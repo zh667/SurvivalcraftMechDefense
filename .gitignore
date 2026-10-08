@@ -1,0 +1,9 @@
+local/
+dist/
+**/bin/
+**/obj/
+**/__pycache__/
+*.user
+.vs/
+Directory.Build.local.props
+Mod/Assets/Imported/

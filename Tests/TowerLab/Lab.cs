@@ -82,7 +82,7 @@ public class Lab:ModLoader {
             var model=u.Entity.FindComponent<ComponentMDTowerModel>(true);
             if(model.Model==null)throw new Exception("model missing "+d.id);
             foreach(var n in d.nodes.Skip(1))if(model.Model.FindBone(n.name,false)==null)throw new Exception($"bone {n.name} missing in {d.id}");
-            if(MDTowerLibrary.Icon(d)==null)throw new Exception("icon missing "+d.id);
+            if(MDTowerLibrary.Icon(d).mesh.Vertices.Count<100)throw new Exception("icon mesh missing "+d.id);
             checks.Add($"{d.id}: model {model.Model.Meshes.Count} meshes, {model.Model.Bones.Count} bones, icon ok");
         }
         results["loadChecks"]=checks;
@@ -195,6 +195,13 @@ public class Lab:ModLoader {
                 // tower forward is -Z after yaw 0; front-right three-quarter view and a back-left one
                 foreach(var x in Hold(focus+new Vector3(.75f,.45f,-1f)*s*1.25f,focus))yield return x;Shot($"g_{id}_fr");{var tm=u.Entity.FindComponent<ComponentMDTowerModel>(true);var mr=GameManager.Project.FindSubsystem<SubsystemModelsRenderer>(true);camlog.Add($"{id}: visible {tm.IsVisibleForCamera} registered {mr.m_componentModels.ContainsKey(tm)} added {u.Entity.IsAddedToProject} hp {u.Damage.Hitpoints} destroyed {u.Destroyed} wreck {u.WreckTime}");}yield return true;
                 foreach(var x in Hold(focus+new Vector3(-.8f,.35f,.9f)*s*1.25f,focus))yield return x;Shot($"g_{id}_bl");yield return true;
+                if(d.muzzles.Length>0) {   // look into the muzzle from just in front and below (bore see-through), then from under the head (seams)
+                    var pose=MDTowerBrain.Pose(u);var mz=MDTowerLibrary.Muzzle(d,pose,0);var fw=MDTowerLibrary.MuzzleForward(d,pose,0);
+                    var sideV=Vector3.Normalize(Vector3.Cross(fw,Vector3.UnitY)+new Vector3(.001f,0,0));
+                    foreach(var x in Hold(mz+fw*1.1f-Vector3.UnitY*.45f+sideV*.2f,mz-fw*.4f))yield return x;Shot($"m_{id}_bore");yield return true;
+                    var hv=d.pitchNode>=0?pose[d.pitchNode].Translation:mz-fw*.5f;
+                    foreach(var x in Hold(hv+fw*1.6f-Vector3.UnitY*1.3f+sideV*.6f,hv))yield return x;Shot($"m_{id}_under");yield return true;
+                }
             }
             // flicker sequences: tiny camera steps, near and far
             foreach(var id in new[]{"battle_turret_3","battle_turret_1","battle_cannon_2","battle_rocket_1"}) {

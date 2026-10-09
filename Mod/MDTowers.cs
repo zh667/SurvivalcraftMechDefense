@@ -40,7 +40,6 @@ public sealed class MDTowerDef {
     [System.Text.Json.Serialization.JsonIgnore] public int yawNode = -1, pitchNode = -1;
     [System.Text.Json.Serialization.JsonIgnore] public int[] recoilNodes = [];
     [System.Text.Json.Serialization.JsonIgnore] public int[] muzzleNodes = [];
-    [System.Text.Json.Serialization.JsonIgnore] public Texture2D Icon;
     public bool HasYaw => yawNode >= 0;
     public float PitchMin => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[0]);
     public float PitchMax => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[1]);
@@ -64,7 +63,28 @@ public static class MDTowerLibrary {
         }
         all=file.towers;byId=all.ToDictionary(t=>t.id);
     }
-    public static Texture2D Icon(MDTowerDef d)=>d.Icon??=ContentManager.Get<Texture2D>("Towers/"+d.id+"/icon");
+    // 3D inventory icon: ~1500 largest triangles of the tower, unit-cube sized, with the tower's atlas.
+    // fit/center frame the slot view (BlockIconWidget looks from (1,1,1)): tall thin towers would otherwise
+    // fill barely half the slot height.
+    public record struct IconData(BlockMesh mesh,Texture2D texture,float fit,Vector3 center);
+    static readonly Dictionary<string,IconData> icons=[];
+    const float IconExtent=1.65f;   // projected size that fills ~80% of an inventory slot (measured in the hotbar)
+    public static IconData Icon(MDTowerDef d)=>IconMesh("Towers/"+d.id+"/icon.bin","Towers/"+d.id+"/atlas");
+    public static IconData IconMesh(string meshPath,string texturePath) {
+        if(icons.TryGetValue(meshPath,out var icon))return icon;
+        var stream=ContentManager.GetStream(meshPath);stream.Position=0;using var r=new BinaryReader(stream);
+        int nv=r.ReadInt32(),ni=r.ReadInt32();var mesh=new BlockMesh();
+        var sx=Vector3.Normalize(new Vector3(1,0,-1));var sy=Vector3.Normalize(new Vector3(-1,2,-1));
+        float x0=float.MaxValue,x1=float.MinValue,y0=float.MaxValue,y1=float.MinValue;
+        for(int i=0;i<nv;i++) {
+            var p=new Vector3(r.ReadSingle(),r.ReadSingle(),r.ReadSingle());var uv=new Vector2(r.ReadSingle(),r.ReadSingle());byte shade=(byte)(255*Math.Clamp(r.ReadSingle(),0,1));
+            mesh.Vertices.Add(new BlockMeshVertex{Position=p,TextureCoordinates=uv,Color=new Color(shade,shade,shade)});
+            float a=Vector3.Dot(p,sx),b=Vector3.Dot(p,sy);x0=MathF.Min(x0,a);x1=MathF.Max(x1,a);y0=MathF.Min(y0,b);y1=MathF.Max(y1,b);
+        }
+        for(int i=0;i<ni;i++)mesh.Indices.Add(r.ReadInt32());
+        icon=new IconData(mesh,ContentManager.Get<Texture2D>(texturePath),IconExtent/MathF.Max(x1-x0,y1-y0),sx*(x0+x1)/2+sy*(y0+y1)/2);
+        icons[meshPath]=icon;return icon;
+    }
     static Vector3 V(float[] a)=>new(a[0],a[1],a[2]);
     // Same composition as ComponentModel.ProcessBoneHierarchy for a rigid glTF: local rotation, then the
     // node's bind translation plus an offset (recoil) expressed in the parent frame.
@@ -91,7 +111,11 @@ public static class MDTowerLibrary {
 // Rigid-part tower model drawn by SubsystemModelsRenderer; bones follow the unit's aim and recoil.
 public class ComponentMDTowerModel : ComponentModel {
     ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil;
-    public override void Load(ValuesDictionary values,IdToEntityMap map){base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);}
+    public override void Load(ValuesDictionary values,IdToEntityMap map) {
+        base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);
+        // Two-sided like the authoring view: tube interiors and slab seams were only ever seen from both sides.
+        RenderingMode=ModelRenderingMode.AlphaThreshold;
+    }
     public static string LastError;
     public override void Animate() {
         try{AnimateBones();}

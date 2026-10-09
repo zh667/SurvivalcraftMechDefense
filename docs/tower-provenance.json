@@ -9,9 +9,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\v1\\battle_turret_1\\battle_turret_1_V1.png",
     "atlasSha256": "5d5e5792d5c178d3595cf29dd9ac841f8d2c02226bb179034dbd5dd4d25dca27"
    },
-   "triangles": 10974,
-   "facesHidden": 2412,
-   "facesClipped": 1130,
+   "triangles": 12262,
+   "facesHidden": 2953,
+   "facesClipped": 1236,
    "crossPartNudged": 0,
    "clearance": {
     "pitch": [
@@ -34,10 +34,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\v1\\battle_turret_2\\battle_turret_2_V1.png",
     "atlasSha256": "0efc8148954969eaebb8f47eb97e0b87b88f54ecbe9c06ec2017fd01f07b10d5"
    },
-   "triangles": 12546,
-   "facesHidden": 3185,
-   "facesClipped": 1325,
-   "crossPartNudged": 6,
+   "triangles": 13936,
+   "facesHidden": 3818,
+   "facesClipped": 1469,
+   "crossPartNudged": 4,
    "clearance": {
     "pitch": [
      -60,
@@ -59,10 +59,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\v1\\battle_turret_3\\battle_turret_3_V1.png",
     "atlasSha256": "e2a8779faeba7d69bd8f986f4febd216c92f486347b5cc17886cce8ebf403069"
    },
-   "triangles": 12479,
-   "facesHidden": 2806,
-   "facesClipped": 1329,
-   "crossPartNudged": 5,
+   "triangles": 14071,
+   "facesHidden": 3571,
+   "facesClipped": 1464,
+   "crossPartNudged": 2,
    "clearance": {
     "pitch": [
      -60,
@@ -84,10 +84,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_cannon_1\\battle_cannon_1_V2.png",
     "atlasSha256": "de9f90f2684e29ae0fe75680c56ad666b2313d3d54a573d7ee1e0d53c5899130"
    },
-   "triangles": 17459,
-   "facesHidden": 2233,
-   "facesClipped": 1664,
-   "crossPartNudged": 1,
+   "triangles": 18414,
+   "facesHidden": 3372,
+   "facesClipped": 1844,
+   "crossPartNudged": 29,
    "clearance": {
     "pitch": [
      -60,
@@ -108,10 +108,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_cannon_2\\battle_cannon_2_V2.png",
     "atlasSha256": "c31e76a9ca85ea0d8b93e9177ca76c78ea352b7100f5f14fe9cbc70c169ad490"
    },
-   "triangles": 20815,
-   "facesHidden": 3345,
-   "facesClipped": 2043,
-   "crossPartNudged": 15,
+   "triangles": 23503,
+   "facesHidden": 4513,
+   "facesClipped": 2419,
+   "crossPartNudged": 39,
    "clearance": {
     "pitch": [
      -60,
@@ -132,10 +132,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_sniper_1\\battle_sniper_1_V2.png",
     "atlasSha256": "7a78e2880c3fa30e04b7a4a1851c78ddb934863080bc6f6fb514da175e1a6426"
    },
-   "triangles": 15584,
-   "facesHidden": 2323,
-   "facesClipped": 1599,
-   "crossPartNudged": 2,
+   "triangles": 18711,
+   "facesHidden": 3406,
+   "facesClipped": 1971,
+   "crossPartNudged": 6,
    "clearance": {
     "pitch": [
      -60,
@@ -156,10 +156,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V2.png",
     "atlasSha256": "5b0f2b3b104964313c2a74213d1229d9afcb69dcc1efe070dcaf11e417a8cef0"
    },
-   "triangles": 15126,
-   "facesHidden": 406,
-   "facesClipped": 1204,
-   "crossPartNudged": 5,
+   "triangles": 22991,
+   "facesHidden": 4051,
+   "facesClipped": 2139,
+   "crossPartNudged": 42,
    "clearance": {
     "yaw_collisions": 0,
     "yaw_worst": [],
@@ -174,10 +174,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_debuff_1\\battle_debuff_1_V2.png",
     "atlasSha256": "63b20079c45ee0924f973b4b65770f023b938803b6253d7b3125946768bc5642"
    },
-   "triangles": 14356,
-   "facesHidden": 880,
-   "facesClipped": 1429,
-   "crossPartNudged": 3,
+   "triangles": 18369,
+   "facesHidden": 4761,
+   "facesClipped": 1966,
+   "crossPartNudged": 28,
    "clearance": {
     "pitch": [
      -60,
@@ -197,10 +197,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_fog_1\\battle_fog_1_V2.png",
     "atlasSha256": "8b5c7524b868f4369ff083398232609608975865386232ef529871c70243cdc9"
    },
-   "triangles": 16859,
-   "facesHidden": 836,
-   "facesClipped": 1803,
-   "crossPartNudged": 3,
+   "triangles": 20779,
+   "facesHidden": 4549,
+   "facesClipped": 2338,
+   "crossPartNudged": 28,
    "clearance": {
     "pitch": [
      -60,
@@ -222,10 +222,10 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_frost_1\\battle_frost_1_V2.png",
     "atlasSha256": "7a1f352b81cf77f3049cf7ac94763bf657d33c75f681aa793a12832431b79db5"
    },
-   "triangles": 11826,
-   "facesHidden": 797,
-   "facesClipped": 1268,
-   "crossPartNudged": 4,
+   "triangles": 15403,
+   "facesHidden": 4169,
+   "facesClipped": 1772,
+   "crossPartNudged": 2,
    "clearance": {
     "pitch": [
      -60,
@@ -245,9 +245,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_jet_1\\battle_jet_1_V2.png",
     "atlasSha256": "a0fe6a33e348d91fc1e075d574f3e0238c037c1453959cb9cc57ce4d40a112f1"
    },
-   "triangles": 10027,
-   "facesHidden": 334,
-   "facesClipped": 1109,
+   "triangles": 13257,
+   "facesHidden": 3371,
+   "facesClipped": 1438,
    "crossPartNudged": 0,
    "clearance": {
     "pitch": [
@@ -266,9 +266,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_rocket_1\\battle_rocket_1_V2.png",
     "atlasSha256": "ee365092e60233672e5414335dab916c4571d85bd5e15643f5f97c0ce67fe3f6"
    },
-   "triangles": 39468,
-   "facesHidden": 1536,
-   "facesClipped": 4742,
+   "triangles": 70524,
+   "facesHidden": 13127,
+   "facesClipped": 9902,
    "crossPartNudged": 0,
    "clearance": {
     "yaw_collisions": 0,
@@ -283,9 +283,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_laser_1\\battle_laser_1_V2.png",
     "atlasSha256": "006ef2a5675dbbe87935386efe80dbe3466d27feb86911f07df017a0e5c8fed0"
    },
-   "triangles": 23478,
-   "facesHidden": 2524,
-   "facesClipped": 2436,
+   "triangles": 25077,
+   "facesHidden": 3838,
+   "facesClipped": 2877,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -297,9 +297,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_laser_2\\battle_laser_2_V2.png",
     "atlasSha256": "ff7319124d1d036709e7ed822096d5dc4e054eb60b4d2c1cb95f190b72ea271d"
    },
-   "triangles": 26706,
-   "facesHidden": 2794,
-   "facesClipped": 2900,
+   "triangles": 31906,
+   "facesHidden": 4244,
+   "facesClipped": 3774,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -311,9 +311,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_lightning_1\\battle_lightning_1_V2.png",
     "atlasSha256": "d223722e27161a6fc1fb88b452c80679c01f8bdaf3bfcd9f97765bf3f46dead0"
    },
-   "triangles": 20570,
-   "facesHidden": 2324,
-   "facesClipped": 2132,
+   "triangles": 26592,
+   "facesHidden": 4167,
+   "facesClipped": 3156,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -325,9 +325,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_lightning_2\\battle_lightning_2_V2.png",
     "atlasSha256": "f778143eab1b26b63044329e7e2561b90c5ccdc88ed48b631c93950d409b281e"
    },
-   "triangles": 34383,
-   "facesHidden": 4732,
-   "facesClipped": 3824,
+   "triangles": 44524,
+   "facesHidden": 8944,
+   "facesClipped": 5399,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -339,9 +339,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_shockwave_1\\battle_shockwave_1_V2.png",
     "atlasSha256": "8fc764c3703b8b427a6407fd727a9402d7b37e2bc073ba686cdfb2971f24f110"
    },
-   "triangles": 14531,
-   "facesHidden": 1607,
-   "facesClipped": 1256,
+   "triangles": 18220,
+   "facesHidden": 2800,
+   "facesClipped": 1780,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -353,9 +353,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_medic_1\\battle_medic_1_V2.png",
     "atlasSha256": "91d4f71a0ecee0ea9db2b955bd0b59839712247db938e1e1c66caf6006f1d425"
    },
-   "triangles": 6916,
-   "facesHidden": 188,
-   "facesClipped": 712,
+   "triangles": 13453,
+   "facesHidden": 1774,
+   "facesClipped": 1473,
    "crossPartNudged": 0,
    "clearance": {}
   },
@@ -367,9 +367,9 @@
     "atlas": "E:\\projects\\endfield-turret-model\\batch2_v2\\battle_trap_1\\battle_trap_1_V2.png",
     "atlasSha256": "3686d267827f5b6aa996495847f680d322b2b083702b72f9373cf0b4798e85a9"
    },
-   "triangles": 15520,
-   "facesHidden": 1561,
-   "facesClipped": 2099,
+   "triangles": 17925,
+   "facesHidden": 3327,
+   "facesClipped": 2617,
    "crossPartNudged": 0,
    "clearance": {}
   }

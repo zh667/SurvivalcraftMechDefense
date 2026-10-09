@@ -6,11 +6,17 @@ For each tower: one glTF binary with a node per rigid part (base / yaw / pitch /
 sub-parts), the authored pixel atlas, and Mod/Assets/Towers/towers.json metadata (pivots,
 muzzles, clip-free pitch range, footprint). Outputs go to Mod/Assets/Towers (generated, ignored).
 
+Every cube is first made a closed box: the authored geo leaves out faces it thought hidden (tube
+slabs keep only their outer side, plates only their front), and Blender's two-sided view hides the
+holes that leaves. Missing faces get a flat colour from the cube's own texture.
+
 Hidden-surface clean-up, per rigid part: a face region is dropped when solid cubes of the same
 part fill the space just in front of it. The authored cube models stack faces 0.006-0.5 mm
 apart (bevel slabs, plates, rings). Blender close-ups hide that; in game it z-fights ("colour
-changes" while the camera moves). Exact ties keep the smaller face (the decal). Faces of two
-parts that still coincide at rest are pushed 2.5 mm apart, the moving part in front.
+changes" while the camera moves). Pieces floating up to SNAP_GAP in front of a parallel surface are
+grown back onto it (cutting the surface under them opened slits); exact ties keep the smaller face
+(the decal). Cubes of two parts whose faces still coincide at rest are grown NUDGE apart, the moving
+part in front (moving only the face left a slit around it).
 Units: SC metres, X right, Y up, -Z forward (authoring frame x forward, y left, z up, 16 px = 1 m).
 """
 from __future__ import annotations
@@ -30,9 +36,11 @@ SPEC = json.loads((ROOT / 'tools/towers.json').read_text(encoding='utf-8'))
 EPS_COVER = 1e-5      # m: probe plane in front of a face (smaller than the 6e-6..5e-4 m stacking gaps? see tie)
 EPS_TIE = 1e-5        # m: faces closer than this are one plane; priority decides
 FIGHT = 0.006         # m: same-facing faces closer than this z-fight at range (24-bit depth, near 0.1)
-NUDGE = 0.007         # m: cross-part coincident faces are pushed this far apart (24-bit depth resolves 7 mm to ~100 m)
+NUDGE = 0.003         # m: cross-part coincident faces are pushed this far apart (24-bit depth resolves 3 mm to ~70 m; larger steps read as seams)
 CROSS_GAP = 0.006     # m: cross-part faces closer than this get nudged
+SNAP_GAP = 0.0125     # m: same-part pieces this close (0.2 model px; designed gaps are whole or half pixels) are grown shut
 PART_ORDER = {'base': 0, 'yaw': 1, 'pitch': 2}
+TRACE = bool(__import__('os').environ.get('MD_TRACE'))     # also write local/claude-work/trace/<id>.json (triangle -> source cube)
 
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
@@ -62,10 +70,16 @@ FACE_Q = {  # TL, TR, BL corners per Bedrock face key (blocky.texel_points)
     'north': lambda x0, y0, z0, x1, y1, z1: [(x1, y1, z0), (x0, y1, z0), (x1, y0, z0)],
 }
 
-def cube_geometry(cube):
-    """-> (to_sc(point_raw), 8 corners SC, faces {key: (TL, TR, BL) SC})."""
+OPPOSITE = {'east': 'west', 'west': 'east', 'up': 'down', 'down': 'up', 'north': 'south', 'south': 'north'}
+BOUND = {'east': (0, 1), 'west': (0, 0), 'up': (1, 1), 'down': (1, 0), 'south': (2, 1), 'north': (2, 0)}   # FACE_Q plane per key
+
+def cube_geometry(cube, grow=None):
+    """-> (8 corners SC, faces {key: (TL, TR, BL) SC}). grow: {face key: metres} moves that face outward."""
     o, s = cube['origin'], cube['size']
-    x0, y0, z0 = -(o[0] + s[0]), o[1], o[2]; x1, y1, z1 = -o[0], o[1] + s[1], o[2] + s[2]
+    b = [[-(o[0] + s[0]), -o[0]], [o[1], o[1] + s[1]], [o[2], o[2] + s[2]]]
+    for key, m in (grow or {}).items():
+        ax, side = BOUND[key]; b[ax][side] += 16 * m if side else -16 * m
+    (x0, x1), (y0, y1), (z0, z1) = b
     M = np.eye(3); cp = np.zeros(3)
     if 'rotation' in cube:
         M = bb_rot(cube['rotation']); cp = np.array([-cube['pivot'][0], cube['pivot'][1], cube['pivot'][2]], float)
@@ -198,17 +212,55 @@ class Face:
         """2D plane coords -> 3D: point = x e1 + y e2 + d n (e1, e2, n orthonormal)."""
         xy = np.asarray(xy, float); return xy[:, :1] * self.e1 + xy[:, 1:2] * self.e2 + self.d * self.n
 
-def faces_of(cubes, owner, tex):
+def uv_rect(f):
+    (u, v), (du, dv) = f['uv'], f['uv_size']; return (min(u, u + du), min(v, v + dv), abs(du), abs(dv))
+
+def flat_texel(atlas, rect):
+    """Zero-size uv rect on the most common opaque colour of an authored face (fill for restored faces)."""
+    u0, v0, w, h = rect; H, W = atlas.shape[:2]
+    a = atlas[int(v0):max(int(v0) + 1, int(math.ceil(v0 + h))), int(u0):max(int(u0) + 1, int(math.ceil(u0 + w)))].reshape(-1, 4)
+    ok = a[:, 3] > 127; cand = a[ok] if ok.any() else a
+    vals, inv, cnt = np.unique(cand[:, :3], axis=0, return_inverse=True, return_counts=True)
+    i = int(np.flatnonzero(ok)[np.flatnonzero(inv.reshape(-1) == cnt.argmax())[0]]) if ok.any() else 0
+    cols = max(int(math.ceil(u0 + w)) - int(u0), 1)
+    return (int(u0) + i % cols + .5, int(v0) + i // cols + .5, 0.0, 0.0)
+
+def faces_of(cubes, owner, tex, atlas, grow={}):
+    """All six faces of every cube: authored ones with their uv, missing ones flat-coloured (restored)."""
     faces, boxes = [], []
     for k, cube in enumerate(cubes):
-        corners, fq = cube_geometry(cube); boxes.append(Box(corners))
-        for key, f in cube['uv'].items():
-            (u, v), (du, dv) = f['uv'], f['uv_size']
-            rect = (min(u, u + du), min(v, v + dv), abs(du), abs(dv))
+        corners, fq = cube_geometry(cube, grow.get(k)); boxes.append(Box(corners)); uv = cube['uv']
+        for key in FACE_Q:
             TL, TR, BL = fq[key]
+            if np.linalg.norm(np.cross(TR - TL, BL - TL)) < 1e-10: continue      # zero-thickness side
+            src = uv.get(key) or uv.get(OPPOSITE[key]) or next(iter(uv.values()))
+            rect = uv_rect(src) if key in uv else flat_texel(atlas, uv_rect(src))
             # blocky painted texel (i, j) of every face at TL + i (TR - TL) + j (BL - TL), from the rect's top-left
             faces.append(Face(owner[k], k, key, TL, TR, BL, rect, tex, boxes[-1].c))
     return faces, boxes
+
+def snap_plates(faces, boxes, owner):
+    """{cube: {key: metres}}: a cube whose back floats (EPS_TIE, SNAP_GAP] in front of a parallel surface of the
+    same part grows back onto it (0.1 mm into it): no hairline gap, and the surface under it is hidden by a
+    solid instead of being cut open (the cut left a slit you could see through)."""
+    grow = {}; by_cube = {}
+    for f in faces: by_cube.setdefault(f.cube, {})[f.key] = f
+    los = np.array([b.lo for b in boxes]); his = np.array([b.hi for b in boxes]); own = np.array(owner)
+    for f in faces:
+        pts = f.lift(np.array(f.poly.exterior.coords)[:4])
+        lo, hi = pts.min(0) - FIGHT, pts.max(0) + FIGHT
+        for j in np.flatnonzero(np.all((los <= hi) & (his >= lo), 1) & (own == f.part)):
+            if j == f.cube: continue
+            for key, b in by_cube.get(j, {}).items():          # b: plate's back face, facing f
+                if b.n @ f.n > -0.9995 or (b.area, j) > (f.area, f.cube): continue    # only the smaller side moves
+                bd = b.lift(np.array(b.poly.exterior.coords)[:4]) @ f.n - f.d
+                if bd.min() <= EPS_TIE or bd.max() > SNAP_GAP: continue
+                bp = Polygon([(float(p @ f.e1), float(p @ f.e2)) for p in b.lift(np.array(b.poly.exterior.coords)[:4])])
+                if bp.intersection(f.poly).area < 1e-7: continue
+                m = float(bd.max()) + 1e-4
+                cur = grow.setdefault(j, {}).get(key)
+                grow[j][key] = m if cur is None else min(cur, m)       # nearest surface under the plate
+    return grow
 
 def snap(g): return shapely.set_precision(g, 1e-7)
 
@@ -234,9 +286,10 @@ def cull_part(faces, boxes, members):
             for g in by_cube.get(j, ()):
                 if g.n @ f.n < 0.9995: continue                   # within ~1.8 degrees: slightly tilted slabs fight too
                 gd = g.lift(np.array(g.poly.exterior.coords)[:4]) @ f.n - f.d    # g's corners relative to f's plane
-                if gd.max() <= EPS_TIE and gd.min() >= -EPS_TIE or gd.min() < -EPS_TIE < gd.max():
+                lo, hi = gd.min(), gd.max()
+                if hi <= EPS_TIE and lo >= -EPS_TIE or lo < -EPS_TIE < hi:
                     if (g.area, g.cube) >= (f.area, f.cube): continue     # coplanar or crossing (tilted slab): smaller face wins
-                elif not (EPS_TIE <= gd.min() and gd.max() <= FIGHT): continue    # g entirely 0..FIGHT in front of f
+                elif not (lo >= -EPS_TIE and hi <= FIGHT): continue    # g 0..FIGHT in front of f (may touch f along an edge)
                 gp = Polygon([(float(p @ f.e1), float(p @ f.e2)) for p in g.lift(np.array(g.poly.exterior.coords)[:4])])
                 if gp.intersects(f.poly): fights.append(gp)
         # GEOS overlay on nearly coincident edges is not robust (a buffered union once dropped a whole
@@ -301,34 +354,27 @@ def write_glb(path, nodes, parts_geo):
     data = struct.pack('<III', 0x46546C67, 2, 12 + 8 + len(js) + 8 + len(bin_)) + struct.pack('<II', len(js), 0x4E4F534A) + js + struct.pack('<II', len(bin_), 0x004E4942) + bytes(bin_)
     Path(path).write_bytes(data)
 
-# ------------------------------------------------------------------ build one tower
-def build(spec):
-    t0 = time.time(); tid = spec['id']
-    src = AUTHOR / spec['source']; geo_path = src / f"{tid}_{spec['version']}.geo.json"; png_path = src / f"{tid}_{spec['version']}.png"
-    geo = json.loads(geo_path.read_text(encoding='utf-8'))['minecraft:geometry'][0]
-    gb = {b['name']: b for b in geo['bones']}
-    tex = (geo['description']['texture_width'], geo['description']['texture_height'])
-    labels = authored_labels(spec, gb)
-    cubes, owner = assign_parts(spec, gb, labels)
-    faces, boxes = faces_of(cubes, owner, tex)
-    parts = sorted(set(owner), key=lambda p: (PART_ORDER.get(p, 3), p))
-    # geo bone pivots (Bedrock raw) -> SC
-    piv = {b: model_to_sc(bb_point_to_model([-gb[b]['pivot'][0], gb[b]['pivot'][1], gb[b]['pivot'][2]])) for b in ('base', 'yaw', 'pitch') if b in gb}
-    parent_of = {'base': 'Root', 'yaw': 'Root', 'pitch': 'yaw' if 'yaw' in gb else 'Root'}
-    for sub in spec.get('subparts', []):
-        mem = [i for i, o in enumerate(owner) if o == sub['name']]
-        assert mem, (tid, sub['name'], 'matched no cubes')
-        P = np.concatenate([boxes[i].corners for i in mem]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2; parent_of[sub['name']] = sub['from']
-    # 1) per-part hidden-surface clean-up
-    vis = {}; stats = dict(faces_in=len(faces))
-    for p in parts:
-        members = [i for i, o in enumerate(owner) if o == p]
-        vis.update(cull_part([f for f in faces if f.part == p], boxes, members))
-    kept = [(f, vis[id(f)]) for f in faces if vis[id(f)] is not None]
-    stats['faces_hidden'] = len(faces) - len(kept); stats['faces_clipped'] = sum(1 for f, v in kept if abs(v.area - f.area) > 1e-12)
-    # 2) cross-part coincident faces at rest: push the moving part forward
-    rank = lambda p: PART_ORDER.get(p, 3)
-    nudge = {}; pairs = 0; buckets = {}
+# ------------------------------------------------------------------ inventory icon mesh
+ICON_TRIS = 1500
+
+def write_icon(path, P, U, N):
+    """3D inventory icon: the largest triangles (rest pose) up to ICON_TRIS, centred and scaled into a unit cube.
+    icon.bin = int32 nv, int32 ni, nv x (x y z u v shade) float32, ni int32 (engine winding: clockwise front)."""
+    P = P.reshape(-1, 3, 3); U = U.reshape(-1, 3, 2); N = N.reshape(-1, 3, 3)[:, 0]
+    area = np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1) / 2
+    keep = np.argsort(-area)[:ICON_TRIS]; P, U, N = P[keep], U[keep], N[keep]
+    lo, hi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0); P = (P - (lo + hi) / 2) / max(hi - lo)
+    # block-style face shading: top light, sides by facing, underside dark
+    shade = np.where(N[:, 1] > .5, 1.0, np.where(N[:, 1] < -.5, .55, .72 + .14 * N[:, 0] - .08 * N[:, 2]))
+    V = np.concatenate([P.reshape(-1, 3), U.reshape(-1, 2), np.repeat(shade, 3)[:, None]], 1).astype('<f4')
+    I = np.arange(len(V), dtype='<i4').reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)    # glTF CCW -> engine front (CW)
+    Path(path).write_bytes(struct.pack('<ii', len(V), len(I)) + V.tobytes() + I.tobytes())
+    return len(keep)
+
+def cross_part_pairs(kept, rank):
+    """{id(mover face): (face, metres)} for visible same-facing faces of two parts closer than CROSS_GAP that
+    overlap: the higher-ranked (moving) part's face must come NUDGE in front of the other."""
+    out = {}; buckets = {}
     for f, v in kept:
         buckets.setdefault((tuple(np.round(f.n * 200).astype(int)), int(math.floor(f.d / CROSS_GAP))), []).append((f, v))
     def neighbours(f):
@@ -341,27 +387,73 @@ def build(spec):
             if not gp.intersects(f.poly): continue
             gw = Polygon([(float(p @ f.e1), float(p @ f.e2)) for p in g.lift(np.array(w.exterior.coords)[:-1])]) if w.geom_type == 'Polygon' else gp
             if v.intersection(gw.buffer(0)).area < 1e-6: continue
-            pairs += 1
             mover, other = (f, g) if rank(f.part) > rank(g.part) else (g, f)
-            nudge[id(mover)] = max(nudge.get(id(mover), 0.0), other.d - mover.d + NUDGE)
-    stats['cross_part_pairs_nudged'] = pairs
+            m = other.d - mover.d + NUDGE
+            if m > 1e-6: out[id(mover)] = (mover, max(out.get(id(mover), (None, 0.0))[1], m))
+    return out
+
+# ------------------------------------------------------------------ build one tower
+def build(spec):
+    t0 = time.time(); tid = spec['id']
+    src = AUTHOR / spec['source']; geo_path = src / f"{tid}_{spec['version']}.geo.json"; png_path = src / f"{tid}_{spec['version']}.png"
+    geo = json.loads(geo_path.read_text(encoding='utf-8'))['minecraft:geometry'][0]
+    gb = {b['name']: b for b in geo['bones']}
+    tex = (geo['description']['texture_width'], geo['description']['texture_height'])
+    labels = authored_labels(spec, gb)
+    cubes, owner = assign_parts(spec, gb, labels)
+    atlas = np.asarray(Image.open(png_path).convert('RGBA'))
+    faces, boxes = faces_of(cubes, owner, tex, atlas)
+    grow = snap_plates(faces, boxes, owner)
+    faces, boxes = faces_of(cubes, owner, tex, atlas, grow)
+    parts = sorted(set(owner), key=lambda p: (PART_ORDER.get(p, 3), p))
+    # geo bone pivots (Bedrock raw) -> SC
+    piv = {b: model_to_sc(bb_point_to_model([-gb[b]['pivot'][0], gb[b]['pivot'][1], gb[b]['pivot'][2]])) for b in ('base', 'yaw', 'pitch') if b in gb}
+    parent_of = {'base': 'Root', 'yaw': 'Root', 'pitch': 'yaw' if 'yaw' in gb else 'Root'}
+    for sub in spec.get('subparts', []):
+        mem = [i for i, o in enumerate(owner) if o == sub['name']]
+        assert mem, (tid, sub['name'], 'matched no cubes')
+        P = np.concatenate([boxes[i].corners for i in mem]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2; parent_of[sub['name']] = sub['from']
+    # 1) per-part hidden-surface clean-up
+    vis = {}; stats = dict(faces_in=len(faces), plates_snapped=sum(len(g) for g in grow.values()))
+    def cull(which):
+        for p in which:
+            members = [i for i, o in enumerate(owner) if o == p]
+            vis.update(cull_part([f for f in faces if f.part == p], boxes, members))
+        return [(f, vis[id(f)]) for f in faces if vis[id(f)] is not None]
+    kept = cull(parts)
+    # 2) cross-part coincident faces at rest: grow the moving part's cube NUDGE in front, then redo that part
+    rank = lambda p: PART_ORDER.get(p, 3)
+    nudge = cross_part_pairs(kept, rank); stats['cross_part_pairs_nudged'] = len(nudge)
+    if nudge:
+        for f, m in nudge.values(): grow.setdefault(f.cube, {})[f.key] = grow.get(f.cube, {}).get(f.key, 0.0) + m
+        moved = sorted({f.part for f, _ in nudge.values()})
+        new, boxes = faces_of(cubes, owner, tex, atlas, grow)
+        faces = [f for f in faces if f.part not in moved] + [f for f in new if f.part in moved]
+        kept = cull(moved)
+        stats['cross_part_pairs_left'] = len(cross_part_pairs(kept, rank)); stats['parts_grown'] = moved
+    stats['faces_hidden'] = len(faces) - len(kept); stats['faces_clipped'] = sum(1 for f, v in kept if abs(v.area - f.area) > 1e-12)
+    for sub in spec.get('subparts', []):         # sub-part pivots from the final boxes
+        P = np.concatenate([boxes[i].corners for i, o in enumerate(owner) if o == sub['name']]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2
     # 3) triangles per part, positions relative to the part's world pivot
-    geo_parts = {}
+    geo_parts = {}; trace = []
     for p in parts:
         P, N, U = [], [], []
         for f, v in kept:
             if f.part != p: continue
-            off = f.n * nudge.get(id(f), 0.0)
             for tri, uv in triangulate(f, v):
-                tri = tri + off
                 # glTF front faces are CCW seen from outside (normal side)
                 if np.cross(tri[1] - tri[0], tri[2] - tri[0]) @ f.n < 0: tri = tri[[0, 2, 1]]; uv = uv[[0, 2, 1]]
                 P.append(tri - piv.get(p, 0)); N.append(np.repeat(f.n[None], 3, 0)); U.append(uv)
+                if TRACE: trace.append(dict(part=p, tri=tri.round(6).tolist(), label=labels[f.cube], cube=f.cube, key=f.key,
+                                            restored=f.key not in cubes[f.cube]['uv'], grow=grow.get(f.cube)))
         P = np.concatenate(P).reshape(-1, 3); N = np.concatenate(N).reshape(-1, 3); U = np.concatenate(U).reshape(-1, 2)
         key = np.round(np.c_[P * 1e5, N * 1e4, U * 1e6]).astype(np.int64)
         _, first, inv = np.unique(key, axis=0, return_index=True, return_inverse=True)
         geo_parts[p] = (P[first], N[first], U[first], inv.reshape(-1).astype(np.uint32))
     stats['triangles'] = {p: int(len(g[3]) // 3) for p, g in geo_parts.items()}; stats['vertices'] = {p: int(len(g[0])) for p, g in geo_parts.items()}
+    # rest-pose triangle soup for the icon (positions back in tower space)
+    soup = [(g[0][g[3]] + piv.get(p, 0), g[2][g[3]], g[1][g[3]]) for p, g in geo_parts.items()]
+    icon_soup = tuple(np.concatenate([x[k] for x in soup]) for k in range(3))
     # 4) node tree
     nodes = [dict(name='Root', parent=None, translation=(0, 0, 0))]
     for p in parts:
@@ -369,6 +461,10 @@ def build(spec):
         nodes.append(dict(name=p, parent=parent, translation=piv.get(p, np.zeros(3)) - base_t))
     d = OUT / tid; d.mkdir(parents=True, exist_ok=True)
     write_glb(d / 'model.glb', nodes, geo_parts)
+    if TRACE:
+        (ROOT / 'local/claude-work/trace').mkdir(parents=True, exist_ok=True)
+        (ROOT / f'local/claude-work/trace/{tid}.json').write_text(json.dumps(trace), encoding='utf-8')
+    stats['icon_triangles'] = write_icon(d / 'icon.bin', *icon_soup)
     Image.open(png_path).convert('RGBA').save(d / 'atlas.png')
     # 5) muzzles (locators on the bone that carries them)
     muzzles = []

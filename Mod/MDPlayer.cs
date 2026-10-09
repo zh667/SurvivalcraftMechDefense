@@ -29,10 +29,15 @@ public class MDDeploymentBlock : Block {
     public override int GetTextureSlotCount(int value)=>1;
     public override int GetFaceTextureSlot(int face,int value)=>0;
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
-    // Pre-rendered icons: two quads per slot instead of re-uploading a 20k-triangle mesh every frame.
+    // Small 3D icon (~1500 triangles, the tower's own atlas) instead of the full 10-40k-triangle model.
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
-        var icon=Tower(value) is {} d?MDTowerLibrary.Icon(d):ContentManager.Get<Texture2D>(Terrain.ExtractData(value)==1?"Towers/_legacy/mech_icon":"Towers/_legacy/enemy_icon");
-        BlocksManager.DrawFlatBlock(r,value,size,ref matrix,icon,color,false,e);
+        var icon=Tower(value) is {} d?MDTowerLibrary.Icon(d):Terrain.ExtractData(value)==1
+            ?MDTowerLibrary.IconMesh("Towers/_legacy/mech_icon.bin","Imported/Mech/texture"):MDTowerLibrary.IconMesh("Towers/_legacy/enemy_icon.bin","Imported/Enemy/texture");
+        if(e?.DrawBlockMode==DrawBlockMode.UI) {
+            size*=icon.fit;var m=Matrix.CreateTranslation(-icon.center*size)*matrix;
+            BlocksManager.DrawMeshBlock(r,icon.mesh,icon.texture,color,size,ref m,e);
+        }
+        else BlocksManager.DrawMeshBlock(r,icon.mesh,icon.texture,color,size,ref matrix,e);
     }
 }
 

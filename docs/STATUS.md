@@ -1,6 +1,17 @@
 # Status — 2026-10-09
 
-## Current delivery: all 19 Endfield towers 0.4.0
+## Current delivery: 0.4.1 (user feedback on 0.4.0)
+
+- See-through barrels and seams: the authored geo.json leaves out faces it considered hidden (67% of
+  33,705 cubes miss at least one), and the 0.4.0 hidden-surface pass treated every cube as closed.
+  The builder now restores all six faces before culling, grows whole cubes for the cross-part
+  separation (moving one face left a slit), and grows same-part pieces floating ≤ 12.5 mm onto the
+  surface below. Towers render two-sided as a safety net for 1-px rasterisation cracks.
+- New check tools/check_tower_gaps.py (GPU, 86 views per pose, culled and two-sided). Results and the
+  see-through spots that remain in the authored models themselves: docs/TOWERS.md.
+- Inventory icons: 1,500-triangle 3D meshes per tower, fitted to the slot in UI mode.
+
+## Previous delivery: all 19 Endfield towers 0.4.0
 
 - Every Endfield tower family is deployable (data values 0, 3, 4 keep the old gun towers; 5–20 the rest).
   Models: authored cube models from `endfield-turret-model` (v1 / batch2_v2) exported as rigid-part glTF

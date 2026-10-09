@@ -1,0 +1,22 @@
+{
+  "version": "0.3.1",
+  "verifiedAtLocalDate": "2026-10-09",
+  "packageBytes": 7832302,
+  "packageSha256": "772fbe8b6e3f7845122b334256d33a25f056d830a463962d4f3493dfc46a43cf",
+  "assetChecks": 1783,
+  "runtimeChecks": 120,
+  "runtimeRunId": "f2edc8c8-9ae8-494a-822c-0c2da33af2a6",
+  "runtimeApi": "1.9.3.1",
+  "runtimePassed": true,
+  "runtimeResult": "local/runtime-endfield-fixes/endfield-result.json",
+  "historical030BlenderCornerUVMatches": 69728,
+  "coplanarOverlapTrianglesPerTower": [0, 0, 0],
+  "degenerateTrianglesPerTower": [0, 0, 0],
+  "optionalCompatibilityTested": "Neorxna 1.4 actual installed archive, isolated copy",
+  "originalAnimationFramesPerTower": 44,
+  "originalAnimationTracksPerTower": 3,
+  "sourceAudioStems": 92,
+  "sourceEventGraphs": 16,
+  "portableEffectClips": 14,
+  "limitations": "See ENDFIELD_THREE.md. Tests do not prove visual or audio parity with Unity/Wwise."
+}

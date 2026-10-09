@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework><OutputType>Library</OutputType>
+    <AssemblyName>MechDefense</AssemblyName><RootNamespace>Game</RootNamespace>
+    <Nullable>disable</Nullable><ImplicitUsings>enable</ImplicitUsings><LangVersion>preview</LangVersion>
+    <ScInstall Condition="'$(ScInstall)' == ''">E:\projects\bf2042-scmod\vendor\SurvivalcraftApi\Survivalcraft.Windows\bin\Debug</ScInstall>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Survivalcraft" HintPath="$(ScInstall)\Survivalcraft.dll" Private="false" />
+    <Reference Include="Engine" HintPath="$(ScInstall)\Engine.dll" Private="false" />
+    <Reference Include="EntitySystem" HintPath="$(ScInstall)\EntitySystem.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(ScInstall)\0Harmony.dll" Private="false" />
+  </ItemGroup>
+</Project>

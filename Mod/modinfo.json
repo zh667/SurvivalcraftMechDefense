@@ -1,0 +1,13 @@
+{
+  "Name": "机甲防线 · 方块铳械塔三型",
+  "Version": "0.3.1",
+  "ApiVersion": "1.9.3.1",
+  "ScVersion": "2.4",
+  "PackageName": "local.mechdefense.sample",
+  "Author": "Local Mod Project",
+  "Description": "铳械塔、扩装铳械塔、暴雨铳械塔：自制方块模型与自绘贴图，绑定终末地原始 VAT 动画；终末地粒子、弹丸和音频素材继续使用。粒子渲染及混音为生存战争适配。保留旧机甲和敌兵。",
+  "LoadOrder": 1100,
+  "NonPersistentMod": false,
+  "GameplayImpactLevel": "Break",
+  "Dependencies": {}
+}

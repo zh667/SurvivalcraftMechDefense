@@ -14,12 +14,18 @@ out = Path(idc.get_input_file_path()).parent / 'native'
 out.mkdir(exist_ok=True)
 need = ['shdRegistPchr', 'adMakeChrPacket', 'shdRegistMotion', 'shdPdispInit',
         'shdCalPchrMat', 'shdPchrCalAllMat', 'shdPAnmExec', 'load_pchr', 'shdPanmCalAnmAdr',
-        'sub_5EF3C', 'sub_5F1FC', 'regist_kind', 'shdCalOrgMat']
+        'sub_5EF3C', 'sub_5F1FC', 'regist_kind', 'shdCalOrgMat', 'shdMakeMat2', 'sub_6197C']
 ida_hexrays.init_hexrays_plugin()
 records = []
+extra = set()
+for ea, name in idautils.Names():
+    if name in ['kinddat','kinddat_ptr']:
+        for xref in idautils.XrefsTo(ea):
+            fn=ida_funcs.get_func(xref.frm)
+            if fn: extra.add(fn.start_ea)
 for ea in idautils.Functions():
     name = ida_name.get_name(ea)
-    if not any(s in name for s in need) or not ida_funcs.get_func(ea):
+    if not any(s in name for s in need) and ea not in extra:
         continue
     record = dict(name=name, address=hex(ea))
     try:

@@ -10,28 +10,51 @@ public class ComponentMDUnit : Component,IUpdateable,IDrawable {
     public ComponentPlayer Driver=>Mount?.Rider?.Entity.FindComponent<ComponentPlayer>();
     public float Yaw,AimYaw,AimPitch,Gait,Throttle,Steer; public bool Trigger,Walking;
     public int AmmoType; public string Animation="Idle"; public float AnimationTime,AnimationDuration;
-    public int TurretVariant=1,TurretShotCount;
-    public MDEndfieldCombat Endfield;
+    public int TurretVariant=1;
+    // Towers: definition from Assets/Towers/towers.json; the model is drawn by ComponentMDTowerModel.
+    public string TowerId; public MDTowerDef Tower;
+    public int ShotCount; public float ScanTimer,Channel,ChannelTick; public ComponentBody Target,ChannelTarget;
+    float[] recoilAge=[];
+    public float TowerPitch=>Tower==null?0:Tower.pitchFixed?Tower.restPitch:Math.Clamp(AimPitch,Tower.PitchMin,Tower.PitchMax);
+    public void TickRecoil(float dt){for(int i=0;i<recoilAge.Length;i++)recoilAge[i]+=dt;}
+    public void Kick(int muzzle) {
+        if(Tower==null||Tower.muzzles.Length==0)return;int k=Array.IndexOf(Tower.recoilParts,Tower.muzzles[Math.Clamp(muzzle,0,Tower.muzzles.Length-1)].part);
+        if(k>=0)recoilAge[k]=0;
+    }
+    // Fast kick back, slower return: offset along the barrel's own +Z (towards the breech).
+    public float RecoilOffset(int k) {
+        if(Tower==null||k>=recoilAge.Length)return 0;float t=recoilAge[k];
+        float f=t<.05f?t/.05f:Math.Max(0,1-(t-.05f)/.32f);f=f*f*(3-2*f);return Tower.recoil[k]*f;
+    }
+    public float[] RecoilOffsets(){var r=new float[recoilAge.Length];for(int k=0;k<r.Length;k++)r[k]=RecoilOffset(k);return r;}
     public bool Destroyed {get;private set;}
     public float WreckTime=>wreck;
-    public string AssetName=>Kind=="Turret"?"Endfield/battle_turret_"+TurretVariant:Kind;
+    public string AssetName=>Kind;
     public float Cooldown,Heat; public Vector3 ShotStart,ShotEnd; public int ShotAmmoType=-1; public float ShotAge,ShotDuration; float wreck,scan;
     ComponentBody target; readonly PrimitivesRenderer3D renderer=new(); bool failedDraw;MDStatusWidget hud;ComponentPlayer previousDriver;float lastHitpoints;
     public UpdateOrder UpdateOrder=>(UpdateOrder)1; public int[] DrawOrders=>[5];
     public Vector3 Direction=>new(-MathF.Sin(AimYaw)*MathF.Cos(AimPitch),MathF.Sin(AimPitch),-MathF.Cos(AimYaw)*MathF.Cos(AimPitch));
-    public Vector3 Muzzle=>Kind=="Mech"?MDAssets.MechMuzzle(this):Kind=="Turret"?MDAssets.TurretMuzzle(this):Body.Position+Vector3.UnitY*2.7f+Direction*.8f;
+    public Vector3 Muzzle=>Kind=="Mech"?MDAssets.MechMuzzle(this):Kind=="Turret"?MDTowerBrain.Muzzle(this):Body.Position+Vector3.UnitY*2.7f+Direction*.8f;
+    void TowerDestroyed() {
+        var w=MDTowerWorld.For(Project);var top=Body.Position+Vector3.UnitY*(Tower.bounds[1][1]*.55f);
+        w.Explosion(top,Math.Max(1.5f,Tower.radius*.6f),"heavy",new Color(255,200,120),new Color(255,120,40));
+        Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Audio/Explosion1",.7f,0,top,10,false);
+    }
     public override void Load(ValuesDictionary v,IdToEntityMap map) {
         Kind=v.GetValue<string>("Kind");Body=Entity.FindComponent<ComponentBody>(true);Damage=Entity.FindComponent<ComponentDamage>(true);Mount=Entity.FindComponent<ComponentMount>();
-        TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);TurretShotCount=v.GetValue("TurretShotCount",0);
-        if(Kind=="Turret")Endfield=new(this);
+        TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);ShotCount=v.GetValue("TurretShotCount",0);
+        if(Kind=="Turret") {
+            TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
+            Tower=MDTowerLibrary.Get(TowerId)??throw new InvalidOperationException("Unknown tower "+TowerId);
+            recoilAge=Enumerable.Repeat(10f,Tower.recoilParts.Length).ToArray();
+        }
         Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);AimPitch=v.GetValue("AimPitch",0f);AmmoType=Math.Clamp(v.GetValue("AmmoType",0),0,4);Cooldown=Math.Clamp(v.GetValue("Cooldown",0f),0,2);Heat=Math.Clamp(v.GetValue("Heat",0f),0,1);lastHitpoints=Damage.Hitpoints;PlayEvent("Deploy",.8f);
         if(Damage.Hitpoints<=0||v.GetValue("Destroyed",false)) {Damage.Hitpoints=0;PlayEvent("Death",1.4f);Destroyed=true;wreck=v.GetValue("WreckTime",0f);AnimationTime=wreck;}
     }
-    public override void Save(ValuesDictionary v,EntityToIdMap map) {v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("AmmoType",AmmoType);v.SetValue("Cooldown",Cooldown);v.SetValue("Heat",Heat);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",TurretShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
+    public override void Save(ValuesDictionary v,EntityToIdMap map) {v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("AmmoType",AmmoType);v.SetValue("Cooldown",Cooldown);v.SetValue("Heat",Heat);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
     public void PlayEvent(string name,float duration) {
         if(Destroyed)return;
         Animation=name;AnimationTime=0;
-        if(Kind=="Turret"&&MDAssets.Load(AssetName).animation is {} data)duration=MDEndfieldAnimation.Duration(data,name);
         AnimationDuration=Math.Max(.01f,duration);
     }
     public void CycleAmmo() { if(Kind!="Mech")return; AmmoType=(AmmoType+1)%5;PlayEvent("Reload",.35f); }
@@ -40,13 +63,14 @@ public class ComponentMDUnit : Component,IUpdateable,IDrawable {
     public override void OnEntityRemoved(){RemoveHud();if(Driver is {} p)MDPlayer.Exit(p,this,true);base.OnEntityRemoved();}
     public void Update(float dt) {
         dt=Math.Min(dt,.1f);Cooldown=Math.Max(0,Cooldown-dt);ShotAge=Math.Min(ShotDuration,ShotAge+dt);Heat=Math.Max(0,Heat-dt*.22f);
-        Endfield?.Update(dt);
-        if(Damage.Hitpoints<=0&&!Destroyed){PlayEvent("Death",1.4f);Destroyed=true;Throttle=Steer=0;Trigger=false;target=null;}
+        if(Damage.Hitpoints<=0&&!Destroyed){PlayEvent("Death",1.4f);Destroyed=true;Throttle=Steer=0;Trigger=false;target=null;Target=null;Channel=0;if(Kind=="Turret")TowerDestroyed();}
         AnimationTime+=dt;if(AnimationTime>=AnimationDuration&&Animation!="Idle"&&!Destroyed)Animation="Idle";
         if(Damage.Hitpoints<lastHitpoints-.001f&&Damage.Hitpoints>0)PlayEvent("Hit",.28f);lastHitpoints=Damage.Hitpoints;
         if(Driver!=previousDriver){RemoveHud();previousDriver=Driver;if(previousDriver!=null){hud=new MDStatusWidget();previousDriver.ComponentGui.ControlsContainerWidget.Children.Add(hud);}}
         hud?.Refresh(this);
+        if(Kind=="Turret")MDTowerBrain.Update(this,dt);
         if(Destroyed) {Walking=false;if(Driver is {} p)MDPlayer.Exit(p,this,true);wreck+=dt;if(wreck>8)Project.RemoveEntity(Entity,true);return;}
+        if(Kind=="Turret")return;
         if(Kind=="Mech") {
             if(Driver==null){Throttle=Steer=0;Trigger=false;}
             if(Body.StandingOnValue.HasValue||Body.StandingOnBody!=null) {
@@ -74,7 +98,7 @@ public class ComponentMDUnit : Component,IUpdateable,IDrawable {
     }
     ComponentBody FindTarget() {
         var bodies=new DynamicArray<ComponentBody>();Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(Body.Position.X,Body.Position.Z),32,bodies);
-        float range=Kind=="Turret"?MDEndfieldCombat.Range(TurretVariant):32;
+        float range=32;
         return bodies.Where(b=>b!=Body&&MDCombat.IsEnemy(this,b)&&Vector3.DistanceSquared(b.Position,Body.Position)<range*range&&MDCombat.ClearShot(this,b)).OrderBy(b=>Vector3.DistanceSquared(b.Position,Body.Position)).FirstOrDefault();
     }
     void Fire(ComponentBody aim) {
@@ -83,7 +107,6 @@ public class ComponentMDUnit : Component,IUpdateable,IDrawable {
         // A barrel poking through a wall must not move the ray origin past cover.
         var torso=Body.Position+Vector3.UnitY*(Kind=="Mech"?3.5f:2.6f);
         if(Project.FindSubsystem<SubsystemTerrain>(true).Raycast(torso,start,false,true,(v,d)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v)).HasValue)return;
-        if(Kind=="Turret") {if(aim!=null)Endfield.Fire(aim);return;}
         var hit=MDCombat.Trace(this,start,end,out Vector3 point);
         // Friendly bodies block a shot rather than being filtered out of the ray.
         if(hit!=null&&MDCombat.IsEnemy(this,hit))ComponentMiner.AttackBody(new ProjectileAttackment(hit.Entity,Driver?.Entity??Entity,point,Vector3.Normalize(end-start),profile.power,null));
@@ -93,10 +116,10 @@ public class ComponentMDUnit : Component,IUpdateable,IDrawable {
         if(Kind!="Turret")Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Imported/Audio/Fire",.4f,0,Body.Position,14,false);
     }
     public void Draw(Camera camera,int order) {
-        if(Vector3.DistanceSquared(camera.ViewPosition,Body.Position)>10000)return;
+        if(Kind=="Turret"||Vector3.DistanceSquared(camera.ViewPosition,Body.Position)>10000)return;
         try {
             MDAssets.Draw(this,camera,renderer);
-            if(Kind=="Turret")Endfield.Draw(camera,renderer);else MDAssets.DrawShot(this,camera,renderer);
+            MDAssets.DrawShot(this,camera,renderer);
             renderer.Flush(camera.ViewProjectionMatrix);
         }catch(Exception e){renderer.Clear();if(!failedDraw){failedDraw=true;Log.Error("[MechDefense] "+e);}}
     }

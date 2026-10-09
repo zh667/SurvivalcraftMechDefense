@@ -1,14 +1,14 @@
 # Survivalcraft Mech Defense
 
-本地开发中的生存战争 API 1.9.3.1 / .NET 10 样例。
+生存战争 API 1.9.3.1 / .NET 10 模组。
 
-当前版 0.3.1：修复共面贴图闪烁、炮管左右绑定、死亡重复，增加固定方格占地和
-Neorxna 中文信息兼容。三座铳械塔使用 `E:/projects/endfield-turret-model/v1` 自制模型与
-贴图，绑定终末地提取的原始动画，保留终末地音效、特效和弹丸素材。
-安装与验证边界见 [ENDFIELD_THREE.md](docs/ENDFIELD_THREE.md)。
+当前版 0.4.0：《明日方舟：终末地》全部 19 种防御塔。模型是 `E:/projects/endfield-turret-model`
+的自制方块模型和自绘原色贴图，交给游戏原生的模型渲染（光照、雾、阴影、实例化）；
+特效是自制像素风；音效是终末地原始音频。0.3.1 的闪烁、炮管穿模、卡顿问题的根因和修法、
+构建与验证步骤见 [docs/TOWERS.md](docs/TOWERS.md)。
 
-目标：一座《明日方舟：终末地》炮塔、一台《毁灭枪手Σ》可驾驶机甲、一种敌方单位。
-机甲独立放置于世界中，玩家进入/退出驾驶；炮塔部署在地面并自动攻击有视线的敌对生物。
+早期样例的《毁灭枪手Σ》机甲和敌兵仍保留，旧存档可继续使用。
 
-原始安装包、游戏资源、外部提取工具和构建产物保存在被 Git 忽略的位置。
-来源路径与本机配置见 local/config.json，进度及验证边界见 docs/STATUS.md。
+原始安装包、游戏资源、外部提取工具和构建产物保存在被 Git 忽略的位置（`local/`、`dist/`、
+`Mod/Assets/Imported/`、`Mod/Assets/Towers/`）。来源路径与本机配置见 local/config.json，
+进度及验证边界见 docs/STATUS.md。

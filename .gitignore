@@ -8,3 +8,4 @@ dist/
 Directory.Build.local.props
 Mod/Assets/Imported/
 *.log
+Mod/Assets/Towers/

@@ -1,0 +1,955 @@
+{
+ "towers": [
+  {
+   "id": "battle_turret_1",
+   "name": "铳械塔",
+   "source": "v1/battle_turret_1",
+   "version": "V1",
+   "tools": "v1/tools",
+   "subparts": [
+    {
+     "name": "barrel_l",
+     "from": "pitch",
+     "labels": "^(barrel|barrel collar|barrel band|barrel mark|muzzle|muzzle bore)$",
+     "side": "left",
+     "recoil": 0.09,
+     "muzzle": "fire_1"
+    },
+    {
+     "name": "barrel_r",
+     "from": "pitch",
+     "labels": "^(barrel|barrel collar|barrel band|barrel mark|muzzle|muzzle bore)$",
+     "side": "right",
+     "recoil": 0.09,
+     "muzzle": "fire_2"
+    }
+   ],
+   "data": 0,
+   "template": "MDTurret",
+   "hp": 650,
+   "summary": "持续发射能量弹，对敌人造成物理伤害。",
+   "attack": {
+    "type": "bolt",
+    "range": 15,
+    "interval": 2,
+    "power": 28,
+    "speed": 40
+   },
+   "fx": {
+    "color": [
+     1,
+     0.82,
+     0.35
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.15
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_1_skill_hit_2"
+   ]
+  },
+  {
+   "id": "battle_turret_2",
+   "name": "扩装铳械塔",
+   "source": "v1/battle_turret_2",
+   "version": "V1",
+   "tools": "v1/tools",
+   "subparts": [
+    {
+     "name": "barrel_l",
+     "from": "pitch",
+     "labels": "^(barrel|barrel bore|barrel band|barrel slot|barrel rod|shroud upper|shroud lower|shroud nose|shroud mark)$",
+     "side": "left",
+     "recoil": 0.09,
+     "muzzle": "fire_1"
+    },
+    {
+     "name": "barrel_r",
+     "from": "pitch",
+     "labels": "^(barrel|barrel bore|barrel band|barrel slot|barrel rod|shroud upper|shroud lower|shroud nose|shroud mark)$",
+     "side": "right",
+     "recoil": 0.09,
+     "muzzle": "fire_2"
+    }
+   ],
+   "data": 3,
+   "template": "MDTurret2",
+   "hp": 800,
+   "summary": "持续发射Ⅱ级能量弹，每第 4 次攻击发射一次强力能量弹。",
+   "attack": {
+    "type": "bolt",
+    "range": 15,
+    "interval": 2,
+    "power": 49,
+    "speed": 42,
+    "enhancedEvery": 4,
+    "enhancedPower": 1.8
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.12
+    ],
+    "scale": 1.15
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_2_skill_hit_2"
+   ]
+  },
+  {
+   "id": "battle_turret_3",
+   "name": "“暴雨”铳械塔",
+   "source": "v1/battle_turret_3",
+   "version": "V1",
+   "tools": "v1/tools",
+   "subparts": [
+    {
+     "name": "barrel_l",
+     "from": "pitch",
+     "labels": "^(barrel|barrel bore|barrel window|barrel top rib|barrel flange|barrel band|brass ring)$",
+     "side": "left",
+     "recoil": 0.09,
+     "muzzle": "fire_1"
+    },
+    {
+     "name": "barrel_r",
+     "from": "pitch",
+     "labels": "^(barrel|barrel bore|barrel window|barrel top rib|barrel flange|barrel band|brass ring)$",
+     "side": "right",
+     "recoil": 0.09,
+     "muzzle": "fire_2"
+    }
+   ],
+   "data": 4,
+   "template": "MDTurret3",
+   "hp": 1100,
+   "summary": "持续发射Ⅲ级能量弹，每第 6 次攻击发射强力能量弹，对落点范围内的敌人造成伤害。",
+   "attack": {
+    "type": "bolt",
+    "range": 18,
+    "interval": 2,
+    "power": 100,
+    "speed": 45,
+    "enhancedEvery": 6,
+    "enhancedPower": 1.5,
+    "enhancedSplash": 2.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.28
+    ],
+    "color2": [
+     1,
+     0.48,
+     0.1
+    ],
+    "scale": 1.3
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_turret_3_skill_hit_2"
+   ]
+  },
+  {
+   "id": "battle_cannon_1",
+   "name": "榴弹塔",
+   "source": "batch2_v2/battle_cannon_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "subparts": [
+    {
+     "name": "barrel",
+     "from": "pitch",
+     "labels": "^(barrel|barrel tube|barrel rim|barrel band|barrel clip|muzzle face|muzzle nub|bore bottom)$",
+     "recoil": 0.08,
+     "muzzle": "fire_1"
+    }
+   ],
+   "data": 5,
+   "hp": 800,
+   "summary": "以抛物线发射榴弹，在敌人附近爆炸，造成范围灼热伤害。",
+   "attack": {
+    "type": "shell",
+    "range": 12.5,
+    "interval": 3,
+    "power": 35,
+    "speed": 15,
+    "splash": 2.5,
+    "burn": 2,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.75,
+     0.35
+    ],
+    "color2": [
+     1,
+     0.45,
+     0.12
+    ],
+    "scale": 1.1,
+    "kind": "fire"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_1_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/Explosion1",
+    "Audio/Explosion2",
+    "Audio/Explosion3"
+   ],
+   "template": "MDTower_battle_cannon_1"
+  },
+  {
+   "id": "battle_cannon_2",
+   "name": "高爆榴弹塔",
+   "source": "batch2_v2/battle_cannon_2",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "subparts": [
+    {
+     "name": "barrel",
+     "from": "pitch",
+     "labels": "^(barrel|barrel tube|barrel band|muzzle bolt|muzzle face|muzzle tab|muzzle tab line|bore bottom)$",
+     "recoil": 0.08,
+     "muzzle": "fire_1"
+    }
+   ],
+   "data": 6,
+   "hp": 950,
+   "summary": "发射Ⅱ级榴弹，范围灼热伤害，并在地面留下燃烧区域。",
+   "attack": {
+    "type": "shell",
+    "range": 12.5,
+    "interval": 3,
+    "power": 76,
+    "speed": 15,
+    "splash": 3,
+    "burn": 2,
+    "zone": 2.5,
+    "zoneTime": 4,
+    "zonePower": 19.0,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 1.25,
+    "kind": "fire"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_2_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_2_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_cannon_2_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/Explosion1",
+    "Audio/Explosion2",
+    "Audio/Explosion3"
+   ],
+   "template": "MDTower_battle_cannon_2"
+  },
+  {
+   "id": "battle_sniper_1",
+   "name": "哨戒塔",
+   "source": "batch2_v2/battle_sniper_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "subparts": [
+    {
+     "name": "barrel",
+     "from": "pitch",
+     "labels": "^(barrel|muzzle|muzzle bore)$",
+     "recoil": 0.07,
+     "muzzle": "fire_1"
+    }
+   ],
+   "data": 7,
+   "hp": 850,
+   "summary": "射程远，优先锁定范围内威胁更高的敌人，造成高额物理伤害。",
+   "attack": {
+    "type": "snipe",
+    "range": 20,
+    "interval": 5,
+    "power": 106,
+    "threatFirst": true
+   },
+   "fx": {
+    "color": [
+     1,
+     0.92,
+     0.6
+    ],
+    "color2": [
+     1,
+     0.7,
+     0.3
+    ],
+    "scale": 1.1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_sniper_1_skill_hit_2"
+   ],
+   "template": "MDTower_battle_sniper_1"
+  },
+  {
+   "id": "battle_cannon_1_dg002",
+   "name": "序章炮塔",
+   "source": "batch2_v2/battle_cannon_1_dg002",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "subparts": [
+    {
+     "name": "barrel",
+     "from": "pitch",
+     "labels": "^(barrel|barrel collar|barrel ring|barrel label|barrel rib|muzzle brake|muzzle ring|brake port|bore)$",
+     "recoil": 0.25,
+     "muzzle": "fire_1"
+    }
+   ],
+   "data": 8,
+   "hp": 2600,
+   "summary": "大型重炮：远距离发射重型炮弹，落点范围伤害（最小射程 9 格）。",
+   "attack": {
+    "type": "shell",
+    "range": 40,
+    "minRange": 9,
+    "interval": 1.5,
+    "power": 90,
+    "speed": 26,
+    "splash": 3,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.4
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 2.0,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/Explosion1",
+    "Audio/Explosion2",
+    "Audio/Explosion3"
+   ],
+   "yawSpeed": 45,
+   "pitchSpeed": 30,
+   "template": "MDTower_battle_cannon_1_dg002",
+   "pitchFixed": true,
+   "restPitch": 0
+  },
+  {
+   "id": "battle_debuff_1",
+   "name": "“酸洗”MK-Ⅰ",
+   "source": "batch2_v2/battle_debuff_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 9,
+   "hp": 900,
+   "summary": "发射酸液弹，在敌人附近爆炸造成范围自然伤害，并降低敌人防御（受到的塔伤害提高）。",
+   "attack": {
+    "type": "shell",
+    "range": 15,
+    "interval": 5,
+    "power": 109,
+    "speed": 14,
+    "splash": 3,
+    "armorDown": 1.35,
+    "armorTime": 6,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     0.55,
+     1,
+     0.25
+    ],
+    "color2": [
+     0.3,
+     0.85,
+     0.15
+    ],
+    "scale": 1.1,
+    "kind": "acid"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_debuff_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_debuff_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_debuff_1_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/Sizzles/Sizzle1",
+    "Audio/Sizzles/Sizzle2"
+   ],
+   "template": "MDTower_battle_debuff_1",
+   "trim": [
+    {
+     "labels": "^pillar foot inner$",
+     "minY": 0.17
+    }
+   ]
+  },
+  {
+   "id": "battle_fog_1",
+   "name": "“毒沼”MK-Ⅰ",
+   "source": "batch2_v2/battle_fog_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 10,
+   "hp": 900,
+   "summary": "发射毒雾弹，落地后留下一片毒雾区，持续造成自然伤害并减速。",
+   "attack": {
+    "type": "shell",
+    "range": 18,
+    "interval": 5,
+    "power": 22,
+    "speed": 14,
+    "splash": 3,
+    "zone": 3,
+    "zoneTime": 5,
+    "zonePower": 11,
+    "slow": 0.6,
+    "slowTime": 1,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     0.62,
+     0.95,
+     0.35
+    ],
+    "color2": [
+     0.45,
+     0.75,
+     0.3
+    ],
+    "scale": 1.1,
+    "kind": "poison"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_fog_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_fog_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_fog_1_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/SizzleLong"
+   ],
+   "template": "MDTower_battle_fog_1",
+   "trim": [
+    {
+     "labels": "^pillar foot inner$",
+     "minY": 0.17
+    }
+   ]
+  },
+  {
+   "id": "battle_frost_1",
+   "name": "液氮塔",
+   "source": "batch2_v2/battle_frost_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 11,
+   "hp": 850,
+   "summary": "发射液氮晶体，爆裂后降低范围内敌人的移动速度。",
+   "attack": {
+    "type": "shell",
+    "range": 15,
+    "interval": 5,
+    "power": 14,
+    "speed": 14,
+    "splash": 3,
+    "slow": 0.45,
+    "slowTime": 4,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     0.65,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.85,
+     0.95,
+     1
+    ],
+    "scale": 1.1,
+    "kind": "frost"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_frost_1_skill_hit_2"
+   ],
+   "template": "MDTower_battle_frost_1"
+  },
+  {
+   "id": "battle_jet_1",
+   "name": "激流塔",
+   "source": "batch2_v2/battle_jet_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 12,
+   "hp": 900,
+   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（7×3 格范围，朝向放置方向）。",
+   "attack": {
+    "type": "jet",
+    "range": 7,
+    "width": 3,
+    "interval": 5,
+    "power": 6,
+    "duration": 1.2,
+    "knockback": 9,
+    "directional": true,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.85,
+     1
+    ],
+    "color2": [
+     0.35,
+     0.65,
+     1
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_hit_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_hit_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_hit_start_2"
+   ],
+   "pitchSpeed": 60,
+   "template": "MDTower_battle_jet_1"
+  },
+  {
+   "id": "battle_rocket_1",
+   "name": "重锤迫击炮",
+   "source": "batch2_v2/battle_rocket_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 13,
+   "hp": 1400,
+   "summary": "消耗大量充能向远处发射威力极大的炮弹，对落点范围内敌人造成高额物理伤害。",
+   "attack": {
+    "type": "shell",
+    "range": 25,
+    "minRange": 3,
+    "interval": 8,
+    "power": 169,
+    "speed": 19,
+    "splash": 4,
+    "needsSight": false,
+    "highArc": true
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.6,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_rocket_1_skill_2"
+   ],
+   "hitSounds": [
+    "Audio/Explosion1",
+    "Audio/Explosion2",
+    "Audio/Explosion3"
+   ],
+   "pitchFixed": true,
+   "yawSpeed": 60,
+   "template": "MDTower_battle_rocket_1",
+   "trim": [
+    {
+     "labels": "^bed$",
+     "maxY": 0.65
+    }
+   ]
+  },
+  {
+   "id": "battle_laser_1",
+   "name": "射线塔",
+   "source": "batch2_v2/battle_laser_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 14,
+   "hp": 1000,
+   "summary": "充能后向目标发射射线，造成高额电磁伤害。",
+   "attack": {
+    "type": "beam",
+    "range": 12.5,
+    "interval": 8,
+    "power": 142,
+    "charge": 0.9,
+    "duration": 0.6
+   },
+   "fx": {
+    "color": [
+     0.45,
+     0.85,
+     1
+    ],
+    "color2": [
+     0.8,
+     0.95,
+     1
+    ],
+    "scale": 1.1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_2"
+   ],
+   "chargeSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_charge_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_charge_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_1_skill_charge_2"
+   ],
+   "hitSounds": [],
+   "template": "MDTower_battle_laser_1"
+  },
+  {
+   "id": "battle_laser_2",
+   "name": "高能射线塔",
+   "source": "batch2_v2/battle_laser_2",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 15,
+   "hp": 1200,
+   "summary": "充能后发射强力射线，优先锁定威胁更高的敌人，造成高额电磁伤害。",
+   "attack": {
+    "type": "beam",
+    "range": 12.5,
+    "interval": 8,
+    "power": 195,
+    "charge": 0.9,
+    "duration": 0.7,
+    "threatFirst": true
+   },
+   "fx": {
+    "color": [
+     0.7,
+     0.6,
+     1
+    ],
+    "color2": [
+     0.9,
+     0.85,
+     1
+    ],
+    "scale": 1.35
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_2"
+   ],
+   "chargeSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_charge_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_charge_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_laser_2_skill_charge_2"
+   ],
+   "hitSounds": [],
+   "template": "MDTower_battle_laser_2"
+  },
+  {
+   "id": "battle_lightning_1",
+   "name": "电涌塔",
+   "source": "batch2_v2/battle_lightning_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 16,
+   "hp": 900,
+   "summary": "释放电能攻击敌人，可弹射到附近敌人（至多 2 次），造成电磁伤害。",
+   "attack": {
+    "type": "chain",
+    "range": 12.5,
+    "interval": 3,
+    "power": 71,
+    "bounces": 2,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.85,
+     1
+    ],
+    "color2": [
+     0.9,
+     0.95,
+     1
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_hit_2"
+   ],
+   "template": "MDTower_battle_lightning_1",
+   "chargeSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_charge_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_charge_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_1_skill_charge_2"
+   ]
+  },
+  {
+   "id": "battle_lightning_2",
+   "name": "甲二型“电荷”",
+   "source": "batch2_v2/battle_lightning_2",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 17,
+   "hp": 1100,
+   "summary": "释放电能并弹射（至多 2 次），在敌人附近留下电球，持续造成电磁伤害。",
+   "attack": {
+    "type": "chain",
+    "range": 18,
+    "interval": 5,
+    "power": 137,
+    "bounces": 2,
+    "bounceRange": 5,
+    "duration": 0.25,
+    "zone": 2.5,
+    "zoneTime": 4,
+    "zonePower": 16
+   },
+   "fx": {
+    "color": [
+     0.55,
+     0.8,
+     1
+    ],
+    "color2": [
+     0.9,
+     0.95,
+     1
+    ],
+    "scale": 1.3
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_2"
+   ],
+   "hitSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_hit_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_hit_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_hit_2"
+   ],
+   "template": "MDTower_battle_lightning_2",
+   "chargeSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_charge_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_charge_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_lightning_2_skill_charge_2"
+   ]
+  },
+  {
+   "id": "battle_shockwave_1",
+   "name": "全向声波塔",
+   "source": "batch2_v2/battle_shockwave_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 18,
+   "hp": 900,
+   "summary": "发射一道震荡波，使范围内的敌人晕眩。",
+   "attack": {
+    "type": "pulse",
+    "range": 6,
+    "interval": 5,
+    "power": 8,
+    "stun": 2.5,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.92,
+     0.6
+    ],
+    "color2": [
+     1,
+     0.8,
+     0.4
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_shockwave_1_skill_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_shockwave_1_skill_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_shockwave_1_skill_2"
+   ],
+   "template": "MDTower_battle_shockwave_1"
+  },
+  {
+   "id": "battle_medic_1",
+   "name": "医疗塔",
+   "source": "batch2_v2/battle_medic_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 19,
+   "hp": 900,
+   "summary": "把充能转化为治疗量，治疗周围受伤的玩家并修复友方防御塔（范围 6 格）。",
+   "attack": {
+    "type": "heal",
+    "range": 6,
+    "interval": 5,
+    "power": 0.2,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     0.5,
+     1,
+     0.6
+    ],
+    "color2": [
+     0.8,
+     1,
+     0.85
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_cure_one_0",
+    "Imported/Endfield/Audio/au_int_cure_one_1",
+    "Imported/Endfield/Audio/au_int_cure_one_2"
+   ],
+   "template": "MDTower_battle_medic_1"
+  },
+  {
+   "id": "battle_trap_1",
+   "name": "AF1“熔甲者”",
+   "source": "batch2_v2/battle_trap_1",
+   "version": "V2",
+   "tools": "batch2_v2/tools",
+   "data": 20,
+   "hp": 1000,
+   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（7×3 格范围，朝向放置方向）。",
+   "attack": {
+    "type": "flame",
+    "range": 7,
+    "width": 3,
+    "interval": 3,
+    "power": 126,
+    "duration": 1.5,
+    "burn": 3,
+    "directional": true,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 1
+   },
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": [],
+   "template": "MDTower_battle_trap_1"
+  }
+ ]
+}

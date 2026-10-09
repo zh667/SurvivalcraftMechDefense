@@ -1,6 +1,23 @@
 # Status — 2026-10-09
 
-## Current delivery: video feedback fixes 0.3.1
+## Current delivery: all 19 Endfield towers 0.4.0
+
+- Every Endfield tower family is deployable (data values 0, 3, 4 keep the old gun towers; 5–20 the rest).
+  Models: authored cube models from `endfield-turret-model` (v1 / batch2_v2) exported as rigid-part glTF
+  and drawn by the game's own model renderer; original Endfield audio for 18 families; own pixel effects.
+- 0.3.1 issues and root causes: see docs/TOWERS.md (stacked faces 0.1–0.5 mm apart z-fighting; original
+  VAT barrel spin retargeted onto non-round authored barrels; full-model CPU redraw every frame for every
+  tower and every hotbar icon; 8–11 MB JSON per model).
+- Towers no longer auto-despawn (SubsystemSpawn used to drop them 60 m from the camera and rebuild them
+  from the template only).
+- Build/test target is the user's own API 1.9.3.1 build (D:/下载/[Windows]SurvivalcraftAPI_1.9.3.1).
+  The vendor dev build used for 0.3.x tests differs (e.g. its instanced-buffer index path throws for
+  models ≤ 65535 vertices and blanks the whole solid-model pass).
+- Verification: tools/run_isolated.py lab (gallery, joints, fx, perf) and perf (same scene for 0.3.1 and
+  0.4.0); tools/check_tower_overlaps.py. Results are summarised in docs/TOWERS.md.
+
+
+## Previous delivery: video feedback fixes 0.3.1
 
 - Coplanar overlap removed with UV-preserving polygon clipping. Output checks:
   zero overlapping coplanar triangles within each rigid bone; zero degenerates.

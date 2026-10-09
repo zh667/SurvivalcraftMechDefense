@@ -16,13 +16,24 @@ public class MDModLoader : ModLoader {
 }
 
 public class MDDeploymentBlock : Block {
-    public static readonly string[] Kinds=["Turret","Mech","Enemy","Turret2","Turret3"];
-    static readonly string[] Names=["铳械塔 · 部署","毁灭枪手机甲 · 部署","敌方机兵 · 部署","扩装铳械塔 · 部署","暴雨铳械塔 · 部署"];
-    public override void Initialize(){DefaultDisplayName=Names[0];DefaultDescription="炮塔在完整平整支撑面上对齐方格固定部署：铳械塔 2×2×3，扩装 2×2×4，暴雨 3×3×4（宽×深×高）。自动攻击敌兵和捕食者。机甲靠近按 E 上下车，WASD 驾驶，左键开火。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
-    public override string GetDisplayName(SubsystemTerrain t,int v)=>Names[Math.Clamp(Terrain.ExtractData(v),0,Kinds.Length-1)];
-    public override IEnumerable<int> GetCreativeValues(){for(int i=0;i<Kinds.Length;i++)yield return Terrain.MakeBlockValue(BlockIndex,0,i);}
+    // Data values 0/3/4 keep the first three gun towers of older saves, 1/2 the legacy mech/enemy; 5+ the other towers.
+    static readonly string[] Legacy=["","毁灭枪手机甲 · 部署","敌方机兵 · 部署"];
+    public override void Initialize(){DefaultDisplayName="终末地防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌兵和捕食者。机甲靠近按 E 上下车，WASD 驾驶，左键开火。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
+    public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value));
+    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署":Legacy[Math.Clamp(Terrain.ExtractData(v),1,2)];
+    public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。":DefaultDescription;
+    public override IEnumerable<int> GetCreativeValues() {
+        foreach(var d in MDTowerLibrary.All)yield return Terrain.MakeBlockValue(BlockIndex,0,d.data);
+        yield return Terrain.MakeBlockValue(BlockIndex,0,1);yield return Terrain.MakeBlockValue(BlockIndex,0,2);
+    }
+    public override int GetTextureSlotCount(int value)=>1;
+    public override int GetFaceTextureSlot(int face,int value)=>0;
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
-    public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e){var mesh=MDAssets.Load(Kinds[Math.Clamp(Terrain.ExtractData(value),0,Kinds.Length-1)]);var m=Matrix.CreateScale(.2f*size)*Matrix.CreateTranslation(0,-.3f*size,0)*matrix;BlocksManager.DrawMeshBlock(r,mesh.Icon,mesh.Texture,color,1,ref m,e);}
+    // Pre-rendered icons: two quads per slot instead of re-uploading a 20k-triangle mesh every frame.
+    public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
+        var icon=Tower(value) is {} d?MDTowerLibrary.Icon(d):ContentManager.Get<Texture2D>(Terrain.ExtractData(value)==1?"Towers/_legacy/mech_icon":"Towers/_legacy/enemy_icon");
+        BlocksManager.DrawFlatBlock(r,value,size,ref matrix,icon,color,false,e);
+    }
 }
 
 public static class MDPlayer {
@@ -89,24 +100,24 @@ public static class MDDeployPatch {
     public static bool Prefix(ComponentMiner __instance,Ray3 ray,ref bool __result) {
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)!=BlocksManager.GetBlockIndex<MDDeploymentBlock>())return true;
         __result=true;var hit=__instance.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4)return false;
-        int kind=Math.Clamp(Terrain.ExtractData(__instance.ActiveBlockValue),0,MDDeploymentBlock.Kinds.Length-1);Vector3 size=kind==1?new(2.4f,4.8f,2.4f):kind==2?new(1.6f,3.2f,1.6f):new(1.4f,kind==4?3.4f:3.3f,1.4f);
-        Vector3 pos=hit.Value.HitPoint()+Vector3.UnitY*.06f;var terrain=__instance.Project.FindSubsystem<SubsystemTerrain>(true);
-        if(kind is 0 or 3 or 4) {
-            int variant=kind==0?1:kind-1;pos=MDTowerPlacement.Snap(hit.Value.CellFace,variant);
-            var subsystemBodies=__instance.Project.FindSubsystem<SubsystemBodies>(true);
-            if(!MDTowerPlacement.Validate(terrain,subsystemBodies,pos,variant,out var reason)){MDPlayer.Message(__instance.ComponentPlayer,reason);return false;}
-            var tower=DatabaseManager.CreateEntity(__instance.Project,"MD"+MDDeploymentBlock.Kinds[kind],true);
-            var fixedBody=tower.FindComponent<ComponentMDTowerBody>(true);var rot=MDTowerPlacement.SnapRotation(__instance.ComponentCreature.ComponentBody.Rotation);
-            fixedBody.FixAt(pos,rot);var state=tower.FindComponent<ComponentMDUnit>();state.Yaw=state.AimYaw=MathF.Atan2(-fixedBody.Matrix.Forward.X,-fixedBody.Matrix.Forward.Z);
-            tower.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(tower);__instance.RemoveActiveTool(1);return false;
+        var terrain=__instance.Project.FindSubsystem<SubsystemTerrain>(true);
+        if(MDDeploymentBlock.Tower(__instance.ActiveBlockValue) is {} tower) {
+            var pos=MDTowerPlacement.Snap(hit.Value.CellFace,tower);var subsystemBodies=__instance.Project.FindSubsystem<SubsystemBodies>(true);
+            if(!MDTowerPlacement.Validate(terrain,subsystemBodies,pos,tower,out var reason)){MDPlayer.Message(__instance.ComponentPlayer,reason);return false;}
+            var entity=DatabaseManager.CreateEntity(__instance.Project,tower.template,true);
+            var fixedBody=entity.FindComponent<ComponentMDTowerBody>(true);var rot=MDTowerPlacement.SnapRotation(__instance.ComponentCreature.ComponentBody.Rotation);
+            fixedBody.FixAt(pos,rot);var state=entity.FindComponent<ComponentMDUnit>();state.Yaw=state.AimYaw=MathF.Atan2(-fixedBody.Matrix.Forward.X,-fixedBody.Matrix.Forward.Z);
+            entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
         }
-        if(!MDPlayer.Clear(terrain,pos,size)){MDPlayer.Message(__instance.ComponentPlayer,"空间不足：机甲需要约 4×4 格空地、5 格净高。");return false;}
-        var bodies=new DynamicArray<ComponentBody>();__instance.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(pos.X,pos.Z),4,bodies);
-        var box=new BoundingBox(pos-new Vector3(size.X/2,0,size.Z/2),pos+new Vector3(size.X/2,size.Y,size.Z/2));
+        int kind=Math.Clamp(Terrain.ExtractData(__instance.ActiveBlockValue),1,2);Vector3 size=kind==1?new(2.4f,4.8f,2.4f):new(1.6f,3.2f,1.6f);
+        Vector3 at=hit.Value.HitPoint()+Vector3.UnitY*.06f;
+        if(!MDPlayer.Clear(terrain,at,size)){MDPlayer.Message(__instance.ComponentPlayer,"空间不足：机甲需要约 4×4 格空地、5 格净高。");return false;}
+        var bodies=new DynamicArray<ComponentBody>();__instance.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(at.X,at.Z),4,bodies);
+        var box=new BoundingBox(at-new Vector3(size.X/2,0,size.Z/2),at+new Vector3(size.X/2,size.Y,size.Z/2));
         if(bodies.Any(b=>box.Intersection(b.BoundingBox))){MDPlayer.Message(__instance.ComponentPlayer,"部署区域有生物，请稍微退后。");return false;}
-        var entity=DatabaseManager.CreateEntity(__instance.Project,"MD"+MDDeploymentBlock.Kinds[kind],true);var body=entity.FindComponent<ComponentBody>(true);body.Position=pos;body.Rotation=__instance.ComponentCreature.ComponentBody.Rotation;
-        var unit=entity.FindComponent<ComponentMDUnit>();unit.Yaw=unit.AimYaw=MathF.Atan2(-body.Matrix.Forward.X,-body.Matrix.Forward.Z);
-        entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
+        var unitEntity=DatabaseManager.CreateEntity(__instance.Project,kind==1?"MDMech":"MDEnemy",true);var body=unitEntity.FindComponent<ComponentBody>(true);body.Position=at;body.Rotation=__instance.ComponentCreature.ComponentBody.Rotation;
+        var unit=unitEntity.FindComponent<ComponentMDUnit>();unit.Yaw=unit.AimYaw=MathF.Atan2(-body.Matrix.Forward.X,-body.Matrix.Forward.Z);
+        unitEntity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(unitEntity);__instance.RemoveActiveTool(1);return false;
     }
 }
 [HarmonyPatch(typeof(ComponentRider),nameof(ComponentRider.StartMounting))]

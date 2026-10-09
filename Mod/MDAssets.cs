@@ -7,22 +7,17 @@ namespace Game;
 public static class MDAssets {
     public sealed class Vertex { public float[] p {get;set;} public float[] n {get;set;} public float[] uv {get;set;} public int bone {get;set;} }
     public sealed class Joint { public string name {get;set;} public int parent {get;set;} public float[] pivot {get;set;} public int vatTrack {get;set;}=-1; }
-    public sealed class Mesh { public Vertex[] vertices {get;set;} public int[] indices {get;set;} public Joint[] joints {get;set;} public float[][] muzzles {get;set;} public int[] muzzleBones {get;set;} public bool pointSampling {get;set;} public string modelOrigin {get;set;} public MDEndfieldAnimation.Data animation {get;set;} public Texture2D Texture; public BlockMesh Icon; }
+    public sealed class Mesh { public Vertex[] vertices {get;set;} public int[] indices {get;set;} public Joint[] joints {get;set;} public bool pointSampling {get;set;} public Texture2D Texture; }
     static readonly Dictionary<string,Mesh> cache=[];
     public static Vector3 V(float[] a)=>new(a[0],a[1],a[2]);
     public static Mesh Load(string name) {
-        name=name switch {"Turret"=>"Endfield/battle_turret_1","Turret2"=>"Endfield/battle_turret_2","Turret3"=>"Endfield/battle_turret_3",_=>name};
         if(cache.TryGetValue(name,out var old))return old;
         var stream=ContentManager.GetStream("Imported/"+name+"/model.json");stream.Position=0;
         var mesh=JsonSerializer.Deserialize<Mesh>(stream);mesh.Texture=ContentManager.Get<Texture2D>("Imported/"+name+"/texture");
-        mesh.Icon=new BlockMesh();
-        foreach(var v in mesh.vertices)mesh.Icon.Vertices.Add(new BlockMeshVertex {Position=V(v.p),TextureCoordinates=new(v.uv[0],v.uv[1]),Color=Color.White});
-        foreach(int i in mesh.indices)mesh.Icon.Indices.Add(i);
         cache.Add(name,mesh);return mesh;
     }
     static Matrix Around(Vector3 p,Matrix r)=>Matrix.CreateTranslation(-p)*r*Matrix.CreateTranslation(p);
     public static Matrix[] Pose(Mesh mesh,string kind,float gait,float amplitude,float yaw,float pitch,string animation="Idle",float animationTime=0,float animationDuration=1,int ammoType=0) {
-        if(kind=="Turret"&&mesh.animation!=null)return MDEndfieldAnimation.Pose(mesh,yaw,pitch,animation,animationTime);
         Matrix[] result=new Matrix[mesh.joints.Length];bool[] done=new bool[result.Length];
         float t=Math.Clamp(animationDuration<=0?0:animationTime/animationDuration,0,1),pulse=MathF.Sin(t*MathF.PI),recoil=pulse*pulse;
         int left=kind=="Mech"?19:7,right=kind=="Mech"?25:12;
@@ -73,12 +68,6 @@ public static class MDAssets {
         var mesh=Load("Mech");var pose=Pose(mesh,"Mech",u.Gait,u.Walking?.35f:0,u.AimYaw-u.Yaw,u.AimPitch,u.Animation,u.AnimationTime,u.AnimationDuration,u.AmmoType);
         return Vector3.Transform(new Vector3(3.41f,3.96f,-1.11f),pose[18]*u.Body.Matrix);
     }
-    public static Vector3 TurretMuzzle(ComponentMDUnit u,int index=0) {
-        var mesh=Load(u.AssetName);var pose=Pose(mesh,"Turret",u.Gait,0,u.AimYaw-u.Yaw,u.AimPitch,u.Animation,u.AnimationTime,u.AnimationDuration,u.AmmoType);
-        var points=mesh.muzzles ?? throw new InvalidDataException("Endfield turret has no recovered fire sockets");
-        index=Math.Clamp(index,0,points.Length-1);var p=points[index];
-        return Vector3.Transform(V(p),pose[mesh.muzzleBones?[index]??2]*u.Body.Matrix);
-    }
     static void Diamond(FlatBatch3D batch,Vector3 center,Vector3 axis,Vector3 side,float size,Color color) {
         axis=Vector3.Normalize(axis);side=Vector3.Normalize(side-axis*Vector3.Dot(side,axis));
         var up=Vector3.Normalize(Vector3.Cross(axis,side));var a=center+side*size;var b=center+up*size;var c=center-side*size;var d=center-up*size;
@@ -90,16 +79,6 @@ public static class MDAssets {
         var start=unit.ShotStart;var end=unit.ShotEnd;var direction=Vector3.Normalize(end-start);if(direction.LengthSquared()<.001f)direction=unit.Direction;
         float progress=Math.Clamp(unit.ShotAge/unit.ShotDuration,0,1);float travel=unit.ShotAmmoType==3?1:Math.Clamp(progress*1.35f,0,1);var head=Vector3.Lerp(start,end,travel);
         var side=Vector3.Normalize(Vector3.Cross(direction,Math.Abs(direction.Y)>.9f?Vector3.UnitX:Vector3.UnitY));
-        if(unit.Kind=="Turret") {
-            // The source turret has two Endfield fire sockets; show both barrels and the impact bolt.
-            for(int i=0;i<2;i++) {
-                var muzzle=TurretMuzzle(unit,i);flat.QueueLine(muzzle,muzzle+direction*.35f,color);
-                flat.QueueLine(muzzle-side*.08f,muzzle+side*.08f,color);
-                flat.QueueLine(muzzle,muzzle+direction*.7f,color*0.55f);
-            }
-            flat.QueueLine(start,end,color*0.35f);Diamond(flat,head,direction,side,.16f,color);
-            return;
-        }
         switch(unit.ShotAmmoType) {
             case 1: // Missile: long orange exhaust and a pointed head.
                 flat.QueueLine(start,head,color);flat.QueueLine(start-side*.08f,head-side*.08f,color*0.45f);Diamond(flat,head,direction,side,.14f,color);break;

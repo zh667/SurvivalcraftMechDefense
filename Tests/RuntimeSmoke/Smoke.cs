@@ -35,8 +35,8 @@ public class Smoke : ModLoader {
                 p.ComponentBody.Position=original;
                 turret=Spawn("Turret",original+new Vector3(0,0,6));mech=Spawn("Mech",original+new Vector3(6,0,6));enemy=Spawn("Enemy",original+new Vector3(0,0,22));enemyStart=enemy.Body.Position;
                 enemy.Damage.AttackResilience=3000;enemyHp=enemy.Damage.Hitpoints;
-                foreach(var kind in new[]{"Mech","Enemy","Turret"})Check(MDAssets.Load(kind).indices.Length>100,"loaded mesh and texture "+kind);
-                Check(MDAssets.Load("Turret").muzzles?.Length==2,"Endfield turret carries two recovered fire sockets");
+                foreach(var kind in new[]{"Mech","Enemy"})Check(MDAssets.Load(kind).indices.Length>100,"loaded mesh and texture "+kind);
+                Check(MDTowerLibrary.Get("battle_turret_1")?.muzzles.Length==2,"gun tower carries two fire sockets");
                 Check(MDCombat.Ammo(0).animation!=""&&MDCombat.Ammo(1).animation!=MDCombat.Ammo(0).animation&&MDCombat.Ammo(4).animation!="","five playable ammo profiles");
                 Check(MDCombat.ShotDuration("Mech",0)!=MDCombat.ShotDuration("Mech",4),"ammo effects have distinct timing");
                 Check(BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()].GetCreativeValues().Count()==3,"three creative deployment entries");

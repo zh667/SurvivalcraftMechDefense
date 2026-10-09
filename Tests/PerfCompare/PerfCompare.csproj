@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>disable</Nullable><ScInstall>D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1</ScInstall></PropertyGroup>
+<ItemGroup><Reference Include="Survivalcraft" HintPath="$(ScInstall)/Survivalcraft.dll" Private="false"/><Reference Include="Engine" HintPath="$(ScInstall)/Engine.dll" Private="false"/><Reference Include="EntitySystem" HintPath="$(ScInstall)/EntitySystem.dll" Private="false"/><Reference Include="0Harmony" HintPath="$(ScInstall)/0Harmony.dll" Private="false"/></ItemGroup>
+</Project>

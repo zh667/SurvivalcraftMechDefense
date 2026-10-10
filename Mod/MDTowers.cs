@@ -17,9 +17,15 @@ public sealed class MDTowerAttack {
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;
     public float slow, slowTime, stun, armorDown, armorTime, knockback, burn, zone, zoneTime, zonePower;
+    public float freeze, freezeImmune = 4;   // frost: seconds frozen solid per hit, then immune to freezing for freezeImmune seconds
+    public float dot, dotTime;               // poison cloud: damage per second, still ticking dotTime seconds after leaving the cloud
+    public float bossResilience = 1e9f;      // stun and freeze skip targets whose AttackResilience is at least this (bosses)
+    public float pushMaxMass = 1e9f;         // knockback moves only bodies up to this mass (small and medium enemies)
     public bool needsSight = true, threatFirst, directional, highArc;   // highArc: mortar lob instead of the flat solution
     public float width;              // directional rectangle width (flame/jet)
 }
+// A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
+public sealed class MDTowerLink { public string node, parent, on; public float[] hinge, at; public bool stretch; }
 public sealed class MDTowerFx {
     public float[] color = [1, .8f, .3f];   // main hue of flashes and bolts
     public float[] color2 = [1, .5f, .1f];  // secondary (trails, impact)
@@ -33,13 +39,14 @@ public sealed class MDTowerDef {
     public int[] cells = [2, 4, 2]; public float hp = 800;
     public float yawSpeed = 150, pitchSpeed = 90, restPitch;
     public string[] recoilParts = []; public float[] recoil = [];
-    public MDTowerAttack attack; public MDTowerFx fx = new();
+    public MDTowerAttack attack; public MDTowerFx fx = new(); public MDTowerLink[] links = [];
     public string[] fireSounds = [], hitSounds = [], chargeSounds = [];
     // resolved at load
     [System.Text.Json.Serialization.JsonIgnore] public int[] parents;
     [System.Text.Json.Serialization.JsonIgnore] public int yawNode = -1, pitchNode = -1;
     [System.Text.Json.Serialization.JsonIgnore] public int[] recoilNodes = [];
     [System.Text.Json.Serialization.JsonIgnore] public int[] muzzleNodes = [];
+    [System.Text.Json.Serialization.JsonIgnore] public int[] linkNodes = [];
     public bool HasYaw => yawNode >= 0;
     public float PitchMin => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[0]);
     public float PitchMax => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[1]);
@@ -60,6 +67,7 @@ public static class MDTowerLibrary {
             d.yawNode=Array.FindIndex(d.nodes,n=>n.name=="yaw");d.pitchNode=Array.FindIndex(d.nodes,n=>n.name=="pitch");
             d.recoilNodes=d.recoilParts.Select(p=>Array.FindIndex(d.nodes,n=>n.name==p)).ToArray();
             d.muzzleNodes=d.muzzles.Select(m=>Array.FindIndex(d.nodes,n=>n.name==m.part)).ToArray();
+            d.linkNodes=d.links.Select(l=>Array.FindIndex(d.nodes,n=>n.name==l.node)).ToArray();
         }
         all=file.towers;byId=all.ToDictionary(t=>t.id);
     }
@@ -86,6 +94,18 @@ public static class MDTowerLibrary {
         icons[meshPath]=icon;return icon;
     }
     static Vector3 V(float[] a)=>new(a[0],a[1],a[2]);
+    // Local transform of link k at cradle pitch: it turns about X at its hinge to keep pointing at its partner point,
+    // so a piston's cylinder and rod stay on one axis (the rod slides in the cylinder); a stretching strut also
+    // scales along its axis to keep reaching its hinge.
+    public static Matrix LinkLocal(MDTowerDef d,int k,float pitch) {
+        var l=d.links[k];var pv=d.nodes[d.pitchNode].translation;float c=MathF.Cos(pitch),s=MathF.Sin(pitch);
+        Vector2 At(float[] p,bool cradle){if(!cradle)return new(p[0],p[1]);float y=p[0]-pv[1],z=p[1]-pv[2];return new(pv[1]+y*c-z*s,pv[2]+y*s+z*c);}
+        var rest=new Vector2(l.at[0]-l.hinge[0],l.at[1]-l.hinge[1]);var now=At(l.at,l.on=="pitch")-At(l.hinge,l.parent=="pitch");
+        var m=Matrix.CreateRotationX(MathF.Atan2(now.Y,now.X)-MathF.Atan2(rest.Y,rest.X)-(l.parent=="pitch"?pitch:0));
+        if(!l.stretch)return m;
+        float f=now.Length()/MathF.Max(1e-4f,rest.Length())-1;var u=Vector3.Normalize(new Vector3(0,rest.X,rest.Y));   // scale along u: I + f u u^T
+        return new Matrix(1,0,0,0, 0,1+f*u.Y*u.Y,f*u.Y*u.Z,0, 0,f*u.Z*u.Y,1+f*u.Z*u.Z,0, 0,0,0,1)*m;
+    }
     // Same composition as ComponentModel.ProcessBoneHierarchy for a rigid glTF: local rotation, then the
     // node's bind translation plus an offset (recoil) expressed in the parent frame.
     public static Matrix[] Pose(MDTowerDef d,Matrix body,float yaw,float pitch,float[] recoil) {
@@ -94,7 +114,8 @@ public static class MDTowerLibrary {
             Matrix local;
             if(i==0)local=body;
             else {
-                var r=i==d.yawNode?Matrix.CreateRotationY(yaw):i==d.pitchNode?Matrix.CreateRotationX(pitch):Matrix.Identity;
+                int li=Array.IndexOf(d.linkNodes,i);
+                var r=i==d.yawNode?Matrix.CreateRotationY(yaw):i==d.pitchNode?Matrix.CreateRotationX(pitch):li>=0?LinkLocal(d,li,pitch):Matrix.Identity;
                 var t=V(d.nodes[i].translation);int k=Array.IndexOf(d.recoilNodes,i);if(k>=0&&recoil!=null)t+=new Vector3(0,0,recoil[k]);
                 local=r*Matrix.CreateTranslation(t);
             }
@@ -110,7 +131,7 @@ public static class MDTowerLibrary {
 
 // Rigid-part tower model drawn by SubsystemModelsRenderer; bones follow the unit's aim and recoil.
 public class ComponentMDTowerModel : ComponentModel {
-    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil;
+    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil,links;
     public override void Load(ValuesDictionary values,IdToEntityMap map) {
         base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);
         // Two-sided like the authoring view: tube interiors and slab seams were only ever seen from both sides.
@@ -126,11 +147,13 @@ public class ComponentMDTowerModel : ComponentModel {
             // Bones resolve after every component has loaded (the unit owns the tower definition).
             root=Model.RootBone.Index;yaw=Model.FindBone("yaw",false)?.Index??-1;pitch=Model.FindBone("pitch",false)?.Index??-1;
             recoil=(unit.Tower?.recoilParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
+            links=(unit.Tower?.links??[]).Select(l=>Model.FindBone(l.node,false)?.Index??-1).ToArray();
         }
         SetBoneTransform(root,m_componentFrame.Matrix);
         if(unit.Tower==null)return;
         if(yaw>=0)SetBoneTransform(yaw,Matrix.CreateRotationY(unit.AimYaw-unit.Yaw));
         if(pitch>=0)SetBoneTransform(pitch,Matrix.CreateRotationX(unit.TowerPitch));
         for(int k=0;k<recoil.Length;k++)if(recoil[k]>=0)SetBoneTransform(recoil[k],Matrix.CreateTranslation(0,0,unit.RecoilOffset(k)));
+        for(int k=0;k<links.Length;k++)if(links[k]>=0)SetBoneTransform(links[k],MDTowerLibrary.LinkLocal(unit.Tower,k,unit.TowerPitch));
     }
 }

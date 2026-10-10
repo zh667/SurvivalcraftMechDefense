@@ -32,6 +32,7 @@ public static class MDTowerBrain {
         }
         float wantPitch=DesiredPitch(u,tc);u.AimPitch=MDCombat.AngleTowards(u.AimPitch,wantPitch,MathUtils.DegToRad(d.pitchSpeed)*dt);
         bool aligned=!d.HasYaw||Math.Abs(MDCombat.AngleDelta(u.AimYaw,MathF.Atan2(-(tc-u.Body.Position).X,-(tc-u.Body.Position).Z)))<.12f;
+        if(a.type=="shell"&&LaidGun(d))aligned&=Math.Abs(u.AimPitch-wantPitch)<.04f;   // a laid gun fires along its barrel: wait until it is elevated
         if(u.Cooldown<=0&&aligned)Fire(u,target);
     }
 
@@ -56,6 +57,8 @@ public static class MDTowerBrain {
         }
         return best;
     }
+    // Bosses (high AttackResilience) shrug off stun and freeze, as Endfield's elite/boss enemies do.
+    static float Resilience(ComponentBody b)=>b.Entity.FindComponent<ComponentHealth>()?.AttackResilience??b.Entity.FindComponent<ComponentDamage>()?.AttackResilience??0;
     static float Threat(ComponentBody b){var h=b.Entity.FindComponent<ComponentHealth>();return h==null?b.Entity.FindComponent<ComponentDamage>()?.Hitpoints??0:h.Health*h.AttackResilience;}
 
     // ---------------------------------------------------------------- aim
@@ -68,6 +71,14 @@ public static class MDTowerBrain {
     static float? Ballistic(float v,float x,float y,bool high) {
         float v2=v*v,disc=v2*v2-Gravity*(Gravity*x*x+2*y*v2);if(disc<0||x<.01f)return null;
         float r=MathF.Sqrt(disc);return MathF.Atan((v2+(high?r:-r))/(Gravity*x));
+    }
+    static bool LaidGun(MDTowerDef d)=>d.pitchNode>=0&&!d.pitchFixed;
+    // A gun that elevates fires along its barrel: the angle is the barrel's, only the charge (muzzle speed) is solved
+    // so the arc ends at the target. Out of reach it fires the strongest charge, which falls short.
+    static Vector3 BarrelLaunch(ComponentMDUnit u,Vector3 from,Vector3 dir,Vector3 to) {
+        var dd=to-from;float x=new Vector2(dd.X,dd.Z).Length(),h=new Vector2(dir.X,dir.Z).Length();
+        float denom=2*h*h*(x*dir.Y/Math.Max(h,1e-4f)-dd.Y),vmax=u.Tower.attack.speed*1.5f;   // v^2 = g x^2 / (2 cos^2 t (x tan t - y))
+        return dir*(denom>1e-4f?Math.Min(vmax,MathF.Sqrt(Gravity*x*x/denom)):vmax);
     }
     static Vector3 LaunchVelocity(ComponentMDUnit u,Vector3 from,Vector3 to) {
         var a=u.Tower.attack;var dd=to-from;var hd=new Vector2(dd.X,dd.Z);float h=hd.Length();
@@ -95,7 +106,8 @@ public static class MDTowerBrain {
                 u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1),strong?a.enhancedSplash:0,strong);break;
             case "shell":
-                u.Kick(mi);var vel=LaunchVelocity(u,muzzle,new Vector3(tc.X,target.Position.Y+.1f,tc.Z));
+                u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f,tc.Z);
+                var vel=LaidGun(d)?BarrelLaunch(u,muzzle,MDTowerLibrary.MuzzleForward(d,pose,mi),aimAt):LaunchVelocity(u,muzzle,aimAt);
                 w.Muzzle(d,muzzle,Vector3.Normalize(vel),true);Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,vel,Gravity,a.power,a.splash,false);break;
             case "snipe":
@@ -143,7 +155,7 @@ public static class MDTowerBrain {
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
             if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),MDCombat.Center(b),f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
-            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),MDCombat.Center(b),f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime);}
+            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),MDCombat.Center(b),f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime);}
         }
     }
     static void ChainStrike(ComponentMDUnit u,Vector3 from,ComponentBody first) {
@@ -167,7 +179,7 @@ public static class MDTowerBrain {
         var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
-            w.Stun(b,a.stun);if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
+            if(Resilience(b)<a.bossResilience)w.Stun(b,a.stun);if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
         }
     }
     static void Heal(ComponentMDUnit u,float dt) {
@@ -200,29 +212,31 @@ public static class MDTowerBrain {
         w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2));
         if(hit!=null)Hit(u,hit,power,point,dir);
         Splash(u,point,r,power*(hit!=null?.6f:1),hit);
-        if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
+        if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
     }
     static void Splash(ComponentMDUnit u,Vector3 point,float r,float power,ComponentBody skip) {
-        var a=u.Tower.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
+        var a=u.Tower.attack;var fx=u.Tower.fx;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var c=MDCombat.Center(b);float dist=Vector3.Distance(c,point);
             if(dist>r+b.BoxSize.X*.5f)continue;
             var start=point+Vector3.UnitY*.3f;if(MDCombat.Trace(u,start,c,out _)!=b&&dist>.8f)continue;
             if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f));
-            if(a.slow>0&&a.zone<=0)w.Slow(b,a.slow,a.slowTime);
-            if(a.armorDown>0)w.ArmorDown(b,a.armorDown,a.armorTime);
+            if(a.slow>0&&fx.kind!="poison")w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(fx.color2));   // poison slows through its cloud
+            if(a.freeze>0&&Resilience(b)<a.bossResilience)w.Freeze(b,a.freeze,a.freezeImmune);
+            if(a.armorDown>0)w.ArmorDown(b,a.armorDown,a.armorTime,MDTowerWorldColor(fx.color));
             if(a.burn>0)b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);
         }
     }
     public static void ZoneTick(ComponentMDUnit u,string kind,Vector3 c,float r,float power,float slow) {
-        var w=World(u);var bodies=new DynamicArray<ComponentBody>();
+        var a=u.Tower.attack;var fx=u.Tower.fx;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(c.X,c.Z),r+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||Vector3.DistanceSquared(b.Position,c)>r*r||Math.Abs(b.Position.Y-c.Y)>2.5f)continue;
-            Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY);
-            if(slow<1)w.Slow(b,slow,1);
-            if(kind=="orb"&&random.Next(2)==0)w.AddBeam(c+Vector3.UnitY*.9f,MDCombat.Center(b),.04f,new Color(170,220,255),.1f,true);
+            if(kind=="poison"&&a.dot>0)w.Poison(u,b,a.dot,a.dotTime);   // damage comes from the poison status, also after leaving
+            else Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY);
+            if(slow<1)w.Slow(b,slow,Math.Max(1,a.slowTime),MDTowerWorldColor(fx.color2));
+            if(kind=="orb"&&random.Next(2)==0)w.AddBeam(c+Vector3.UnitY*.9f,MDCombat.Center(b),.04f,MDTowerWorldColor(fx.color2),.1f,true);
         }
     }
 }

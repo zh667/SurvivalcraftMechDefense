@@ -1,6 +1,15 @@
-# Status — 2026-10-09
+# Status — 2026-10-10
 
-## Current delivery: 0.4.1 (user feedback on 0.4.0)
+## Current delivery: 0.4.2 (chamfers, round 6-7)
+
+- All 19 towers use the V3 authored models (endfield-turret-model/v3): 45-degree chamfers on exposed long edges,
+  slopes instead of steps, no needle tips; shapes, sizes, colours and bones unchanged.
+- Authored see-through slits from the 0.4.1 to-do fixed where they were modelling gaps (trap side armour, sniper
+  magazine neck, medic corner pads); the remaining ones (lightning fins, medic leg cavity) are open in the original too.
+- Builder: cross-part separation repeats until no coincident pair is left (max 3 passes).
+- Numbers and verification: docs/TOWERS.md.
+
+## Previous delivery: 0.4.1 (user feedback on 0.4.0)
 
 - See-through barrels and seams: the authored geo.json leaves out faces it considered hidden (67% of
   33,705 cubes miss at least one), and the 0.4.0 hidden-surface pass treated every cube as closed.

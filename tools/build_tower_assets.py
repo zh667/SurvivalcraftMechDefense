@@ -138,7 +138,7 @@ def sat_overlap(A, B, tol=0.0):
 # ------------------------------------------------------------------ source loading
 def purge_modules():
     for m in list(sys.modules):
-        if m.startswith(('fam_', 'famB', 'A_')) or m in ('blocky', 'build_family', 'turret_parts', 'check_floating') or m.endswith(('_C', '_D')):
+        if m.startswith(('fam_', 'famB', 'A_')) or m in ('blocky', 'bevel', 'build_family', 'turret_parts', 'check_floating') or m.endswith(('_C', '_D')):
             del sys.modules[m]
 
 def authored_labels(spec, geo_bones):
@@ -423,14 +423,16 @@ def build(spec):
     kept = cull(parts)
     # 2) cross-part coincident faces at rest: grow the moving part's cube NUDGE in front, then redo that part
     rank = lambda p: PART_ORDER.get(p, 3)
-    nudge = cross_part_pairs(kept, rank); stats['cross_part_pairs_nudged'] = len(nudge)
-    if nudge:
+    nudge = cross_part_pairs(kept, rank); stats['cross_part_pairs_nudged'] = len(nudge); moved_all = set()
+    for _ in range(3):                       # growing a face past one neighbour can bring it near another: repeat
+        if not nudge: break
         for f, m in nudge.values(): grow.setdefault(f.cube, {})[f.key] = grow.get(f.cube, {}).get(f.key, 0.0) + m
-        moved = sorted({f.part for f, _ in nudge.values()})
+        moved = sorted({f.part for f, _ in nudge.values()}); moved_all |= set(moved)
         new, boxes = faces_of(cubes, owner, tex, atlas, grow)
         faces = [f for f in faces if f.part not in moved] + [f for f in new if f.part in moved]
         kept = cull(moved)
-        stats['cross_part_pairs_left'] = len(cross_part_pairs(kept, rank)); stats['parts_grown'] = moved
+        nudge = cross_part_pairs(kept, rank)
+    if moved_all: stats['cross_part_pairs_left'] = len(nudge); stats['parts_grown'] = sorted(moved_all)
     stats['faces_hidden'] = len(faces) - len(kept); stats['faces_clipped'] = sum(1 for f, v in kept if abs(v.area - f.area) > 1e-12)
     for sub in spec.get('subparts', []):         # sub-part pivots from the final boxes
         P = np.concatenate([boxes[i].corners for i, o in enumerate(owner) if o == sub['name']]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2

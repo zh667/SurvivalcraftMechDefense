@@ -1,6 +1,19 @@
 # Status — 2026-10-10
 
-## Current delivery: 0.4.3 (V5 models, rounds 8-10)
+## Current delivery: 0.5.0 (crafting, special effects, held towers, round 11)
+
+- Crafting: 19 crafting-table recipes from vanilla materials (`Mod/Assets/MechDefense.cr`); upgrades take the lower
+  tower as an ingredient. No industry, no power (user's call).
+- Special effects matched to Endfield's skill/buff data (extracted read-only to local/endfield/ability-research):
+  frost slows to 25% with a 3 s ice field (plus a 1.5 s freeze the user asked for; the original has none), poison
+  cloud is purple and keeps poisoning/slowing 5 s after leaving, acid -30% defence 15 s, charge orb gold 5 s,
+  shockwave 2 s stun without damage, bosses immune, water jet pushes only up to 500 kg.
+- Held towers: first/third-person pose set (the item used to sit on the camera / centred in the hand) and drawn from the
+  full glTF model (the 1,500-triangle icon fell apart in the hand).
+- Prologue cannon elevates 0-30 degrees with articulated pistons and centre strut; shells leave along the barrel.
+- Verified in an isolated runtime of the user's build (numbers in docs/TOWERS.md). Not played in the user's real game.
+
+## Previous delivery: 0.4.3 (V5 models, rounds 8-10)
 
 - All 19 towers use the V5 authored models (endfield-turret-model/v5): every bevel strip, cone, polygon and
   stripe cube is clipped to its part's shape, so no cube corner sticks out (V3 had 59-721 per tower, up to

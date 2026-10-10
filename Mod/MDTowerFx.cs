@@ -2,6 +2,7 @@ using Engine;
 using Engine.Graphics;
 using GameEntitySystem;
 using System.Runtime.CompilerServices;
+using HarmonyLib;
 
 namespace Game;
 
@@ -20,7 +21,11 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     struct Beam { public Vector3 a,b; public float age,life,width; public Color c; public bool lightning; public int seed; }
     sealed class Shot { public ComponentMDUnit owner; public MDTowerDef def; public Vector3 pos,vel; public float age,gravity,power,splash; public bool enhanced; public int muzzle; public Vector3 last; }
     sealed class Zone { public ComponentMDUnit owner; public Vector3 c; public float r,age,life,tick,power,slow; public string kind; }
-    sealed class Status { public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1; public float walk,fly,swim,jump; public bool saved; }
+    sealed class Status {
+        public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick;
+        public ComponentMDUnit poisonOwner; public Color slowColor=new(200,235,255),armorColor=new(220,255,110);
+        public float walk,fly,swim,jump,turn,look; public bool saved;
+    }
     readonly Project project; readonly Texture2D texture; readonly System.Random random=new();
     P[] ps=new P[3000]; int pn; readonly List<Beam> beams=[]; readonly List<Shot> shots=[]; readonly List<Zone> zones=[];
     readonly Dictionary<ComponentBody,Status> status=[];
@@ -32,6 +37,9 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
     Vector3 RDir(){Vector3 v;do v=new(R(-1,1),R(-1,1),R(-1,1));while(v.LengthSquared()>1||v.LengthSquared()<.01f);return Vector3.Normalize(v);}
     static Color C(float[] c,float a=1)=>new(c[0],c[1],c[2],a);
+    // The alpha batch blends premultiplied (One, InvSrcAlpha): a straight colour with alpha < 1 adds its full RGB, and
+    // overlapping clouds wash out to white. The coloured clouds and ground stains below are premultiplied.
+    static Color PM(Color c)=>new((byte)(c.R*c.A/255),(byte)(c.G*c.A/255),(byte)(c.B*c.A/255),c.A);
     void Emit(S slot,Vector3 pos,Vector3 vel,float life,float s0,float s1,Color c0,Color c1,bool additive,float gravity=0,float drag=0,float stretch=0,float spin=0,bool flat=false) {
         if(pn>=ps.Length){Array.Copy(ps,ps.Length/4,ps,0,ps.Length-ps.Length/4);pn=ps.Length-ps.Length/4;}
         ps[pn++]=new P{pos=pos,vel=vel,life=life,s0=s0,s1=s1,c0=c0,c1=c1,slot=slot,add=additive,gravity=gravity,drag=drag,stretch=stretch,rot=R(0,6.28f),spin=spin,flat=flat};
@@ -78,12 +86,13 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             for(int i=0;i<n/2;i++)Emit(S.Bubble,p+new Vector3(R(-radius,radius)*.7f,.05f,R(-radius,radius)*.7f),new Vector3(0,R(.2f,.6f),0),R(.6f,1.4f),.08f,.16f,c2,c2*0f,true);
             Emit(S.Puddle,p+Vector3.UnitY*.03f,Vector3.Zero,3.5f,radius*.75f,radius*.85f,new Color((byte)(c.R*.7f),(byte)(c.G*.8f),(byte)(c.B*.6f),(byte)95),new Color(c.R,c.G,c.B,(byte)0),false,0,0,0,0,true);
             SmokePuffs(p,n/3,.4f*s,new Color(c2.R,c2.G,c2.B,(byte)90),.6f,1.6f,.4f*s);
-        } else if(kind=="poison") {
-            for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.5f;Emit(i%2==0?S.Smoke:S.Smoke2,p+d*.3f,d*R(1,2.4f)*s,R(.8f,1.6f),.4f*s,1.1f*s,new Color((byte)(c.R*.8f),(byte)(c.G*.85f),(byte)(c.B*.8f),(byte)120),new Color(c2.R,c2.G,c2.B,(byte)0),false,0,2.2f,0,R(-1,1));}
+        } else if(kind=="poison") {   // deep purple cloud fading darker (Endfield fog 159,88,176 -> 65,41,102), a few bright bubbles
+            for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.5f;Emit(i%2==0?S.Smoke:S.Smoke2,p+d*.3f,d*R(1,2.4f)*s,R(.8f,1.6f),.4f*s,1.1f*s,PM(new Color(c2.R,c2.G,c2.B,(byte)170)),Color.Transparent,false,0,2.2f,0,R(-1,1));}
+            for(int i=0;i<n/3;i++)Emit(S.Bubble,p+new Vector3(R(-radius,radius)*.6f,.1f,R(-radius,radius)*.6f),new Vector3(0,R(.3f,.8f),0),R(.5f,1f),.05f,.1f,c,new Color(c.R,c.G,c.B,(byte)0),true);
         } else if(kind=="frost") {
             for(int i=0;i<n;i++){var d=RDir();Emit(S.Crystal,p+d*.2f,d*R(2,5)*s,R(.3f,.7f),R(.08f,.16f)*s,.03f,new Color(190,230,255),c*0f,true,6,1.2f,0,R(-6,6));}
-            for(int i=0;i<n/2;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.4f;Emit(S.Smoke,p+d*.3f,d*R(.8f,2)*s,R(.8f,1.5f),.4f*s,1f*s,new Color(210,235,255,150),new Color(210,235,255,0),false,0,2,0,R(-1,1));}
-            Emit(S.Puddle,p+Vector3.UnitY*.04f,Vector3.Zero,3f,radius*.7f,radius*.8f,new Color(200,232,255,85),new Color(200,232,255,0),false,0,0,0,0,true);
+            for(int i=0;i<n/2;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.4f;Emit(S.Smoke,p+d*.3f,d*R(.8f,2)*s,R(.8f,1.5f),.4f*s,1f*s,PM(new Color(146,199,243,150)),Color.Transparent,false,0,2,0,R(-1,1));}   // Endfield ice mist
+            Emit(S.Puddle,p+Vector3.UnitY*.04f,Vector3.Zero,3f,radius*.7f,radius*.8f,PM(new Color(159,226,255,110)),Color.Transparent,false,0,0,0,0,true);
             Ring(p,radius,new Color(170,220,255),.5f);
             for(int i=0;i<10;i++){var q=p+new Vector3(R(-radius,radius)*.6f,.05f,R(-radius,radius)*.6f);Emit(S.Crystal,q,new Vector3(0,R(.2f,.6f),0),R(.6f,1.2f),R(.12f,.2f),.05f,new Color(225,245,255),new Color(225,245,255,0),true,0,1,0,R(-2,2));}
         } else { // heavy / physical
@@ -110,28 +119,69 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     public void Wreck(Vector3 p,float size){if(random.Next(4)==0)SmokePuffs(p,1,.5f*size,new Color(45,42,40,160),1.6f,2.4f,.3f);if(random.Next(14)==0)Sparks(p,Vector3.UnitY,4,new Color(255,200,120),3,1.2f,.5f,.04f);}
 
     // ---------------------------------------------------------------- shells, zones, status
-    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced)=>shots.Add(new Shot{owner=owner,def=owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});
-    public void AddZone(ComponentMDUnit owner,string kind,Vector3 c,float r,float life,float power,float slow=1)=>zones.Add(new Zone{owner=owner,kind=kind,c=c,r=r,life=life,power=power,slow=slow});
+    public Vector3 LastLaunch;   // velocity of the last shell (lab checks)
+    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});}
+    public void AddZone(ComponentMDUnit owner,string kind,Vector3 c,float r,float life,float power,float slow=1) {
+        zones.Add(new Zone{owner=owner,kind=kind,c=c,r=r,life=life,power=power,slow=slow});
+        var fx=owner.Tower.fx;var c1=C(fx.color);var c2=C(fx.color2);
+        if(kind=="poison")Emit(S.Puddle,c+Vector3.UnitY*.04f,Vector3.Zero,life,r*.85f,r*.95f,PM(new Color((byte)(c2.R*.75f),(byte)(c2.G*.75f),(byte)(c2.B*.8f),(byte)140)),Color.Transparent,false,0,0,0,0,true);
+        if(kind=="ice"){Emit(S.Puddle,c+Vector3.UnitY*.05f,Vector3.Zero,life,r*.9f,r,PM(new Color(c1.R,c1.G,c1.B,(byte)130)),Color.Transparent,false,0,0,0,0,true);Ring(c,r,c2,.6f);}
+    }
     Status Get(ComponentBody b){if(!status.TryGetValue(b,out var s))status[b]=s=new Status();return s;}
-    public void Slow(ComponentBody b,float factor,float seconds){var s=Get(b);s.slowFactor=Math.Min(factor,s.slowUntil>time?s.slowFactor:1);s.slowUntil=Math.Max(s.slowUntil,time+seconds);}
+    public void Slow(ComponentBody b,float factor,float seconds,Color? c=null){var s=Get(b);s.slowFactor=Math.Min(factor,s.slowUntil>time?s.slowFactor:1);s.slowUntil=Math.Max(s.slowUntil,time+seconds);if(c.HasValue)s.slowColor=c.Value;}
     public void Stun(ComponentBody b,float seconds){var s=Get(b);s.stunUntil=Math.Max(s.stunUntil,time+seconds);}
-    public void ArmorDown(ComponentBody b,float factor,float seconds){var s=Get(b);s.armorFactor=Math.Max(factor,s.armorUntil>time?s.armorFactor:1);s.armorUntil=Math.Max(s.armorUntil,time+seconds);}
+    public void ArmorDown(ComponentBody b,float factor,float seconds,Color? c=null){var s=Get(b);s.armorFactor=Math.Max(factor,s.armorUntil>time?s.armorFactor:1);s.armorUntil=Math.Max(s.armorUntil,time+seconds);if(c.HasValue)s.armorColor=c.Value;}
+    // Frozen solid: no walking, turning or looking around. Afterwards the target is immune for a while, so several
+    // frost towers cannot keep one enemy frozen forever.
+    public bool Freeze(ComponentBody b,float seconds,float immune) {
+        var s=Get(b);if(time<s.freezeImmuneUntil)return false;
+        s.freezeUntil=time+seconds;s.freezeImmuneUntil=s.freezeUntil+immune;
+        for(int i=0;i<10;i++)Emit(S.Crystal,b.Position+new Vector3(R(-.5f,.5f)*b.BoxSize.X,R(0,b.BoxSize.Y),R(-.5f,.5f)*b.BoxSize.Z),RDir()*R(.5f,1.5f),R(.4f,.8f),R(.1f,.18f),.04f,new Color(225,245,255),new Color(225,245,255,0),true,2,1,0,R(-4,4));
+        return true;
+    }
+    // Poison keeps ticking after the target leaves the cloud; clouds do not stack (the strongest one counts).
+    public void Poison(ComponentMDUnit owner,ComponentBody b,float dps,float seconds) {
+        var s=Get(b);if(s.poisonUntil<=time||dps>=s.poisonDps){s.poisonDps=dps;s.poisonOwner=owner;}
+        s.poisonUntil=Math.Max(s.poisonUntil,time+seconds);
+    }
     public float DamageFactor(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.armorUntil>time?s.armorFactor:1;
     public bool IsStunned(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.stunUntil>time;
+    public bool IsFrozen(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.freezeUntil>time;
+    public bool IsPoisoned(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.poisonUntil>time;
+    // Colour multiplier for a frozen (ice blue) or poisoned (the cloud's purple) creature; see MDStatusTint.
+    public static Vector3? Tint(ComponentModel m) {
+        if(!worlds.TryGetValue(m.Project,out var w)||w.status.Count==0||m.Entity.FindComponent<ComponentBody>() is not {} b||!w.status.TryGetValue(b,out var s))return null;
+        if(s.freezeUntil>w.time)return new Vector3(.55f,.78f,1f);
+        if(s.poisonUntil>w.time&&s.poisonOwner?.Tower?.fx is {} fx)return Vector3.Lerp(Vector3.One,new Vector3(fx.color2[0],fx.color2[1],fx.color2[2]),.5f);
+        return null;
+    }
+    public float SpeedFactor(ComponentBody b)=>!status.TryGetValue(b,out var s)?1:s.freezeUntil>time||s.stunUntil>time?0:s.slowUntil>time?s.slowFactor:1;
 
-    void ApplyStatus() {
+    void ApplyStatus(float dt) {
         List<ComponentBody> done=null;
         foreach(var (b,s) in status) {
             var loc=b.Entity.FindComponent<ComponentLocomotion>();
-            bool alive=b.Entity.IsAddedToProject;float f=!alive?1:s.stunUntil>time?0:s.slowUntil>time?s.slowFactor:1;
+            bool alive=b.Entity.IsAddedToProject,frozen=alive&&s.freezeUntil>time,stunned=alive&&s.stunUntil>time,poisoned=alive&&s.poisonUntil>time;
+            float f=!alive?1:frozen||stunned?0:s.slowUntil>time?s.slowFactor:1;
             if(loc!=null&&alive) {
-                if(f<1&&!s.saved){s.walk=loc.WalkSpeed;s.fly=loc.FlySpeed;s.swim=loc.SwimSpeed;s.jump=loc.JumpSpeed;s.saved=true;}
-                if(s.saved){loc.WalkSpeed=s.walk*f;loc.FlySpeed=s.fly*f;loc.SwimSpeed=s.swim*f;loc.JumpSpeed=s.jump*(f<1?.3f*f:1);}
-                if(s.stunUntil>time&&random.Next(5)==0)Emit(S.Star,b.Position+Vector3.UnitY*(b.BoxSize.Y+.2f)+new Vector3(R(-.3f,.3f),0,R(-.3f,.3f)),Vector3.UnitY*.3f,.4f,.1f,.05f,new Color(255,240,120),new Color(255,240,120,0),true);
-                if(s.slowUntil>time&&s.slowFactor<1&&random.Next(8)==0)Emit(S.Crystal,b.Position+new Vector3(R(-.4f,.4f),R(.1f,b.BoxSize.Y),R(-.4f,.4f)),Vector3.Zero,.5f,.08f,.02f,new Color(200,235,255),new Color(200,235,255,0),true);
+                if(f<1&&!s.saved){s.walk=loc.WalkSpeed;s.fly=loc.FlySpeed;s.swim=loc.SwimSpeed;s.jump=loc.JumpSpeed;s.turn=loc.TurnSpeed;s.look=loc.LookSpeed;s.saved=true;}
+                if(s.saved){loc.WalkSpeed=s.walk*f;loc.FlySpeed=s.fly*f;loc.SwimSpeed=s.swim*f;loc.JumpSpeed=s.jump*(f<1?.3f*f:1);loc.TurnSpeed=frozen?0:s.turn;loc.LookSpeed=frozen?0:s.look;}
             }
-            if(f>=1&&s.saved&&loc!=null){loc.WalkSpeed=s.walk;loc.FlySpeed=s.fly;loc.SwimSpeed=s.swim;loc.JumpSpeed=s.jump;s.saved=false;}
-            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&!s.saved))(done??=[]).Add(b);
+            if(alive) {
+                var box=b.BoxSize;Vector3 OnBody()=>b.Position+new Vector3(R(-.5f,.5f)*box.X,R(.1f,1)*box.Y,R(-.5f,.5f)*box.Z);
+                if(stunned&&!frozen&&random.Next(5)==0)Emit(S.Star,b.Position+Vector3.UnitY*(box.Y+.2f)+new Vector3(R(-.3f,.3f),0,R(-.3f,.3f)),Vector3.UnitY*.3f,.4f,.1f,.05f,new Color(255,240,120),new Color(255,240,120,0),true);
+                if(frozen){if(random.Next(2)==0)Emit(S.Crystal,OnBody(),Vector3.Zero,.6f,.16f,.1f,new Color(215,242,255),new Color(215,242,255,0),true,0,0,0,R(-1,1));}
+                else if(s.slowUntil>time&&s.slowFactor<1&&random.Next(8)==0)Emit(S.Crystal,OnBody(),Vector3.Zero,.5f,.08f,.02f,s.slowColor,new Color(s.slowColor.R,s.slowColor.G,s.slowColor.B,(byte)0),true);
+                if(s.armorUntil>time&&random.Next(10)==0)Emit(S.Drop,OnBody(),Vector3.Zero,.6f,.07f,.04f,s.armorColor,new Color(s.armorColor.R,s.armorColor.G,s.armorColor.B,(byte)0),false,4);
+                if(poisoned) {
+                    var pc=s.poisonOwner?.Tower?.fx is {} pfx?C(pfx.color):new Color(228,140,255);
+                    if(random.Next(5)==0)Emit(S.Bubble,OnBody(),Vector3.UnitY*R(.3f,.6f),R(.5f,.9f),.07f,.12f,pc,new Color(pc.R,pc.G,pc.B,(byte)0),true);
+                    s.poisonTick-=dt;
+                    if(s.poisonTick<=0){s.poisonTick=.5f;if(s.poisonOwner?.Entity.IsAddedToProject==true)MDTowerBrain.Hit(s.poisonOwner,b,s.poisonDps*.5f,MDCombat.Center(b),Vector3.UnitY);}
+                }
+            }
+            if(f>=1&&s.saved&&loc!=null){loc.WalkSpeed=s.walk;loc.FlySpeed=s.fly;loc.SwimSpeed=s.swim;loc.JumpSpeed=s.jump;loc.TurnSpeed=s.turn;loc.LookSpeed=s.look;s.saved=false;}
+            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&s.freezeUntil<=time&&s.poisonUntil<=time&&s.freezeImmuneUntil<=time&&!s.saved))(done??=[]).Add(b);
         }
         if(done!=null)foreach(var b in done)status.Remove(b);
     }
@@ -158,7 +208,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             ZoneVisual(z);
             if(z.tick<=0){z.tick=.5f;MDTowerBrain.ZoneTick(z.owner,z.kind,z.c,z.r,z.power*.5f,z.slow);}
         }
-        ApplyStatus();
+        ApplyStatus(dt);
         return false;
     }
     void ShellTrail(Shot s,float dt) {
@@ -170,8 +220,13 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     void ZoneVisual(Zone z) {
         float fade=Math.Min(1,(z.life-z.age)/1.2f);
         if(z.kind=="burn"&&random.Next(2)==0){var p=z.c+new Vector3(R(-z.r,z.r)*.8f,.05f,R(-z.r,z.r)*.8f);Emit(S.Fire,p,new Vector3(0,R(.6f,1.4f),0),R(.3f,.6f),.15f,.35f,new Color(255,200,120)*fade,new Color(200,50,10,0),true,-1,1);}
-        if(z.kind=="poison"&&random.Next(2)==0){var p=z.c+new Vector3(R(-z.r,z.r)*.8f,R(.05f,.6f),R(-z.r,z.r)*.8f);Emit(random.Next(2)==0?S.Smoke:S.Smoke2,p,new Vector3(R(-.2f,.2f),R(.05f,.2f),R(-.2f,.2f)),R(1,1.8f),.5f,1.1f,new Color((byte)115,(byte)170,(byte)90,(byte)(85*fade)),new Color(90,150,80,0),false,0,.5f,0,R(-.5f,.5f));}
-        if(z.kind=="orb"){var top=z.c+Vector3.UnitY*.9f;Emit(S.Glow,top,Vector3.Zero,.1f,.5f,.45f,new Color(140,200,255)*fade,new Color(140,200,255)*0f,true);if(random.Next(3)==0){var t=top+RDir()*R(.6f,z.r);AddBeam(top,t,.05f,new Color(170,220,255)*fade,.08f,true);}}
+        var fx=z.owner.Tower.fx;var c1=C(fx.color);var c2=C(fx.color2);
+        if(z.kind=="poison") {   // purple cloud low over the ground, bubbles rising out of it
+            if(random.Next(2)==0){var p=z.c+new Vector3(R(-z.r,z.r)*.8f,R(.05f,.6f),R(-z.r,z.r)*.8f);Emit(random.Next(2)==0?S.Smoke:S.Smoke2,p,new Vector3(R(-.2f,.2f),R(.05f,.2f),R(-.2f,.2f)),R(1,1.8f),.5f,1.1f,PM(new Color(c2.R,c2.G,c2.B,(byte)(130*fade))),Color.Transparent,false,0,.5f,0,R(-.5f,.5f));}
+            if(random.Next(6)==0)Emit(S.Bubble,z.c+new Vector3(R(-z.r,z.r)*.7f,.05f,R(-z.r,z.r)*.7f),new Vector3(0,R(.3f,.7f),0),R(.6f,1.1f),.05f,.1f,c1*fade,new Color(c1.R,c1.G,c1.B,(byte)0),true);
+        }
+        if(z.kind=="ice"&&random.Next(3)==0)Emit(S.Crystal,z.c+new Vector3(R(-z.r,z.r)*.7f,.05f,R(-z.r,z.r)*.7f),new Vector3(0,R(.1f,.4f),0),R(.6f,1.1f),R(.08f,.14f),.04f,c2*fade,new Color(c2.R,c2.G,c2.B,(byte)0),true,0,1,0,R(-2,2));
+        if(z.kind=="orb"){var top=z.c+Vector3.UnitY*.9f;Emit(S.Glow,top,Vector3.Zero,.1f,.5f,.45f,c1*fade,c1*0f,true);if(random.Next(3)==0){var t=top+RDir()*R(.6f,z.r);AddBeam(top,t,.05f,c2*fade,.08f,true);}}
     }
 
     // ---------------------------------------------------------------- drawing
@@ -223,4 +278,10 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         int s=(int)S.Beam;float u=s%8/8f,v=s/8/8f,q=1/8f;
         add.QueueQuad(a-side,a+side,b+side,b-side,new Vector2(u,v+q),new Vector2(u+q,v+q),new Vector2(u+q,v),new Vector2(u,v),c);
     }
+}
+
+// The creature model rewrites DiffuseColor every frame (injury flash), so the status tint is multiplied in after it.
+[HarmonyPatch(typeof(ComponentCreatureModel),nameof(ComponentCreatureModel.Animate))]
+public static class MDStatusTint {
+    public static void Postfix(ComponentCreatureModel __instance){if(MDTowerWorld.Tint(__instance) is {} t)__instance.DiffuseColor=(__instance.DiffuseColor??Vector3.One)*t;}
 }

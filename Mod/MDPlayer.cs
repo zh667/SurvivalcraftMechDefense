@@ -26,11 +26,22 @@ public class MDDeploymentBlock : Block {
         foreach(var d in MDTowerLibrary.All)yield return Terrain.MakeBlockValue(BlockIndex,0,d.data);
         yield return Terrain.MakeBlockValue(BlockIndex,0,1);yield return Terrain.MakeBlockValue(BlockIndex,0,2);
     }
+    // Held item. The icon mesh is centred on its bounding box and at most one unit long; without these the engine draws
+    // it at scale 1 on the camera itself (first person: nothing visible) or centred on the hand (third person).
+    public static float FirstScale=.36f,HandScale=.4f;
+    public static Vector3 FirstOffset=new(.46f,-.28f,-.62f),FirstRotation=new(0,90,0),HandOffset=new(0,.12f,0),HandRotation=new(90,0,0);   // side view; upright in the hand
+    public override float GetFirstPersonScale(int value)=>FirstScale;
+    public override Vector3 GetFirstPersonOffset(int value)=>FirstOffset;
+    public override Vector3 GetFirstPersonRotation(int value)=>FirstRotation;
+    public override float GetInHandScale(int value)=>HandScale;
+    public override Vector3 GetInHandOffset(int value)=>HandOffset;
+    public override Vector3 GetInHandRotation(int value)=>HandRotation;
     public override int GetTextureSlotCount(int value)=>1;
     public override int GetFaceTextureSlot(int face,int value)=>0;
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
     // Small 3D icon (~1500 triangles, the tower's own atlas) instead of the full 10-40k-triangle model.
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
+        if(e?.DrawBlockMode is DrawBlockMode.FirstPerson or DrawBlockMode.ThirdPerson&&Tower(value) is {} held&&MDHeldModel.Draw(held,color,size,matrix,e))return;
         var icon=Tower(value) is {} d?MDTowerLibrary.Icon(d):Terrain.ExtractData(value)==1
             ?MDTowerLibrary.IconMesh("Towers/_legacy/mech_icon.bin","Imported/Mech/texture"):MDTowerLibrary.IconMesh("Towers/_legacy/enemy_icon.bin","Imported/Enemy/texture");
         if(e?.DrawBlockMode==DrawBlockMode.UI) {
@@ -40,6 +51,43 @@ public class MDDeploymentBlock : Block {
         else BlocksManager.DrawMeshBlock(r,icon.mesh,icon.texture,color,size,ref matrix,e);
     }
 }
+
+// A tower in the hand is drawn from its full glTF model (GPU buffers), the way the engine draws the bare first-person
+// hand. The ~1500-triangle icon mesh is fine in an inventory slot but falls apart when it fills part of the screen:
+// the V5 models are mostly small bevel strips, and those are the triangles the icon leaves out.
+public static class MDHeldModel {
+    public static Camera Camera;   // the camera being drawn (set by the patches below)
+    static readonly LitShader shader=new(2,false,false,true,false,false);
+    sealed class Entry { public Model model; public Texture2D texture; public Matrix[] bones; public Matrix fit; }
+    static readonly Dictionary<string,Entry> cache=[];
+    public static bool Draw(MDTowerDef d,Color color,float size,Matrix matrix,DrawBlockEnvironmentData e) {
+        if(Camera==null)return false;
+        if(!cache.TryGetValue(d.id,out var c)) {
+            var model=ContentManager.Get<Model>("Towers/"+d.id+"/model");var bones=new Matrix[model.Bones.Count];
+            foreach(var b in model.Bones)bones[b.Index]=b.ParentBone==null?b.Transform:b.Transform*bones[b.ParentBone.Index];   // rest pose
+            var lo=new Vector3(d.bounds[0][0],d.bounds[0][1],d.bounds[0][2]);var hi=new Vector3(d.bounds[1][0],d.bounds[1][1],d.bounds[1][2]);var ext=hi-lo;
+            // same frame as the icon mesh: centred on the bounding box, longest side one unit
+            c=new Entry{model=model,texture=ContentManager.Get<Texture2D>("Towers/"+d.id+"/atlas"),bones=bones,fit=Matrix.CreateTranslation(-(lo+hi)/2)*Matrix.CreateScale(1/MathF.Max(ext.X,MathF.Max(ext.Y,ext.Z)))};
+            cache[d.id]=c;
+        }
+        float light=LightingManager.LightIntensityByLightValue[Math.Clamp(e.Light,0,15)];
+        shader.InstancesCount=1;shader.Texture=c.texture;shader.SamplerState=SamplerState.PointClamp;shader.MaterialColor=new Vector4(color);
+        shader.AmbientLightColor=new Vector3(light*LightingManager.LightAmbient);shader.DiffuseLightColor1=shader.DiffuseLightColor2=new Vector3(light);
+        shader.LightDirection1=Vector3.TransformNormal(LightingManager.DirectionToLight1,Camera.ViewMatrix);shader.LightDirection2=Vector3.TransformNormal(LightingManager.DirectionToLight2,Camera.ViewMatrix);
+        shader.Transforms.View=Matrix.Identity;shader.Transforms.Projection=Camera.ProjectionMatrix;   // the matrix passed in already includes the view
+        Display.DepthStencilState=DepthStencilState.Default;Display.RasterizerState=RasterizerState.CullNoneScissor;Display.BlendState=BlendState.Opaque;
+        var place=c.fit*Matrix.CreateScale(size)*matrix;
+        foreach(var mesh in c.model.Meshes) {
+            shader.Transforms.World[0]=c.bones[mesh.ParentBone.Index]*place;
+            foreach(var part in mesh.MeshParts)if(part.IndicesCount>0)Display.DrawIndexed(PrimitiveType.TriangleList,shader,part.VertexBuffer,part.IndexBuffer,part.StartIndex,part.IndicesCount);
+        }
+        return true;
+    }
+}
+[HarmonyPatch(typeof(ComponentFirstPersonModel),nameof(ComponentFirstPersonModel.Draw))]
+public static class MDHeldCameraFirst {public static void Prefix(Camera camera)=>MDHeldModel.Camera=camera;}
+[HarmonyPatch(typeof(ComponentHumanModel),nameof(ComponentHumanModel.DrawExtras))]
+public static class MDHeldCameraThird {public static void Prefix(Camera camera)=>MDHeldModel.Camera=camera;}
 
 public static class MDPlayer {
     public static ComponentMDUnit Mounted(ComponentPlayer p)=>p?.ComponentRider?.Mount?.Entity.FindComponent<ComponentMDUnit>();

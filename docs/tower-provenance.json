@@ -156,11 +156,21 @@
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V5.png",
     "atlasSha256": "f801f7f28e5edce874cbe4778fa19800177e4273ddc5f21f977eee8bc547def5"
    },
-   "triangles": 70672,
-   "facesHidden": 15139,
-   "facesClipped": 10384,
+   "triangles": 70716,
+   "facesHidden": 15111,
+   "facesClipped": 10391,
    "crossPartNudged": 12,
    "clearance": {
+    "pitch": [
+     -2,
+     32
+    ],
+    "pitch_up_blocked_by": [
+     "rear skid x turntable rim: 2.1 cm"
+    ],
+    "pitch_down_blocked_by": [
+     "receiver x elevation arm: 1.6 cm"
+    ],
     "yaw_collisions": 0,
     "yaw_worst": [],
     "recoil_barrel": 0

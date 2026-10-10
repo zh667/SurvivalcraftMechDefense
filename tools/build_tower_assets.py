@@ -415,7 +415,7 @@ def build(spec):
     for sub in spec.get('subparts', []):
         mem = [i for i, o in enumerate(owner) if o == sub['name']]
         assert mem, (tid, sub['name'], 'matched no cubes')
-        P = np.concatenate([boxes[i].corners for i in mem]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2; parent_of[sub['name']] = sub['from']
+        P = np.concatenate([boxes[i].corners for i in mem]); piv[sub['name']] = sub_pivot(sub, P); parent_of[sub['name']] = sub['from']
     # 1) per-part hidden-surface clean-up
     vis = {}; stats = dict(faces_in=len(faces), plates_snapped=sum(len(g) for g in grow.values()))
     def cull(which):
@@ -438,7 +438,7 @@ def build(spec):
     if moved_all: stats['cross_part_pairs_left'] = len(nudge); stats['parts_grown'] = sorted(moved_all)
     stats['faces_hidden'] = len(faces) - len(kept); stats['faces_clipped'] = sum(1 for f, v in kept if abs(v.area - f.area) > 1e-12)
     for sub in spec.get('subparts', []):         # sub-part pivots from the final boxes
-        P = np.concatenate([boxes[i].corners for i, o in enumerate(owner) if o == sub['name']]); piv[sub['name']] = (P.min(0) + P.max(0)) / 2
+        P = np.concatenate([boxes[i].corners for i, o in enumerate(owner) if o == sub['name']]); piv[sub['name']] = sub_pivot(sub, P)
     # 3) triangles per part, positions relative to the part's world pivot
     geo_parts = {}; trace = []
     for p in parts:
@@ -537,7 +537,8 @@ def clearance(spec, boxes, owner, piv, labels=None):
             key = (lab(i), lab(j)); agg[key] = max(agg.get(key, 0), dep)
         return [f"{a} x {b}: {d * 100:.1f} cm" for (a, b), d in sorted(agg.items(), key=lambda x: -x[1])[:k]]
     if 'pitch' in parts and not spec.get('pitchFixed'):
-        moving = [i for i, o in enumerate(owner) if o == 'pitch' or spec_parent(spec, o) == 'pitch']
+        links = {s['name'] for s in spec.get('subparts', []) if 'aim' in s}   # pistons/struts follow the cradle at runtime
+        moving = [i for i, o in enumerate(owner) if (o == 'pitch' or spec_parent(spec, o) == 'pitch') and o not in links]
         pv = piv['pitch']; reach = max(np.linalg.norm(boxes[i].corners - pv, axis=1).max() for i in moving) + 0.05
         fixed = [j for j, o in enumerate(owner) if o in ('yaw', 'base') and np.linalg.norm(np.clip(pv, boxes[j].lo, boxes[j].hi) - pv) <= reach]
         rest = rest_contacts(boxes, moving, fixed)
@@ -570,6 +571,11 @@ def clearance(spec, boxes, owner, piv, labels=None):
         res[f"recoil_{sub['name']}"] = len(new_contacts(boxes, mem, others, np.eye(3), np.zeros(3), np.array([0, 0, sub['recoil']]), rest))
     return res
 
+def sub_pivot(sub, P):
+    """Sub-part pivot: an explicit hinge [y, z] (SC metres; links turn about X there), else the centre of its boxes."""
+    c = (P.min(0) + P.max(0)) / 2
+    return np.array([c[0], sub['hinge'][0], sub['hinge'][1]]) if 'hinge' in sub else c
+
 def spec_parent(spec, name):
     for sub in spec.get('subparts', []):
         if sub['name'] == name: return sub['from']
@@ -584,6 +590,9 @@ def runtime_entry(spec, meta):
         lo, hi = meta['clearance']['pitch']; d['pitch'] = [max(lo + 2, -35), min(hi - 2, 70)] if hi > lo else [0, 0]
     subs = [x for x in spec.get('subparts', []) if 'recoil' in x]
     d['recoilParts'] = [x['name'] for x in subs]; d['recoil'] = [x['recoil'] for x in subs]
+    # articulated links: turn about X at their hinge to keep pointing at a partner point (on the turret or the cradle)
+    d['links'] = [dict(node=x['name'], parent=x['from'], hinge=x['hinge'], at=x['aim']['at'], on=x['aim']['on'], stretch=bool(x.get('stretch')))
+                  for x in spec.get('subparts', []) if 'aim' in x]
     return d
 
 def main(ids):

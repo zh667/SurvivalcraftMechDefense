@@ -9,7 +9,7 @@ namespace TowerLab;
 
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
-// Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all".
+// Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four).
 public class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -145,6 +145,114 @@ public class Lab:ModLoader {
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_e_four_towers");yield return true;
             Remove(placed.Skip(1).Take(3).Select(p=>p.unit));while(Wait(.5))yield return true;
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_f_one_tower");yield return true;
+        }
+        if(mode is "recipes" or "special") {
+            // every tower has a crafting recipe, and its own ingredient grid resolves to it (no clash with vanilla or each other)
+            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
+            var mine=CraftingRecipesManager.Recipes.Where(r=>Terrain.ExtractContents(r.ResultValue)==block.BlockIndex).ToList();
+            var rec=new Dictionary<string,object>();var bad=new List<string>();
+            foreach(var d in towers) {
+                var r=mine.FirstOrDefault(x=>Terrain.ExtractData(x.ResultValue)==d.data);
+                if(r==null){bad.Add(d.id+": no recipe");continue;}
+                var grid=r.Ingredients.Select(s=>s==null?null:s.Contains(':')?s:s+":0").ToArray();   // what the crafting table builds from real items
+                var found=CraftingRecipesManager.FindMatchingRecipe(terrain,grid,0,1);
+                bool ok=found!=null&&found.ResultValue==r.ResultValue&&found.ResultCount==1;
+                if(!ok)bad.Add($"{d.id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
+                rec[d.id]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),remains=r.RemainsValue,description=r.Description,resolves=ok};
+            }
+            results["recipes"]=new{count=mine.Count,bad,rec};
+            if(bad.Count>0||mine.Count!=towers.Count)throw new Exception($"recipes: {mine.Count} for {towers.Count} towers; "+string.Join("; ",bad));
+        }
+        if(mode is "hand" or "special") {
+            // the deploy item held in first person (game camera) and third person (fixed camera in front of the player)
+            Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
+            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var pl=player.ComponentPlayer;var gw=pl.GameWidget;
+            var inv=pl.Entity.FindComponent<ComponentCreativeInventory>(true);var H=origin+new Vector3(-17,0,40);
+            (float s,Vector3 o,Vector3 r)[] first=[(MDDeploymentBlock.FirstScale,MDDeploymentBlock.FirstOffset,MDDeploymentBlock.FirstRotation)];   // add candidates here to compare poses
+            (float s,Vector3 o,Vector3 r)[] third=[(MDDeploymentBlock.HandScale,MDDeploymentBlock.HandOffset,MDDeploymentBlock.HandRotation)];
+            IEnumerable<bool> Settle(double seconds,Action each){for(double s0=Time.RealTime;Time.RealTime-s0<seconds;){each();yield return true;}}   // the lab runs at ~800 fps: wait in time, not frames
+            foreach(var id in new[]{"battle_turret_1","battle_sniper_1","battle_rocket_1","battle_cannon_1_dg002","battle_jet_1","battle_laser_2"}) {
+                var d=towers.First(t=>t.id==id);
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,d.data),1);inv.ActiveSlotIndex=0;
+                for(int v=0;v<first.Length;v++) {
+                    (MDDeploymentBlock.FirstScale,MDDeploymentBlock.FirstOffset,MDDeploymentBlock.FirstRotation)=first[v];
+                    foreach(var x in Settle(1.2,()=>{pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentLocomotion.LookAngles=new(0,-.15f);gw.ActiveCamera=gw.FindCamera<FppCamera>();}))yield return x;
+                    ScreenCaptureManager.Capture(1280,720,$"h_first{v}_{id}.png");yield return true;
+                }
+                for(int v=0;v<third.Length;v++) {
+                    (MDDeploymentBlock.HandScale,MDDeploymentBlock.HandOffset,MDDeploymentBlock.HandRotation)=third[v];
+                    foreach(var x in Settle(.6,()=>{pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;Cam(H+new Vector3(1.1f,1.3f,-1.25f),H+new Vector3(.15f,.85f,-.1f));}))yield return x;
+                    Shot($"h_third{v}_{id}");yield return true;
+                    foreach(var x in Settle(.3,()=>{pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;Cam(H+new Vector3(1.9f,1.0f,.2f),H+new Vector3(.2f,.8f,-.1f));}))yield return x;
+                    Shot($"h_side{v}_{id}");yield return true;
+                }
+                foreach(var x in Settle(.6,()=>{pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;gw.ActiveCamera=gw.FindCamera<TppCamera>();}))yield return x;
+                ScreenCaptureManager.Capture(1280,720,$"h_tppcam_{id}.png");yield return true;
+            }
+            (MDDeploymentBlock.FirstScale,MDDeploymentBlock.FirstOffset,MDDeploymentBlock.FirstRotation)=first[0];(MDDeploymentBlock.HandScale,MDDeploymentBlock.HandOffset,MDDeploymentBlock.HandRotation)=third[0];
+            inv.RemoveSlotItems(0,inv.GetSlotCount(0));pl.ComponentBody.Position=Home;results["hand"]="screenshots h_*";
+        }
+        if(mode is "effects" or "special") {
+            // special effects on real creatures: a wolf (AttackResilience 400) and a boss-strength one (5000);
+            // for the water jet the second wolf weighs 1500 kg instead (rhino class) and must not be pushed
+            Remove(placed.Select(p=>p.unit));placed.Clear();player.ComponentPlayer.ComponentBody.Position=Home;while(Wait(.5))yield return true;
+            var w=MDTowerWorld.For(GameManager.Project);var T=origin+new Vector3(-17,0,40);var eff=new Dictionary<string,object>();
+            ComponentCreature Wolf(Vector3 at,float res) {
+                var e=DatabaseManager.CreateEntity(GameManager.Project,"Wolf",true);e.FindComponent<ComponentBody>(true).Position=at;e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;
+                GameManager.Project.AddEntity(e);var c=e.FindComponent<ComponentCreature>(true);c.ComponentHealth.AttackResilience=res;return c;
+            }
+            string State(ComponentCreature c)=>!c.Entity.IsAddedToProject?"gone":$"{(w.IsFrozen(c.ComponentBody)?"F":w.IsStunned(c.ComponentBody)?"S":"-")}{(w.IsPoisoned(c.ComponentBody)?"P":"-")} v{w.SpeedFactor(c.ComponentBody):F2} walk{c.ComponentLocomotion.WalkSpeed:F2} dmg x{w.DamageFactor(c.ComponentBody):F2} hp{c.ComponentHealth.Health:F4}";
+            foreach(var id in new[]{"battle_frost_1","battle_fog_1","battle_debuff_1","battle_lightning_2","battle_shockwave_1","battle_jet_1"}) {
+                var d=towers.First(t=>t.id==id);var u=Place(d,T,0);u.Cooldown=1e6f;bool jet=id=="battle_jet_1";
+                float dist=d.attack.directional?3.5f:Math.Min(d.attack.range*.5f,7);
+                var pa=T+new Vector3(-.5f,0,-dist);var pb=T+new Vector3(.8f,0,-dist-.5f);
+                var a=Wolf(pa,400);var b=Wolf(pb,jet?400:5000);if(jet){b.ComponentBody.Mass=1500;a.ComponentLocomotion.WalkSpeed=b.ComponentLocomotion.WalkSpeed=0;}   // jet: only the push may move them
+                for(int i=0;i<40;i++){a.ComponentBody.Position=pa;b.ComponentBody.Position=pb;a.ComponentBody.Velocity=b.ComponentBody.Velocity=Vector3.Zero;Cam(T+new Vector3(5,3.5f,-dist+4),T+new Vector3(0,.8f,-dist));yield return true;}
+                var line=new List<string>();u.Cooldown=0;int shots=u.ShotCount;double start=Time.RealTime;double next=0;int k=0;bool moved=false;var a0=a.ComponentBody.Position;var b0=b.ComponentBody.Position;
+                while(Time.RealTime-start<8.5) {
+                    double t=Time.RealTime-start;if(u.ShotCount>shots)u.Cooldown=1e6f;   // one attack only
+                    if(id=="battle_fog_1"&&!moved&&t>2.5){moved=true;a.ComponentBody.Position=T+new Vector3(-7,0,-dist);line.Add($"{t:F2} wolf A carried out of the cloud");}
+                    if(t>=next){line.Add($"{t:F2} A[{State(a)}] B[{State(b)}] zones {w.Zones}");next+=.5;}
+                    if(k<3&&t>=new[]{.9,1.6,3.0}[k]){Shot($"e_{id}_{k}");if(k==1&&id=="battle_frost_1"){var ap=a.ComponentBody.Position;Cam(ap+new Vector3(2.2f,1.3f,1.9f),ap+Vector3.UnitY*.4f);Shot($"e_frozen_close_{(w.IsFrozen(a.ComponentBody)?"frozen":"thawed")}");}k++;}
+                    Cam(T+new Vector3(3f,2.2f,-dist+2.6f),T+new Vector3(0,.5f,-dist));yield return true;
+                }
+                if(jet)line.Add($"pushed along -Z: A {(a0-a.ComponentBody.Position).Z:F2} m, B (1500 kg) {(b0-b.ComponentBody.Position).Z:F2} m");
+                eff[id]=line;
+                foreach(var c in new[]{a,b})if(c.Entity.IsAddedToProject)GameManager.Project.RemoveEntity(c.Entity,true);
+                Remove([u]);while(Wait(1))yield return true;
+            }
+            results["effects"]=eff;
+        }
+        if(mode is "artillery" or "special") {
+            // the prologue cannon elevates and its shells leave along the barrel: targets at three distances
+            Remove(placed.Select(p=>p.unit));placed.Clear();player.ComponentPlayer.ComponentBody.Position=Home;while(Wait(.5))yield return true;
+            var w=MDTowerWorld.For(GameManager.Project);var T=origin+new Vector3(-17,0,30);var art=new List<string>();
+            var gun=towers.First(t=>t.id=="battle_cannon_1_dg002");var u=Place(gun,T,0);u.Cooldown=1e6f;
+            art.Add($"pitch range {MathUtils.RadToDeg(gun.PitchMin):F0}..{MathUtils.RadToDeg(gun.PitchMax):F0} deg, fixed {gun.pitchFixed}");
+            foreach(var dist in new[]{14f,26f,38f}) {
+                foreach(var c in GameManager.Project.FindSubsystem<SubsystemCreatureSpawn>(true).Creatures.ToList())   // wild animals spawn in the lab world;
+                    if(c is not ComponentPlayer&&Vector3.Distance(c.ComponentBody.Position,T)<70)GameManager.Project.RemoveEntity(c.Entity,true);   // the gun must shoot the dummy
+                var spot=T+new Vector3(0,0,-dist);var target=Dummy(spot);while(Wait(.3))yield return true;
+                void Pin(){target.Body.Position=spot;target.Body.Velocity=Vector3.Zero;}   // the dummy unit walks; keep it on its mark
+                u.Cooldown=0;int shots=u.ShotCount;double start=Time.RealTime;
+                while(u.ShotCount==shots&&Time.RealTime-start<8){Pin();Cam(T+new Vector3(10,4,-5),T+new Vector3(0,3,-5));yield return true;}
+                u.Cooldown=1e6f;bool onDummy=u.Target==target.Body;
+                var bd=MDTowerLibrary.MuzzleForward(gun,MDTowerBrain.Pose(u),0);var lv=w.LastLaunch;
+                float off=MathUtils.RadToDeg(MathF.Acos(Math.Clamp(Vector3.Dot(bd,Vector3.Normalize(lv)),-1,1)));
+                Shot($"a_dg002_{(int)dist}_fire");
+                double t1=Time.RealTime;int imp=w.Impacts;bool flight=false;
+                while(Time.RealTime-t1<5&&w.Impacts==imp){Pin();if(!flight&&Time.RealTime-t1>.35){Shot($"a_dg002_{(int)dist}_flight");flight=true;}Cam(T+new Vector3(16,5,-dist*.5f),T+new Vector3(0,3,-dist*.5f));yield return true;}
+                art.Add($"target {dist} m: barrel {MathUtils.RadToDeg(u.TowerPitch):F1} deg, shell {MathUtils.RadToDeg(MathF.Asin(Vector3.Normalize(lv).Y)):F1} deg at {lv.Length():F1} m/s, shell vs barrel {off:F2} deg, fired after {Time.RealTime-start:F1} s, aimed at the dummy {onDummy}, landed {w.Impacts>imp}, dummy hit {target.Damage.Hitpoints<1}");
+                Remove([target]);while(Wait(.5))yield return true;
+            }
+            // the cradle at both ends of its range: pistons and the centre strut must follow without gaps or clipping
+            var pv=MDTowerLibrary.Pose(gun,u.Body.Matrix,0,0,null)[gun.pitchNode].Translation;
+            foreach(var (tag,pd) in new[]{("min",gun.PitchMin),("mid",(gun.PitchMin+gun.PitchMax)/2),("max",gun.PitchMax)})
+                foreach(var (side,off) in new[]{("l",new Vector3(-4.2f,.4f,-.6f)),("r",new Vector3(4.2f,.4f,-.6f))}) {
+                    foreach(var x in Hold(pv+off,pv-Vector3.UnitY*.7f,10)){u.AimYaw=u.Yaw;u.AimPitch=pd;yield return x;}
+                    Shot($"a_dg002_pitch_{tag}_{side}");yield return true;
+                }
+            results["artillery"]=art;Remove([u]);while(Wait(.5))yield return true;
         }
         if(mode is "fx" or "joints") {
             // isolated test site: no other towers around

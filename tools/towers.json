@@ -3,9 +3,9 @@
   {
    "id": "battle_turret_1",
    "name": "铳械塔",
-   "source": "v3/battle_turret_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_turret_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel_l",
@@ -62,9 +62,9 @@
   {
    "id": "battle_turret_2",
    "name": "扩装铳械塔",
-   "source": "v3/battle_turret_2",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_turret_2",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel_l",
@@ -123,9 +123,9 @@
   {
    "id": "battle_turret_3",
    "name": "“暴雨”铳械塔",
-   "source": "v3/battle_turret_3",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_turret_3",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel_l",
@@ -185,9 +185,9 @@
   {
    "id": "battle_cannon_1",
    "name": "榴弹塔",
-   "source": "v3/battle_cannon_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_cannon_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel",
@@ -239,9 +239,9 @@
   {
    "id": "battle_cannon_2",
    "name": "高爆榴弹塔",
-   "source": "v3/battle_cannon_2",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_cannon_2",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel",
@@ -296,9 +296,9 @@
   {
    "id": "battle_sniper_1",
    "name": "哨戒塔",
-   "source": "v3/battle_sniper_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_sniper_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel",
@@ -346,9 +346,9 @@
   {
    "id": "battle_cannon_1_dg002",
    "name": "序章炮塔",
-   "source": "v3/battle_cannon_1_dg002",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_cannon_1_dg002",
+   "version": "V5",
+   "tools": "v5/tools",
    "subparts": [
     {
      "name": "barrel",
@@ -404,9 +404,9 @@
   {
    "id": "battle_debuff_1",
    "name": "“酸洗”MK-Ⅰ",
-   "source": "v3/battle_debuff_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_debuff_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 9,
    "hp": 900,
    "summary": "发射酸液弹，在敌人附近爆炸造成范围自然伤害，并降低敌人防御（受到的塔伤害提高）。",
@@ -455,9 +455,9 @@
   {
    "id": "battle_fog_1",
    "name": "“毒沼”MK-Ⅰ",
-   "source": "v3/battle_fog_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_fog_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 10,
    "hp": 900,
    "summary": "发射毒雾弹，落地后留下一片毒雾区，持续造成自然伤害并减速。",
@@ -508,9 +508,9 @@
   {
    "id": "battle_frost_1",
    "name": "液氮塔",
-   "source": "v3/battle_frost_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_frost_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 11,
    "hp": 850,
    "summary": "发射液氮晶体，爆裂后降低范围内敌人的移动速度。",
@@ -554,9 +554,9 @@
   {
    "id": "battle_jet_1",
    "name": "激流塔",
-   "source": "v3/battle_jet_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_jet_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 12,
    "hp": 900,
    "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（7×3 格范围，朝向放置方向）。",
@@ -600,9 +600,9 @@
   {
    "id": "battle_rocket_1",
    "name": "重锤迫击炮",
-   "source": "v3/battle_rocket_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_rocket_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 13,
    "hp": 1400,
    "summary": "消耗大量充能向远处发射威力极大的炮弹，对落点范围内敌人造成高额物理伤害。",
@@ -654,9 +654,9 @@
   {
    "id": "battle_laser_1",
    "name": "射线塔",
-   "source": "v3/battle_laser_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_laser_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 14,
    "hp": 1000,
    "summary": "充能后向目标发射射线，造成高额电磁伤害。",
@@ -697,9 +697,9 @@
   {
    "id": "battle_laser_2",
    "name": "高能射线塔",
-   "source": "v3/battle_laser_2",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_laser_2",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 15,
    "hp": 1200,
    "summary": "充能后发射强力射线，优先锁定威胁更高的敌人，造成高额电磁伤害。",
@@ -741,9 +741,9 @@
   {
    "id": "battle_lightning_1",
    "name": "电涌塔",
-   "source": "v3/battle_lightning_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_lightning_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 16,
    "hp": 900,
    "summary": "释放电能攻击敌人，可弹射到附近敌人（至多 2 次），造成电磁伤害。",
@@ -789,9 +789,9 @@
   {
    "id": "battle_lightning_2",
    "name": "甲二型“电荷”",
-   "source": "v3/battle_lightning_2",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_lightning_2",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 17,
    "hp": 1100,
    "summary": "释放电能并弹射（至多 2 次），在敌人附近留下电球，持续造成电磁伤害。",
@@ -840,9 +840,9 @@
   {
    "id": "battle_shockwave_1",
    "name": "全向声波塔",
-   "source": "v3/battle_shockwave_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_shockwave_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 18,
    "hp": 900,
    "summary": "发射一道震荡波，使范围内的敌人晕眩。",
@@ -877,9 +877,9 @@
   {
    "id": "battle_medic_1",
    "name": "医疗塔",
-   "source": "v3/battle_medic_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_medic_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 19,
    "hp": 900,
    "summary": "把充能转化为治疗量，治疗周围受伤的玩家并修复友方防御塔（范围 6 格）。",
@@ -913,9 +913,9 @@
   {
    "id": "battle_trap_1",
    "name": "AF1“熔甲者”",
-   "source": "v3/battle_trap_1",
-   "version": "V3",
-   "tools": "v3/tools",
+   "source": "v5/battle_trap_1",
+   "version": "V5",
+   "tools": "v5/tools",
    "data": 20,
    "hp": 1000,
    "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（7×3 格范围，朝向放置方向）。",

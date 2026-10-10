@@ -1,6 +1,18 @@
 # Status — 2026-10-10
 
-## Current delivery: 0.4.2 (chamfers, round 6-7)
+## Current delivery: 0.4.3 (V5 models, rounds 8-10)
+
+- All 19 towers use the V5 authored models (endfield-turret-model/v5): every bevel strip, cone, polygon and
+  stripe cube is clipped to its part's shape, so no cube corner sticks out (V3 had 59-721 per tower, up to
+  1.19 px); drum bases rebuilt from the original as one solid cut by the logo plane; trap nozzle is one cone.
+- Builder: per-tower metadata in local/tower-meta/<id>.json (geo and atlas hashes), so subsets build in
+  parallel and `--runtime-only` assembles towers.json (one process for all 19 takes about 3 h).
+- Verified in an isolated runtime of the user's build: see-through slits (rest, two-sided) 1,995 -> 2,026,
+  triangles 715k -> 1,162k, frame time not slower (hotbar 1.24 -> 1.15 ms, 30 towers 1.18 -> 1.16 ms),
+  all 19 load and draw. Not played in the user's real game.
+- Numbers: docs/TOWERS.md.
+
+## Previous delivery: 0.4.2 (chamfers, round 6-7)
 
 - All 19 towers use the V3 authored models (endfield-turret-model/v3): 45-degree chamfers on exposed long edges,
   slopes instead of steps, no needle tips; shapes, sizes, colours and bones unchanged.

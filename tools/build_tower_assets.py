@@ -1,6 +1,8 @@
 """Authored Endfield cube towers -> Survivalcraft runtime assets.
 
 python tools/build_tower_assets.py [ids...] [--runtime-only]   (default: every tower in tools/towers.json)
+Each built tower also leaves local/tower-meta/<id>.json, so towers can be built in subsets or parallel jobs and a
+final --runtime-only run assembles towers.json from them (used when they still match the source geo and atlas).
 
 For each tower: one glTF binary with a node per rigid part (base / yaw / pitch / animated
 sub-parts), the authored pixel atlas, and Mod/Assets/Towers/towers.json metadata (pivots,
@@ -32,6 +34,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 AUTHOR = Path('E:/projects/endfield-turret-model')
 OUT = ROOT / 'Mod/Assets/Towers'
+META = ROOT / 'local/tower-meta'                 # per-tower build metadata (ignored)
 SPEC = json.loads((ROOT / 'tools/towers.json').read_text(encoding='utf-8'))
 EPS_COVER = 1e-5      # m: probe plane in front of a face (smaller than the 6e-6..5e-4 m stacking gaps? see tie)
 EPS_TIE = 1e-5        # m: faces closer than this are one plane; priority decides
@@ -491,6 +494,8 @@ def build(spec):
     meta['cells'] = [int(max(spec.get('minCells', [1, 1])[0], math.ceil(2 * half[0] - .05))), int(math.ceil(allc[:, 1].max() - .05)),
                      int(max(spec.get('minCells', [1, 1])[1], math.ceil(2 * half[1] - .05)))]
     print(tid, json.dumps(dict(stats=stats, clearance=meta['clearance']), ensure_ascii=False), f'{time.time() - t0:.1f}s', flush=True)
+    META.mkdir(parents=True, exist_ok=True)                  # per tower, so a subset build (or a parallel one) is reusable
+    (META / f'{tid}.json').write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding='utf-8')
     return meta
 
 # ------------------------------------------------------------------ motion clearance
@@ -586,6 +591,12 @@ def main(ids):
     metas = {}
     old = OUT / 'towers.generated.json'
     if old.exists(): metas = {m['id']: m for m in json.loads(old.read_text(encoding='utf-8'))['towers']}
+    for spec in SPEC['towers']:                    # per-tower metadata from earlier subset builds, if it matches the source now
+        p = META / f"{spec['id']}.json"
+        if not p.exists(): continue
+        m = json.loads(p.read_text(encoding='utf-8')); src = AUTHOR / spec['source']
+        geo = src / f"{spec['id']}_{spec['version']}.geo.json"; png = src / f"{spec['id']}_{spec['version']}.png"
+        if geo.exists() and m['source']['geoSha256'] == sha(geo) and m['source']['atlasSha256'] == sha(png): metas[spec['id']] = m
     if '--runtime-only' not in sys.argv:          # --runtime-only: regenerate towers.json from tools/towers.json + cached geometry
         for spec in towers: metas[spec['id']] = build(spec)
     OUT.mkdir(parents=True, exist_ok=True)

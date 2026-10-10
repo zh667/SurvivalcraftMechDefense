@@ -4,15 +4,15 @@
   {
    "id": "battle_turret_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_1\\battle_turret_1_V3.geo.json",
-    "geoSha256": "414ecd376359d726ce9d4c06e36200fd19032f45692ad670076b4e1bafb4ee5c",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_1\\battle_turret_1_V3.png",
-    "atlasSha256": "3a3c01440f14c359a179c9a553c3929c9366e3802821e936c490df965328e834"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_1\\battle_turret_1_V5.geo.json",
+    "geoSha256": "4a75a562015e520c0c0f8cfb662b6f71846a2ba133e904cf02107ceb80bf63f4",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_1\\battle_turret_1_V5.png",
+    "atlasSha256": "0a58e83af4545c31d73b0fb0539496811fc68232dac76456128eb63a843b92b0"
    },
-   "triangles": 21281,
-   "facesHidden": 5788,
-   "facesClipped": 3131,
-   "crossPartNudged": 0,
+   "triangles": 38840,
+   "facesHidden": 11873,
+   "facesClipped": 6323,
+   "crossPartNudged": 32,
    "clearance": {
     "pitch": [
      -60,
@@ -29,15 +29,15 @@
   {
    "id": "battle_turret_2",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_2\\battle_turret_2_V3.geo.json",
-    "geoSha256": "6c0382f7f1de9c50c7d8cab83b8915d2cf759300e8d16aa5be4d505538c41f50",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_2\\battle_turret_2_V3.png",
-    "atlasSha256": "10bb0eb07f755b6218c1c6a0ffa398bed0df2cc822817190f6e9caaca99f0c39"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_2\\battle_turret_2_V5.geo.json",
+    "geoSha256": "bb8d61a60b8bf2709b77e43959a5abf01b1344b4135a677a812ddbdef7de1e64",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_2\\battle_turret_2_V5.png",
+    "atlasSha256": "fd67af7b5f83a039dcd8cb6d5757a9ad29605f5eae546b91c21ac709a9a891c6"
    },
-   "triangles": 24845,
-   "facesHidden": 7195,
-   "facesClipped": 3614,
-   "crossPartNudged": 4,
+   "triangles": 48664,
+   "facesHidden": 18617,
+   "facesClipped": 7882,
+   "crossPartNudged": 36,
    "clearance": {
     "pitch": [
      -60,
@@ -54,15 +54,15 @@
   {
    "id": "battle_turret_3",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_3\\battle_turret_3_V3.geo.json",
-    "geoSha256": "3a7fb42f7f99ba9eb6684a81d360720ccf67c0d0ed8d3aff5c9e2808d757c237",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_turret_3\\battle_turret_3_V3.png",
-    "atlasSha256": "5d1953097a45d86ef16b3c585583f53a804b24a788d8ff6a5cff8ff4b71f9faa"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_3\\battle_turret_3_V5.geo.json",
+    "geoSha256": "e6d2f83a33799c2ef889c2c0890629b7818b07502fb402e9a72145007ab8d082",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_3\\battle_turret_3_V5.png",
+    "atlasSha256": "4f2ab70152cef9288dba0c887ecad04e85f173e2051785ae264da398347c2a6a"
    },
-   "triangles": 24445,
-   "facesHidden": 7016,
-   "facesClipped": 3490,
-   "crossPartNudged": 0,
+   "triangles": 47062,
+   "facesHidden": 18327,
+   "facesClipped": 7541,
+   "crossPartNudged": 32,
    "clearance": {
     "pitch": [
      -60,
@@ -79,14 +79,14 @@
   {
    "id": "battle_cannon_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_1\\battle_cannon_1_V3.geo.json",
-    "geoSha256": "d414f1f9f1df23923476fff69530894731b969abb844549f7fbc83417b7da726",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_1\\battle_cannon_1_V3.png",
-    "atlasSha256": "2dffd8d288a663a9767c65a755effd4e9f092a0c5a9c07741b53ef891220d343"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1\\battle_cannon_1_V5.geo.json",
+    "geoSha256": "4d3ce57aaf9c5a401ac143e1f1037f28ff90470055d911ccad175142e6ca134f",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1\\battle_cannon_1_V5.png",
+    "atlasSha256": "7e19dbcaf7dba9e58a95d0732fa41d92815a1f3e6c017d05a7b64e9b6b339ce2"
    },
-   "triangles": 24755,
-   "facesHidden": 5337,
-   "facesClipped": 3116,
+   "triangles": 41994,
+   "facesHidden": 16169,
+   "facesClipped": 6120,
    "crossPartNudged": 29,
    "clearance": {
     "pitch": [
@@ -103,14 +103,14 @@
   {
    "id": "battle_cannon_2",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_2\\battle_cannon_2_V3.geo.json",
-    "geoSha256": "5b765fd78a513c46cbfbc351a4baf3a6691192505658894007c1913fc9d573f9",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_2\\battle_cannon_2_V3.png",
-    "atlasSha256": "edfe2042d4bbe9d8a1a809f5cbbacf8c115e2847a3c82498a49b47d859d04993"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_2\\battle_cannon_2_V5.geo.json",
+    "geoSha256": "5c8f497c4c4ee2aa1a0be3e3b3bdd65252decea382e067998f401ce6bd6712b7",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_2\\battle_cannon_2_V5.png",
+    "atlasSha256": "a19752b717bda8d156cc54893d3aece2c12ffd11c45f1a13a3b6de5cdc5be955"
    },
-   "triangles": 37439,
-   "facesHidden": 9180,
-   "facesClipped": 5147,
+   "triangles": 57436,
+   "facesHidden": 18543,
+   "facesClipped": 8699,
    "crossPartNudged": 39,
    "clearance": {
     "pitch": [
@@ -127,15 +127,15 @@
   {
    "id": "battle_sniper_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_sniper_1\\battle_sniper_1_V3.geo.json",
-    "geoSha256": "8b56330840dfe652e9a338dbb28cf59101099d2ed4b3aeb583ee65f8306f0825",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_sniper_1\\battle_sniper_1_V3.png",
-    "atlasSha256": "7316f994f6870232bd376964f9c21039f4ecad4908206186355b2ee13cad1795"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_sniper_1\\battle_sniper_1_V5.geo.json",
+    "geoSha256": "20980d588b9627fff6d372b0a97c5ebcca38518a7a882a67ea103e8289c2607b",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_sniper_1\\battle_sniper_1_V5.png",
+    "atlasSha256": "efbe702dbd11185fed4029e1020d8e5a41472a62434223cf858af1b82c84dfb6"
    },
-   "triangles": 34208,
-   "facesHidden": 8214,
-   "facesClipped": 5084,
-   "crossPartNudged": 6,
+   "triangles": 44783,
+   "facesHidden": 11992,
+   "facesClipped": 6946,
+   "crossPartNudged": 58,
    "clearance": {
     "pitch": [
      -60,
@@ -151,15 +151,15 @@
   {
    "id": "battle_cannon_1_dg002",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V3.geo.json",
-    "geoSha256": "697a7a29275e6da67648babdeaafbf101b3c51529a7b992c6dcc668e55bf1c88",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V3.png",
-    "atlasSha256": "b6243e3009ed0af0d5eafc9a36425121f653f7b8c9306568901be24e78a06adf"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V5.geo.json",
+    "geoSha256": "bc2791825b23a7e4f53e43f485f7e06c0d590322d490c1f5eadcb7d526a7e38e",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V5.png",
+    "atlasSha256": "f801f7f28e5edce874cbe4778fa19800177e4273ddc5f21f977eee8bc547def5"
    },
-   "triangles": 60506,
-   "facesHidden": 13141,
-   "facesClipped": 8796,
-   "crossPartNudged": 44,
+   "triangles": 70672,
+   "facesHidden": 15139,
+   "facesClipped": 10384,
+   "crossPartNudged": 12,
    "clearance": {
     "yaw_collisions": 0,
     "yaw_worst": [],
@@ -169,15 +169,15 @@
   {
    "id": "battle_debuff_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_debuff_1\\battle_debuff_1_V3.geo.json",
-    "geoSha256": "c1a482868416620927e426edc4ac1de6d7a1985c336f5b29a9b1b6b7e6de1d89",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_debuff_1\\battle_debuff_1_V3.png",
-    "atlasSha256": "20069fac6280134c3456e248fa65c0918c56adfae82245ef67b5d644239d934e"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_debuff_1\\battle_debuff_1_V5.geo.json",
+    "geoSha256": "bbc9017768feabc79a8ccb1a8871f11b21e07cd124ddd9492384cb67305cffb0",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_debuff_1\\battle_debuff_1_V5.png",
+    "atlasSha256": "3d8edab99fc61b72b7f44467da9156feec765376fb821ad93e682426c6b095af"
    },
-   "triangles": 38008,
-   "facesHidden": 11210,
-   "facesClipped": 5946,
-   "crossPartNudged": 28,
+   "triangles": 55650,
+   "facesHidden": 18393,
+   "facesClipped": 8957,
+   "crossPartNudged": 29,
    "clearance": {
     "pitch": [
      -60,
@@ -185,22 +185,24 @@
     ],
     "pitch_up_blocked_by": [],
     "pitch_down_blocked_by": [],
-    "yaw_collisions": 0,
-    "yaw_worst": []
+    "yaw_collisions": 3916,
+    "yaw_worst": [
+     "drum x base ring lip: 1.3 cm"
+    ]
    }
   },
   {
    "id": "battle_fog_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_fog_1\\battle_fog_1_V3.geo.json",
-    "geoSha256": "15da7d4a7673206754b3a0c239c2cb187c65f91a705d8df58f8709d2016d912b",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_fog_1\\battle_fog_1_V3.png",
-    "atlasSha256": "f6f9518c4f0c008cf42d9e3614c9e30d4f09c395aca67771f796cbd00a6bd50d"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_fog_1\\battle_fog_1_V5.geo.json",
+    "geoSha256": "ea21a8270feaa930aa2bb8496c54b16492946e707dbc59fb2e6ed3f38108ffe4",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_fog_1\\battle_fog_1_V5.png",
+    "atlasSha256": "9a1c254e4e12186840c2b6f13f4317ac94b637ffbe709aed2ca6697ea0cb2d88"
    },
-   "triangles": 39708,
-   "facesHidden": 11039,
-   "facesClipped": 6119,
-   "crossPartNudged": 28,
+   "triangles": 57689,
+   "facesHidden": 18157,
+   "facesClipped": 9199,
+   "crossPartNudged": 29,
    "clearance": {
     "pitch": [
      -60,
@@ -210,22 +212,24 @@
      "hose fitting x pillar plate: 1.3 cm"
     ],
     "pitch_down_blocked_by": [],
-    "yaw_collisions": 0,
-    "yaw_worst": []
+    "yaw_collisions": 3916,
+    "yaw_worst": [
+     "drum x base ring lip: 1.3 cm"
+    ]
    }
   },
   {
    "id": "battle_frost_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_frost_1\\battle_frost_1_V3.geo.json",
-    "geoSha256": "1349de965443d75f5d8aad471e4cec632169a72c40218ea2abae428263c8bf83",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_frost_1\\battle_frost_1_V3.png",
-    "atlasSha256": "3f084d8e7dbaa63bac057f8a13bde940b2b4ec3738b4adac3908f3bfc7864516"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_frost_1\\battle_frost_1_V5.geo.json",
+    "geoSha256": "471363544d8a3541cc22e22569791c431d4e51c73e16b9c3fba79deac5f8bc56",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_frost_1\\battle_frost_1_V5.png",
+    "atlasSha256": "fccd7f9a2fb389531863d47e68c08be79473827820de233194c7c9df0d9e1b30"
    },
-   "triangles": 27516,
-   "facesHidden": 8088,
-   "facesClipped": 4252,
-   "crossPartNudged": 0,
+   "triangles": 41800,
+   "facesHidden": 13901,
+   "facesClipped": 6859,
+   "crossPartNudged": 6,
    "clearance": {
     "pitch": [
      -60,
@@ -240,14 +244,14 @@
   {
    "id": "battle_jet_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_jet_1\\battle_jet_1_V3.geo.json",
-    "geoSha256": "0361e9cba7a0eeb146641c4bf7c6af88392b575ddc880bfe6446d38e5ce2ca0b",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_jet_1\\battle_jet_1_V3.png",
-    "atlasSha256": "cf12084e1cfd65cf40773691e705fffc4586d72996d6409cc1264b1d5ad806fb"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_jet_1\\battle_jet_1_V5.geo.json",
+    "geoSha256": "1de532e1ed36360247505bd75c8e289eaf17b70228e35efd3cc70fcd7d003988",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_jet_1\\battle_jet_1_V5.png",
+    "atlasSha256": "927b54a548e4c066cb587b4a9b856941d8fd84bc1f82ca03380f0cdeac31a2cc"
    },
-   "triangles": 23660,
-   "facesHidden": 7646,
-   "facesClipped": 3546,
+   "triangles": 29579,
+   "facesHidden": 9997,
+   "facesClipped": 4610,
    "crossPartNudged": 0,
    "clearance": {
     "pitch": [
@@ -261,14 +265,14 @@
   {
    "id": "battle_rocket_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_rocket_1\\battle_rocket_1_V3.geo.json",
-    "geoSha256": "7c76a5a7e539b64cffcf017343754742e25aee5845fa998da152cf1b9cc8e755",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_rocket_1\\battle_rocket_1_V3.png",
-    "atlasSha256": "76077e803a546908f30652d5edc83c815230015ace90ddd81681773da0b7025f"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_rocket_1\\battle_rocket_1_V5.geo.json",
+    "geoSha256": "101e48b8a4374afa5d70c738aa682459c5526dded70a172b4a934002d7513db9",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_rocket_1\\battle_rocket_1_V5.png",
+    "atlasSha256": "0620b45d9d470aae55d34c813a62cbe64537225ada97da3533d9a535d6707bac"
    },
-   "triangles": 101289,
-   "facesHidden": 20041,
-   "facesClipped": 15005,
+   "triangles": 142608,
+   "facesHidden": 43301,
+   "facesClipped": 22185,
    "crossPartNudged": 0,
    "clearance": {
     "yaw_collisions": 0,
@@ -278,98 +282,98 @@
   {
    "id": "battle_laser_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_laser_1\\battle_laser_1_V3.geo.json",
-    "geoSha256": "a6bfc593ed23c53ef29e7f1d4a715aa7d44bef35435b4bf73519f5f3dc158dee",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_laser_1\\battle_laser_1_V3.png",
-    "atlasSha256": "75d36dda84820a6706838e4f45cff510a36457dbf574b64fedf65dc089df53a9"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_1\\battle_laser_1_V5.geo.json",
+    "geoSha256": "81ffc988541b612495334d969801abad927757989beeaa79fd7fccea2ae92ab0",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_1\\battle_laser_1_V5.png",
+    "atlasSha256": "28595a33cd25274fc56e5e70714f4b6a048d1b4a2cea75b63a95b0abf0894259"
    },
-   "triangles": 33830,
-   "facesHidden": 7348,
-   "facesClipped": 4635,
+   "triangles": 70162,
+   "facesHidden": 20024,
+   "facesClipped": 10672,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_laser_2",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_laser_2\\battle_laser_2_V3.geo.json",
-    "geoSha256": "be2599af4722e125be6a619f8c92e433759d362700eac495ee72e7fc872536d9",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_laser_2\\battle_laser_2_V3.png",
-    "atlasSha256": "a8783c3c5bb752515fc11353146b1d19ae1a7b666e9a1fc7b6589488d545284b"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_2\\battle_laser_2_V5.geo.json",
+    "geoSha256": "7d6a247d7f1025c2daade299db7e032fe10e772ab5382b5e93ec13984fba445a",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_2\\battle_laser_2_V5.png",
+    "atlasSha256": "60252a8b8d7ddee60afe7c2078d40165633b59afd63b5702a7dd8226e7dd2ac3"
    },
-   "triangles": 43630,
-   "facesHidden": 7892,
-   "facesClipped": 6083,
+   "triangles": 80111,
+   "facesHidden": 23292,
+   "facesClipped": 11891,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_lightning_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_lightning_1\\battle_lightning_1_V3.geo.json",
-    "geoSha256": "10fc6440eb43ea38938143e246dbeab2637650da175b179180ea4bbfad1c39d0",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_lightning_1\\battle_lightning_1_V3.png",
-    "atlasSha256": "4a804064833d9d6fef45629d3175b323ddebe33003a3f62ae167c052b6b6bc26"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_1\\battle_lightning_1_V5.geo.json",
+    "geoSha256": "44bcfb32106131e6a4de11b1fb33588e18f6c90130e2fbeb9c64d2543660e304",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_1\\battle_lightning_1_V5.png",
+    "atlasSha256": "12af9a55d81bb666c2c64fba2ca9fcf1a9ad2d032030c8ae8823c8e31d940b82"
    },
-   "triangles": 34030,
-   "facesHidden": 6569,
-   "facesClipped": 4986,
+   "triangles": 67959,
+   "facesHidden": 16698,
+   "facesClipped": 11139,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_lightning_2",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_lightning_2\\battle_lightning_2_V3.geo.json",
-    "geoSha256": "cb87d0d97407ab5b836bd6207b4bf17c9859633a00524c6c53fab7e1d4b629f2",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_lightning_2\\battle_lightning_2_V3.png",
-    "atlasSha256": "7967e8c15f7f82928e8f2f3fc55b50487b52767d73885353961c424b93a150b7"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_2\\battle_lightning_2_V5.geo.json",
+    "geoSha256": "15f0c3b0792b5a2c43aedb4673a07a8868566ad0b96995fa8da8c794b919cb72",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_2\\battle_lightning_2_V5.png",
+    "atlasSha256": "aadf849fac23bf3f2f8bfb56534572c8c7983c54a7e14191ae5ffe2598fdb909"
    },
-   "triangles": 64767,
-   "facesHidden": 13633,
-   "facesClipped": 9901,
+   "triangles": 95715,
+   "facesHidden": 24742,
+   "facesClipped": 15371,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_shockwave_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_shockwave_1\\battle_shockwave_1_V3.geo.json",
-    "geoSha256": "a6c482da5c9d1030119182ae94fa20ee36fc9c1639013c171caf30619cd461a7",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_shockwave_1\\battle_shockwave_1_V3.png",
-    "atlasSha256": "5e89b5310baebfad5cd321cb0553544672a4d1a36d2eaab131d933ded59ef9fc"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_shockwave_1\\battle_shockwave_1_V5.geo.json",
+    "geoSha256": "8eb7bca8cda1ee35667cd4275a797c9778d8130acb24866afc762eabdb724136",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_shockwave_1\\battle_shockwave_1_V5.png",
+    "atlasSha256": "6ed6b7cba34edb39e65a3ab5160a214cc762002550e9c746e87dd58991d7a8af"
    },
-   "triangles": 25996,
-   "facesHidden": 4713,
-   "facesClipped": 3339,
+   "triangles": 55088,
+   "facesHidden": 10180,
+   "facesClipped": 9014,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_medic_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_medic_1\\battle_medic_1_V3.geo.json",
-    "geoSha256": "8dc5f97e51cafe4b3f094402540057800a97ecaa2c3d9226fa9d16442e9b6390",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_medic_1\\battle_medic_1_V3.png",
-    "atlasSha256": "5202bb02612d87c559840b8849ee18c8a05e50bba0cc0313d07e8bb3c6378a75"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_medic_1\\battle_medic_1_V5.geo.json",
+    "geoSha256": "2e862a5793d6042e41adb1ae7634e67f80b9ea2dc1ca7a2fbf2b10fa072f2ee6",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_medic_1\\battle_medic_1_V5.png",
+    "atlasSha256": "36827bb9aa918986dc8a88afec51b9a1e8948a0f507218ed15a0509e9739f848"
    },
-   "triangles": 26227,
-   "facesHidden": 4769,
-   "facesClipped": 3740,
+   "triangles": 61594,
+   "facesHidden": 11163,
+   "facesClipped": 10581,
    "crossPartNudged": 0,
    "clearance": {}
   },
   {
    "id": "battle_trap_1",
    "source": {
-    "geo": "E:\\projects\\endfield-turret-model\\v3\\battle_trap_1\\battle_trap_1_V3.geo.json",
-    "geoSha256": "f08da4e62725cd430a7a486d1041ba9c89db8a8e812b997e3ce03e022a2d1237",
-    "atlas": "E:\\projects\\endfield-turret-model\\v3\\battle_trap_1\\battle_trap_1_V3.png",
-    "atlasSha256": "d2a6109f0199639f92afb882aa8c0a7737577c94bc739aa50dbd0501319aaae1"
+    "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_trap_1\\battle_trap_1_V5.geo.json",
+    "geoSha256": "ddb2aa5288485fea855591f4e084e04beca143e7734a428bfdc16326fd67f13c",
+    "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_trap_1\\battle_trap_1_V5.png",
+    "atlasSha256": "14e6264fda22ea79c2c45aaccbecb693d9726939d9183af48a3560550fb12bd6"
    },
-   "triangles": 28817,
-   "facesHidden": 6714,
-   "facesClipped": 4830,
+   "triangles": 54835,
+   "facesHidden": 13485,
+   "facesClipped": 8948,
    "crossPartNudged": 0,
    "clearance": {}
   }

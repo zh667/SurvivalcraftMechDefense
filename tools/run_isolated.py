@@ -2,6 +2,8 @@
 
 python tools/run_isolated.py lab  [--mode all|gallery|fire|perf] [--package dist/MechDefense-x.scmod] [--limit 1500]
 python tools/run_isolated.py perf --package dist/MechDefense-0.3.1.scmod --label old
+python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod --label migration   (old-save migration:
+python tools/run_isolated.py smoke --mode new --label migration                                           same runtime, both steps)
 Runtime: local/runtime-<name>; the original game installation and the user's worlds are never touched.
 """
 import argparse, glob, json, os, shutil, subprocess, sys, time, zipfile
@@ -9,7 +11,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 # The user's own game build (binaries and Content.zip only; its Mods, worlds and settings are not copied).
 SOURCE = Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1')
-TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json')}
+# The user's Neorxna info mod (exercises the optional compatibility patch). Builds for API 1.9.4 do not run on this 1.9.3.1
+# runtime (2026-10-11: v1.4.3 throws MissingMethodException at start and the lab never reaches the main menu).
+NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods')]
+TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json'), 'smoke': ('RuntimeSmoke', 'smoke-result.json')}
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('test', choices=TESTS); ap.add_argument('--mode', default='all')
@@ -25,14 +30,19 @@ def main():
     if p.returncode: print(p.stdout[-3000:]); sys.exit('test build failed')
     for f in mods.iterdir(): f.unlink()
     shutil.copy2(ROOT / package if not package.is_absolute() else package, mods / 'MechDefense.scmod')
-    if a.test == 'lab':      # a copy of the user's Neorxna info mod, to exercise the optional compatibility patch
-        for f in (SOURCE / 'Mods').glob('*Neorxna-v1.4*.scmod'): shutil.copy2(f, mods / 'Neorxna.scmod'); break
+    if a.test == 'lab':
+        found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if '[API1.9.4' not in f.name]
+        if found: shutil.copy2(found[0], mods / 'Neorxna.scmod')
+        print('neorxna:', found[0] if found else 'none')
     deps = {info['PackageName']: info['Version']} if a.test == 'lab' else {}
     with zipfile.ZipFile(mods / f'{project}.scmod', 'w') as z:
         z.write(ROOT / f'Tests/{project}/bin/Release/net10.0/{project}.dll', f'{project}.dll')
         z.writestr('modinfo.json', json.dumps(dict(Name=project, Version='1.0.0', ApiVersion='1.9.3.1', ScVersion='2.4', PackageName='local.' + project.lower(),
                                                    Author='Tests', Description='Isolated tests only', LoadOrder=1300, Dependencies=deps)))
-    (runtime / 'lab-mode.txt').write_text(a.mode, encoding='ascii')
+    (runtime / ('smoke-mode.txt' if a.test == 'smoke' else 'lab-mode.txt')).write_text(a.mode, encoding='ascii')
+    if a.test == 'smoke' and a.mode == 'old':   # a fresh old world (worlds live in <runtime>/doc/Worlds, inside local/)
+        worlds = runtime / 'doc' / 'Worlds'; assert ROOT / 'local' in worlds.parents
+        if worlds.exists(): shutil.rmtree(worlds)
     res = runtime / result_name
     if res.exists(): res.unlink()
     shots = runtime / 'ScreenCapture'

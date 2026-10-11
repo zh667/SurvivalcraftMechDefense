@@ -2,7 +2,8 @@
 
 19 种终末地防御塔，全部用 `E:/projects/endfield-turret-model` 的自制方块模型和自绘原色贴图
 （0.4.3 起 19 种都用 `v5/`：0.4.2 `v3/` 的倒角、圆角、斜面过渡，方块都裁到形状里，不再凸出小刺）。原始游戏模型、贴图、特效不进包；
-音效是终末地原始音频（Wwise 事件混成 OGG）。旧存档里的机甲、敌兵保留。
+音效是终末地原始音频（Wwise 事件混成 OGG）。游戏里显示的名称和说明不写“终末地”（用户要求，0.6.0）。
+0.6.0 移除了《毁灭枪手Σ》机甲和敌兵（模板留着只为旧存档能载入，载入时自动移除）。
 
 ## 0.4.0 相对 0.3.1 改了什么，为什么
 
@@ -137,6 +138,15 @@
 - 19 种全部加载、显示，画面无报错；帧时间两次测量：只放快捷栏 1.34 / 1.07 ms（0.4.3 同次 1.15 / 1.24），视野里 30 座塔 1.10 / 1.15 ms（0.4.3 1.18 / 1.31），差别在测量波动之内。
 - 没有验证：在你装了其他模组的正式游戏里实际合成、游玩；多人联机。
 
+## 0.6.0：去掉毁灭枪手机甲、敌兵，显示名称不写“终末地”（2026-10-11）
+
+- 塔的模型、贴图、特效、数值都没动（资源和 0.5.0 逐字节相同）；只去掉了机甲、敌兵的代码和资源，改了模组名、物品默认名和说明、
+  Neorxna 信息面板的副标题。旧存档：机甲、敌兵载入时自动移除，骑在机甲上的玩家就地放下；旧部署物品显示“已移除的旧单位”。
+- 验证（隔离运行时）：旧存档迁移 16/16、lab all + special 全部通过（数字见 docs/STATUS.md）；帧时间同场景两轮交替：只放快捷栏
+  1.05 / 1.21 ms（0.5.0 1.05 / 1.22），视野里 30 座塔 1.14 / 1.27 ms（0.5.0 1.18 / 1.22），没有变化。
+- 实验室的靶子从敌兵换成钉住不动、抗性极高的狼，体积小得多：射击测试里有几种塔“命中靶子”记为否（子弹打在旁边），
+  这是靶子变了，不是塔变了；旧存档迁移测试里铳械塔在 8 m 外打伤了正常的狼。
+
 ## 结构
 
 - `tools/towers.json`：每种塔的来源、可动部件（按方块标签切出炮管等）、玩法参数、特效颜色、音效。
@@ -145,7 +155,7 @@
   `Mod/Assets/Towers/towers.json`（骨骼、炮口、俯仰范围、占地）。隐藏面处理和碰撞检查都在这里。
 - `tools/check_tower_gaps.py`：透光缝检查。在 GPU 上把每种塔按静止、偏航 45°、俯仰两端摆好，从 86 个方向各画一张
   1024 像素的图（单面、双面各一遍），数被模型围住、宽度不超过约 4 像素（约 1.5 cm）的背景像素块，即能透过去看见天空的缝和针孔。
-- `tools/make_fx_atlas.py`：特效像素图集 `Towers/fx.png`。物品图标网格 `Towers/<id>/icon.bin` 由 build_tower_assets.py 一起导出；旧机甲/敌兵的用 `tools/build_legacy_icons.py`。
+- `tools/make_fx_atlas.py`：特效像素图集 `Towers/fx.png`。物品图标网格 `Towers/<id>/icon.bin` 由 build_tower_assets.py 一起导出。
 - `tools/extract_tower_audio.py`：其余 16 种塔的终末地原始音效（技能数据里的事件名 + 约定事件名，只保留银行里真实存在的）。
 - `Mod/MDTowers.cs`：定义加载、骨骼姿态、`ComponentMDTowerModel`（游戏原生模型组件，按瞄准和后坐设置骨骼）。
 - `Mod/MDTowerBrain.cs`：索敌、瞄准、各攻击方式。`Mod/MDTowerFx.cs`：特效、炮弹、持续区域、减速/眩晕/破甲。
@@ -156,7 +166,6 @@
 python tools/build_tower_assets.py [ids]      # V5 一个进程约 3 小时：分几组并行（每组给一串 id），再跑一次 --runtime-only 汇总
                                               # （每座的元数据在 local/tower-meta/；MD_TRACE=1 另出三角形→源方块对照）
 python tools/make_fx_atlas.py
-python tools/build_legacy_icons.py
 python tools/extract_tower_audio.py           # 读取已安装的终末地（只读）
 python tools/prepare_database.py
 python tools/check_tower_gaps.py              # 透光缝；--package dist/X.scmod 查旧包
@@ -165,6 +174,8 @@ python tools/package.py                       # -> dist/MechDefense-<版本>.scm
 python tools/run_isolated.py lab --mode all   # 隔离运行时：截图 + 帧时间，结果 local/runtime-lab
 python tools/run_isolated.py lab --mode special   # 配方解析、手持截图、特殊效果（真狼）、序章炮塔俯仰与弹道
 python tools/run_isolated.py perf --package dist/MechDefense-0.3.1.scmod --label old   # 同场景性能对比
+python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod --label migration   # 旧存档迁移：
+python tools/run_isolated.py smoke --mode new --label migration                                           # 先用旧包建档，再用新包载入检查
 ```
 
 隔离运行时在 `local/runtime-*`，不碰正式游戏目录和存档。

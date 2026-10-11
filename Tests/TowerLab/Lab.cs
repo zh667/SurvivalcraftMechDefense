@@ -46,6 +46,7 @@ public class Lab:ModLoader {
                 script=Run().GetEnumerator();stage=2;step=Time.RealTime;return;
             }
             if(stage==2) {
+                foreach(var d in dums)d.Track();
                 if(!script.MoveNext()){Save(true);Window.Frame-=Frame;Window.Close();}
             }
         } catch(Exception e){Save(false,e.ToString());Window.Frame-=Frame;Window.Close();}
@@ -57,10 +58,22 @@ public class Lab:ModLoader {
         var rot=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);body.FixAt(at,rot);
         var u=e.FindComponent<ComponentMDUnit>(true);u.Yaw=u.AimYaw=yaw;e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;GameManager.Project.AddEntity(e);return u;
     }
-    static ComponentMDUnit Dummy(Vector3 at) {
-        var e=DatabaseManager.CreateEntity(GameManager.Project,"MDEnemy",true);var u=e.FindComponent<ComponentMDUnit>();u.Body.Position=at;u.Cooldown=1e6f;
-        u.Damage.AttackResilience=1e7f;e.FindComponent<ComponentSpawn>().SpawnDuration=0;GameManager.Project.AddEntity(e);return u;
+    // Target dummy: a wolf (a land predator, which the towers attack) that cannot move and barely takes damage. Before 0.6.0
+    // this was the Destroy Gunners enemy unit, removed from the mod. Creatures heal over time, so a hit is read from the lowest
+    // health seen (Track runs every frame).
+    sealed class Dum {
+        public ComponentCreature C;public float Min=1;
+        public ComponentBody Body=>C.ComponentBody;public GameEntitySystem.Entity Entity=>C.Entity;public bool Hit=>Min<1;
+        public void Track(){if(C.Entity.IsAddedToProject)Min=Math.Min(Min,C.ComponentHealth.Health);}
     }
+    static readonly List<Dum> dums=[];
+    static Dum Dummy(Vector3 at) {
+        var e=DatabaseManager.CreateEntity(GameManager.Project,"Wolf",true);e.FindComponent<ComponentBody>(true).Position=at;e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;
+        GameManager.Project.AddEntity(e);var c=e.FindComponent<ComponentCreature>(true);c.ComponentHealth.AttackResilience=1e7f;
+        var l=c.ComponentLocomotion;l.WalkSpeed=l.JumpSpeed=l.SwimSpeed=l.FlySpeed=0;
+        var d=new Dum{C=c};dums.Add(d);return d;
+    }
+    static void Remove(IEnumerable<Dum> ds){foreach(var d in ds.ToList()){dums.Remove(d);if(d.Entity.IsAddedToProject)GameManager.Project.RemoveEntity(d.Entity,true);}}
     static void Clear(int x0,int x1,int z0,int z1) {
         var t=GameManager.Project.FindSubsystem<SubsystemTerrain>();
         for(int x=x0;x<x1;x++)for(int z=z0;z<z1;z++)for(int y=60;y<90;y++)t.ChangeCell(x,y,z,y<70?(y==69?2:1):0);
@@ -233,7 +246,7 @@ public class Lab:ModLoader {
                 foreach(var c in GameManager.Project.FindSubsystem<SubsystemCreatureSpawn>(true).Creatures.ToList())   // wild animals spawn in the lab world;
                     if(c is not ComponentPlayer&&Vector3.Distance(c.ComponentBody.Position,T)<70)GameManager.Project.RemoveEntity(c.Entity,true);   // the gun must shoot the dummy
                 var spot=T+new Vector3(0,0,-dist);var target=Dummy(spot);while(Wait(.3))yield return true;
-                void Pin(){target.Body.Position=spot;target.Body.Velocity=Vector3.Zero;}   // the dummy unit walks; keep it on its mark
+                void Pin(){target.Body.Position=spot;target.Body.Velocity=Vector3.Zero;}   // keep the dummy on its mark (shots push it)
                 u.Cooldown=0;int shots=u.ShotCount;double start=Time.RealTime;
                 while(u.ShotCount==shots&&Time.RealTime-start<8){Pin();Cam(T+new Vector3(10,4,-5),T+new Vector3(0,3,-5));yield return true;}
                 u.Cooldown=1e6f;bool onDummy=u.Target==target.Body;
@@ -242,7 +255,7 @@ public class Lab:ModLoader {
                 Shot($"a_dg002_{(int)dist}_fire");
                 double t1=Time.RealTime;int imp=w.Impacts;bool flight=false;
                 while(Time.RealTime-t1<5&&w.Impacts==imp){Pin();if(!flight&&Time.RealTime-t1>.35){Shot($"a_dg002_{(int)dist}_flight");flight=true;}Cam(T+new Vector3(16,5,-dist*.5f),T+new Vector3(0,3,-dist*.5f));yield return true;}
-                art.Add($"target {dist} m: barrel {MathUtils.RadToDeg(u.TowerPitch):F1} deg, shell {MathUtils.RadToDeg(MathF.Asin(Vector3.Normalize(lv).Y)):F1} deg at {lv.Length():F1} m/s, shell vs barrel {off:F2} deg, fired after {Time.RealTime-start:F1} s, aimed at the dummy {onDummy}, landed {w.Impacts>imp}, dummy hit {target.Damage.Hitpoints<1}");
+                art.Add($"target {dist} m: barrel {MathUtils.RadToDeg(u.TowerPitch):F1} deg, shell {MathUtils.RadToDeg(MathF.Asin(Vector3.Normalize(lv).Y)):F1} deg at {lv.Length():F1} m/s, shell vs barrel {off:F2} deg, fired after {Time.RealTime-start:F1} s, aimed at the dummy {onDummy}, landed {w.Impacts>imp}, dummy hit {target.Hit}");
                 Remove([target]);while(Wait(.5))yield return true;
             }
             // the cradle at both ends of its range: pistons and the centre strut must follow without gaps or clipping
@@ -289,9 +302,9 @@ public class Lab:ModLoader {
                     while(Time.RealTime-start<dt){Cam(eye,focus);yield return true;}
                     Shot($"x_{d.id}_{k++}");yield return true;
                 }
-                fxlog[d.id]=new{fired=u.ShotCount-shots,impacts=w.Impacts-impacts,targetDamaged=target!=null&&target.Damage.Hitpoints<1,particles=w.Particles,
+                fxlog[d.id]=new{fired=u.ShotCount-shots,impacts=w.Impacts-impacts,targetDamaged=target!=null&&target.Hit,particles=w.Particles,
                     healed=a.type=="heal"?player.ComponentPlayer.ComponentHealth.Health:0f};
-                Remove(target==null?new[]{u}:new[]{u,target});player.ComponentPlayer.ComponentBody.Position=Home;
+                Remove([u]);if(target!=null)Remove([target]);player.ComponentPlayer.ComponentBody.Position=Home;
                 while(Wait(.6))yield return true;
             }
             results["fx"]=fxlog;
@@ -345,7 +358,7 @@ public class Lab:ModLoader {
                     while(Time.RealTime-start<dt){Cam(lastEye,lastFocus);yield return true;}
                     Shot($"x_{id}_{k++}");yield return true;
                 }
-                shotsLog[id]=new{fired=u.ShotCount-shots,impacts=w.Impacts-impacts,targetHit=target.Damage.Hitpoints<1,particles=w.Particles,
+                shotsLog[id]=new{fired=u.ShotCount-shots,impacts=w.Impacts-impacts,targetHit=target.Hit,particles=w.Particles,
                     healed=a.type=="heal"?player.ComponentPlayer.ComponentHealth.Health:0f};
                 Remove([target]);player.ComponentPlayer.ComponentBody.Position=Home;
                 while(Wait(.4))yield return true;
@@ -372,7 +385,7 @@ public class Lab:ModLoader {
             while(Wait(1))yield return true;
             foreach(var x in Measure("rows76_idle",4,eye,focus))yield return x;
             // enemies in front of everything, all towers firing
-            var dummies=new List<ComponentMDUnit>();
+            var dummies=new List<Dum>();
             for(int i=0;i<towers.Count;i++)dummies.Add(Dummy(Slot(i)+new Vector3(2.7f,0,-4)));
             foreach(var o in placed)o.unit.Cooldown=0;foreach(var o in extra)o.Cooldown=0;
             while(Wait(2))yield return true;

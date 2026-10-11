@@ -2,6 +2,8 @@
 
 Towers come from Mod/Assets/Towers/towers.json (tools/build_tower_assets.py). The first three gun
 towers keep their 0.3.x template names (MDTurret, MDTurret2, MDTurret3) so existing saves load.
+MDMech/MDEnemy (Destroy Gunners sample units, removed in 0.6.0) keep their templates unchanged for the same reason:
+ComponentMDUnit removes such entities when an old world loads.
 """
 from pathlib import Path
 import json,uuid,xml.etree.ElementTree as X
@@ -16,7 +18,7 @@ def entity(key,name):
         node=X.SubElement(e,'MemberComponentTemplate',Name=cname,Guid=guid(key+'/'+cname),InheritanceParent=parents[cname])
         for k,typ,value in values:X.SubElement(node,'Parameter',Name=k,Type=typ,Value=str(value),Guid=guid(key+'/'+cname+'/'+k))
     return comp
-# legacy Destroy Gunners sample units (old worlds)
+# removed Destroy Gunners sample units: templates kept unchanged only so that old worlds load (see docstring)
 for kind,size,mass,hp in [('Mech','2.4,4.8,2.4',3000,1500),('Enemy','1.6,3.2,1.6',700,260)]:
     comp=entity(kind,'MD'+kind)
     comp('Unit',[('Class','string','Game.ComponentMDUnit'),('LoadOrder','int',100),('Kind','string',kind),('TurretVariant','int',1),('TowerId','string','')])

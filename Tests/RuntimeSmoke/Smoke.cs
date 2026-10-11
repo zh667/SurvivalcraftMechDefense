@@ -2,97 +2,119 @@ using Engine;
 using Game;
 using GameEntitySystem;
 using System.Text.Json;
-using HarmonyLib;
 
 namespace MechDefenseVerification;
 
-// Installed only into local/runtime by tools/run_smoke.ps1, never shipped in the mod.
+// Old-save migration test (0.6.0 removed the Destroy Gunners mech and enemy). Installed only into an isolated runtime by
+// tools/run_isolated.py smoke, never shipped. Mode in smoke-mode.txt next to the exe:
+//   "old": run with an older package (0.5.0). Builds the world "MDMigration": a gun tower, a mech with the player riding
+//          it, an enemy, and mech / enemy / frost tower deployment items in the inventory; saves and quits.
+//   "new": run with the current package in the same runtime. Loads that world and checks that the mech and enemy are gone,
+//          the player is off the mech and unhurt, the old items read as removed and cannot deploy, a tower still deploys
+//          and the old tower still shoots a wolf; saves, reloads and checks again.
+// Code that touches members only the current mod has (Legacy, RemovedNote) stays out of the "old" path's methods.
 public class Smoke : ModLoader {
-    static int stage;static double began,step;static WorldInfo world;static PlayerData data;
-    static ComponentMDUnit mech,turret,enemy;static float enemyHp;static Vector3 original,mechStart,enemyStart;static readonly List<string> checks=[];
-    public static bool Drive;public static bool Shooting;public static int Shots,EnemyShots,FireEvents;
-    public override void __ModInitialize(){new Harmony("local.mechdefense.smoke").PatchAll(typeof(Smoke).Assembly);SettingsManager.FileAssociationEnabled=false;}
+    const string WorldName="MDMigration";
+    static int stage;static double began,step;static WorldInfo world;static PlayerData data;static string mode="new";
+    static Vector3 origin;static ComponentCreature wolf;static float wolfMin=1;static int towerShots;
+    static readonly List<string> checks=[];
+    public override void __ModInitialize(){SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
     static string Output=>Path.Combine(AppContext.BaseDirectory,"smoke-result.json");
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
-    static void Check(bool ok,string description){if(!ok)throw new Exception(description);checks.Add(description);File.WriteAllText(Path.Combine(AppContext.BaseDirectory,"smoke-progress.json"),JsonSerializer.Serialize(new{stage,checks}));}
-    static ComponentMDUnit Spawn(string kind,Vector3 pos) {var e=DatabaseManager.CreateEntity(GameManager.Project,"MD"+kind,true);var u=e.FindComponent<ComponentMDUnit>(true);u.Body.Position=pos;e.FindComponent<ComponentSpawn>().SpawnDuration=0;GameManager.Project.AddEntity(e);return u;}
+    static void Check(bool ok,string description){if(!ok)throw new Exception("FAILED: "+description);checks.Add(description);}
+    static ContainerWidget Games=>ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
+    static int Deploy(int data)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,data);
+    static ComponentMDUnit[] Units()=>GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null).ToArray();
+    static void Finish(object result){File.WriteAllText(Output,JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));Window.Frame-=Frame;Window.Close();}
     static void Frame() {
         try {
-            if(Time.RealTime-began>150)throw new TimeoutException("Stage "+stage);
-            if(stage==0) {
-                if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
-                SettingsManager.VisibilityRange=64;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;
-                world=WorldsManager.CreateWorld(new WorldSettings{Name="MechDefense_Automated",Seed="42",GameMode=GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
-                var widget=ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");GameManager.LoadProject(world,widget);
-                data=new PlayerData(GameManager.Project){Name="Test pilot",SpawnPosition=new(100,65,100),InputDevice=WidgetInputDevice.None};GameManager.Project.FindSubsystem<SubsystemPlayers>(true).AddPlayerData(data);
-                ScreensManager.SwitchScreen("Game");stage=1;return;
-            }
-            if(stage==1) {
-                if(!data.IsReadyForPlaying)return;
-                var p=data.ComponentPlayer;original=new(Terrain.ToCell(p.ComponentBody.Position.X)+.5f,70.05f,Terrain.ToCell(p.ComponentBody.Position.Z)+.5f);
-                var platform=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
-                for(int x=(int)original.X-24;x<=(int)original.X+24;x++)for(int z=(int)original.Z-16;z<=(int)original.Z+34;z++)for(int y=68;y<80;y++)platform.ChangeCell(x,y,z,y<70?1:0);
-                p.ComponentBody.Position=original;
-                turret=Spawn("Turret",original+new Vector3(0,0,6));mech=Spawn("Mech",original+new Vector3(6,0,6));enemy=Spawn("Enemy",original+new Vector3(0,0,22));enemyStart=enemy.Body.Position;
-                enemy.Damage.AttackResilience=3000;enemyHp=enemy.Damage.Hitpoints;
-                foreach(var kind in new[]{"Mech","Enemy"})Check(MDAssets.Load(kind).indices.Length>100,"loaded mesh and texture "+kind);
-                Check(MDTowerLibrary.Get("battle_turret_1")?.muzzles.Length==2,"gun tower carries two fire sockets");
-                Check(MDCombat.Ammo(0).animation!=""&&MDCombat.Ammo(1).animation!=MDCombat.Ammo(0).animation&&MDCombat.Ammo(4).animation!="","five playable ammo profiles");
-                Check(MDCombat.ShotDuration("Mech",0)!=MDCombat.ShotDuration("Mech",4),"ammo effects have distinct timing");
-                Check(BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()].GetCreativeValues().Count()==3,"three creative deployment entries");
-                p.ComponentBody.Position=mech.Body.Position+new Vector3(2,0,0);
-                Check(MDPlayer.CanBoard(p,mech),"board within reach");p.ComponentRider.StartMounting(mech.Mount);
-                Check(mech.Driver==p&&p.ComponentBody.ParentBody==mech.Body,"player mounted an independent entity");
-                mechStart=mech.Body.Position;Drive=true;Shooting=true;
-                step=Time.RealTime;stage=2;return;
-            }
-            if(stage==2) {
-                if(Time.RealTime-step<3)return;
-                Drive=Shooting=false;Check(Vector3.Distance(mechStart,mech.Body.Position)>2,"actual mounted mech driving moves the body");Check(Shots>0&&FireEvents>0,"mounted cannon fires with event animation");
-                Check(Vector3.Distance(enemyStart,enemy.Body.Position)>.5f,"enemy advances toward a hostile target");Check(EnemyShots>0,"enemy fires at a hostile target");
-                Check(enemy.Damage.Hitpoints<enemyHp,"automatic turret attacks enemy in actual world");
-                Check(MDPlayer.Exit(data.ComponentPlayer,mech),"safe dismount succeeds");Check(mech.Entity.IsAddedToProject&&data.ComponentPlayer.ComponentBody.ParentBody==null,"mech remains after dismount");
-                Check(!MDCombat.IsEnemy(turret,mech.Body)&&!MDCombat.IsEnemy(turret,data.ComponentPlayer.ComponentBody),"turret excludes friendly mech and player");
-                enemy.Body.Position=turret.Body.Position+new Vector3(0,0,15);enemy.Damage.Hitpoints=1;enemy.Body.Velocity=Vector3.Zero;
-                mech.Body.Position=turret.Body.Position+new Vector3(0,0,7);
-                Check(!MDCombat.ClearShot(turret,enemy.Body),"friendly mech blocks line of fire");
-                mech.Body.Position=original+new Vector3(6,0,6);
-                var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
-                int wx=Terrain.ToCell(turret.Body.Position.X),wz=Terrain.ToCell(turret.Body.Position.Z+7),wy=Terrain.ToCell(turret.Body.Position.Y);
-                for(int x=wx-1;x<=wx+1;x++)for(int y=wy;y<wy+5;y++)terrain.ChangeCell(x,y,wz,1);
-                Check(!MDCombat.ClearShot(turret,enemy.Body),"solid wall blocks line of fire");
-                for(int x=wx-1;x<=wx+1;x++)for(int y=wy;y<wy+5;y++)terrain.ChangeCell(x,y,wz,0);
-                mech.Damage.Hitpoints=.73f;mech.AimYaw=.43f;mech.AmmoType=2;GameManager.SaveProject(true,false);
-                var widget=ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");GameManager.LoadProject(world,widget);
-                var all=GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null).ToArray();
-                Check(all.Length==3,"three units survive world save and reload");mech=all.Single(u=>u.Kind=="Mech");enemy=all.Single(u=>u.Kind=="Enemy");turret=all.Single(u=>u.Kind=="Turret");Check(Math.Abs(mech.Damage.Hitpoints-.73f)<.001&&Math.Abs(mech.AimYaw-.43f)<.001&&mech.AmmoType==2,"health aim and ammo survive reload");
-                data=GameManager.Project.FindSubsystem<SubsystemPlayers>(true).PlayersData[0];step=Time.RealTime;stage=3;return;
-            }
-            if(stage==3&&data.IsReadyForPlaying&&Time.RealTime-step>3) {
-                Check(GameManager.Project!=null,"world runs after reload");
-                var p=data.ComponentPlayer;
-                var units=GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null).ToArray();
-                foreach(var u in units){u.Damage.Hitpoints=1;u.Cooldown=100;u.Body.Position=original+new Vector3(u.Kind=="Mech"?-4:u.Kind=="Enemy"?0:4,0,6);u.Body.Rotation=Quaternion.Identity;u.Yaw=u.AimYaw=u.AimPitch=0;}
-                var camera=p.GameWidget.FindCamera<FppCamera>();p.GameWidget.ActiveCamera=camera;
-                Vector3 cam=original+new Vector3(10,6,-7),focus=original+new Vector3(0,2.2f,6);
-                camera.SetupPerspectiveCamera(cam,Vector3.Normalize(focus-cam),Vector3.UnitY);
-                SettingsManager.ShowLogoInScreenshots=false;ScreenCaptureManager.Capture(1280,720,"mech-defense-smoke.png");
-                enemy.Damage.Hitpoints=1;enemy.Damage.Damage(2);step=Time.RealTime;stage=4;return;
-            }
-            if(stage==4&&Time.RealTime-step>8.5) {
-                Check(!enemy.Entity.IsAddedToProject,"enemy is removed after lethal damage");
-                File.WriteAllText(Output,JsonSerializer.Serialize(new{passed=true,actualGameLaunched=true,api=ModsManager.APIVersionString,checks,world=world.DirectoryName},new JsonSerializerOptions{WriteIndented=true}));
-                Window.Frame-=Frame;GameManager.SaveProject(true,false);Window.Close();
-            }
-        }catch(Exception e){File.WriteAllText(Output,JsonSerializer.Serialize(new{passed=false,stage,checks,error=e.ToString()},new JsonSerializerOptions{WriteIndented=true}));Window.Frame-=Frame;Window.Close();}
+            if(Time.RealTime-began>240)throw new TimeoutException("stage "+stage);
+            if(mode=="old")Old();else New();
+        }catch(Exception e){Finish(new{passed=false,mode,stage,checks,error=e.ToString()});}
+    }
+
+    static void Old() {
+        if(stage==0) {
+            if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
+            SettingsManager.VisibilityRange=64;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;
+            world=WorldsManager.CreateWorld(new WorldSettings{Name=WorldName,Seed="42",GameMode=GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
+            GameManager.LoadProject(world,Games);
+            data=new PlayerData(GameManager.Project){Name="Migration",SpawnPosition=new(100,65,100),InputDevice=WidgetInputDevice.None};GameManager.Project.FindSubsystem<SubsystemPlayers>(true).AddPlayerData(data);
+            ScreensManager.SwitchScreen("Game");stage=1;return;
+        }
+        if(stage==1) {
+            if(!data.IsReadyForPlaying)return;
+            var p=data.ComponentPlayer;origin=new(Terrain.ToCell(p.ComponentBody.Position.X)+.5f,70.05f,Terrain.ToCell(p.ComponentBody.Position.Z)+.5f);
+            var t=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
+            for(int x=(int)origin.X-30;x<=(int)origin.X+30;x++)for(int z=(int)origin.Z-30;z<=(int)origin.Z+60;z++)for(int y=68;y<80;y++)t.ChangeCell(x,y,z,y<70?1:0);
+            Spawn("MDTurret",origin+new Vector3(-12,0,0));                  // gun tower (data 0)
+            var mech=Spawn("MDMech",origin+new Vector3(6,0,6));Spawn("MDEnemy",origin+new Vector3(0,0,55));   // the enemy far from tower and player
+            p.ComponentBody.Position=mech.Body.Position+new Vector3(2,0,0);p.ComponentRider.StartMounting(mech.Mount);
+            var inv=p.ComponentMiner.Inventory;foreach(var (slot,d) in new[]{(0,1),(1,2),(2,11)}){inv.RemoveSlotItems(slot,inv.GetSlotCount(slot));inv.AddSlotItems(slot,Deploy(d),1);}
+            step=Time.RealTime;stage=2;return;
+        }
+        if(stage==2&&Time.RealTime-step>3) {
+            var p=data.ComponentPlayer;var units=Units();
+            Check(units.Count(u=>u.Kind=="Mech")==1&&units.Count(u=>u.Kind=="Enemy")==1&&units.Count(u=>u.Kind=="Turret")==1,"old world: one mech, one enemy, one tower");
+            Check(p.ComponentBody.ParentBody!=null&&p.ComponentBody.ParentBody==units.Single(u=>u.Kind=="Mech").Body,"old world: player rides the mech");
+            Check(p.ComponentMiner.Inventory.GetSlotValue(0)==Deploy(1)&&p.ComponentMiner.Inventory.GetSlotValue(1)==Deploy(2),"old world: mech and enemy deployment items in the inventory");
+            GameManager.SaveProject(true,false);
+            Finish(new{passed=true,mode,checks,world=world.DirectoryName,riderAt=p.ComponentBody.Position.ToString()});
+        }
+    }
+    static ComponentMDUnit Spawn(string template,Vector3 pos) {
+        var e=DatabaseManager.CreateEntity(GameManager.Project,template,true);var u=e.FindComponent<ComponentMDUnit>(true);u.Body.Position=pos;
+        e.FindComponent<ComponentSpawn>().SpawnDuration=0;GameManager.Project.AddEntity(e);return u;
+    }
+
+    static void New() {
+        if(stage==0) {
+            if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
+            SettingsManager.VisibilityRange=64;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;
+            WorldsManager.UpdateWorldsList();world=WorldsManager.WorldInfos.Where(w=>w.WorldSettings.Name==WorldName).OrderByDescending(w=>w.LastSaveTime).FirstOrDefault()??throw new Exception("no world "+WorldName+": run the old mode first");
+            GameManager.LoadProject(world,Games);data=GameManager.Project.FindSubsystem<SubsystemPlayers>(true).PlayersData[0];
+            ScreensManager.SwitchScreen("Game");step=Time.RealTime;stage=1;return;
+        }
+        if(stage==1&&data.IsReadyForPlaying&&Time.RealTime-step>3){AfterLoad("first load");stage=2;step=Time.RealTime;return;}
+        if(stage==2) {
+            if(wolf!=null&&wolf.Entity.IsAddedToProject)wolfMin=Math.Min(wolfMin,wolf.ComponentHealth.Health);
+            if(Time.RealTime-step<6)return;
+            var gun=Units().First(u=>u.TowerId=="battle_turret_1");
+            Check(gun.ShotCount>towerShots,"old gun tower fires at a wolf");Check(wolfMin<1,"the wolf takes damage");
+            GameManager.SaveProject(true,false);GameManager.LoadProject(world,Games);data=GameManager.Project.FindSubsystem<SubsystemPlayers>(true).PlayersData[0];
+            step=Time.RealTime;stage=3;return;
+        }
+        if(stage==3&&data.IsReadyForPlaying&&Time.RealTime-step>3) {
+            var units=Units();
+            Check(units.Length>0&&units.All(u=>u.Kind=="Turret"&&u.Tower!=null),"after saving and reloading: still only towers");
+            Check(units.Count(u=>u.TowerId=="battle_frost_1")==1,"the tower deployed after migration survives save and reload");
+            Finish(new{passed=true,mode,checks,world=world.DirectoryName,units=units.Select(u=>u.TowerId).ToArray()});
+        }
+    }
+    static void AfterLoad(string when) {
+        var p=data.ComponentPlayer;var units=Units();var block=(MDDeploymentBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()];
+        Check(units.All(u=>u.Kind=="Turret"),$"{when}: the mech and the enemy are gone");
+        Check(units.Count(u=>u.TowerId=="battle_turret_1"&&!u.Destroyed)==1,$"{when}: the old gun tower is still there");
+        Check(p.ComponentBody.ParentBody==null&&p.ComponentRider.Mount==null,$"{when}: the player no longer rides anything");
+        Check(p.ComponentHealth.Health>.99f,$"{when}: the player is unhurt");
+        Check(p.GameWidget.ActiveCamera is FppCamera,$"{when}: first-person camera");
+        var t=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
+        Check(block.GetDisplayName(t,Deploy(1))=="已移除的旧单位"&&block.GetDisplayName(t,Deploy(2))=="已移除的旧单位",$"{when}: old mech / enemy items read as removed");
+        var creative=block.GetCreativeValues().ToArray();
+        Check(creative.Length==MDTowerLibrary.All.Count&&creative.All(v=>MDDeploymentBlock.Tower(v)!=null),"creative inventory lists the towers only");
+        var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).ToArray();
+        Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")),"no Endfield / Destroy Gunners names: "+string.Join(" ",names.Take(4)));
+        // Use the removed mech item, then the frost tower item, on the platform in front of the player
+        var inv=p.ComponentMiner.Inventory;int before=Units().Length;p.ComponentBody.Velocity=Vector3.Zero;
+        var foot=p.ComponentBody.Position;var ray=new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-4.5f)));
+        inv.ActiveSlotIndex=0;int count0=inv.GetSlotCount(0),value0=inv.GetSlotValue(0);bool used=p.ComponentMiner.Use(ray);
+        Check(Units().Length==before,$"the removed mech item does not deploy (units {before} -> {Units().Length}, Use returned {used})");
+        Check(inv.GetSlotCount(0)==count0&&inv.GetSlotValue(0)==value0,$"the removed mech item is not used up (slot 0: {count0} x {value0} -> {inv.GetSlotCount(0)} x {inv.GetSlotValue(0)}, {inv.GetType().Name})");
+        inv.ActiveSlotIndex=2;p.ComponentMiner.Use(ray);
+        Check(Units().Count(u=>u.TowerId=="battle_frost_1")==1,"a frost tower still deploys from its item");
+        var gun=Units().First(u=>u.TowerId=="battle_turret_1");towerShots=gun.ShotCount;
+        var e=DatabaseManager.CreateEntity(GameManager.Project,"Wolf",true);e.FindComponent<ComponentBody>(true).Position=gun.Body.Position+new Vector3(0,0,-8);e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;
+        GameManager.Project.AddEntity(e);wolf=e.FindComponent<ComponentCreature>(true);var l=wolf.ComponentLocomotion;l.WalkSpeed=l.JumpSpeed=0;
+        Check(MDCombat.IsEnemy(gun,wolf.ComponentBody)&&!MDCombat.IsEnemy(gun,p.ComponentBody),"towers treat the wolf as hostile and the player as friendly");
     }
 }
-
-[HarmonyPatch(typeof(MDPlayer),nameof(MDPlayer.Input))]
-public static class SimulatedDriver {
-    public static void Postfix(ComponentPlayer p){if(MDPlayer.Mounted(p) is {} u){u.Throttle=Smoke.Drive?.7f:0;u.Trigger=Smoke.Shooting;}}
-}
-[HarmonyPatch(typeof(ComponentMDUnit),"Fire")]
-public static class ShotCounter {public static void Postfix(ComponentMDUnit __instance){if(__instance.Cooldown<=0)return;if(__instance.Kind=="Mech"){Smoke.Shots++;if(__instance.Animation.StartsWith("Fire"))Smoke.FireEvents++;}if(__instance.Kind=="Enemy")Smoke.EnemyShots++;}}
-[HarmonyPatch(typeof(FileAssociationManager),nameof(FileAssociationManager.Initialize))]
-public static class NoTestFileAssociation {public static bool Prefix()=>false;}

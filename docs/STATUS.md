@@ -1,6 +1,36 @@
-# Status — 2026-10-10
+# Status — 2026-10-11
 
-## Current delivery: 0.5.0 (crafting, special effects, held towers, round 11)
+## Current delivery: 0.6.0 (Destroy Gunners units removed, no 终末地 in shown names)
+
+- User (2026-10-11): “先把毁灭枪手里的机甲剔除掉，然后名字显示也不要出现终末地，再打包一版scmod”.
+- Removed the Destroy Gunners Σ sample mech and enemy: driving, boarding, cameras, HUD, ammo keys (B/R), enemy AI and
+  firing; their models, textures, icons, motion catalogue and fire sound are out of the code and the package
+  (`tools/package.py` refuses them). The DG extraction/conversion tools left `tools/` (in history at v0.5.0).
+- Old worlds: the MDMech/MDEnemy templates stay unchanged, so worlds load; such entities remove themselves on load, and a
+  player riding a mech is set down where it stood, in first-person view. Deployment items with data 1/2 read
+  “已移除的旧单位”, cannot deploy and are not used up; they are no longer in the creative list.
+- Nothing shown in game says 终末地: mod name “机甲防线 · 防御塔”, deploy item “防御塔 · 部署” and its description, the
+  Neorxna info panel. Tower names never had it. Package scan: no 终末地 / 毁灭枪手 / 机兵 in any entry (DLL strings included).
+- Towers attack hostile creatures only (predators, or anything chasing a player). Tower assets are byte-identical to 0.5.0.
+- Verification (isolated runtime of the user's build, API 1.9.3.1):
+  - Old-save migration (`run_isolated.py smoke`): 0.5.0 builds a world with a gun tower, a mech the player rides, an
+    enemy and old deployment items (3/3 checks); 0.6.0 loads it: 16/16 checks — mech and enemy gone, player off the mech,
+    unhurt, first-person view; old items read “已移除的旧单位”, do not deploy and are not used up; creative list = the 19
+    towers; no 终末地 / 毁灭枪手 / 机兵 in names; a frost tower still deploys; the old gun tower fires at and damages a
+    wolf; still only towers after another save and reload. Game log without errors.
+  - Lab all + special: 19 towers load and draw, no model or draw errors; the Neorxna panel shows the 19 tower names;
+    19 recipes resolve; effects on real wolves as in 0.5.0 (frost freezes 1.5 s, boss only slowed to 25%; poison and
+    slow go on after leaving the cloud; acid ×1.30; shockwave 2 s stun; jet pushes 2.92 m, 1500 kg not at all);
+    artillery hits at 14 / 26 / 38 m, shell along the barrel (0.00°); held towers unchanged.
+  - Frame time (`perf`, two alternating runs): hotbar only 1.05 / 1.21 ms (0.5.0: 1.05 / 1.22), 30 towers 1.14 /
+    1.27 ms (0.5.0: 1.18 / 1.22) — no change.
+  - Package `dist/MechDefense-0.6.0.scmod`: 26,256,959 bytes, 154 entries (0.5.0: 26,866,219 bytes, 162 entries).
+- Tooling: `tools/run_isolated.py smoke --mode old|new` (migration test); the lab's target dummy is now an immobile, very
+  tough wolf; the runner skips Neorxna builds for API 1.9.4 (v1.4.3 in the user's Mods stops this 1.9.3.1 runtime at start)
+  and uses the user's v1.4 copy in `D:/下载/Mods`.
+- Not verified: the user's real game with its other mods; a game on API 1.9.4.
+
+## Previous delivery: 0.5.0 (crafting, special effects, held towers, round 11)
 
 - Crafting: 19 crafting-table recipes from vanilla materials (`Mod/Assets/MechDefense.cr`); upgrades take the lower
   tower as an ingredient. No industry, no power (user's call).

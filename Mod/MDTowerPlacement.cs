@@ -82,8 +82,8 @@ public static class MDNeorxnaCompatibility {
     public static void AfterEntityInfo(object __instance,Entity __0) {
         var unit=__0.FindComponent<ComponentMDUnit>();if(unit==null)return;
         var type=__instance.GetType();
-        if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=unit.Kind=="Turret"?unit.Tower.name:unit.Kind=="Mech"?"毁灭枪手机甲":"敌方机兵";
-        if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text="机甲防线 · 终末地防御塔";
+        if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=unit.Kind=="Turret"?unit.Tower.name:"已移除的旧单位";
+        if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text="机甲防线 · 防御塔";
         if(unit.Kind=="Turret")type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)])?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
     }
 }

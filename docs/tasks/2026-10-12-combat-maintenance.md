@@ -1,6 +1,6 @@
 # Task 2026-10-12: tower combat fixes, dismantle and repair (0.7.0)
 
-Status: review (PR open, not merged)
+Status: accepted — merged into main on the user's approval (2026-10-13), tag v0.7.0
 Branch: feat/tower-combat-maintenance    Current writer: Claude Code (VPS, edits applied on Windows)
 User-authorized scope (2026-10-12): “1. 炮弹的飞行速度得加快一点，要不然会出现炮弹跟不上别人跑的速度的尴尬。2. 攻击范围还可以加大一点
 太近了，另外美好时代的船长跟海盗炮塔不会攻击他们，索敌需要优化一下，就是分辨敌我。然后感觉数值可以再给高一点，因为本来频率就不高，
@@ -58,4 +58,4 @@ Out of scope: installing the package, the user's Mods folder and worlds, merging
   to 0.6.0 in the package).
 - Remaining: not played in the user's real game with all its mods; ScCsgoTactical soldiers/companions not loaded in the lab;
   Industrial Era plates are not repair materials; numbers are a first pass for the user to judge in play.
-- Rollback: dist/MechDefense-0.6.0.scmod. Merge only after the user approves.
+- Rollback: dist/MechDefense-0.6.0.scmod (keep until the user accepts 0.7.0 in play).

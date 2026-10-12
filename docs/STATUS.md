@@ -1,6 +1,6 @@
-# Status — 2026-10-12
+# Status — 2026-10-13
 
-## In review: 0.7.0 (branch feat/tower-combat-maintenance, not merged)
+## Current delivery: 0.7.0 (PR #3, merged 2026-10-13 on the user's approval, tag v0.7.0)
 
 - User (2026-10-12): shells cannot keep up with running targets; ranges too short; Wonderful Era's captain and pirates are not
   attacked, tell friend from foe; damage can be higher since towers fire rarely; towers barely hurt the ghouls; towers cannot be
@@ -47,7 +47,7 @@
 - Not verified: the user's real game with all its mods; ScCsgoTactical soldiers/companions (the CS package was not loaded in
   the lab; the rule reads their TargetBody / no chase behaviour); Industrial Era plates as repair material (not supported).
 
-## Current delivery: 0.6.0 (Destroy Gunners units removed, no 终末地 in shown names)
+## Previous delivery: 0.6.0 (Destroy Gunners units removed, no 终末地 in shown names)
 
 - User (2026-10-11): “先把毁灭枪手里的机甲剔除掉，然后名字显示也不要出现终末地，再打包一版scmod”.
 - Removed the Destroy Gunners Σ sample mech and enemy: driving, boarding, cameras, HUD, ammo keys (B/R), enemy AI and

@@ -1,4 +1,51 @@
-# Status — 2026-10-11
+# Status — 2026-10-12
+
+## In review: 0.7.0 (branch feat/tower-combat-maintenance, not merged)
+
+- User (2026-10-12): shells cannot keep up with running targets; ranges too short; Wonderful Era's captain and pirates are not
+  attacked, tell friend from foe; damage can be higher since towers fire rarely; towers barely hurt the ghouls; towers cannot be
+  taken down — make the vanilla pickaxe dismantle them, keep their health, and add repair by right-clicking with materials
+  priced after how other mods change the vanilla materials. Task brief: docs/tasks/2026-10-12-combat-maintenance.md.
+- Numbers (docs/TOWERS.md, 0.7.0): ranges about ×1.6-2.7 (gun towers 28/32/36, sentry 48, mortar 48, prologue cannon 56),
+  damage ×1.5-3.2, bolt 110-130 and shell 24-36 m/s; attack intervals unchanged.
+- Lead: bolts and shells aim where the target will be (its observed movement × flight time).
+- Friend or foe (`Mod/MDFaction.cs`) from each creature's own behaviour, no list of mod names: never players, towers, the
+  player's herd or a player's mount; targets: recent attackers of the player's side, creatures chasing the player's side,
+  predators, creatures whose chase behaviour hunts players on sight (range > 4 m).
+- Ghouls: gunfire aims at the head where the head is the weak spot; explosions, beams, lightning, flames, jets and poison are
+  no longer ProjectileAttackment, so the ghouls' bullet defence (body ×0.1-0.5) does not apply to them. Their injury caps do.
+- Dismantle: 3 pickaxe hits; the deploy item keeps the health (name and slot bar), redeploying restores it. Repair: right-click
+  with iron/copper ingot (200/120 hit points) or block (×9).
+- Verification (isolated runtime of the user's build, API 1.9.3.1, with the user's ghoul 2.0 and Wonderful Era 1.9.3a mods
+  plus its two dependencies; `run_isolated.py lab --mode combat`, Harmless world):
+  - Friend or foe: targets — wolf, rhino, pirate sailor/elite/captain, ghoul weak/fast/strong_08/monster/bear; not targets —
+    hired pirate sailor/elite, deputy captain, bull, bison, boar; the deputy captain becomes a target after hitting the player,
+    and when its chase behaviour targets the player; a bull staring at the player (ComponentStareBehavior) does not.
+  - Ghoul damage per unit of attack power (health lost × resilience / power): weak_01 body 0.5 / head 1 / explosion 1;
+    strong_08 0.1 / 0.5 / 1; monster 0.2 / 0.4 / 1. Real rounds on a pinned monster at 15 m: gun tower 7/7 and sentry 3/3
+    hit within the head band (hit height 71.02, eye 70.97).
+  - Running target (pirate, 5 m/s across the line of fire at 20 m, beyond the old 15 m range), 12 s: gun tower 9/12 hits
+    with lead, 0/12 without; grenade tower 5/8 with lead, 2/8 without.
+  - Dismantle through real input (Hit injected into ComponentInput): 3 iron-pickaxe hits take a 62% tower down, pickaxe
+    wear 3, the player gathers “铳械塔 · 部署（耐久 62%）” with a 0.62 health bar; the worn item does not fit the upgrade
+    recipe, a full one does; redeployed through Interact at 62%; repair clicks with 3 iron ingots: 62% → 93% → 100%, then
+    no change and no ingot used (1 left).
+  - Every damaging tower against a pinned wolf at 12 m (trap 5 m), 6 s: all 15 hit it — e.g. gun towers 384 / 748 / 1,235,
+    grenade 440, high-explosive 1,320, sentry 1,020, prologue cannon 1,400, acid 576, poison 241 (shell + poison ticks),
+    mortar 480, ray 720 / 1,040, lightning 600 / 1,084, trap 1,040.
+  - Regression: lab special passes (19 recipes resolve; effects on real wolves as in 0.5.0/0.6.0: frost 25% and 4 s,
+    poison continues after leaving the cloud, acid ×1.30, jet pushes 2.92 m and 1500 kg not at all; prologue cannon hits at
+    14 / 26 / 38 m, shell along the barrel 0.00°; Neorxna shows the 19 names). Lab fire passes; against 0.6.0 in the same
+    2 s window the gun tower and the prologue cannon now also damage the dummy; the ray tower fires 0 times in that window
+    in both versions (its charge), the poison tower's cloud is too late for it in 0.7.0 (it does damage in the 6 s check).
+  - Old-save migration (`smoke`, 0.5.0 world → 0.7.0): 3/3 and 16/16, as for 0.6.0.
+  - Frame time (`perf`, the same scene, four alternating pairs): hotbar only 0.6.0 1.07 / 1.43 / 1.40 / 1.05 ms, 0.7.0
+    1.31 / 1.45 / 1.19 / 1.05 ms; 30 towers 0.6.0 1.22 / 1.72 / 1.15 / 1.16 ms, 0.7.0 1.60 / 1.45 / 1.20 / 1.14 ms — no
+    difference beyond the run-to-run spread (about 0.3 ms on this machine today).
+- Package `dist/MechDefense-0.7.0.scmod`: 26,263,051 bytes, 154 entries. Against 0.6.0 only MechDefense.dll, modinfo.json,
+  Assets/Towers/towers.json and the manifest differ; no 终末地 in any entry.
+- Not verified: the user's real game with all its mods; ScCsgoTactical soldiers/companions (the CS package was not loaded in
+  the lab; the rule reads their TargetBody / no chase behaviour); Industrial Era plates as repair material (not supported).
 
 ## Current delivery: 0.6.0 (Destroy Gunners units removed, no 终末地 in shown names)
 

@@ -253,7 +253,8 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             var c=C(s.def.fx.color);var dir=s.vel.LengthSquared()>.01f?Vector3.Normalize(s.vel):Vector3.UnitY;float sc=s.def.fx.scale*(s.enhanced?1.5f:1);
             if(s.def.attack.type=="bolt") {
                 var side=Vector3.Cross(dir,front);side=side.LengthSquared()<1e-5f?right:Vector3.Normalize(side);
-                Quad(alpha,s.pos-dir*.45f*sc,side*.11f*sc,dir*.75f*sc,S.Bolt,Deep(c));Quad(add,s.pos-dir*.45f*sc,side*.05f*sc,dir*.6f*sc,S.Bolt,Color.White);Quad(add,s.pos,right*.3f*sc,up*.3f*sc,S.Glow,c*.9f);
+                float k=Math.Max(1,s.vel.Length()/45);   // longer tracer for faster bolts (about one frame of flight at 60 fps)
+                Quad(alpha,s.pos-dir*.45f*sc*k,side*.11f*sc,dir*.75f*sc*k,S.Bolt,Deep(c));Quad(add,s.pos-dir*.45f*sc*k,side*.05f*sc,dir*.6f*sc*k,S.Bolt,Color.White);Quad(add,s.pos,right*.3f*sc,up*.3f*sc,S.Glow,c*.9f);
             } else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
         }
     }

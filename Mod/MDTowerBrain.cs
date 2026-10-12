@@ -25,7 +25,7 @@ public static class MDTowerBrain {
         if(target!=null&&!MDCombat.Living(target))target=u.Target=null;
         if(u.Channel>0){Channel(u,dt);return;}
         if(target==null){if(d.HasYaw)u.AimPitch=MathUtils.Lerp(u.AimPitch,d.restPitch,dt*1.5f);return;}
-        var tc=MDCombat.Center(target);
+        Track(u,target,dt);var tc=AimPoint(u,target);
         if(d.HasYaw) {
             var dd=tc-u.Body.Position;
             float want=MathF.Atan2(-dd.X,-dd.Z);u.AimYaw=MDCombat.AngleTowards(u.AimYaw,want,MathUtils.DegToRad(d.yawSpeed)*dt);
@@ -33,7 +33,7 @@ public static class MDTowerBrain {
         float wantPitch=DesiredPitch(u,tc);u.AimPitch=MDCombat.AngleTowards(u.AimPitch,wantPitch,MathUtils.DegToRad(d.pitchSpeed)*dt);
         bool aligned=!d.HasYaw||Math.Abs(MDCombat.AngleDelta(u.AimYaw,MathF.Atan2(-(tc-u.Body.Position).X,-(tc-u.Body.Position).Z)))<.12f;
         if(a.type=="shell"&&LaidGun(d))aligned&=Math.Abs(u.AimPitch-wantPitch)<.04f;   // a laid gun fires along its barrel: wait until it is elevated
-        if(u.Cooldown<=0&&aligned)Fire(u,target);
+        if(u.Cooldown<=0&&aligned)Fire(u,target,tc);
     }
 
     // ---------------------------------------------------------------- targets
@@ -45,23 +45,68 @@ public static class MDTowerBrain {
         float along=Vector3.Dot(d,f),side=Vector3.Dot(d,r);return along>0&&along<=a.range&&Math.Abs(side)<=a.width*.5f;
     }
     public static bool Sight(ComponentMDUnit u,Vector3 from,ComponentBody target)=>MDCombat.Trace(u,from,MDCombat.Center(target),out _)==target;
+    // The nearest enemy in the area (or the most threatening one) that the tower can see. Candidates are ranked first and
+    // traced in that order, so the longer ranges do not cost a line-of-sight trace per creature in the area.
     static ComponentBody FindTarget(ComponentMDUnit u) {
         var a=u.Tower.attack;var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),a.range+2,bodies);
-        Vector3 from=Aim(u);ComponentBody best=null;float bestScore=float.MaxValue;
-        foreach(var b in bodies) {
-            if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
-            if(a.needsSight&&!Sight(u,from,b))continue;
-            float score=a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position);
-            if(score<bestScore){bestScore=score;best=b;}
-        }
-        return best;
+        var found=new List<(float score,ComponentBody body)>();
+        foreach(var b in bodies)
+            if(MDCombat.IsEnemy(u,b)&&InArea(u,MDCombat.Center(b)))found.Add((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position),b));
+        found.Sort((x,y)=>x.score.CompareTo(y.score));
+        var from=Aim(u);
+        foreach(var (_,b) in found)if(!a.needsSight||Sight(u,from,b))return b;
+        return null;
     }
     // Bosses (high AttackResilience) shrug off stun and freeze, as Endfield's elite/boss enemies do.
     static float Resilience(ComponentBody b)=>b.Entity.FindComponent<ComponentHealth>()?.AttackResilience??b.Entity.FindComponent<ComponentDamage>()?.AttackResilience??0;
     static float Threat(ComponentBody b){var h=b.Entity.FindComponent<ComponentHealth>();return h==null?b.Entity.FindComponent<ComponentDamage>()?.Hitpoints??0:h.Health*h.AttackResilience;}
 
     // ---------------------------------------------------------------- aim
+    public static bool LeadEnabled=true;   // lab switch: hits on a running target with and without lead
+    // The target's velocity from its own movement, smoothed over about 0.1 s. ComponentBody.Velocity is not enough: a mod
+    // creature moved by setting its position has none, and a walking creature's includes its bobbing.
+    static void Track(ComponentMDUnit u,ComponentBody target,float dt) {
+        if(u.Tracked!=target){u.Tracked=target;u.TrackedAt=target.Position;u.TrackedVelocity=target.Velocity;return;}
+        if(dt<=0)return;
+        var v=(target.Position-u.TrackedAt)/dt;u.TrackedAt=target.Position;
+        if(v.LengthSquared()<900)u.TrackedVelocity=Vector3.Lerp(u.TrackedVelocity,v,Math.Min(1,dt*10));   // a jump of 30 m/s+ is a teleport
+    }
+    static bool Bullet(MDTowerAttack a)=>a.type is "bolt" or "snipe";
+    // Where to aim. Gunfire aims at the head of a creature whose head is its weak spot, everything else at the body centre.
+    // Bolts and shells aim where the target will be when they arrive: its ground velocity times the flight time.
+    public static Vector3 AimPoint(ComponentMDUnit u,ComponentBody target) {
+        var a=u.Tower.attack;
+        var p=Bullet(a)&&HeadIsWeak(target)&&target.Entity.FindComponent<ComponentCreatureModel>() is {} model?model.EyePosition:MDCombat.Center(target);
+        if(!LeadEnabled||a.type is not ("bolt" or "shell"))return p;
+        var v=u.Tracked==target?u.TrackedVelocity:target.Velocity;if(target.StandingOnValue.HasValue||target.StandingOnBody!=null)v.Y=0;   // on the ground: no vertical lead
+        if(v.LengthSquared()>400)v=Vector3.Normalize(v)*20;
+        var from=Aim(u);var q=p;
+        for(int i=0;i<3;i++)q=p+v*FlightTime(u,from,q);
+        return q;
+    }
+    static float FlightTime(ComponentMDUnit u,Vector3 from,Vector3 to) {
+        var a=u.Tower.attack;var d=to-from;if(a.type!="shell")return d.Length()/Math.Max(1,a.speed);
+        float h=new Vector2(d.X,d.Z).Length(),angle=Ballistic(a.speed,h,d.Y,a.highArc)??.785f;
+        return h/Math.Max(.1f,a.speed*MathF.Cos(angle));
+    }
+    // A mod makes the head the weak spot when it scales gunfire by HeadHitDamageMultiplier / NonHeadHitDamageMultiplier
+    // (the ghouls' ComponentBulletDefender: body hits x0.1-0.5, head hits up to x1.3). Read once per creature.
+    static readonly Dictionary<Type,(System.Reflection.PropertyInfo head,System.Reflection.PropertyInfo body)> weakSpotProbes=[];
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Entity,object> weakHead=new();
+    static bool HeadIsWeak(ComponentBody b) {
+        if(weakHead.TryGetValue(b.Entity,out var known))return (bool)known;
+        bool weak=false;
+        foreach(var c in b.Entity.Components) {
+            var t=c.GetType();
+            if(!weakSpotProbes.TryGetValue(t,out var w)) {
+                var h=t.GetProperty("HeadHitDamageMultiplier");var n=t.GetProperty("NonHeadHitDamageMultiplier");
+                weakSpotProbes[t]=w=h?.PropertyType==typeof(float)&&n?.PropertyType==typeof(float)?(h,n):(null,null);
+            }
+            if(w.head!=null){weak=(float)w.head.GetValue(c)>(float)w.body.GetValue(c);break;}
+        }
+        weakHead.AddOrUpdate(b.Entity,weak);return weak;
+    }
     static float DesiredPitch(ComponentMDUnit u,Vector3 tc) {
         var d=u.Tower;if(d.pitchFixed||d.pitchNode<0)return d.restPitch;
         var pivot=MDTowerLibrary.Pose(d,u.Body.Matrix,u.AimYaw-u.Yaw,0,null)[d.pitchNode].Translation;var dd=tc-pivot;float h=new Vector2(dd.X,dd.Z).Length();
@@ -93,12 +138,12 @@ public static class MDTowerBrain {
         if(list==null||list.Length==0)return;
         u.Project.FindSubsystem<SubsystemAudio>(true).PlaySound(list[random.Next(list.Length)],volume,MathUtils.Lerp(-.05f,.05f,(float)random.NextDouble()),at,12,false);
     }
-    static void Fire(ComponentMDUnit u,ComponentBody target) {
+    static void Fire(ComponentMDUnit u,ComponentBody target,Vector3 tc) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         int shot=++u.ShotCount;bool strong=a.enhancedEvery>0&&shot%a.enhancedEvery==0;
         int mi=d.muzzles.Length>0?(shot-1)%d.muzzles.Length:0;var pose=Pose(u);
         var muzzle=d.muzzles.Length>0?MDTowerLibrary.Muzzle(d,pose,mi):u.Body.Position+Vector3.UnitY*2;
-        var tc=MDCombat.Center(target);var dir=Vector3.Normalize(tc-muzzle);
+        var dir=Vector3.Normalize(tc-muzzle);
         if(a.needsSight&&a.type!="shell"&&!Sight(u,muzzle,target)){u.Target=null;return;}
         u.Cooldown=a.interval;
         switch(a.type) {
@@ -106,7 +151,7 @@ public static class MDTowerBrain {
                 u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1),strong?a.enhancedSplash:0,strong);break;
             case "shell":
-                u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f,tc.Z);
+                u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f+tc.Y-MDCombat.Center(target).Y,tc.Z);   // the ground under the lead point
                 var vel=LaidGun(d)?BarrelLaunch(u,muzzle,MDTowerLibrary.MuzzleForward(d,pose,mi),aimAt):LaunchVelocity(u,muzzle,aimAt);
                 w.Muzzle(d,muzzle,Vector3.Normalize(vel),true);Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,vel,Gravity,a.power,a.splash,false);break;
@@ -114,7 +159,7 @@ public static class MDTowerBrain {
                 u.Kick(mi);w.Muzzle(d,muzzle,dir,true);Sound(u,d.fireSounds,muzzle,.8f);
                 var hb=MDCombat.Trace(u,muzzle,muzzle+dir*(a.range+4),out var hp);
                 w.AddBeam(muzzle,hp,.035f*d.fx.scale,MDTowerWorldColor(d.fx.color),.18f,false);w.Impact(d,hp,dir,true);
-                if(hb!=null)Hit(u,hb,a.power,hp,dir);Sound(u,d.hitSounds,hp,.5f);break;
+                if(hb!=null)Hit(u,hb,a.power,hp,dir,true);Sound(u,d.hitSounds,hp,.5f);break;
             case "beam": case "chain": case "flame": case "jet":
                 u.Channel=a.charge+a.duration;u.ChannelTarget=target;u.ChannelTick=0;Sound(u,a.charge>0?d.chargeSounds:d.fireSounds,muzzle);
                 if(a.type=="chain")ChainStrike(u,muzzle,target);
@@ -198,19 +243,21 @@ public static class MDTowerBrain {
     }
 
     // ---------------------------------------------------------------- damage
-    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir) {
+    // Gunfire (bolts, sniper rounds) is a ProjectileAttackment; explosions, beams, lightning, flames, jets and poison are
+    // MDTowerAttackment, so a mod that cuts bullet damage (the ghouls' body-hit multiplier) does not cut them.
+    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false) {
         if(b==null||!MDCombat.IsEnemy(u,b)||power<=0)return;
         power*=World(u).DamageFactor(b);
-        ComponentMiner.AttackBody(new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null));
+        ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power));
     }
     public static void ShellLanded(ComponentMDUnit u,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         Sound(u,d.hitSounds,point,.55f);
-        if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir);return;}
+        if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir,true);return;}
         string kind=d.fx.kind;float r=Math.Max(splash,.5f);
         if(a.type=="bolt")w.Impact(d,point,dir,true);
         w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2));
-        if(hit!=null)Hit(u,hit,power,point,dir);
+        if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt");   // an enhanced bolt: the round itself, then its blast
         Splash(u,point,r,power*(hit!=null?.6f:1),hit);
         if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
     }

@@ -30,10 +30,10 @@
    "summary": "持续发射能量弹，对敌人造成物理伤害。",
    "attack": {
     "type": "bolt",
-    "range": 15,
+    "range": 28,
     "interval": 2,
-    "power": 28,
-    "speed": 40
+    "power": 64,
+    "speed": 110
    },
    "fx": {
     "color": [
@@ -89,10 +89,10 @@
    "summary": "持续发射Ⅱ级能量弹，每第 4 次攻击发射一次强力能量弹。",
    "attack": {
     "type": "bolt",
-    "range": 15,
+    "range": 32,
     "interval": 2,
-    "power": 49,
-    "speed": 42,
+    "power": 110,
+    "speed": 120,
     "enhancedEvery": 4,
     "enhancedPower": 1.8
    },
@@ -150,10 +150,10 @@
    "summary": "持续发射Ⅲ级能量弹，每第 6 次攻击发射强力能量弹，对落点范围内的敌人造成伤害。",
    "attack": {
     "type": "bolt",
-    "range": 18,
+    "range": 36,
     "interval": 2,
-    "power": 100,
-    "speed": 45,
+    "power": 190,
+    "speed": 130,
     "enhancedEvery": 6,
     "enhancedPower": 1.5,
     "enhancedSplash": 2.5
@@ -202,10 +202,10 @@
    "summary": "以抛物线发射榴弹，在敌人附近爆炸，造成范围灼热伤害。",
    "attack": {
     "type": "shell",
-    "range": 12.5,
+    "range": 26,
     "interval": 3,
-    "power": 35,
-    "speed": 15,
+    "power": 110,
+    "speed": 26,
     "splash": 2.5,
     "burn": 2,
     "needsSight": false
@@ -256,15 +256,15 @@
    "summary": "发射Ⅱ级榴弹，范围灼热伤害，并在地面留下 5 秒燃烧区域。",
    "attack": {
     "type": "shell",
-    "range": 12.5,
+    "range": 30,
     "interval": 3,
-    "power": 76,
-    "speed": 15,
+    "power": 200,
+    "speed": 28,
     "splash": 3,
     "burn": 2,
     "zone": 2.5,
     "zoneTime": 5,
-    "zonePower": 19.0,
+    "zonePower": 40.0,
     "needsSight": false
    },
    "fx": {
@@ -313,9 +313,9 @@
    "summary": "射程远，优先锁定范围内威胁更高的敌人，造成高额物理伤害。",
    "attack": {
     "type": "snipe",
-    "range": 20,
+    "range": 48,
     "interval": 5,
-    "power": 106,
+    "power": 340,
     "threatFirst": true
    },
    "fx": {
@@ -445,14 +445,14 @@
    ],
    "data": 8,
    "hp": 2600,
-   "summary": "大型重炮：远距离发射重型炮弹，落点范围伤害（最小射程 9 格）。",
+   "summary": "大型重炮：远距离发射重型炮弹，落点范围伤害（最小射程 10 格）。",
    "attack": {
     "type": "shell",
-    "range": 40,
-    "minRange": 9,
+    "range": 56,
+    "minRange": 10,
     "interval": 1.5,
-    "power": 90,
-    "speed": 26,
+    "power": 200,
+    "speed": 36,
     "splash": 3,
     "needsSight": false
    },
@@ -495,10 +495,10 @@
    "summary": "发射酸液弹，在敌人附近爆炸造成范围自然伤害，并降低敌人防御 30%（受到的塔伤害提高，持续 15 秒）。",
    "attack": {
     "type": "shell",
-    "range": 15,
+    "range": 28,
     "interval": 5,
-    "power": 109,
-    "speed": 14,
+    "power": 160,
+    "speed": 24,
     "splash": 3,
     "armorDown": 1.3,
     "armorTime": 15,
@@ -546,10 +546,10 @@
    "summary": "发射毒雾弹，落地后留下 5 秒紫色毒雾区：区内敌人中毒（持续自然伤害）并减速到 25%，离开毒雾后中毒和减速还会持续 5 秒。",
    "attack": {
     "type": "shell",
-    "range": 18,
+    "range": 30,
     "interval": 5,
-    "power": 22,
-    "speed": 14,
+    "power": 40,
+    "speed": 24,
     "splash": 3,
     "zone": 3,
     "zoneTime": 5,
@@ -557,7 +557,7 @@
     "slow": 0.25,
     "slowTime": 5,
     "needsSight": false,
-    "dot": 11,
+    "dot": 22,
     "dotTime": 5
    },
    "fx": {
@@ -601,10 +601,10 @@
    "summary": "发射液氮晶体，爆裂后使范围内敌人移速降到 25%（4 秒）并冻结 1.5 秒（首领级不会被冻结；同一敌人解冻后 4 秒内不会再被冻结），落点留下 3 秒冰面继续减速。不造成伤害。",
    "attack": {
     "type": "shell",
-    "range": 15,
+    "range": 26,
     "interval": 5,
     "power": 0,
-    "speed": 14,
+    "speed": 24,
     "splash": 3,
     "slow": 0.25,
     "slowTime": 4,
@@ -650,11 +650,11 @@
    "tools": "v5/tools",
    "data": 12,
    "hp": 900,
-   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（7×3 格范围，朝向放置方向；犀牛这类大型敌人推不动），不造成伤害。",
+   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（10×4 格范围，朝向放置方向；犀牛这类大型敌人推不动），不造成伤害。",
    "attack": {
     "type": "jet",
-    "range": 7,
-    "width": 3,
+    "range": 10,
+    "width": 4,
     "interval": 5,
     "power": 0,
     "duration": 1.2,
@@ -700,11 +700,11 @@
    "summary": "消耗大量充能向远处发射威力极大的炮弹，对落点范围内敌人造成高额物理伤害。",
    "attack": {
     "type": "shell",
-    "range": 25,
-    "minRange": 3,
+    "range": 48,
+    "minRange": 8,
     "interval": 8,
-    "power": 169,
-    "speed": 19,
+    "power": 480,
+    "speed": 30,
     "splash": 4,
     "needsSight": false,
     "highArc": true
@@ -754,9 +754,9 @@
    "summary": "充能后向目标发射射线，造成高额电磁伤害。",
    "attack": {
     "type": "beam",
-    "range": 12.5,
+    "range": 28,
     "interval": 8,
-    "power": 142,
+    "power": 360,
     "charge": 0.9,
     "duration": 0.6
    },
@@ -797,9 +797,9 @@
    "summary": "充能后发射强力射线，优先锁定威胁更高的敌人，造成高额电磁伤害。",
    "attack": {
     "type": "beam",
-    "range": 12.5,
+    "range": 34,
     "interval": 8,
-    "power": 195,
+    "power": 520,
     "charge": 0.9,
     "duration": 0.7,
     "threatFirst": true
@@ -841,9 +841,9 @@
    "summary": "释放电能攻击敌人，可弹射到附近敌人（至多 2 次），造成电磁伤害。",
    "attack": {
     "type": "chain",
-    "range": 12.5,
+    "range": 24,
     "interval": 3,
-    "power": 71,
+    "power": 150,
     "bounces": 2,
     "bounceRange": 5,
     "duration": 0.25
@@ -889,15 +889,15 @@
    "summary": "释放电能并弹射（至多 2 次），在敌人附近留下金色电球（5 秒），持续电击附近的敌人。",
    "attack": {
     "type": "chain",
-    "range": 18,
+    "range": 30,
     "interval": 5,
-    "power": 137,
+    "power": 260,
     "bounces": 2,
     "bounceRange": 5,
     "duration": 0.25,
     "zone": 2.5,
     "zoneTime": 5,
-    "zonePower": 16
+    "zonePower": 32
    },
    "fx": {
     "color": [
@@ -940,7 +940,7 @@
    "summary": "发射一道震荡波，使范围内的普通和进阶敌人晕眩 2 秒（首领级不受影响），不造成伤害。",
    "attack": {
     "type": "pulse",
-    "range": 6,
+    "range": 9,
     "interval": 5,
     "power": 0,
     "stun": 2,
@@ -975,10 +975,10 @@
    "tools": "v5/tools",
    "data": 19,
    "hp": 900,
-   "summary": "把充能转化为治疗量，治疗周围受伤的玩家并修复友方防御塔（范围 6 格）。",
+   "summary": "把充能转化为治疗量，治疗周围受伤的玩家并修复友方防御塔（范围 10 格）。",
    "attack": {
     "type": "heal",
-    "range": 6,
+    "range": 10,
     "interval": 5,
     "power": 0.2,
     "needsSight": false
@@ -1011,13 +1011,13 @@
    "tools": "v5/tools",
    "data": 20,
    "hp": 1000,
-   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（7×3 格范围，朝向放置方向）。",
+   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（10×4 格范围，朝向放置方向）。",
    "attack": {
     "type": "flame",
-    "range": 7,
-    "width": 3,
+    "range": 10,
+    "width": 4,
     "interval": 3,
-    "power": 126,
+    "power": 260,
     "duration": 1.5,
     "burn": 3,
     "directional": true,

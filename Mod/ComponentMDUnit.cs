@@ -13,6 +13,9 @@ public class ComponentMDUnit : Component,IUpdateable {
     // Towers: definition from Assets/Towers/towers.json; the model is drawn by ComponentMDTowerModel.
     public string TowerId; public MDTowerDef Tower;
     public int ShotCount; public float ScanTimer,Channel,ChannelTick; public ComponentBody Target,ChannelTarget;
+    public SubsystemTime Clock;
+    public ComponentBody Tracked; public Vector3 TrackedAt,TrackedVelocity;   // the target's observed movement (MDTowerBrain.Track)
+    public int DismantleHits; public double DismantleAt;   // pickaxe hits towards taking the tower down (MDTowerMaintenance), not saved
     // Kinds "Mech" and "Enemy" were the Destroy Gunners sample units, removed in 0.6.0. Their templates stay in the database
     // so that old worlds still load; such an entity lets its rider off and removes itself on its first update.
     public bool Legacy=>Kind!="Turret";
@@ -32,6 +35,8 @@ public class ComponentMDUnit : Component,IUpdateable {
     public bool Destroyed {get;private set;}
     public float WreckTime=>wreck;
     public float Cooldown; float wreck,lastHitpoints;
+    // Health set from outside (a redeployed tower, a repair): no hit reaction.
+    public void SetHitpoints(float hitpoints){Damage.Hitpoints=lastHitpoints=Math.Clamp(hitpoints,0,1);}
     public UpdateOrder UpdateOrder=>(UpdateOrder)1;
     public Vector3 Muzzle=>MDTowerBrain.Muzzle(this);
     void TowerDestroyed() {
@@ -40,7 +45,7 @@ public class ComponentMDUnit : Component,IUpdateable {
         Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Audio/Explosion1",.7f,0,top,10,false);
     }
     public override void Load(ValuesDictionary v,IdToEntityMap map) {
-        Kind=v.GetValue<string>("Kind");Body=Entity.FindComponent<ComponentBody>(true);Damage=Entity.FindComponent<ComponentDamage>(true);Mount=Entity.FindComponent<ComponentMount>();
+        Kind=v.GetValue<string>("Kind");Clock=Project.FindSubsystem<SubsystemTime>(true);Body=Entity.FindComponent<ComponentBody>(true);Damage=Entity.FindComponent<ComponentDamage>(true);Mount=Entity.FindComponent<ComponentMount>();
         if(Legacy)return;
         TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);ShotCount=v.GetValue("TurretShotCount",0);
         TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
@@ -85,12 +90,11 @@ public class ComponentMDDamage : ComponentDamage {
 public static class MDCombat {
     public static Vector3 Center(ComponentBody b)=>(b.BoundingBox.Min+b.BoundingBox.Max)*.5f;
     public static bool Living(ComponentBody b)=>b.Entity.IsAddedToProject&&(b.Entity.FindComponent<ComponentDamage>()?.Hitpoints??b.Entity.FindComponent<ComponentHealth>()?.Health??0)>0;
-    // Towers attack hostile creatures only: land or water predators, or anything chasing a player; never a player or a tower.
+    // Towers attack hostile creatures only (MDFaction); never a player, a tower or the player's herd.
     public static bool IsEnemy(ComponentMDUnit source,ComponentBody b) {
         if(!Living(b)||b==source.Body||b.ParentBody==source.Body)return false;
-        if(b.Entity.FindComponent<ComponentPlayer>()!=null||b.Entity.FindComponent<ComponentMDUnit>()!=null)return false;
-        var creature=b.Entity.FindComponent<ComponentCreature>();var chase=b.Entity.FindComponent<ComponentChaseBehavior>();
-        return creature!=null&&(creature.Category.HasFlag(CreatureCategory.LandPredator)||creature.Category.HasFlag(CreatureCategory.WaterPredator)||chase?.m_target is ComponentPlayer);
+        var creature=b.Entity.FindComponent<ComponentCreature>();
+        return creature!=null&&MDFaction.Hostile(creature,source.Clock.GameTime);
     }
     public static ComponentBody Trace(ComponentMDUnit source,Vector3 start,Vector3 end,out Vector3 point) {
         var terrain=source.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(start,end,false,true,(v,d)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));

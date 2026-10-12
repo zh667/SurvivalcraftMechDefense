@@ -9,7 +9,8 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 - Towers only. The Destroy Gunners mech and enemy were removed in 0.6.0 (user, 2026-10-11); their database templates stay
   so that old worlds load, and the entities remove themselves on load.
 - In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11).
-- Towers attack hostile creatures only; require line of sight and prevent friendly fire.
+- Towers attack hostile creatures only (`Mod/MDFaction.cs`: read from each creature's own behaviour, no list of mod names;
+  never players, towers, the player's herd or mount); require line of sight and prevent friendly fire.
 - Tower models are the authored blocky models from `E:/projects/endfield-turret-model`; `tools/towers.json` names the
   model version per tower. Details, numbers and the build pipeline: `docs/TOWERS.md`.
 - Never substitute a procedural placeholder and describe it as a recovered original game model.

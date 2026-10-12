@@ -1,6 +1,6 @@
 """Run a test mod in an isolated copy of the Survivalcraft API runtime and wait for its result file.
 
-python tools/run_isolated.py lab  [--mode all|gallery|fire|perf] [--package dist/MechDefense-x.scmod] [--limit 1500]
+python tools/run_isolated.py lab  [--mode all|gallery|fire|perf|special|combat] [--package dist/MechDefense-x.scmod] [--limit 1500]
 python tools/run_isolated.py perf --package dist/MechDefense-0.3.1.scmod --label old
 python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod --label migration   (old-save migration:
 python tools/run_isolated.py smoke --mode new --label migration                                           same runtime, both steps)
@@ -15,6 +15,10 @@ SOURCE = Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1')
 # runtime (2026-10-11: v1.4.3 throws MissingMethodException at start and the lab never reaches the main menu).
 NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods')]
 TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json'), 'smoke': ('RuntimeSmoke', 'smoke-result.json')}
+# lab --mode combat: the user's ghoul mod and Wonderful Era (pirates; with the two mods it depends on), copied into the
+# isolated runtime only.
+COMBAT_MODS = [SOURCE / 'Mods' / '[API1.9.2.1]Ghoul尸鬼-v2.0.scmod', Path(r'D:\下载\[API1.9.3]美好时代V1.9.3a.scmod'),
+               SOURCE / 'Mods' / '[API1.9]服饰配件V1.2.1.scmod', SOURCE / 'Mods' / '[API1.9]构千形V1.2.1.scmod']
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('test', choices=TESTS); ap.add_argument('--mode', default='all')
@@ -34,7 +38,13 @@ def main():
         found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if '[API1.9.4' not in f.name]
         if found: shutil.copy2(found[0], mods / 'Neorxna.scmod')
         print('neorxna:', found[0] if found else 'none')
-    deps = {info['PackageName']: info['Version']} if a.test == 'lab' else {}
+        if a.mode == 'combat':
+            for m in COMBAT_MODS:
+                if m.exists(): shutil.copy2(m, mods / m.name)
+                print('combat mod:', m.name, 'copied' if m.exists() else 'MISSING')
+    with zipfile.ZipFile(mods / 'MechDefense.scmod') as z:   # the lab depends on the package under test (an older one too)
+        tested = json.loads(z.read('modinfo.json').decode('utf-8-sig'))
+    deps = {tested['PackageName']: tested['Version']} if a.test == 'lab' else {}
     with zipfile.ZipFile(mods / f'{project}.scmod', 'w') as z:
         z.write(ROOT / f'Tests/{project}/bin/Release/net10.0/{project}.dll', f'{project}.dll')
         z.writestr('modinfo.json', json.dumps(dict(Name=project, Version='1.0.0', ApiVersion='1.9.3.1', ScVersion='2.4', PackageName='local.' + project.lower(),

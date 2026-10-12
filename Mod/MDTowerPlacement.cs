@@ -84,6 +84,9 @@ public static class MDNeorxnaCompatibility {
         var type=__instance.GetType();
         if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=unit.Kind=="Turret"?unit.Tower.name:"已移除的旧单位";
         if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text="机甲防线 · 防御塔";
-        if(unit.Kind=="Turret")type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)])?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
+        if(unit.Kind!="Turret")return;
+        var label=type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)]);
+        label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
+        label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
     }
 }

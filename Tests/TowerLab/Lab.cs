@@ -9,8 +9,9 @@ namespace TowerLab;
 
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
-// Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four).
-public class Lab:ModLoader {
+// Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four);
+// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods).
+public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
     static readonly List<(string id,ComponentMDUnit unit,Vector3 at)> placed=[];
@@ -37,7 +38,8 @@ public class Lab:ModLoader {
             if(stage==0) {
                 if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
                 SettingsManager.VisibilityRange=128;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;SettingsManager.ShowLogoInScreenshots=false;
-                world=WorldsManager.CreateWorld(new WorldSettings{Name="TowerLab_"+DateTime.Now.ToString("HHmmss"),Seed="7",GameMode=GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
+                world=WorldsManager.CreateWorld(new WorldSettings{Name="TowerLab_"+DateTime.Now.ToString("HHmmss"),Seed="7",GameMode=mode=="combat"?GameMode.Harmless:GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
+                ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").m_worldInfo=world;   // set by the loading screen in the real game; the ghoul mod reads it
                 GameManager.LoadProject(world,ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 player=new PlayerData(GameManager.Project){Name="Lab",SpawnPosition=new(100,65,100),InputDevice=WidgetInputDevice.None};GameManager.Project.FindSubsystem<SubsystemPlayers>().AddPlayerData(player);ScreensManager.SwitchScreen("Game");stage=1;return;
             }
@@ -148,6 +150,7 @@ public class Lab:ModLoader {
             Cam(origin+new Vector3(-12,40,8.1f),origin+new Vector3(-12,0,8));Shot("diag_top");yield return true;
             Remove([f]);
         }
+        if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="probe") {
             var (pid,pu,pat)=placed[0];var focus=pat+Vector3.UnitY*1.4f;var eye=focus+new Vector3(.75f,.45f,-1f)*3.6f;
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_a_hold");yield return true;

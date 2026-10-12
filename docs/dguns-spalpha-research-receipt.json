@@ -1,0 +1,378 @@
+{
+  "stage": "offline archive/ABI/ELF/GLB/PNG verification passed; not animation playback or SC runtime",
+  "sourceApkSha256": "40992b63ab295781fcf4273ecf32dceb521e27b2dff9680998643042eee2dd16",
+  "archiveRecordsVerified": 1244,
+  "counts": {
+    "entries": 530,
+    "variants": 647,
+    "containers": {
+      "dat.bin": 111,
+      "grp.bin": 199,
+      "grp2.bin": 183,
+      "bgm.bin": 6,
+      "se.bin": 31
+    },
+    "textures": 278,
+    "audio": 37,
+    "motions": 23,
+    "models": 49,
+    "sections": 86,
+    "kinds": 69,
+    "playerRows": 12,
+    "distinctPlayerModels": 4,
+    "enemyRows": 167,
+    "enemyKinds": 36,
+    "bossFamilyKinds": 7,
+    "parts": 80,
+    "attacks": 47,
+    "glb": 147,
+    "previews": 75
+  },
+  "abiChecks": {
+    "plbody1": 6,
+    "plbody3": 6,
+    "enepara": 25,
+    "enepara2": 71,
+    "enepara3": 71,
+    "attacks": 47
+  },
+  "audioDecodeChecks": [
+    {
+      "file": "audio/bgm.bin/0001.0.ogg",
+      "frames": 4142048,
+      "sampleRate": 48000,
+      "channels": 2,
+      "seconds": 86.29266666666666
+    },
+    {
+      "file": "audio/bgm.bin/0002.0.ogg",
+      "frames": 4874052,
+      "sampleRate": 44100,
+      "channels": 2,
+      "seconds": 110.52272108843538
+    },
+    {
+      "file": "audio/bgm.bin/0003.0.ogg",
+      "frames": 4490218,
+      "sampleRate": 44100,
+      "channels": 2,
+      "seconds": 101.8190022675737
+    },
+    {
+      "file": "audio/bgm.bin/0004.0.ogg",
+      "frames": 2969280,
+      "sampleRate": 48000,
+      "channels": 2,
+      "seconds": 61.86
+    },
+    {
+      "file": "audio/bgm.bin/0005.0.ogg",
+      "frames": 3756268,
+      "sampleRate": 44100,
+      "channels": 2,
+      "seconds": 85.17614512471656
+    },
+    {
+      "file": "audio/bgm.bin/0006.0.ogg",
+      "frames": 6180440,
+      "sampleRate": 44100,
+      "channels": 2,
+      "seconds": 140.14603174603175
+    },
+    {
+      "file": "audio/se.bin/0001.0.ogg",
+      "frames": 1141,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.03565625
+    },
+    {
+      "file": "audio/se.bin/0002.0.ogg",
+      "frames": 13176,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.41175
+    },
+    {
+      "file": "audio/se.bin/0003.0.ogg",
+      "frames": 3762,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.1175625
+    },
+    {
+      "file": "audio/se.bin/0004.0.ogg",
+      "frames": 6614,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.2066875
+    },
+    {
+      "file": "audio/se.bin/0005.0.ogg",
+      "frames": 7000,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.21875
+    },
+    {
+      "file": "audio/se.bin/0006.0.ogg",
+      "frames": 7650,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.2390625
+    },
+    {
+      "file": "audio/se.bin/0007.0.ogg",
+      "frames": 5635,
+      "sampleRate": 44100,
+      "channels": 1,
+      "seconds": 0.12777777777777777
+    },
+    {
+      "file": "audio/se.bin/0008.0.ogg",
+      "frames": 31022,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.9694375
+    },
+    {
+      "file": "audio/se.bin/0009.0.ogg",
+      "frames": 93046,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 2.9076875
+    },
+    {
+      "file": "audio/se.bin/0010.0.ogg",
+      "frames": 22144,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.692
+    },
+    {
+      "file": "audio/se.bin/0011.0.ogg",
+      "frames": 60235,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 1.88234375
+    },
+    {
+      "file": "audio/se.bin/0012.0.ogg",
+      "frames": 10848,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.339
+    },
+    {
+      "file": "audio/se.bin/0013.0.ogg",
+      "frames": 28753,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.89853125
+    },
+    {
+      "file": "audio/se.bin/0014.0.ogg",
+      "frames": 69632,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 2.176
+    },
+    {
+      "file": "audio/se.bin/0015.0.ogg",
+      "frames": 13839,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.43246875
+    },
+    {
+      "file": "audio/se.bin/0016.0.ogg",
+      "frames": 24670,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.7709375
+    },
+    {
+      "file": "audio/se.bin/0017.0.ogg",
+      "frames": 28246,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.8826875
+    },
+    {
+      "file": "audio/se.bin/0018.0.ogg",
+      "frames": 42155,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 1.31734375
+    },
+    {
+      "file": "audio/se.bin/0019.0.ogg",
+      "frames": 39129,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 1.22278125
+    },
+    {
+      "file": "audio/se.bin/0020.0.ogg",
+      "frames": 82006,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 2.5626875
+    },
+    {
+      "file": "audio/se.bin/0021.0.ogg",
+      "frames": 26027,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.81334375
+    },
+    {
+      "file": "audio/se.bin/0022.0.ogg",
+      "frames": 43583,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 1.36196875
+    },
+    {
+      "file": "audio/se.bin/0023.0.ogg",
+      "frames": 28118,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.8786875
+    },
+    {
+      "file": "audio/se.bin/0024.0.ogg",
+      "frames": 47360,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 1.48
+    },
+    {
+      "file": "audio/se.bin/0025.0.ogg",
+      "frames": 3598,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.1124375
+    },
+    {
+      "file": "audio/se.bin/0026.0.ogg",
+      "frames": 10518,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.3286875
+    },
+    {
+      "file": "audio/se.bin/0027.0.ogg",
+      "frames": 12896,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.403
+    },
+    {
+      "file": "audio/se.bin/0028.0.ogg",
+      "frames": 8272,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.2585
+    },
+    {
+      "file": "audio/se.bin/0029.0.ogg",
+      "frames": 11222,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.3506875
+    },
+    {
+      "file": "audio/se.bin/0030.0.ogg",
+      "frames": 17558,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 0.5486875
+    },
+    {
+      "file": "audio/se.bin/0031.0.ogg",
+      "frames": 73594,
+      "sampleRate": 32000,
+      "channels": 1,
+      "seconds": 2.2998125
+    }
+  ],
+  "nativeSha256": "79ab12e94af46ae5dde74e211f85cdb73c137300b41a0e0b7613df7e71718590",
+  "instructions": [
+    {
+      "address": "0x780b4",
+      "bytes": "e20d40b9",
+      "mnemonic": "ldr",
+      "operands": "w2, [x15, #0xc]"
+    },
+    {
+      "address": "0x780bc",
+      "bytes": "ee1140b9",
+      "mnemonic": "ldr",
+      "operands": "w14, [x15, #0x10]"
+    },
+    {
+      "address": "0x780c4",
+      "bytes": "e0154079",
+      "mnemonic": "ldrh",
+      "operands": "w0, [x15, #0xa]"
+    },
+    {
+      "address": "0xb3d00",
+      "bytes": "080840b9",
+      "mnemonic": "ldr",
+      "operands": "w8, [x0, #8]"
+    },
+    {
+      "address": "0xb3d04",
+      "bytes": "090cc079",
+      "mnemonic": "ldrsh",
+      "operands": "w9, [x0, #6]"
+    },
+    {
+      "address": "0x700d4",
+      "bytes": "692a4079",
+      "mnemonic": "ldrh",
+      "operands": "w9, [x19, #0x14]"
+    },
+    {
+      "address": "0x6ff40",
+      "bytes": "952ec079",
+      "mnemonic": "ldrsh",
+      "operands": "w21, [x20, #0x16]"
+    },
+    {
+      "address": "0x7595c",
+      "bytes": "694a4039",
+      "mnemonic": "ldrb",
+      "operands": "w9, [x19, #0x12]"
+    }
+  ],
+  "bankLookup": {
+    "indices": [
+      1,
+      1,
+      0,
+      255,
+      2
+    ],
+    "bases": [
+      2000,
+      0,
+      4000
+    ],
+    "names": [
+      "dat.bin",
+      "grp.bin",
+      "grp2.bin"
+    ]
+  },
+  "unboundAlternateViews": [
+    "KN_RD15_s5",
+    "KN_RD16_s5"
+  ],
+  "sourceArchiveSha256": "81ee8993334987ebce06c579ac2fe3eafb51d59fd070d217e260e02b2b0fbea3",
+  "tablesSha256": "b086b4fb9dcf1b697607f85706a4ffffa562ec03b40380f342309f376f8de61f",
+  "namesSha256": "2b0ad310c85ab86a2fe10377260f43a28a0d361c593d10750c9711cf1aa798f3",
+  "verificationSha256": "08779ba9c1ba71b9e5acb6c5235eed6a7c559c28297c66caccfe410ed3dc60ab"
+}

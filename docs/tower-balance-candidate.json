@@ -1,0 +1,32 @@
+{
+  "status": "analysis-only; NOT loaded by the mod; provisional numbers require runtime testing",
+  "damageUnit": "SC attack power, not normalized Health; beam/flame/jet are total per activation",
+  "towers": {
+    "battle_turret_1": {"range":28,"interval":0.6,"power":24,"speed":100,"tier":1},
+    "battle_turret_2": {"range":32,"interval":0.6,"power":42,"speed":120,"tier":2},
+    "battle_turret_3": {"range":36,"interval":0.4,"power":60,"speed":140,"tier":3},
+    "battle_cannon_1": {"range":32,"interval":3,"power":160,"speed":24,"splash":2.5,"tier":1},
+    "battle_cannon_2": {"range":36,"interval":3.5,"power":300,"speed":26,"splash":3,"zonePower":40,"tier":2},
+    "battle_sniper_1": {"range":56,"interval":4.5,"power":480,"tier":3},
+    "battle_cannon_1_dg002": {"range":48,"minRange":10,"interval":2.5,"power":240,"speed":30,"tier":"creative/late siege only"},
+    "battle_debuff_1": {"range":28,"interval":4,"power":60,"speed":24,"armorDown":1.25,"armorTime":5,"tier":2},
+    "battle_fog_1": {"range":28,"interval":4,"power":24,"speed":24,"zonePower":36,"zoneTime":5,"slow":0.7,"tier":2},
+    "battle_frost_1": {"range":26,"interval":3.5,"power":16,"speed":24,"slow":0.55,"slowTime":2,"tier":2},
+    "battle_jet_1": {"range":10,"width":4,"interval":3,"power":8,"duration":1,"knockback":6,"tier":1},
+    "battle_rocket_1": {"range":56,"minRange":10,"interval":7,"power":640,"speed":32,"splash":4,"tier":3},
+    "battle_laser_1": {"range":32,"interval":4.5,"power":420,"charge":0.8,"duration":0.6,"tier":2},
+    "battle_laser_2": {"range":40,"interval":5,"power":720,"charge":1.2,"duration":0.8,"tier":3},
+    "battle_lightning_1": {"range":24,"interval":1.8,"power":90,"bounceRange":4,"tier":2},
+    "battle_lightning_2": {"range":30,"interval":2.8,"power":180,"bounceRange":4,"zonePower":20,"tier":3},
+    "battle_shockwave_1": {"range":9,"interval":5,"power":10,"stun":1.2,"tier":2},
+    "battle_medic_1": {"range":10,"interval":3,"power":0.04,"proposedHealCapSC":25,"tier":2},
+    "battle_trap_1": {"range":10,"width":4,"interval":3,"power":180,"duration":1.5,"burn":1.5,"tier":2}
+  },
+  "globalDesignConstraints": [
+    "Not a drop-in patch: material/power costs and faction compatibility are prerequisites.",
+    "Do not stack same-type zones, armor debuffs or permanent hard crowd control.",
+    "Keep target mod injury limits and boss immunities; no hook bypass or fake multiple hits.",
+    "Range is a loaded-world horizontal envelope, not guaranteed visibility or hit probability.",
+    "Medical proposal requires both percent limit and absolute cap, using the smaller result."
+  ]
+}

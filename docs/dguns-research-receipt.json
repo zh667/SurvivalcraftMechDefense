@@ -1,0 +1,62 @@
+{
+  "stage": "archive + PNG + GLB geometry/UV/texture pixel checks passed; NOT original animation playback or SC runtime",
+  "archiveRecordsVerified": 1767,
+  "modelContainers": 58,
+  "meshSections": 109,
+  "glbCount": 217,
+  "playerBodies": 20,
+  "playerPaintVariants": 80,
+  "enemyParameterRows": 68,
+  "bossParameterRows": 15,
+  "unboundModelIds": [
+    236,
+    237,
+    260
+  ],
+  "sourceApkSha256": "d9ce01e477f22e5c96728ac879ae6200198e2a4b3141abbebf625a868fd8b8b0",
+  "abiScalarChecks": {
+    "playerBodies": 20,
+    "enemies": 68,
+    "attacks": 19,
+    "parts": 126
+  },
+  "nativeSha256": "83e8af7dfc2333f27d1ddf9506bc9eb3a5a752b8e83a6c1a4d71d0cd982d0ae6",
+  "independentInstructions": [
+    {
+      "address": "0xdd9a0",
+      "bytes": "130840b9",
+      "mnemonic": "ldr",
+      "operands": "w19, [x0, #8]"
+    },
+    {
+      "address": "0xdd9a4",
+      "bytes": "1a0cc079",
+      "mnemonic": "ldrsh",
+      "operands": "w26, [x0, #6]"
+    },
+    {
+      "address": "0x81b50",
+      "bytes": "d10d40b9",
+      "mnemonic": "ldr",
+      "operands": "w17, [x14, #0xc]"
+    },
+    {
+      "address": "0x81b58",
+      "bytes": "cd1140b9",
+      "mnemonic": "ldr",
+      "operands": "w13, [x14, #0x10]"
+    },
+    {
+      "address": "0x81b60",
+      "bytes": "c111c079",
+      "mnemonic": "ldrsh",
+      "operands": "w1, [x14, #8]"
+    }
+  ],
+  "textures": 267,
+  "audio": 42,
+  "independentMotionContainers": 26,
+  "archiveSha256": "167d27852ba3d9d42e6597039f590ad69ef75a12782dcaf2145d8df89f490767",
+  "tablesSha256": "ed9abcf41bdd22f84330d7c0a7ec30239de4c7bfbb17076cbae380e1a75bf9db",
+  "verificationSha256": "3bbec20079e1d3ec3744251d3e90944bd1ad75845021f951d54124b2a89508fe"
+}

@@ -1,0 +1,190 @@
+{
+  "date": "2026-10-09",
+  "scope": "analysis and local extraction only",
+  "sourceMods": [
+    {
+      "name": "11111.scmod",
+      "sha256": "a445c3bdc7bbfab2cec0ca8b880ac8e811379bf15a33cefcbf23c3046bf5632d"
+    },
+    {
+      "name": "[1工业时代2-1.0.0.2.scmod",
+      "sha256": "e66dd3c6d578dabfe9594537aed2d82a408b9911a595415b732398c25cb9646a"
+    },
+    {
+      "name": "[API1.8.1.3]命令方块4.1.7.scmod",
+      "sha256": "07cd2a8e714fed2676445affde71bacb1a0f45cbcf6bf6216acce47764f0085a"
+    },
+    {
+      "name": "[API1.8.2.3]循环电路板v1.02.scmod",
+      "sha256": "a5cc0532d7f5a5f95a058f4e465aa8808fda0c7a36813ea97707fff10c9df4c2"
+    },
+    {
+      "name": "[API1.8]主角身体属性提升1.21.scmod",
+      "sha256": "0cfd791d5e4c9c6d3f9755ea7e8f77adbb446217f7324102bee6ff3843ff651a"
+    },
+    {
+      "name": "[API1.8]生存开透视角.scmod",
+      "sha256": "dc2984daaa8fe21f9608343a18b33516474db925e22207390b3c7a493ce372d4"
+    },
+    {
+      "name": "[API1.9+]ScbbsPlus社区扩展v1.4.3.scmod",
+      "sha256": "2960b313e3a444a7dcd20e7a6b9d5fb681a9b0d3a6b2fa7bab879e07d4fde74e"
+    },
+    {
+      "name": "[API1.9.1.3]HDR天幕v1.0.2公测版.scmod",
+      "sha256": "7c83391726a9d736d85ee283cf9cfd8f3f8ff78f233a46a694495f4ed8ad3698"
+    },
+    {
+      "name": "[API1.9.2.1]Ghoul尸鬼-v2.0.scmod",
+      "sha256": "6c0a1d7eec67a612ebbdf51908e3a16de80f126bc753cab3090c255600fb3a3c"
+    },
+    {
+      "name": "[API1.9.2.1]Neorxna-v1.4 (2).scmod",
+      "sha256": "1efefcb5b9cff41a68cb39580908cdf524db5cfd0ffbc0d41a90aad65a3317c6"
+    },
+    {
+      "name": "[API1.9.2]工业时代2x泰拉工作台 v1.0.scmod",
+      "sha256": "2ed04ff9480ecce73bd99957a04fa68a4b21f47e1c73d336db88768a07e939f7"
+    },
+    {
+      "name": "[API1.9.2]泰拉工作台 Terraria Crafting Table  v1.1.1.scmod",
+      "sha256": "54f50ca6cf1a6eb86a253f8ddb2b235d1aba76633ce18831c5a0e0abb05bedbb"
+    },
+    {
+      "name": "[API1.9.3]工业时代2：Neorxna信息显示增强v1.2.scmod",
+      "sha256": "d41c1bcb6c062776711e3f964cc11ee209a030f7c1dd04d3733ba966e185c90a"
+    },
+    {
+      "name": "[API1.9.3]工业时代2：筛子_v1.1 内测.scmod",
+      "sha256": "540541303aac96b8d6f4f3d38696f2afa8b0dec05edfba0687fa5e625f4c37f4"
+    },
+    {
+      "name": "[API1.9.3]杂交工艺v1.2.0-beta.3内测版(勿外传).scmod",
+      "sha256": "6785c2865728ee47472d46e07417c91bd98234375172ee1206d6a5f055f21543"
+    },
+    {
+      "name": "[API1.9.3]深海迷航V1.2.2.scmod",
+      "sha256": "6484157cfd4cae63a764c7c18d0b52cdf0df93dc875fa4f7199d48a17eed8551"
+    },
+    {
+      "name": "[API1.9]CS武器1.5.0-全量包.scmod",
+      "sha256": "cea8f888c30f06f6221a01b2c8aed9f54482d020d23ed6cf2f322dd0767ecf42"
+    },
+    {
+      "name": "[API1.9]CS武器1.5.0-死亡竞赛.scmod",
+      "sha256": "e489d2ba720492b9e900b9cb9b57212839646096b46da73b3d89b75a1c8b879d"
+    },
+    {
+      "name": "[API1.9]NekoMeko Model-v1.1.scmod",
+      "sha256": "12a659a67676640203277b9ad862d91e3116c4b3e3db84f35fdf9e0003cdeafc"
+    },
+    {
+      "name": "[API1.9]TravelMap2.7.1.scmod",
+      "sha256": "00e597d25dd666dfa5a25e131fae606d778b58faa5d3673fdbf41f8f11ab85be"
+    },
+    {
+      "name": "[API1.9]服饰配件V1.2.1.scmod",
+      "sha256": "61b15968b816dd28984cfd775f5ccbaa42f1c2707b7813b5cdd11124304d9b18"
+    },
+    {
+      "name": "[API1.9]构千形V1.2.1.scmod",
+      "sha256": "d67d0bd29fd3cf479512f0c70ecbd10eaee31e402471247939545950af09bfaf"
+    },
+    {
+      "name": "[API1.9]玲兰科技v3.0.4(需玲兰辅助).scmod",
+      "sha256": "a2eda34cdb6e15d42c594c83e2bdbc1668bec06b39450d89ddb8727664b2dfd6"
+    },
+    {
+      "name": "[API1.9]玲兰辅助v3.0.3.scmod",
+      "sha256": "40ea58b5d6ff453065f290c250af19cac98ad4cd7313944ec370fc69b0df7a24"
+    },
+    {
+      "name": "[内测1,勿外传][API1.9.3]恶灵传说V2.1.scmod",
+      "sha256": "336de65c0a70a4731e1a93902d3caee358871ec4add933d0ef3c0d1c0a59dbc5"
+    },
+    {
+      "name": "[工业时代附属]物流-1.0.0.1.scmod",
+      "sha256": "f64e951bb2e98f104c8c6ed4c7ed7655a2ab3f9d6f1535fc7ad632ae39b00e57"
+    },
+    {
+      "name": "BF2042-airwater-0.4.6.scmod",
+      "sha256": "fea156cfa0adf698fb3b8d910dbd43ad1ceecee20b5ba55641df0cd23a600aac"
+    },
+    {
+      "name": "BF2042-core-0.4.6.scmod",
+      "sha256": "64007c42a66b8f2550c10e2f1b19f4beb55e3d0297e4c8f7f8f899f37ce2cad8"
+    },
+    {
+      "name": "BF2042-ground-0.4.6.scmod",
+      "sha256": "60446c9a92bf3a0f3d8868c25aa3edad49e4fca2059f2c2238e54f0839411510"
+    },
+    {
+      "name": "BF2042-weapons-0.4.6.scmod",
+      "sha256": "3bd814cc6d47ec4f7e974fd06e7ff700e675fafde76650601ada82b016b80f44"
+    },
+    {
+      "name": "MechDefense-0.4.1.scmod",
+      "sha256": "51c2bb293771d421aefcb70e10da056eda5243fbbfe8a61a1258f19017c22a7c"
+    },
+    {
+      "name": "mod.scmod",
+      "sha256": "52756ff4d9f29db8a80226bdc9fdc73ae80ab16ec04863f6c82bdcf55e132788"
+    },
+    {
+      "name": "NoAutoWakeUpMod.scmod",
+      "sha256": "a79a858d28cdecbd830a3ec26b70bf9c65a8e19f4a384888cb84f6042fff2fd3"
+    },
+    {
+      "name": "RecipaediaEX-2.0.0.1.scmod",
+      "sha256": "9279123c11167a77ac430f0b402431b9c44773efe22c5ba574f3e2529104365d"
+    },
+    {
+      "name": "SneakPlaceMod.scmod",
+      "sha256": "63eb9f279827a47c9e8e3f0901f6643c2c29cfdcfbf1f51ea35199822c17ea76"
+    },
+    {
+      "name": "化肥.scmod",
+      "sha256": "e0155235c77a155ff4c871c013095691bf9210b7490538dc2e0d9b854bb436d7"
+    }
+  ],
+  "runtimeAssemblySha256": "25816c2fbb6380d820b279ddc69455f6d401eeeaec86be131314a3aaa401372c",
+  "endfieldManifestHash": "f8c40366829bc9841a50c3f3c3b43502",
+  "archive": {
+    "groups": 17,
+    "bundles": 579,
+    "assets": 4337,
+    "bytes": 232862318
+  },
+  "convertedCounts": {
+    "converted": {
+      ".anim": 3,
+      ".json": 8062,
+      ".obj": 98,
+      ".shader": 13,
+      ".png": 3846,
+      ".bc7": 3803,
+      ".raw": 27,
+      ".bc5": 16
+    },
+    "object-json": {
+      ".json": 8176
+    },
+    "scene-json": {
+      ".json": 608
+    },
+    "config": {
+      ".json": 88
+    }
+  },
+  "verificationSha256": "e0588400792f64ac89e66af13863dba56bf79b07d54e63223eba97d03ed05f69",
+  "emptyAnimatorMarkers": 32,
+  "geometryMeshes": 85,
+  "emptyMeshMarkers": 13,
+  "exclusions": [
+    "no runtime changes",
+    "no world changes",
+    "no packaging",
+    "no industrial scene assembly",
+    "no gameplay tests"
+  ]
+}

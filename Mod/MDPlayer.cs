@@ -30,7 +30,7 @@ public class MDDeploymentBlock : Block {
     // stay in old inventories under a placeholder name and cannot be deployed.
     const string RemovedName="已移除的旧单位";public const string RemovedNote="这个单位已在 0.6.0 移除，不能再部署。";
     const string MechName="水星机甲 · 部署";
-    static readonly string MechNote="可驾驶的机甲「水星」（原作模型、原作动作和音效）。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
+    static readonly string MechNote="可驾驶的机甲「水星」。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
         "靠近按 R（游戏的骑乘键）上下车：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮（耗能量），空格跳，左键开火，F 近战（有目标时冲过去打），V 切换视角。"+
         "B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 3 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
         $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久。";

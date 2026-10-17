@@ -92,7 +92,7 @@ the user's installed mods (below). Facts about the original game, with their sou
   held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, crafting table or creative inventory): stands on the clicked ground facing like the player;
   needs about 3 × 3 cells and 5 cells of headroom, no creature in the way. Old 0.5.0 mech items and mechs come back as Mercury;
-  the 0.5.0 enemy (data 2, `MDEnemy`) stays removed. Shown texts do not name the source games.
+  the 0.5.0 enemy (data 2, `MDEnemy`) stays removed. Shown texts do not name the source games or mention an original (原作; user: “帮助里不要提到什么原作什么的”).
 - Upkeep as for the towers (`MDTowerMaintenance`): right-click it with iron or copper to repair (an iron ingot restores 200
   of its 3000, 6.7 %; an iron block 60 %); three pickaxe hits take it down into its item, which keeps its health (wear bits
   8-14 of the data, shown in the name and the slot's bar) and deploys it again with that health. A rider is set down first.

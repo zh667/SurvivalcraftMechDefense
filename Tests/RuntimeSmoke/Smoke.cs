@@ -110,7 +110,7 @@ public class Smoke : ModLoader {
         var creative=block.GetCreativeValues().ToArray();
         Check(creative.Length==MDTowerLibrary.All.Count+1&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&creative.Contains(Deploy(1)),"creative inventory lists the towers and Mercury");
         var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).Append(block.GetDescription(Deploy(2))).ToArray();
-        Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")),"no Endfield / Destroy Gunners names: "+string.Join(" ",names.Take(4)));
+        Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")&&!n.Contains("原作")),"no Endfield / Destroy Gunners names, no 原作: "+string.Join(" ",names.Take(4)));   // AGENTS.md product rule
         // Use the removed enemy item, then the frost tower item, on the platform in front of the player
         var inv=p.ComponentMiner.Inventory;p.ComponentBody.Position=origin+new Vector3(-10,0,22);p.ComponentBody.Velocity=Vector3.Zero;int before=Units().Length;
         var foot=p.ComponentBody.Position;var ray=new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-4.5f)));

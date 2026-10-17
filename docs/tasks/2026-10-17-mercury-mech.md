@@ -28,7 +28,7 @@ beyond what the mech's shells need.
   `package.py` (Mercury assets, checked), lab mode `mech` (`Tests/TowerLab/Mech.cs`), smoke expectations for 0.8.0, docs.
 - Windows jobs: asset tool claude-pb-assets-1 (d2be6575…); lab claude-pb-lab-mech-1 (9944847d…), claude-pb-lab-mech-3 (two runs);
   regression claude-pb-tests-1 (86c410c8…) and claude-pb-tests-2 (6d7226d2…): smoke old/new, lab fire 0.8.0 / 0.7.0, perf pairs.
-- Package: dist/MechDefense-0.8.0.scmod, 31,257,700 bytes, SHA-256 568fb06a…a0f11693 (details in docs/STATUS.md).
+- Package: dist/MechDefense-0.8.0.scmod, 31,257,637 bytes, SHA-256 2220167d…d450db50c (details in docs/STATUS.md).
 - Checks passed: asset re-pose (p99 ≤ 0.002 mm), lab mech (twice), smoke migration 3/3 + 20/20, lab fire (same as 0.7.0), perf
   (no difference beyond the spread), package scan. Not run: tower gap/overlap checks (tower models unchanged).
 - User test 1 (2026-10-17): “上机甲是哪个键？E不行” — E is ToggleInventory in this game version; the GUI opened the inventory

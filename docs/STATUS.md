@@ -31,8 +31,8 @@
   Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
   30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
   Tower models unchanged (no gap/overlap rerun).
-- Package `dist/MechDefense-0.8.0.scmod`: 31,257,700 bytes, 178 entries (+19 original sound effects), SHA-256 568fb06a…a0f11693 (job
-  claude-pb-round5-pkg-1). Against 0.7.0: added Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png};
+- Package `dist/MechDefense-0.8.0.scmod`: 31,257,637 bytes, 178 entries (+19 original sound effects), SHA-256 2220167d…d450db50c (job
+  claude-pb-yuanzuo-fix-1; shown texts without 原作, smoke old/new pass). Against 0.7.0: added Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png};
   changed MechDefense.dll, MechDefense.xdb (the MDMech template gains its model component, armour 3000), MechDefense.cr
   (Mercury's recipe), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
 - Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the

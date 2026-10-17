@@ -4,7 +4,7 @@
 
 - User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
   the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,
-  cannon that unfolds and folds, F melee), creative inventory only. Task brief: docs/tasks/2026-10-17-mercury-mech.md; design
+  cannon that unfolds and folds, F melee), creative inventory only (round 5: a survival recipe as well). Task brief: docs/tasks/2026-10-17-mercury-mech.md; design
   and numbers: docs/MECH.md.
 - Assets (`tools/build_mech_assets.py`, job claude-pb-assets-1): 37 joints, 34 rigid parts, 25 clips (752 samples), texture
   embedded (JPEG, engine mipmaps, linear). Re-posed from its own output with the engine's bone composition against Blender:
@@ -31,9 +31,10 @@
   Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
   30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
   Tower models unchanged (no gap/overlap rerun).
-- Package `dist/MechDefense-0.8.0.scmod`: 28,160,481 bytes, 178 entries (+19 original sound effects), SHA-256 9fbbf465…c48cade6. Against 0.7.0: added
-  Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png}; changed MechDefense.dll, MechDefense.xdb
-  (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
+- Package `dist/MechDefense-0.8.0.scmod`: 31,257,700 bytes, 178 entries (+19 original sound effects), SHA-256 568fb06a…a0f11693 (job
+  claude-pb-round5-pkg-1). Against 0.7.0: added Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png};
+  changed MechDefense.dll, MechDefense.xdb (the MDMech template gains its model component, armour 3000), MechDefense.cr
+  (Mercury's recipe), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
 - Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
   inventory before the mech saw the key. Boarding and leaving now use the mount key (R); input is read after ComponentInput.
 - User test 2 (2026-10-17): big steps but little ground, no steering in a jump; the cannon unfolded on its own; first person
@@ -57,8 +58,19 @@
   shot_missile (the only take-off sound in the original's code; SPα has the same 32 effects); locked missiles pass through
   terrain and burst on their target (lab: 3/3 on standing wolves, 3/3 on wolves running sideways at 6 m/s); the laser is one
   held beam with a fading ribbon. Smoke and lab fire pass.
+- User test 5 (2026-10-17): “shift按住应该只有一段音效”; “机甲表面不用加那么多噪点，就用原版材质清晰化那个版本（…如果能再清晰就跟好了）”;
+  “数值设置和生存模式材料设置参考模组 D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1\Mods”. Now: one boss_hover per Shift press
+  (lab, real keys: 1 in a 2.5 s hold, 2 after a second press; counted on SubsystemAudio.PlaySound); the texture is the
+  clean Real-ESRGAN x4plus 2048 upscale of the original (V7) with a light unsharp mask, embedded as PNG (model.glb 4.2 MB),
+  no grain or wear; numbers from the installed mods (decompiled code and data, docs/MECH.md): damage the original's ÷ 10
+  (lab on 2e4 wolves: missiles 100 each 3/3 also on runners, cannon 200, melee 1000, laser 855 per beam, rifle 571 in 6
+  impacts), armour 3000; a crafting-table recipe from 暴雨 / 高能射线 / 序章 / 2 高爆榴弹 towers + 2 iron blocks + diamond
+  block + semiconductor block (lab recipes: 20 recipes, Mercury's grid resolves to it); repair and pickaxe take-down as for
+  towers, which before crashed on the mech (lab: iron ingot 50 % → 56.7 %, 3 hits → item “耐久 57%”, redeployed at 57 %).
+  Smoke 0.5.0 > 0.8.0 (old, new) and lab fire pass (job claude-pb-round5-bal-1).
 - Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
-  for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
+  for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods; the
+  recipe with RecipaediaEX (the user's crafting table; the lab runs the vanilla one); the mod numbers in play.
   The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was
   not identified.
 

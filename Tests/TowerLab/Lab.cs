@@ -164,21 +164,23 @@ public partial class Lab:ModLoader {
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_f_one_tower");yield return true;
         }
         if(mode is "recipes" or "special") {
-            // every tower has a crafting recipe, and its own ingredient grid resolves to it (no clash with vanilla or each other)
+            // every tower and Mercury has a crafting recipe, and its own ingredient grid resolves to it (no clash with vanilla or each other)
             var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
             var mine=CraftingRecipesManager.Recipes.Where(r=>Terrain.ExtractContents(r.ResultValue)==block.BlockIndex).ToList();
             var rec=new Dictionary<string,object>();var bad=new List<string>();
-            foreach(var d in towers) {
-                var r=mine.FirstOrDefault(x=>Terrain.ExtractData(x.ResultValue)==d.data);
-                if(r==null){bad.Add(d.id+": no recipe");continue;}
+            void Check(string id,int data) {
+                var r=mine.FirstOrDefault(x=>Terrain.ExtractData(x.ResultValue)==data);
+                if(r==null){bad.Add(id+": no recipe");return;}
                 var grid=r.Ingredients.Select(s=>s==null?null:s.Contains(':')?s:s+":0").ToArray();   // what the crafting table builds from real items
                 var found=CraftingRecipesManager.FindMatchingRecipe(terrain,grid,0,1);
                 bool ok=found!=null&&found.ResultValue==r.ResultValue&&found.ResultCount==1;
-                if(!ok)bad.Add($"{d.id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
-                rec[d.id]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),remains=r.RemainsValue,description=r.Description,resolves=ok};
+                if(!ok)bad.Add($"{id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
+                rec[id]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),remains=r.RemainsValue,description=r.Description,resolves=ok};
             }
+            foreach(var d in towers)Check(d.id,d.data);
+            Check("mercury",1);   // Mercury, the mech (survival recipe since 0.8.0)
             results["recipes"]=new{count=mine.Count,bad,rec};
-            if(bad.Count>0||mine.Count!=towers.Count)throw new Exception($"recipes: {mine.Count} for {towers.Count} towers; "+string.Join("; ",bad));
+            if(bad.Count>0||mine.Count!=towers.Count+1)throw new Exception($"recipes: {mine.Count} for {towers.Count} towers and Mercury; "+string.Join("; ",bad));
         }
         if(mode is "hand" or "special") {
             // the deploy item held in first person (game camera) and third person (fixed camera in front of the player)

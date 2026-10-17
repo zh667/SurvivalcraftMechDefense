@@ -24,6 +24,14 @@ public static class LabKeys {
     public static void Release(){up.AddRange(Held);Held.Clear();}
 }
 
+// Counts the sounds played through SubsystemAudio's positional PlaySound (the one MDMechBrain.Sound uses), by name.
+[HarmonyPatch(typeof(SubsystemAudio),nameof(SubsystemAudio.PlaySound),new[]{typeof(string),typeof(float),typeof(float),typeof(Vector3),typeof(float),typeof(bool)})]
+public static class LabSounds {
+    public static readonly Dictionary<string,int> Count=[];
+    public static void Prefix(string name){Count[name]=Count.GetValueOrDefault(name)+1;}
+    public static int Of(string name)=>Count.GetValueOrDefault(name);
+}
+
 // lab --mode mech: Mercury, the mech a player boards. Deploys it from its item, shows the clips (forced, standing still),
 // then drives it through MDMechState as the pilot input would (MDMechPilot.ExternalControls): boarding and both cameras,
 // walking, strafing, dashing, jumping and turning, the rifle, missiles and cannon on target dummies, melee, leaving it and
@@ -56,6 +64,7 @@ public partial class Lab {
             for(int k=0;k<3;k++){m.ForceClip=name;m.ForceTime=d.Seconds(clip)*k/2f;foreach(var x in Hold(eye,focus,3))yield return x;Shot($"mc_{name}_{k}");yield return true;}
         }
         m.ForceClip="idle";m.ForceTime=0;
+        foreach(var x in Hold(c+new Vector3(2.6f,3.4f,-3.4f),c+new Vector3(0,3,0),3))yield return x;Shot("mt_close");yield return true;   // the texture up close
         for(int k=0;k<4;k++){float a=MathF.PI*.25f+k*MathF.PI*.5f;foreach(var x in Hold(c+new Vector3(MathF.Sin(a)*10,3.5f,-MathF.Cos(a)*10),focus,3))yield return x;Shot($"mt_{k}");yield return true;}
         m.ForceClip=null;
         // ---- real keys: R boards from 2.4 m (the game's mount key), W walks, Shift dashes, B cycles weapons, F strikes,
@@ -70,7 +79,12 @@ public partial class Lab {
             var kp=u.Body.Position;string clip="";
             foreach(var x in HoldKeys(1.2,()=>clip=m.Anim.Base.name,Key.W))yield return x;k["W walks"]=$"{Vector3.Distance(Flat(kp),Flat(u.Body.Position)):0.0} m, {clip}";
             foreach(var x in During(.6,()=>{}))yield return x;
-            bool hov=false;foreach(var x in HoldKeys(.8,()=>{hov|=m.Hovering;if(m.Hovering)clip=$"{m.Anim.Base.name} held at {m.Anim.BaseTime:0.0} s";},Key.W,Key.Shift))yield return x;k["Shift+W hovers"]=$"{hov}, {clip}";
+            bool hov=false;int hum0=LabSounds.Of(MDMechBrain.Se(31));
+            foreach(var x in HoldKeys(2.5,()=>{hov|=m.Hovering;if(m.Hovering)clip=$"{m.Anim.Base.name} held at {m.Anim.BaseTime:0.0} s";},Key.W,Key.Shift))yield return x;
+            k["Shift+W hovers"]=$"{hov}, {clip}";int hums=LabSounds.Of(MDMechBrain.Se(31))-hum0;k["hover hums in one 2.5 s Shift hold"]=hums;   // user: one sound per hold
+            foreach(var x in During(.4,()=>{}))yield return x;foreach(var x in HoldKeys(.6,()=>{},Key.Shift))yield return x;
+            int hums2=LabSounds.Of(MDMechBrain.Se(31))-hum0;k["hover hums after a second press"]=hums2;
+            if(hums!=1||hums2!=2)throw new Exception($"hover hum: {hums} in one hold, {hums2} after a second press (want 1 and 2)");
             foreach(var x in During(.6,()=>{}))yield return x;
             var weapons=new List<string>{m.WeaponName};
             for(int i=0;i<5;i++){foreach(var x in Tap(Key.B,.5))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
@@ -201,6 +215,25 @@ public partial class Lab {
         // ---- leave, then destroy it
         r["exit"]=MDMechPilot.Exit(pl,u);r["afterExit"]=new{mounted=MDMechPilot.Mounted(pl)!=null,riding=pl.ComponentBody.ParentBody!=null,camera=pl.GameWidget.ActiveCamera.GetType().Name,hud=m.Hud!=null};
         MDMechPilot.ExternalControls=false;
+        // ---- survival upkeep: armour 3000; iron repairs it like a tower; three pickaxe hits (the miner's real hit, through
+        // MDDismantlePatch) take it down into its item with its health; that item deploys it again with that health
+        var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);var pickables=GameManager.Project.FindSubsystem<SubsystemPickables>(true);
+        float armour=u.Damage.AttackResilience;u.SetHitpoints(.5f);
+        var iron=MDTowerMaintenance.Material(Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronIngotBlock>())).Value;
+        bool repaired=MDTowerMaintenance.Repair(pl.ComponentMiner,u,iron.points,iron.name);float afterIron=u.Damage.Hitpoints;
+        inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronPickaxeBlock>()),1);inv.ActiveSlotIndex=0;
+        var hitAt=u.Body.Position+Vector3.UnitY*2;
+        for(int i=0;i<MDTowerMaintenance.HitsToDismantle;i++){pl.ComponentMiner.Hit(u.Body,hitAt,Vector3.UnitZ);foreach(var x in During(1,()=>{}))yield return x;}
+        var drop=pickables.Pickables.FirstOrDefault(pk=>Terrain.ExtractContents(pk.Value)==block.BlockIndex&&MDDeploymentBlock.IsMech(pk.Value));
+        r["upkeep"]=new{armour,repaired,afterIron,takenDown=!u.Entity.IsAddedToProject,item=drop==null?null:block.GetDisplayName(terrain,drop.Value),wear=drop==null?-1:MDDeploymentBlock.Wear(drop.Value)};
+        if(armour!=3000||!repaired||MathF.Abs(afterIron-(.5f+200f/3000))>.002f||drop==null||u.Entity.IsAddedToProject)throw new Exception("mech upkeep: "+System.Text.Json.JsonSerializer.Serialize(r["upkeep"]));
+        int back=drop.Value;drop.ToRemove=true;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,back,1);inv.ActiveSlotIndex=0;
+        pl.ComponentBody.Position=Home;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
+        foot=pl.ComponentBody.Position;pl.ComponentMiner.Use(new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
+        u=GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null);
+        r["redeployed"]=new{deployed=u!=null,hitpoints=u?.Damage.Hitpoints??-1};
+        if(u==null||MathF.Abs(u.Damage.Hitpoints-(1-MDDeploymentBlock.Wear(back)/100f))>.001f)throw new Exception("redeployed mech: "+System.Text.Json.JsonSerializer.Serialize(r["redeployed"]));
+        while(Wait(1))yield return true;
         u.Damage.Hitpoints=0;var dc=u.Body.Position;
         foreach(var x in During(1.8,()=>Cam(dc+new Vector3(7,3,-8),dc+Vector3.UnitY*1.5f)))yield return x;Shot("md_death");yield return true;r["destroyed"]=u.Destroyed;
         foreach(var x in During(10.5,()=>{}))yield return x;r["removedAfterWreck"]=!u.Entity.IsAddedToProject;

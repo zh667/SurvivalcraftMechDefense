@@ -20,7 +20,9 @@ def entity(key,name):
         for k,typ,value in values:X.SubElement(node,'Parameter',Name=k,Type=typ,Value=str(value),Guid=guid(key+'/'+cname+'/'+k))
     return comp
 # Mercury (MDMech) and the removed sample enemy (MDEnemy, kept only so that old worlds load; see docstring)
-for kind,size,mass,hp in [('Mech','2.4,4.8,2.4',3000,1500),('Enemy','1.6,3.2,1.6',700,260)]:
+# Mercury's armour 3000 (user, 2026-10-17: numbers by the installed mods): above BF2042's tank (2000), below SiyahAkrep's
+# armoured car (3200) and Leopard 2 (12000); see docs/MECH.md.
+for kind,size,mass,hp in [('Mech','2.4,4.8,2.4',3000,3000),('Enemy','1.6,3.2,1.6',700,260)]:
     comp=entity(kind,'MD'+kind)
     comp('Unit',[('Class','string','Game.ComponentMDUnit'),('LoadOrder','int',100),('Kind','string',kind),('TurretVariant','int',1),('TowerId','string','')])
     comp('Body',[('BoxSize','Vector3',size),('Mass','float',mass),('Density','float',5),('MaxSmoothRiseHeight','float',.8),('WaterSwayAngle','float',0),('WaterTurnSpeed','float',0)])

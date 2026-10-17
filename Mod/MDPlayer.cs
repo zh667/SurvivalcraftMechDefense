@@ -25,21 +25,23 @@ public class MDModLoader : ModLoader {
 public class MDDeploymentBlock : Block {
     // Data: the tower's data value in the low 8 bits (0/3/4 keep the first three gun towers of older saves; 5+ the other
     // towers); bits 8-14 the wear of a dismantled tower in percent, 0 for full health, so crafted, creative and older items
-    // are unchanged and stack. 1 is Mercury, the mech a player boards (creative inventory only; since 0.8.0, the data value
+    // are unchanged and stack. 1 is Mercury, the mech a player boards (crafting table or creative inventory, same wear bits when taken down; since 0.8.0, the data value
     // of the 0.5.0 sample mech, so such items deploy Mercury). 2 was the Destroy Gunners enemy (removed in 0.6.0): such items
     // stay in old inventories under a placeholder name and cannot be deployed.
     const string RemovedName="已移除的旧单位";public const string RemovedNote="这个单位已在 0.6.0 移除，不能再部署。";
     const string MechName="水星机甲 · 部署";
-    const string MechNote="可驾驶的机甲「水星」（原作模型、原作动作和音效）。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
+    static readonly string MechNote="可驾驶的机甲「水星」（原作模型、原作动作和音效）。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
         "靠近按 R（游戏的骑乘键）上下车：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮（耗能量），空格跳，左键开火，F 近战（有目标时冲过去打），V 切换视角。"+
-        "B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 3 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。";
+        "B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 3 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
+        $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久。";
     public static bool IsMech(int value)=>(Terrain.ExtractData(value)&0xFF)==1;
     public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);
     public static int Wear(int value)=>(Terrain.ExtractData(value)>>8)&0x7F;
     public static float Hitpoints(int value)=>1-Wear(value)/100f;
     public static int Value(MDTowerDef d,float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
-    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):IsMech(v)?MechName:RemovedName;
+    public static int MechValue(float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,1|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
+    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):IsMech(v)?MechName+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
     public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
         $"维修：手持铁锭、铜锭（或铁块、铜块）右键炮塔。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):IsMech(v)?MechNote:RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
@@ -139,6 +141,7 @@ public static class MDDeployPatch {
             var mech=DatabaseManager.CreateEntity(__instance.Project,"MDMech",true);var body=mech.FindComponent<ComponentBody>(true);body.Position=at;
             var facing=__instance.ComponentCreature.ComponentBody.Matrix.Forward;float yaw=MathF.Atan2(-facing.X,-facing.Z);body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
             var unit=mech.FindComponent<ComponentMDUnit>(true);unit.Yaw=unit.AimYaw=yaw;
+            if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)unit.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // taken down, it keeps its health
             mech.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(mech);__instance.RemoveActiveTool(1);return false;
         }
         MDPlayer.Message(__instance.ComponentPlayer,MDDeploymentBlock.RemovedNote);return false;   // data 2: the removed enemy

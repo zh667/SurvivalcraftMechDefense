@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Game;
 
-// Mercury (Destroy Gunners), the mech a player can board (deploy item data 1, creative inventory only). Assets come from
+// Mercury (Destroy Gunners), the mech a player can board (deploy item data 1: crafting table or creative inventory). Assets come from
 // tools/build_mech_assets.py (Assets/Imported/Mercury): a rigid-part glTF with one node per joint at its rest pivot, and
 // the 25 clips decoded from the original game as local joint transforms every 2 ticks (1/30 s). Game frame: the mech
 // faces -Z, its right is +X. Docs: docs/MECH.md.
@@ -158,7 +158,7 @@ public sealed class MDMechState {
     public Vector2 Move; public bool Hover,Jump,Trigger,Melee,Switch;  // move: x right, y forward; Jump/Melee/Switch are presses
     public Vector3? AimPoint; public Vector3 AimFrom,AimDir;          // the crosshair: its point and the camera ray
     public MDMechWeapon Weapon; public float Cooldown,MeleeCooldown,FiredAgo=99,AirTime,ShownSpeed;public bool MeleeHit,Grounded,PendingShot,WasTrigger,WasHover;
-    public float Energy=MDMechBrain.EnergyMax,EnergyLock,HoverHum;    // EP of the original; at 0 no boost for 3 s; hover sound timer
+    public float Energy=MDMechBrain.EnergyMax,EnergyLock;             // EP of the original; at 0 no boost for 3 s
     public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer;   // missile locks; missiles still to launch
     public float BeamTime=-1,BeamTick,BeamLength;                       // laser: seconds since the beam started (<0 off), next damage tick, length
     public ComponentBody LungeTarget;
@@ -194,14 +194,16 @@ public static class MDMechBrain {
     // jump's airborne pose with both legs kicked back (user: like the jump, only without jumping; the original's gliding
     // "dash" clips looked crouched). Short acceleration on the ground, steering in the air at half of it; the jump leaves at
     // once with a thruster burst. Sounds: the jump take-off is shot_missile as in the original's code (no other take-off
-    // sound exists in either version's 32 effects); hover hums with the game's boss_hover, repeated while it lasts.
+    // sound exists in either version's 32 effects); hover plays the game's boss_hover once per Shift press.
     public const float HoverPoseTime=1;   // s into the jump clip: its steady airborne pose (from 0.6 s on)
     public const float WalkSpeed=5.7f,BackSpeed=5.2f,StrafeSpeed=5.7f,HoverSpeed=13,JumpSpeed=8.5f,Accel=24,AirAccel=12,HoverHeight=.8f;
     // Energy (EP): 100000, +9000/s, boost -15360/s, a cannon shot -640; empty: 3 s without boost.
     public const float EnergyMax=100000,EnergyRegen=9000,BoostCost=15360,CannonCost=640;
     // Damage: the original's (pilot attack 1000 x part power %) x DamageScale. Mercury's default parts (rifle NO-100,
     // missile NO-100, cannon NO-200) and the shop's first laser (NO-150) and grenade (NO-200); the punch is 1000 %.
-    public const float DamageScale=.03f;
+    // 0.1 (user: numbers by the installed mods, docs/MECH.md): the rifle's 400 per second is above the strongest hand guns
+    // there (about 300-350) and below the vehicles' heavy weapons (BF2042 tank shell 600-2700, helicopter rockets 563/s).
+    public const float DamageScale=.1f;
     public const int MaxLocks=3;                                        // MERCURY's missile lock count
     static readonly System.Random random=new();
     static float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
@@ -238,7 +240,7 @@ public static class MDMechBrain {
         m.Hovering=hover&&ground.HasValue&&!(body.Velocity.Y>2&&ground>HoverHeight);
         if(m.Hovering)body.Velocity=new(body.Velocity.X,Math.Clamp((HoverHeight-ground.Value)*7,-5,6),body.Velocity.Z);
         else if(hover&&!m.Grounded&&body.Velocity.Y<-2.5f)body.Velocity=new(body.Velocity.X,-2.5f,body.Velocity.Z);
-        m.HoverHum-=dt;if(m.Hovering&&(!m.WasHover||m.HoverHum<=0)){Sound(u,Se(31),body.Position,.45f);m.HoverHum=2.1f;}m.WasHover=m.Hovering;
+        if(m.Hover&&!m.WasHover&&hover)Sound(u,Se(31),body.Position,.5f);m.WasHover=m.Hover;   // one hum per Shift press (user: not a repeating one)
         m.Energy=Math.Clamp(m.Energy+(m.Hovering?-BoostCost:EnergyRegen)*dt,0,EnergyMax);if(m.Energy<=0&&m.EnergyLock<=0)m.EnergyLock=3;
         bool footing=m.Grounded||m.Hovering;m.AirTime=footing?0:m.AirTime+dt;
         // turning: the body follows the aim; the turret covers the rest (up to TurretLimit)

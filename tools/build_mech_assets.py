@@ -4,7 +4,9 @@ python tools/build_mech_assets.py [--source <mercury_V8.blend>] [--blender <blen
 
 Output: Mod/Assets/Imported/Mercury/ (ignored: extracted game data, rebuilt by this tool, packaged by package.py)
   model.glb   rigid parts, one node per joint at its rest pivot, the part's mesh in node space; the texture is embedded
-              (JPEG; the engine builds the mipmaps and samples it linearly). Drawn two-sided by ComponentMDMechModel.
+              (lossless PNG; the engine builds the mipmaps and samples it linearly). Drawn two-sided by ComponentMDMechModel.
+              Texture (user, 2026-10-17): the clean Real-ESRGAN x4plus 2048 upscale of the original 512 (V7, no grain or wear)
+              with a light unsharp mask (radius 1.4, 70 %, threshold 2) -> TEXTURE.
   mech.json   joints (name, parent, pivot), clips (name, slot, loop, hold, samples, offset), muzzles, measured speeds
   clips.bin   float32 per clip, per sample (every 2 ticks = 1/30 s), per joint: qx qy qz qw tx ty tz s, the joint's
               deformation relative to its parent's (column vectors, game frame)
@@ -20,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'Mod/Assets/Imported/Mercury'
 SOURCE = Path(r'E:\projects\dguns-mech-model\v8_assets\mercury_V8.blend')
+TEXTURE = Path(r'E:\projects\dguns-mech-model\v8_assets\textures\mercury_clean_2048_sharp.png')
 CONTRACT = 'mercury_V8_contract.json'           # next to the .blend: measured planted-foot speeds
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 STEP = 2                                        # ticks between samples
@@ -162,7 +165,7 @@ def engine_pose(np, ex, data, clip, sample):
     return W
 
 
-def write_glb(np, path, ex, jpeg):
+def write_glb(np, path, ex, image, mime):
     bin_ = bytearray(); views = []; accessors = []; meshes = []; nodes = []
     def view(data, target=None):
         while len(bin_) % 4: bin_.append(0)
@@ -187,10 +190,10 @@ def write_glb(np, path, ex, jpeg):
                         indices=acc(idx, 5123, 'SCALAR', 34963), material=0)
             meshes.append(dict(name=nm, primitives=[prim])); g['mesh'] = len(meshes) - 1
         nodes.append(g)
-    img = view(jpeg)
+    img = view(image)
     gltf = dict(asset=dict(version='2.0', generator='MechDefense build_mech_assets'), scene=0, scenes=[dict(nodes=[0])], nodes=nodes, meshes=meshes,
                 materials=[dict(name='mercury', pbrMetallicRoughness=dict(baseColorTexture=dict(index=0), metallicFactor=0, roughnessFactor=1), doubleSided=True)],
-                textures=[dict(sampler=0, source=0)], images=[dict(bufferView=img, mimeType='image/jpeg', name='mercury')],
+                textures=[dict(sampler=0, source=0)], images=[dict(bufferView=img, mimeType=mime, name='mercury')],
                 samplers=[dict(magFilter=9729, minFilter=9987, wrapS=33071, wrapT=33071)],
                 accessors=accessors, bufferViews=views, buffers=[dict(byteLength=len(bin_))])
     js = json.dumps(gltf, separators=(',', ':')).encode(); js += b' ' * (-len(js) % 4); bin_ += b'\0' * (-len(bin_) % 4)
@@ -216,7 +219,7 @@ def write_icon(np, path, ex):
 def main():
     import argparse, hashlib, io, shutil, tempfile
     import numpy as np
-    ap = argparse.ArgumentParser(); ap.add_argument('--source', default=str(SOURCE)); ap.add_argument('--blender', default=str(BLENDER)); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument('--source', default=str(SOURCE)); ap.add_argument('--texture', default=str(TEXTURE)); ap.add_argument('--blender', default=str(BLENDER)); a = ap.parse_args()
     work = Path(tempfile.mkdtemp(prefix='mech_assets_'))
     r = subprocess.run([a.blender, '-b', a.source, '--python', __file__, '--', '--export', str(work)], capture_output=True, text=True, encoding='utf-8', errors='replace')
     if 'EXPORT_DONE' not in r.stdout: print(r.stdout[-3000:], r.stderr[-3000:]); sys.exit('Blender export failed')
@@ -232,9 +235,9 @@ def main():
             err.append(np.linalg.norm(got - ref[part['src']], axis=1))
         e = np.concatenate(err); report.append(dict(clip=c['clip'], frame=c['frame'], max_error_m=float(e.max()), p99_m=float(np.percentile(e, 99))))
     OUT.mkdir(parents=True, exist_ok=True)
-    from PIL import Image   # the V8 texture as baked (sRGB PNG next to the .blend), embedded as JPEG
-    im = Image.open(Path(a.source).parent / 'textures/mercury_V8_2048.png').convert('RGB'); buf = io.BytesIO(); im.save(buf, 'JPEG', quality=92, subsampling=0)
-    write_glb(np, OUT / 'model.glb', ex, buf.getvalue())
+    from PIL import Image   # the texture (sRGB PNG), embedded losslessly
+    im = Image.open(a.texture).convert('RGB'); buf = io.BytesIO(); im.save(buf, 'PNG', optimize=True)
+    write_glb(np, OUT / 'model.glb', ex, buf.getvalue(), 'image/png')
     im.resize((512, 512), Image.LANCZOS).save(OUT / 'icon.png')
     shutil.copyfile(work / 'clips.bin', OUT / 'clips.bin')
     (OUT / 'Audio').mkdir(exist_ok=True)

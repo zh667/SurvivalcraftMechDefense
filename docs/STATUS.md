@@ -31,7 +31,7 @@
   Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
   30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
   Tower models unchanged (no gap/overlap rerun).
-- Package `dist/MechDefense-0.8.0.scmod`: 28,138,752 bytes, 177 entries (+18 original sound effects), SHA-256 266e24d8…166b31ba. Against 0.7.0: added
+- Package `dist/MechDefense-0.8.0.scmod`: 28,160,481 bytes, 178 entries (+19 original sound effects), SHA-256 9fbbf465…c48cade6. Against 0.7.0: added
   Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png}; changed MechDefense.dll, MechDefense.xdb
   (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
 - Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
@@ -51,6 +51,12 @@
   wolves: rifle 151 (5 hits), missiles 3 locks in one sweep and 3 homing hits of 30, laser 251 over its 1 s beam, grenade 50
   (blast), cannon 60, jump attack (clip 45) lunges 13.8 m and hits 300; real keys: B cycles rifle > missiles > cannon >
   laser > grenade > rifle. Smoke 0.5.0 > 0.8.0 and lab fire pass again.
+- User test 4 (2026-10-17): hover should look like the jump (legs kicked back), not crouched; jump / hover sound the same as the
+  missile; locked missiles sometimes missed; the laser smeared in steps; hover did not feel faster. Now: hover holds the jump
+  clip at 1.0 s (steady airborne pose) at 13 m/s (lab 12.96 m/s, 0.79 m up); hover hums with boss_hover, the jump keeps
+  shot_missile (the only take-off sound in the original's code; SPα has the same 32 effects); locked missiles pass through
+  terrain and burst on their target (lab: 3/3 on standing wolves, 3/3 on wolves running sideways at 6 m/s); the laser is one
+  held beam with a fading ribbon. Smoke and lab fire pass.
 - Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
   for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
   The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was

@@ -70,6 +70,8 @@ public sealed class MDMechAnimator {
         var c=d.Clip(name);if(c==Base){Rate=rate;return;}
         PrevBase=Base;PrevTime=BaseTime;PrevRate=Rate;Base=c;BaseTime=0;Rate=rate;Fade=0;FadeLength=fade;
     }
+    // a clip held still at one time (hover holds the jump's airborne pose)
+    public void HoldBase(string name,float time,float fade=.2f){var c=d.Clip(name);if(c!=Base){PrevBase=Base;PrevTime=BaseTime;PrevRate=Rate;Base=c;Fade=0;FadeLength=fade;}BaseTime=time;Rate=0;}
     public void PlayAction(string name){Action=d.Clip(name);ActionTime=0;}
     public void PlayCannon(string name){Cannon=d.Clip(name);CannonTime=0;CannonOn=true;}
     public bool ActionDone=>Action==null||ActionTime>=d.Seconds(Action);
@@ -156,7 +158,7 @@ public sealed class MDMechState {
     public Vector2 Move; public bool Hover,Jump,Trigger,Melee,Switch;  // move: x right, y forward; Jump/Melee/Switch are presses
     public Vector3? AimPoint; public Vector3 AimFrom,AimDir;          // the crosshair: its point and the camera ray
     public MDMechWeapon Weapon; public float Cooldown,MeleeCooldown,FiredAgo=99,AirTime,ShownSpeed;public bool MeleeHit,Grounded,PendingShot,WasTrigger,WasHover;
-    public float Energy=MDMechBrain.EnergyMax,EnergyLock;             // EP of the original; at 0 no boost for 3 s
+    public float Energy=MDMechBrain.EnergyMax,EnergyLock,HoverHum;    // EP of the original; at 0 no boost for 3 s; hover sound timer
     public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer;   // missile locks; missiles still to launch
     public float BeamTime=-1,BeamTick,BeamLength;                       // laser: seconds since the beam started (<0 off), next damage tick, length
     public ComponentBody LungeTarget;
@@ -187,10 +189,14 @@ public sealed class MDMechState {
 public static class MDMechBrain {
     public const float TurretLimit=1.05f,TurnRate=3.5f,Gravity=12,Unit=2.67f;
     // Speeds: the original's root motion (move/16384 units per tick x60) x Unit with the clips at their own rate: walk 5.7,
-    // back 5.2, sideways 5.7 m/s; boost (hover, Shift held: the original's boost mode, whose clips are the gliding "dash"
-    // clips) 8 m/s HoverHeight above the ground on the back thrusters. Short acceleration on the ground, steering in the air at
-    // half of it; the jump leaves at once with a thruster burst.
-    public const float WalkSpeed=5.7f,BackSpeed=5.2f,StrafeSpeed=5.7f,HoverSpeed=8,JumpSpeed=8.5f,Accel=24,AirAccel=12,HoverHeight=.8f;
+    // back 5.2, sideways 5.7 m/s; boost (hover, Shift held) 13 m/s HoverHeight above the ground on the back thrusters (the
+    // original's boost is x1.4 = 8 m/s, which the user could not feel), in the
+    // jump's airborne pose with both legs kicked back (user: like the jump, only without jumping; the original's gliding
+    // "dash" clips looked crouched). Short acceleration on the ground, steering in the air at half of it; the jump leaves at
+    // once with a thruster burst. Sounds: the jump take-off is shot_missile as in the original's code (no other take-off
+    // sound exists in either version's 32 effects); hover hums with the game's boss_hover, repeated while it lasts.
+    public const float HoverPoseTime=1;   // s into the jump clip: its steady airborne pose (from 0.6 s on)
+    public const float WalkSpeed=5.7f,BackSpeed=5.2f,StrafeSpeed=5.7f,HoverSpeed=13,JumpSpeed=8.5f,Accel=24,AirAccel=12,HoverHeight=.8f;
     // Energy (EP): 100000, +9000/s, boost -15360/s, a cannon shot -640; empty: 3 s without boost.
     public const float EnergyMax=100000,EnergyRegen=9000,BoostCost=15360,CannonCost=640;
     // Damage: the original's (pilot attack 1000 x part power %) x DamageScale. Mercury's default parts (rifle NO-100,
@@ -232,7 +238,7 @@ public static class MDMechBrain {
         m.Hovering=hover&&ground.HasValue&&!(body.Velocity.Y>2&&ground>HoverHeight);
         if(m.Hovering)body.Velocity=new(body.Velocity.X,Math.Clamp((HoverHeight-ground.Value)*7,-5,6),body.Velocity.Z);
         else if(hover&&!m.Grounded&&body.Velocity.Y<-2.5f)body.Velocity=new(body.Velocity.X,-2.5f,body.Velocity.Z);
-        if(m.Hovering&&!m.WasHover)Sound(u,Se(9),body.Position,.5f);m.WasHover=m.Hovering;
+        m.HoverHum-=dt;if(m.Hovering&&(!m.WasHover||m.HoverHum<=0)){Sound(u,Se(31),body.Position,.45f);m.HoverHum=2.1f;}m.WasHover=m.Hovering;
         m.Energy=Math.Clamp(m.Energy+(m.Hovering?-BoostCost:EnergyRegen)*dt,0,EnergyMax);if(m.Energy<=0&&m.EnergyLock<=0)m.EnergyLock=3;
         bool footing=m.Grounded||m.Hovering;m.AirTime=footing?0:m.AirTime+dt;
         // turning: the body follows the aim; the turret covers the rest (up to TurretLimit)
@@ -262,7 +268,8 @@ public static class MDMechBrain {
         bool jumping=!footing&&a.Base.name=="jump"&&a.BaseTime<1.1f;
         if(jumping){}
         else if(!footing&&m.AirTime>.15f)a.PlayBase("fall",1,.2f);
-        else if(moving)a.PlayBase((m.Hovering?"dash_":"walk_")+dir,1,.18f);
+        else if(m.Hovering)a.HoldBase("jump",HoverPoseTime,.2f);
+        else if(moving)a.PlayBase("walk_"+dir,1,.18f);
         else a.PlayBase(m.FiredAgo<1.5f?"combat_stance":"idle",1,.25f);
         // melee (F): with a locked creature, or one near the crosshair within 20 m, the original's jump attack at it; else the
         // punch combo. Both strike once at their hit frame.
@@ -363,8 +370,7 @@ public static class MDMechBrain {
         if(m.BeamTime>=1){m.BeamTime=-1;m.Cooldown=1;return;}
         var from=Muzzle(u,"rifle",out _);if(Covered(u,from))return;var dir=Vector3.Normalize(Target(u,from)-from);
         m.BeamLength=Math.Min(m.BeamLength+60*Unit*dt,22*Unit);var hit=MDCombat.Trace(u,from,from+dir*m.BeamLength,out var end);
-        var c=new Color(Laser.fx.color[0],Laser.fx.color[1],Laser.fx.color[2]);w.AddBeam(from,end,.16f,c,.05f,false);w.Flash(from,.35f,c,.05f);
-        if(Vector3.Distance(end,from)<m.BeamLength-.05f)w.Flash(end,.45f,c,.05f);
+        var c=new Color(Laser.fx.color[0],Laser.fx.color[1],Laser.fx.color[2]);w.HoldBeam(u,from,end,.16f,c);   // one beam, a smooth fading ribbon behind it
         m.BeamTick-=dt;if(m.BeamTick<=0&&hit!=null){m.BeamTick=1/6f;MDTowerBrain.Hit(u,hit,Laser.attack.power,end,dir);w.Sparks(end,-dir,4,c,4,.8f,.3f,.04f);Sound(u,Se(13),end,.4f);}
     }
     // The grenade: thrown from the cannon's base in an arc 4 m high that lands at 75 % of the crosshair's distance (40 m at most).

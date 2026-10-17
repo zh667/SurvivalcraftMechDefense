@@ -70,7 +70,7 @@ public partial class Lab {
             var kp=u.Body.Position;string clip="";
             foreach(var x in HoldKeys(1.2,()=>clip=m.Anim.Base.name,Key.W))yield return x;k["W walks"]=$"{Vector3.Distance(Flat(kp),Flat(u.Body.Position)):0.0} m, {clip}";
             foreach(var x in During(.6,()=>{}))yield return x;
-            bool hov=false;foreach(var x in HoldKeys(.8,()=>{hov|=m.Hovering;if(m.Anim.Base.name.StartsWith("dash"))clip=m.Anim.Base.name;},Key.W,Key.Shift))yield return x;k["Shift+W hovers"]=$"{hov}, {clip}";
+            bool hov=false;foreach(var x in HoldKeys(.8,()=>{hov|=m.Hovering;if(m.Hovering)clip=$"{m.Anim.Base.name} held at {m.Anim.BaseTime:0.0} s";},Key.W,Key.Shift))yield return x;k["Shift+W hovers"]=$"{hov}, {clip}";
             foreach(var x in During(.6,()=>{}))yield return x;
             var weapons=new List<string>{m.WeaponName};
             for(int i=0;i<5;i++){foreach(var x in Tap(Key.B,.5))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
@@ -117,7 +117,7 @@ public partial class Lab {
         foreach(var x in During(1.6,()=>{m.Move=new(0,1);m.Hover=true;seen=m.Anim.Base.name;if(Time.RealTime>0){float h=u.Body.Position.Y-Home.Y;hmin=Math.Min(hmin,h);hmax=Math.Max(hmax,h);}Cam(u.Body.Position+side*1.3f,u.Body.Position+Vector3.UnitY*2);}))yield return x;
         Shot("mp_hover");yield return true;
         var hp1=u.Body.Position;foreach(var x in During(.5,()=>{m.Move=new(0,1);m.Hover=true;}))yield return x;
-        r["hover"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),lastHalfSecondSpeed=Vector3.Distance(Flat(hp1),Flat(u.Body.Position))/.5f,heightNow=u.Body.Position.Y-Home.Y,hovering=m.Hovering,clip=seen};
+        r["hover"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),lastHalfSecondSpeed=Vector3.Distance(Flat(hp1),Flat(u.Body.Position))/.5f,heightNow=u.Body.Position.Y-Home.Y,hovering=m.Hovering,clip=seen,clipTime=m.Anim.BaseTime,rate=m.Anim.Rate};
         m.Hover=false;foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;r["afterHover"]=new{grounded=m.Grounded,height=u.Body.Position.Y-Home.Y};
         foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;
         // jump while walking forward: it leaves at once and keeps steering in the air
@@ -152,10 +152,20 @@ public partial class Lab {
         int locks=m.Locks.Count;foreach(var x in During(.1,()=>Cam(cam,mid)))yield return x;Shot("mp_missile_locked");yield return true;m.Trigger=false;
         foreach(var x in During(4,()=>Cam(cam,mid)))yield return x;Shot("mp_missile");yield return true;
         r["missile"]=new{locks,hits=mt.Count(t=>t.Hit),damage=string.Join(" ",mt.Select(t=>$"{(1-t.Min)*2e4f:0}")),weapon=m.WeaponName};Remove(mt);
+        // locked missiles always hit: three wolves running sideways at 6 m/s (moved every frame)
+        var run=new[]{Target(At(18,-12)),Target(At(24,-8)),Target(At(30,-14))};while(Wait(.6))yield return true;
+        void Run(float dt){foreach(var t in run)if(t.Entity.IsAddedToProject)t.Body.Position+=right*6*dt;}
+        double runAt=Time.RealTime;float Step(){float d=(float)(Time.RealTime-runAt);runAt=Time.RealTime;return Math.Min(d,.05f);}
+        for(int k=0;k<3;k++)foreach(var x in During(.25,()=>{Run(Step());m.Trigger=true;AimAt(run[k]);}))yield return x;
+        int runLocks=m.Locks.Count;m.Trigger=false;
+        foreach(var x in During(6,()=>{Run(Step());Cam(cam,mid+right*8);}))yield return x;Shot("mp_missile_running");yield return true;
+        r["missileRunning"]=new{locks=runLocks,hits=run.Count(t=>t.Hit),damage=string.Join(" ",run.Select(t=>$"{(1-t.Min)*2e4f:0}"))};Remove(run);
         // laser: a 1 s beam on a wolf at 14 m, damage every 1/6 s
         foreach(var x in SwitchTo(MDMechWeapon.Laser))yield return x;
         var lt=Target(At(14,1));while(Wait(.6))yield return true;
         foreach(var x in During(.5,()=>{m.Trigger=true;AimAt(lt);Cam(cam,mid);}))yield return x;Shot("mp_laser");yield return true;
+        // sweep the beam sideways (aim point moving 12 m/s): one beam with a smooth ribbon behind it
+        var sweep0=Time.RealTime;foreach(var x in During(.25,()=>{m.Trigger=true;m.AimPoint=MDCombat.Center(lt.Body)+right*(float)((Time.RealTime-sweep0)*12-1.5);Cam(cam,mid);}))yield return x;Shot("mp_laser_sweep");yield return true;
         foreach(var x in During(1.2,()=>{m.Trigger=true;AimAt(lt);}))yield return x;m.Trigger=false;
         r["laser"]=new{hit=lt.Hit,damage=(1-lt.Min)*2e4f,weapon=m.WeaponName};Remove([lt]);
         // grenade: thrown at a wolf at 18 m lands at 75 % of the distance, the blast reaches it

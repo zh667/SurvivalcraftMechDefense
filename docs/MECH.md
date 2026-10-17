@@ -23,7 +23,7 @@ sounds. Facts about the original game, with their sources in its code and tables
   thrusters under the lower back units (33, 35; the original puts its jet objects there).
 - `Audio/seNN.ogg`: lock_on 07, shot_gun 08, shot_missile 09 (also jump / boost take-off), shot_laser 10, shot_cannon 11,
   hit_gun 13, hit_missile 14, punch_swing 16, hit_punch 17, player_damage 19, player_destruction 20, throw_bomb 23,
-  bomb_explosion 24, change_to_gun/missile/cannon/bomb/laser 25/26/27/29/30.
+  bomb_explosion 24, change_to_gun/missile/cannon/bomb/laser 25/26/27/29/30, boss_hover 31 (the hover hum).
 - `icon.bin` / `icon.png`: inventory icon (idle pose, every triangle) in the towers' icon format.
 - Self-check of the tool: it re-poses the model from its own output with the engine's bone composition
   (`ComponentModel.ProcessBoneHierarchy`: the set transform, plus the node's bind translation, times the parent) and compares
@@ -49,13 +49,16 @@ sounds. Facts about the original game, with their sources in its code and tables
   The body turns towards the aim at 3.5 rad/s while moving or when the aim leaves the turret's range.
 - Jump (Space): leaves at once at 8.5 m/s (3.1 m high) with a thruster burst and shot_missile's sound (the original's
   take-off sound).
-- Hover (Shift held; the original's boost mode, whose clips are the four gliding "dash" clips): floats 0.8 m above the ground
-  at 8 m/s on flames from the two back thrusters. Energy (EP, the original's): 100000, +9000/s, boost −15360/s (about 6.5 s
+- Hover (Shift held; the original's boost mode): floats 0.8 m above the ground at 13 m/s on flames from the two back
+  thrusters, in the jump's airborne pose with both legs kicked back (the jump clip held at 1.0 s). User: the original's
+  gliding "dash" clips looked crouched, and its ×1.4 boost (8 m/s) did not feel faster. Sounds: the jump take-off is
+  shot_missile as in the original's code (neither Σ nor SPα has another take-off sound among its 32 effects); hover hums
+  with boss_hover, repeated while it lasts. Energy (EP, the original's): 100000, +9000/s, boost −15360/s (about 6.5 s
   from full), a cannon shot −640; empty: no boost for 3 s.
-- Clips: idle, combat stance (1.5 s after firing), walk in four directions (left/right by the mech's own sides), the dash
-  clips while hovering, jump, fall, hit (when damaged on the ground), punch combo, jump attack (lock-on special), death
-  (held), cannon unfold / fold. Not used: hangar pose, quick-steps, the two unnamed extras, the cannon's follow-up clip 55 (the
-  original plays it for every cannon shot; it swings the cannon up and back down, which the user saw as folding and snapping
+- Clips: idle, combat stance (1.5 s after firing), walk in four directions (left/right by the mech's own sides), the
+  jump's airborne pose while hovering, jump, fall, hit (when damaged on the ground), punch combo, jump attack (lock-on special), death
+  (held), cannon unfold / fold. Not used: hangar pose, quick-steps, the two unnamed extras, the cannon's follow-up clip 55, the four "dash" clips (the
+  original plays clip 55 for every cannon shot; it swings the cannon up and back down, which the user saw as folding and snapping
   open again).
 - Weapons (B cycles rifle → missiles → cannon → laser → grenade, with the original's change_to sounds). Damage is the
   original's (pilot attack 1000 × part power %) × 0.03: Mercury's default rifle NO-100, missile NO-100 and cannon NO-200, and
@@ -65,9 +68,9 @@ sounds. Facts about the original game, with their sources in its code and tables
   | Weapon | Damage | Rhythm | Flight / reach | Behaviour |
   |---|---|---|---|---|
   | Rifle | 30 | 0.25 s while held | 160 m/s | from the rifle tip |
-  | Missiles | 30 each | one per lock, 0.3 s apart | 8 → 32 m/s (38 m/s²), 8-12 s | hold: a creature the crosshair sweeps over locks at once (within 3.5° or 1.3 m of the ray, 0.8-133 m, in sight beyond 13 m), up to 3 (MERCURY's lock count), red rings and the lock_on beep; release: launch. Drift 0.33-0.67 s, then home at 60°/s (600°/s within 13 m) towards where the target will be. Release without a lock: one straight missile |
+  | Missiles | 30 each | one per lock, 0.3 s apart | 8 → 32 m/s (38 m/s²), 8-12 s | hold: a creature the crosshair sweeps over locks at once (within 3.5° or 1.3 m of the ray, 0.8-133 m, in sight beyond 13 m), up to 3 (MERCURY's lock count), red rings and the lock_on beep; release: launch. Drift 0.33-0.67 s, then home at 60°/s and faster the longer it homes (600°/s within 13 m, straight at it within 5 m) towards where the target will be. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts on reaching the target. Release without a lock: one straight missile |
   | Cannon | 60, blast 36 within 13.4 m | 1.63 s | 320 m/s, straight | folded until fired: a press unfolds it (0.73 s) and fires once open; held, it stays open and keeps firing; released, it folds after the shot's recoil, as on another weapon |
-  | Laser | 45 every 1/6 s | 1 s beam, then 1 s | grows at 160 m/s to 59 m | from the rifle tip, follows the crosshair |
+  | Laser | 45 every 1/6 s | 1 s beam, then 1 s | grows at 160 m/s to 59 m | from the rifle tip, follows the crosshair; drawn as one beam with a soft ribbon through its last 0.12 s of positions (beams added every frame showed as stepped copies) |
   | Grenade | 60, blast within 13.4 m | 1.33 s, on press | arc 4 m above the higher end | thrown from the cannon's base; lands at 75 % of the crosshair's distance, 40 m at most |
   | Melee (F) | 300 | 1.2 s | — | with a locked creature or one near the crosshair within 20 m: the jump attack carries the mech at it (up to 22 m/s); else the punch combo; 120° wedge up to 5.5 m at the hit frame |
 

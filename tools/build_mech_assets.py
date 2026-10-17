@@ -26,7 +26,8 @@ STEP = 2                                        # ticks between samples
 SE_DIR = ROOT / 'local/dguns/assets/se.bin'      # the game's se.bin as ogg files 00NN.ogg (archive entry NN = sound id NN)
 SE_NAMES = {7: 'lock_on', 8: 'shot_gun', 9: 'shot_missile (also jump / boost take-off)', 10: 'shot_laser', 11: 'shot_cannon', 13: 'hit_gun',
             14: 'hit_missile', 16: 'punch_swing', 17: 'hit_punch', 19: 'player_damage', 20: 'player_destruction', 23: 'throw_bomb',
-            24: 'bomb_explosion', 25: 'change_to_gun', 26: 'change_to_missile', 27: 'change_to_cannon', 29: 'change_to_bomb', 30: 'change_to_laser'}
+            24: 'bomb_explosion', 25: 'change_to_gun', 26: 'change_to_missile', 27: 'change_to_cannon', 29: 'change_to_bomb', 30: 'change_to_laser',
+            31: 'boss_hover (the hover hum)'}
 
 
 def blender_export(work):

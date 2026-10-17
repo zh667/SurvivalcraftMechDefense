@@ -28,7 +28,7 @@ beyond what the mech's shells need.
   `package.py` (Mercury assets, checked), lab mode `mech` (`Tests/TowerLab/Mech.cs`), smoke expectations for 0.8.0, docs.
 - Windows jobs: asset tool claude-pb-assets-1 (d2be6575…); lab claude-pb-lab-mech-1 (9944847d…), claude-pb-lab-mech-3 (two runs);
   regression claude-pb-tests-1 (86c410c8…) and claude-pb-tests-2 (6d7226d2…): smoke old/new, lab fire 0.8.0 / 0.7.0, perf pairs.
-- Package: dist/MechDefense-0.8.0.scmod, 28,138,752 bytes, SHA-256 266e24d8…166b31ba (details in docs/STATUS.md).
+- Package: dist/MechDefense-0.8.0.scmod, 28,160,481 bytes, SHA-256 9fbbf465…c48cade6 (details in docs/STATUS.md).
 - Checks passed: asset re-pose (p99 ≤ 0.002 mm), lab mech (twice), smoke migration 3/3 + 20/20, lab fire (same as 0.7.0), perf
   (no difference beyond the spread), package scan. Not run: tower gap/overlap checks (tower models unchanged).
 - User test 1 (2026-10-17): “上机甲是哪个键？E不行” — E is ToggleInventory in this game version; the GUI opened the inventory
@@ -39,5 +39,7 @@ beyond what the mech's shells need.
   sounds). User test 3: the cannon folded and snapped open again after every shot; the dash looked crouched; make Shift hover
   (the original's boost with back flames). Research of the original (code + tables): docs/MERCURY_ORIGINAL.md. Jobs
   claude-pb-round2-*, claude-pb-round3-*, claude-pb-smoke-3, claude-pb-final-3.
+- User test 4 (2026-10-17): hover like the jump pose, distinct sounds, locked missiles always hit, smooth laser, faster hover
+  (jobs claude-pb-round4-*, claude-pb-round4-final).
 - Remaining: not verified in the user's real game, with real keyboard input, touch/gamepad, or next to the ghoul / Wonderful
   Era mods. Rollback package: dist/MechDefense-0.7.0.scmod.

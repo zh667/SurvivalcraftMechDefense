@@ -106,6 +106,11 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         Impacts++;
     }
     public void AddBeam(Vector3 a,Vector3 b,float width,Color c,float life,bool lightning)=>beams.Add(new Beam{a=a,b=b,width=width,c=c,life=life,lightning=lightning,seed=random.Next()});
+    // A held beam (the mech's laser), set every update while it lasts: drawn once where it is now, with a soft ribbon through its
+    // positions of the last 0.12 s that fades out. Short-lived beams added every frame showed as separate stepped copies.
+    sealed class Held { public Vector3 a,b; public float width,seen; public Color c; public readonly List<(Vector3 a,Vector3 b,float age)> trail=[]; }
+    readonly Dictionary<object,Held> held=[];
+    public void HoldBeam(object key,Vector3 a,Vector3 b,float width,Color c){if(!held.TryGetValue(key,out var h))held[key]=h=new Held();h.a=a;h.b=b;h.width=width;h.c=c;h.seen=0;}
     public void Ring(Vector3 p,float radius,Color c,float life,float y=.06f){Emit(S.ThinRing,p+Vector3.UnitY*y,Vector3.Zero,life,.2f,radius,c,c*0f,true,0,0,0,0,true);Emit(S.Ring,p+Vector3.UnitY*y,Vector3.Zero,life*.8f,.2f,radius*.92f,c*.6f,c*0f,true,0,0,0,0,true);}
     public void Spray(string kind,Vector3 p,Vector3 dir,Color c,Color c2,float length) {
         if(kind=="flame") {
@@ -130,7 +135,9 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     // def: the weapon (a tower's own definition by default; the mech passes one per weapon)
     public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced,MDTowerDef def=null){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=def??owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});}
     // The mech's missile, after the original: it leaves slowly, drifts for homeAfter seconds, then accelerates to maxSpeed and
-    // turns 60 deg/s towards where the target will be (600 deg/s within 13 m); without a target it flies straight on.
+    // turns towards where the target will be: 60 deg/s at first, faster the longer it homes, 600 deg/s within 13 m, straight at
+    // it within 5 m. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts
+    // when it reaches the target. Without a target, or once the target is dead, it flies on and hits like a shell.
     public void LaunchMissile(ComponentMDUnit owner,MDTowerDef def,Vector3 from,Vector3 velocity,ComponentBody target,float homeAfter,float accel,float maxSpeed,float life,float power) {
         shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life});
     }
@@ -209,11 +216,25 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             p.vel.Y-=p.gravity*dt;p.vel*=MathF.Max(0,1-p.drag*dt);p.pos+=p.vel*dt;p.rot+=p.spin*dt;
         }
         for(int i=beams.Count-1;i>=0;i--){var b=beams[i];b.age+=dt;if(b.age>=b.life)beams.RemoveAt(i);else beams[i]=b;}
+        List<object> gone=null;
+        foreach(var (k,h) in held) {
+            h.seen+=dt;
+            for(int j=h.trail.Count-1;j>=0;j--){var e=h.trail[j];e.age+=dt;if(e.age>.12f)h.trail.RemoveAt(j);else h.trail[j]=e;}
+            if(h.seen<.06f&&(h.trail.Count==0||h.trail[^1].age>=1/90f))h.trail.Add((h.a,h.b,0));
+            if(h.seen>=.06f&&h.trail.Count==0)(gone??=[]).Add(k);
+        }
+        if(gone!=null)foreach(var k in gone)held.Remove(k);
         for(int i=shots.Count-1;i>=0;i--) {
             var s=shots[i];s.age+=dt;s.last=s.pos;s.vel.Y-=s.gravity*dt;
             if(s.missile)Steer(s,dt);
             var next=s.pos+s.vel*dt;
             if(!s.owner.Entity.IsAddedToProject||s.age>s.life){shots.RemoveAt(i);continue;}
+            if(s.missile&&s.target!=null&&s.target.Entity.IsAddedToProject&&MDCombat.Living(s.target)) {
+                var c=MDCombat.Center(s.target);float r=Math.Max(1.2f,s.target.BoxSize.X*.6f+.5f);var seg=next-s.pos;
+                float k=seg.LengthSquared()>1e-8f?Math.Clamp(Vector3.Dot(c-s.pos,seg)/seg.LengthSquared(),0,1):0;
+                if(Vector3.Distance(s.pos+seg*k,c)<=r){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,c,Vector3.Normalize(s.vel),s.target,s.power,s.splash,s.enhanced);continue;}
+                s.pos=next;ShellTrail(s,dt);continue;
+            }
             var hit=MDCombat.Trace(s.owner,s.pos,next,out var point);
             bool collided=hit!=null||Vector3.DistanceSquared(point,next)>1e-6f;
             if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced);continue;}
@@ -231,9 +252,13 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     static void Steer(Shot s,float dt) {
         float speed=Math.Min(s.maxSpeed,s.vel.Length()+s.accel*dt);var dir=s.vel.LengthSquared()>1e-6f?Vector3.Normalize(s.vel):Vector3.UnitY;
         if(s.target!=null&&s.age>=s.homeAfter&&s.target.Entity.IsAddedToProject&&MDCombat.Living(s.target)) {
-            var c=MDCombat.Center(s.target);float t=Vector3.Distance(c,s.pos)/Math.Max(1,speed);var want=Vector3.Normalize(c+s.target.Velocity*t-s.pos);
-            float near=new Vector2(c.X-s.pos.X,c.Z-s.pos.Z).Length(),turn=(near<13?10.5f:1.05f)*dt,angle=MathF.Acos(Math.Clamp(Vector3.Dot(dir,want),-1,1));
-            dir=angle<=turn?want:Vector3.Normalize(Vector3.Lerp(dir,want,turn/angle));
+            var c=MDCombat.Center(s.target);float dist=Vector3.Distance(c,s.pos);
+            if(dist<5)dir=Vector3.Normalize(c-s.pos);   // straight at it
+            else {
+                float t=dist/Math.Max(1,speed);var want=Vector3.Normalize(c+s.target.Velocity*t-s.pos);
+                float near=new Vector2(c.X-s.pos.X,c.Z-s.pos.Z).Length(),turn=(near<13?10.5f:1.05f+4*(s.age-s.homeAfter))*dt,angle=MathF.Acos(Math.Clamp(Vector3.Dot(dir,want),-1,1));
+                dir=angle<=turn?want:Vector3.Normalize(Vector3.Lerp(dir,want,turn/angle));
+            }
         }
         s.vel=dir*speed;
     }
@@ -276,6 +301,14 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             Quad(p.add?add:alpha,p.pos,x,y,p.slot,c);
         }
         foreach(var b in beams)DrawBeam(b,eye,front);
+        foreach(var h in held.Values) {
+            int sb=(int)S.Beam;float bu=sb%8/8f,bv=sb/8/8f,bq=1/8f;
+            for(int j=0;j+1<h.trail.Count;j++) {   // ribbon between successive positions, older = fainter
+                var p=h.trail[j];var q=h.trail[j+1];float f=1-p.age/.12f;
+                add.QueueQuad(p.a,q.a,q.b,p.b,new Vector2(bu,bv+bq),new Vector2(bu+bq,bv+bq),new Vector2(bu+bq,bv),new Vector2(bu,bv),h.c*(.35f*f*f));
+            }
+            if(h.seen<.06f){Segment(h.a,h.b,h.width,h.c,eye);Segment(h.a,h.b,h.width*.35f,Color.White,eye);Quad(add,h.a,right*.35f,up*.35f,S.Glow,h.c);Quad(add,h.b,right*.5f,up*.5f,S.Glow,h.c);}
+        }
         foreach(var s in shots) {
             var c=C(s.def.fx.color);var dir=s.vel.LengthSquared()>.01f?Vector3.Normalize(s.vel):Vector3.UnitY;float sc=s.def.fx.scale*(s.enhanced?1.5f:1);
             if(s.def.attack.type=="bolt") {

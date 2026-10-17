@@ -1,6 +1,41 @@
-# Status — 2026-10-13
+# Status — 2026-10-17
 
-## Current delivery: 0.7.0 (PR #3, merged 2026-10-13 on the user's approval, tag v0.7.0)
+## Current delivery: 0.8.0 (branch feat/mercury-mech, pull request open; merging needs the user's approval)
+
+- User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
+  the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,
+  cannon that unfolds and folds, F melee), creative inventory only. Task brief: docs/tasks/2026-10-17-mercury-mech.md; design
+  and numbers: docs/MECH.md.
+- Assets (`tools/build_mech_assets.py`, job claude-pb-assets-1): 37 joints, 34 rigid parts, 25 clips (752 samples), texture
+  embedded (JPEG, engine mipmaps, linear). Re-posed from its own output with the engine's bone composition against Blender:
+  p99 0.001-0.002 mm on 7 poses; max 16-48 mm at the 3 head-sensor seam triangles the skinned original stretches.
+- In game (`run_isolated.py lab --mode mech`, isolated runtime of the user's build 1.9.3.1 with Neorxna; two runs on the
+  final package, same numbers): the item “水星机甲 · 部署” is in the creative list and deploys Mercury (34 meshes, 38 bones,
+  no missing bone, no texture override, two-sided); boarding, third- and first-person cameras, HUD; walk forward 10.1 m in
+  2 s (walk clip at 1.56× so the feet keep pace), strafe left 5.4 m in 1.5 s to the mech's left (walk_left), dash 10.1 m in
+  1 s, jump 2.80 m (jump → fall → landed); standing, the body turns until the aim is within ~51° and the turret takes the
+  rest; on 2e4-resilience wolves: rifle 8 impacts 206 damage, missiles 4/4 = 280, cannon (stowed → unfolding → ready →
+  firing → ready, then folding → stowed on switching) 360, melee 300; leaving: rider off, first person, HUD gone; destroyed:
+  explosion, death clip, removed after the wreck time. No draw or model errors. Screenshots:
+  `local/runtime-lab-mech/ScreenCapture` (mc_* clips, mt_* turntable, mp_* piloting, md_death).
+- Old saves (`smoke`, a 0.5.0 world → 0.8.0, 3/3 and 20/20): the sample enemy is gone; the 0.5.0 sample mech is Mercury with
+  its model and the player still seated, who gets out unhurt into first person; the old mech item reads “水星机甲 · 部署”
+  and deploys a second Mercury, the enemy item stays “已移除的旧单位” and does not deploy; towers still deploy and shoot;
+  after saving and reloading: towers and both mechs.
+- Regression: lab fire 0.8.0 vs 0.7.0 — every tower fires the same number of times; which dummies register a hit in the
+  2 s window varies between runs of the same version (0.7.0 run: prologue cannon false, 0.8.0 run: gun tower 1 false).
+  Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
+  30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
+  Tower models unchanged (no gap/overlap rerun).
+- Package `dist/MechDefense-0.8.0.scmod`: 27,926,090 bytes, 159 entries, SHA-256 78d74662…a619fd. Against 0.7.0: added
+  Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png}; changed MechDefense.dll, MechDefense.xdb
+  (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
+- Not verified: the user's real game with all its mods; keyboard-only controls (the lab drives MDMechState directly; the key
+  reading is the 0.5.0 code path plus Shift/Space/F); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
+  The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was
+  not identified.
+
+## Previous delivery: 0.7.0 (PR #3, merged 2026-10-13 on the user's approval, tag v0.7.0)
 
 - User (2026-10-12): shells cannot keep up with running targets; ranges too short; Wonderful Era's captain and pirates are not
   attacked, tell friend from foe; damage can be higher since towers fire rarely; towers barely hurt the ghouls; towers cannot be

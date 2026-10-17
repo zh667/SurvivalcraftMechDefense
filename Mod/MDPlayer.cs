@@ -25,20 +25,26 @@ public class MDModLoader : ModLoader {
 public class MDDeploymentBlock : Block {
     // Data: the tower's data value in the low 8 bits (0/3/4 keep the first three gun towers of older saves; 5+ the other
     // towers); bits 8-14 the wear of a dismantled tower in percent, 0 for full health, so crafted, creative and older items
-    // are unchanged and stack. 1/2 were the Destroy Gunners mech and enemy (removed in 0.6.0): such items stay in old
-    // inventories under a placeholder name and cannot be deployed.
+    // are unchanged and stack. 1 is Mercury, the mech a player boards (creative inventory only; since 0.8.0, the data value
+    // of the 0.5.0 sample mech, so such items deploy Mercury). 2 was the Destroy Gunners enemy (removed in 0.6.0): such items
+    // stay in old inventories under a placeholder name and cannot be deployed.
     const string RemovedName="已移除的旧单位";public const string RemovedNote="这个单位已在 0.6.0 移除，不能再部署。";
+    const string MechName="水星机甲 · 部署";
+    const string MechNote="可驾驶的机甲「水星」（原作模型和原作动作）。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
+        "靠近按 E 上下车：鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，左键开火，B 切换步枪 / 导弹 / 火炮（火炮先展开），F 近战，V 切换视角。";
+    public static bool IsMech(int value)=>(Terrain.ExtractData(value)&0xFF)==1;
     public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);
     public static int Wear(int value)=>(Terrain.ExtractData(value)>>8)&0x7F;
     public static float Hitpoints(int value)=>1-Wear(value)/100f;
     public static int Value(MDTowerDef d,float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
-    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
+    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):IsMech(v)?MechName:RemovedName;
     public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
-        $"维修：手持铁锭、铜锭（或铁块、铜块）右键炮塔。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):RemovedNote;
+        $"维修：手持铁锭、铜锭（或铁块、铜块）右键炮塔。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):IsMech(v)?MechNote:RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
     public override IEnumerable<int> GetCreativeValues() {
         foreach(var d in MDTowerLibrary.All)yield return Terrain.MakeBlockValue(BlockIndex,0,d.data);
+        yield return Terrain.MakeBlockValue(BlockIndex,0,1);   // Mercury
     }
     // Held item. The icon mesh is centred on its bounding box and at most one unit long; without these the engine draws
     // it at scale 1 on the camera itself (first person: nothing visible) or centred on the hand (third person).
@@ -56,8 +62,9 @@ public class MDDeploymentBlock : Block {
     // Small 3D icon (~1500 triangles, the tower's own atlas) instead of the full 10-40k-triangle model.
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
         if(e?.DrawBlockMode is DrawBlockMode.FirstPerson or DrawBlockMode.ThirdPerson&&Tower(value) is {} held&&MDHeldModel.Draw(held,color,size,matrix,e))return;
-        var d=Tower(value);if(d==null){d=MDTowerLibrary.All[0];color*=.35f;}   // a removed unit (data 1/2): the first tower's icon, dimmed
-        var icon=MDTowerLibrary.Icon(d);
+        var d=Tower(value);
+        if(d==null&&!IsMech(value)){d=MDTowerLibrary.All[0];color*=.35f;}   // the removed enemy (data 2): the first tower's icon, dimmed
+        var icon=d!=null?MDTowerLibrary.Icon(d):MDMechLibrary.Icon;
         if(e?.DrawBlockMode==DrawBlockMode.UI) {
             size*=icon.fit;var m=Matrix.CreateTranslation(-icon.center*size)*matrix;
             BlocksManager.DrawMeshBlock(r,icon.mesh,icon.texture,color,size,ref m,e);
@@ -122,6 +129,17 @@ public static class MDDeployPatch {
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)state.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // a dismantled tower keeps its health
             entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
         }
-        MDPlayer.Message(__instance.ComponentPlayer,MDDeploymentBlock.RemovedNote);return false;   // data 1/2: a removed unit
+        if(MDDeploymentBlock.IsMech(__instance.ActiveBlockValue)) {   // Mercury stands on the hit point, facing like the player
+            var size=new Vector3(2.4f,4.8f,2.4f);var at=hit.Value.HitPoint()+Vector3.UnitY*.06f;
+            if(!MDMechPilot.Clear(terrain,at,size)){MDPlayer.Message(__instance.ComponentPlayer,"空间不足：机甲需要约 3×3 格空地、5 格净高。");return false;}
+            var bodies=new DynamicArray<ComponentBody>();__instance.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(at.X,at.Z),4,bodies);
+            var box=new BoundingBox(at-new Vector3(size.X/2,0,size.Z/2),at+new Vector3(size.X/2,size.Y,size.Z/2));
+            if(bodies.Any(b=>box.Intersection(b.BoundingBox))){MDPlayer.Message(__instance.ComponentPlayer,"部署区域有生物，请稍微退后。");return false;}
+            var mech=DatabaseManager.CreateEntity(__instance.Project,"MDMech",true);var body=mech.FindComponent<ComponentBody>(true);body.Position=at;
+            var facing=__instance.ComponentCreature.ComponentBody.Matrix.Forward;float yaw=MathF.Atan2(-facing.X,-facing.Z);body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+            var unit=mech.FindComponent<ComponentMDUnit>(true);unit.Yaw=unit.AimYaw=yaw;
+            mech.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(mech);__instance.RemoveActiveTool(1);return false;
+        }
+        MDPlayer.Message(__instance.ComponentPlayer,MDDeploymentBlock.RemovedNote);return false;   // data 2: the removed enemy
     }
 }

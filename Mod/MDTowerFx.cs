@@ -120,7 +120,8 @@ public sealed class MDTowerWorld : ParticleSystemBase {
 
     // ---------------------------------------------------------------- shells, zones, status
     public Vector3 LastLaunch;   // velocity of the last shell (lab checks)
-    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});}
+    // def: the weapon (a tower's own definition by default; the mech passes one per weapon)
+    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced,MDTowerDef def=null){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=def??owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});}
     public void AddZone(ComponentMDUnit owner,string kind,Vector3 c,float r,float life,float power,float slow=1) {
         zones.Add(new Zone{owner=owner,kind=kind,c=c,r=r,life=life,power=power,slow=slow});
         var fx=owner.Tower.fx;var c1=C(fx.color);var c2=C(fx.color2);
@@ -199,7 +200,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             if(!s.owner.Entity.IsAddedToProject||s.age>8){shots.RemoveAt(i);continue;}
             var hit=MDCombat.Trace(s.owner,s.pos,next,out var point);
             bool collided=hit!=null||Vector3.DistanceSquared(point,next)>1e-6f;
-            if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced);continue;}
+            if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced);continue;}
             s.pos=next;ShellTrail(s,dt);
         }
         for(int i=zones.Count-1;i>=0;i--) {

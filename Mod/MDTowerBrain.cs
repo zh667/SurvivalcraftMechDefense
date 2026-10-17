@@ -250,19 +250,19 @@ public static class MDTowerBrain {
         power*=World(u).DamageFactor(b);
         ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power));
     }
-    public static void ShellLanded(ComponentMDUnit u,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
-        var d=u.Tower;var a=d.attack;var w=World(u);
+    public static void ShellLanded(ComponentMDUnit u,MDTowerDef d,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
+        var a=d.attack;var w=World(u);
         Sound(u,d.hitSounds,point,.55f);
         if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir,true);return;}
         string kind=d.fx.kind;float r=Math.Max(splash,.5f);
         if(a.type=="bolt")w.Impact(d,point,dir,true);
         w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2));
         if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt");   // an enhanced bolt: the round itself, then its blast
-        Splash(u,point,r,power*(hit!=null?.6f:1),hit);
+        Splash(u,d,point,r,power*(hit!=null?.6f:1),hit);
         if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
     }
-    static void Splash(ComponentMDUnit u,Vector3 point,float r,float power,ComponentBody skip) {
-        var a=u.Tower.attack;var fx=u.Tower.fx;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
+    static void Splash(ComponentMDUnit u,MDTowerDef d,Vector3 point,float r,float power,ComponentBody skip) {
+        var a=d.attack;var fx=d.fx;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var c=MDCombat.Center(b);float dist=Vector3.Distance(c,point);

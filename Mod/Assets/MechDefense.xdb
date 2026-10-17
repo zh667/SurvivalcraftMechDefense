@@ -32,6 +32,13 @@
         <Parameter Name="DismountOffset" Type="Vector3" Value="3,0,0" Guid="645c6948-bbb3-550c-8e83-e37583c027d3" />
         <Parameter Name="MountAllowToStartRange" Type="float" Value="5" Guid="d786bce2-a914-5fa2-a0a8-f9c1fe63a667" />
       </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="23f2590c-f473-5946-8d03-1e84fc3a6a89" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDMechModel" Guid="2f42dc00-edaf-531f-b496-3b832d1d2321" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/Mercury/model" Guid="fb60627e-0a17-52b8-bfab-27520b85264a" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="345ef6ce-439b-59b8-bf5e-29baac0df97b" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.6" Guid="01d57db2-4712-5151-a658-5d0b0f6ae9ba" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="4238968a-08c4-5c88-866e-08e389898675" />
+      </MemberComponentTemplate>
     </EntityTemplate>
     <EntityTemplate Name="MDEnemy" Guid="73668d39-2809-5cce-bc98-4e03d83c2934">
       <MemberComponentTemplate Name="Unit" Guid="b5ea887d-8284-5aff-8af3-b60ea7588ccb" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">

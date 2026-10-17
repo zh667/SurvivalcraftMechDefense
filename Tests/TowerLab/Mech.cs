@@ -74,7 +74,7 @@ public partial class Lab {
             foreach(var x in During(.6,()=>{}))yield return x;
             var weapons=new List<string>{m.WeaponName};
             for(int i=0;i<3;i++){foreach(var x in Tap(Key.B,.9))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
-            k["B cycles"]=string.Join(" > ",weapons);
+            k["B cycles"]=string.Join(" > ",weapons);   // the cannon stays folded until it fires
             bool melee=false;foreach(var x in Tap(Key.F,.1))yield return x;foreach(var x in During(.5,()=>melee|=m.Anim.Action?.name=="melee"))yield return x;k["F strikes"]=melee;
             var cams=new List<string>{pl.GameWidget.ActiveCamera.GetType().Name};
             for(int i=0;i<2;i++){foreach(var x in Tap(Key.V))yield return x;cams.Add(pl.GameWidget.ActiveCamera.GetType().Name);}
@@ -91,33 +91,43 @@ public partial class Lab {
         r["board"]=MDMechPilot.Board(pl,u);while(Wait(.6))yield return true;
         r["mounted"]=MDMechPilot.Mounted(pl)==u;r["camera"]=pl.GameWidget.ActiveCamera.GetType().Name;r["hud"]=m.Hud?.ParentWidget!=null;
         ScreenCaptureManager.Capture(1280,720,"mp_tpp.png");yield return true;
+        // first person: standing, then a burst while walking (shake / flicker), the head sensors hidden
         pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();foreach(var x in During(.4,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,"mp_fpp.png");yield return true;
+        r["fppMeshesDrawn"]=$"{mm.MeshDrawOrders?.Length} of {mm.Model.Meshes.Count}";var eyes=new List<Vector3>();
+        for(int i=0;i<6;i++){foreach(var x in During(.12,()=>m.Move=new(0,1)))yield return x;eyes.Add(pl.GameWidget.ActiveCamera.ViewPosition-u.Body.Position);ScreenCaptureManager.Capture(1280,720,$"mp_fpp_walk_{i}.png");yield return true;}
+        foreach(var x in During(.6,()=>m.Move=Vector2.Zero))yield return x;
+        r["fppEyeOffsetsWhileWalking"]=eyes.Select(e=>$"{e.Y:0.000}").ToList();
         pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<TppCamera>();
         string seen="";var side=new Vector3(9,3,0);
+        // each movement test starts at Home facing -Z: at the real speeds the mech leaves the cleared platform otherwise
+        IEnumerable<bool> Reset(){u.Body.Position=Home;u.Body.Velocity=Vector3.Zero;m.MoveVelocity=Vector3.Zero;u.Yaw=u.AimYaw=0;u.Body.Rotation=Quaternion.Identity;for(double s0=Time.RealTime;Time.RealTime-s0<.6;){m.Move=Vector2.Zero;yield return true;}}
         // walk forward
-        var p0=u.Body.Position;
+        foreach(var x in Reset())yield return x;var p0=u.Body.Position;
         foreach(var x in During(2,()=>{m.Move=new(0,1);seen=m.Anim.Base.name;}))yield return x;
         foreach(var x in During(.15,()=>{m.Move=new(0,1);Cam(u.Body.Position+side,u.Body.Position+Vector3.UnitY*2);}))yield return x;Shot("mp_walk");yield return true;
         r["walk"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),clip=seen,rate=m.Anim.Rate};
         foreach(var x in During(.6,()=>m.Move=Vector2.Zero))yield return x;
         // strafe left: along the mech's -X (its left)
-        p0=u.Body.Position;
+        foreach(var x in Reset())yield return x;p0=u.Body.Position;
         foreach(var x in During(1.5,()=>{m.Move=new(-1,0);seen=m.Anim.Base.name;}))yield return x;
         var right=new Vector3(MathF.Cos(u.Yaw),0,-MathF.Sin(u.Yaw));r["strafeLeft"]=new{alongRight=Vector3.Dot(u.Body.Position-p0,right),clip=seen};
         foreach(var x in During(.6,()=>m.Move=Vector2.Zero))yield return x;
         // dash forward
-        p0=u.Body.Position;
+        foreach(var x in Reset())yield return x;p0=u.Body.Position;
         foreach(var x in During(1,()=>{m.Move=new(0,1);m.Dash=true;seen=m.Anim.Base.name;}))yield return x;
         r["dash"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),clip=seen};m.Dash=false;
         foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;
-        // jump
-        float y0=u.Body.Position.Y,top=y0;m.Jump=true;var clips=new HashSet<string>();
-        foreach(var x in During(2.5,()=>{top=Math.Max(top,u.Body.Position.Y);clips.Add(m.Anim.Base.name);Cam(u.Body.Position+side*1.4f,u.Body.Position+Vector3.UnitY*2);}))yield return x;
-        r["jump"]=new{height=top-y0,clips=string.Join(",",clips),landed=m.Grounded};
+        // jump while walking forward: it leaves at once and keeps steering in the air
+        foreach(var x in Reset())yield return x;float y0=u.Body.Position.Y,top=y0;var jp=u.Body.Position;m.Jump=true;var clips=new HashSet<string>();float airMetres=0;var last=u.Body.Position;
+        foreach(var x in During(2.5,()=>{m.Move=new(0,1);top=Math.Max(top,u.Body.Position.Y);clips.Add(m.Anim.Base.name);if(!m.Grounded)airMetres+=Vector3.Distance(Flat(last),Flat(u.Body.Position));last=u.Body.Position;Cam(u.Body.Position+side*1.4f,u.Body.Position+Vector3.UnitY*2);}))yield return x;
+        r["jump"]=new{height=top-y0,airMetres,clips=string.Join(",",clips),landed=m.Grounded};
+        foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;
         // turn: the turret leads, the body follows the aim
-        float aim=u.Yaw+1.4f;u.AimYaw=aim;foreach(var x in During(.25,()=>{}))yield return x;float early=MDCombat.AngleDelta(u.Yaw,aim);
+        foreach(var x in Reset())yield return x;float aim=u.Yaw+1.4f;u.AimYaw=aim;foreach(var x in During(.25,()=>{}))yield return x;float early=MDCombat.AngleDelta(u.Yaw,aim);
         foreach(var x in During(1.5,()=>{}))yield return x;r["turn"]=new{afterQuarterSecond=early,after2s=MDCombat.AngleDelta(u.Yaw,aim)};
-        // ---- weapons on dummies 16 m ahead
+        // ---- weapons on dummies 16 m ahead, back at Home (the movement tests above cover 40 m and more)
+        u.Body.Position=Home;u.Body.Velocity=Vector3.Zero;m.MoveVelocity=Vector3.Zero;u.Yaw=u.AimYaw=0;u.Body.Rotation=Quaternion.Identity;
+        foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;right=new Vector3(MathF.Cos(u.Yaw),0,-MathF.Sin(u.Yaw));
         var fwd=new Vector3(-MathF.Sin(u.Yaw),0,-MathF.Cos(u.Yaw));var w=MDTowerWorld.For(GameManager.Project);
         // the towers' dummies take 1e-7 of a hit's power, which a wolf heals within a frame at the lab's ~800 fps; a resilience
         // of 2e4 still keeps them alive through every shot here and makes each hit show (lost = health lost)
@@ -132,13 +142,17 @@ public partial class Lab {
         m.Switch=true;foreach(var x in During(.5,()=>{}))yield return x;imp0=w.Impacts;bool fired=false;
         foreach(var x in During(2.8,()=>{if(!fired){m.Trigger=true;m.AimPoint=MDCombat.Center(missT.Body);}if(m.FiredAgo<.05f){fired=true;m.Trigger=false;}Cam(cam,mid);}))yield return x;Shot("mp_missile");yield return true;
         m.Trigger=false;r["missile"]=new{hit=missT.Hit,lost=1-missT.Min,impacts=w.Impacts-imp0,weapon=m.WeaponName,fired};
+        // cannon: folded when chosen, unfolds on the trigger and fires once open, folds after 3 s without a shot
         m.Switch=true;var states=new List<string>();
-        foreach(var x in During(1.5,()=>{var s=m.Cannon.ToString();if(states.Count==0||states[^1]!=s)states.Add(s);Cam(u.Body.Position+fwd*-4+right*7+Vector3.UnitY*6,u.Body.Position+Vector3.UnitY*3.5f);}))yield return x;Shot("mp_cannon_ready");yield return true;
-        imp0=w.Impacts;fired=false;
-        foreach(var x in During(3,()=>{if(!fired){m.Trigger=true;m.AimPoint=MDCombat.Center(canT.Body);}if(m.Cannon==MDMechState.CannonState.Firing){fired=true;m.Trigger=false;}var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);Cam(cam,mid);}))yield return x;Shot("mp_cannon_fired");yield return true;
-        r["cannon"]=new{hit=canT.Hit,lost=1-canT.Min,impacts=w.Impacts-imp0,weapon=m.WeaponName,fired,states=string.Join(">",states)};
-        m.Switch=true;foreach(var x in During(1,()=>{var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);}))yield return x;
-        r["cannonAfterSwitch"]=new{state=m.Cannon.ToString(),weapon=m.WeaponName,states=string.Join(">",states)};
+        foreach(var x in During(1,()=>{var s=m.Cannon.ToString();if(states.Count==0||states[^1]!=s)states.Add(s);}))yield return x;
+        r["cannonWhenChosen"]=m.Cannon.ToString();
+        imp0=w.Impacts;fired=false;bool readyShot=false;
+        foreach(var x in During(3,()=>{if(!fired){m.Trigger=true;m.AimPoint=MDCombat.Center(canT.Body);}if(m.Cannon==MDMechState.CannonState.Firing){fired=true;m.Trigger=false;}var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);
+            if(!readyShot&&m.Cannon==MDMechState.CannonState.Ready&&!fired){readyShot=true;}Cam(cam,mid);}))yield return x;Shot("mp_cannon_fired");yield return true;
+        r["cannon"]=new{hit=canT.Hit,lost=1-canT.Min,impacts=w.Impacts-imp0,weapon=m.WeaponName,fired};
+        foreach(var x in During(4.5,()=>{var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);Cam(u.Body.Position+fwd*-4+right*7+Vector3.UnitY*6,u.Body.Position+Vector3.UnitY*3.5f);}))yield return x;Shot("mp_cannon_folded");yield return true;
+        r["cannonStates"]=string.Join(">",states);
+        m.Switch=true;foreach(var x in During(.5,()=>{}))yield return x;r["afterSwitch"]=m.WeaponName;
         Remove([rifleT,missT,canT]);
         // melee on a dummy 4.5 m ahead
         var meleeT=Target(u.Body.Position+fwd*4.5f);while(Wait(.5))yield return true;m.Melee=true;

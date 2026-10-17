@@ -36,6 +36,12 @@
   (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
 - Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
   inventory before the mech saw the key. Boarding and leaving now use the mount key (R); input is read after ComponentInput.
+- User test 2 (2026-10-17): big steps but little ground, no steering in a jump; the cannon unfolded on its own; first person
+  shaky, own weapon hard to see, flickering; HUD speed flickering. Now: the original speeds with the clips at their own rate (lab: 17.9 m
+  walked in 2 s, 11.5 m strafed in 1.5 s, jump 3.1 m high and 11 m forward in the air); the cannon unfolds on the trigger
+  (Stowed > Deploying > Firing > Ready > Retracting > Stowed after 3 s idle); first person fixed to the body (eye height constant
+  while walking) drawing only the rifle arm and the cannon, the arms aim the rifle at the crosshair; HUD speed smoothed.
+  Weapons and sounds of the original: being researched (next commit).
 - Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
   for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
   The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was

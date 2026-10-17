@@ -12,6 +12,15 @@ namespace Game;
 public static class MDMechPilot {
     public static bool ExternalControls;   // tests drive MDMechState directly; the player's input then only boards and leaves
     public static ComponentPlayer Driver(ComponentMDUnit u)=>u.Mount?.Rider?.Entity.FindComponent<ComponentPlayer>();
+    public static bool FirstPerson(ComponentMDUnit u)=>Driver(u)?.GameWidget.ActiveCamera is FppCamera;
+    // First person: fixed to the body (not to the walking head, which bobs), 3.6 m up at the cockpit, 0.5 m in front of the
+    // body's centre, smoothed. The model then draws the weapons only (ComponentMDMechModel): the rifle on its forearm at the
+    // lower right (the arms aim it at the crosshair) and the cannon when it is open.
+    public static Vector3 FirstPersonEye(ComponentMDUnit u,float dt) {
+        var d=MDMechBrain.AimDirection(u);var flat=Vector3.Normalize(new Vector3(d.X,0,d.Z)+new Vector3(1e-4f,0,0));
+        var want=u.Body.Position+Vector3.UnitY*3.6f+flat*.5f;var m=u.Mech;
+        m.CameraAt=m.CameraAt is {} at&&Vector3.DistanceSquared(at,want)<4?Vector3.Lerp(at,want,1-MathF.Exp(-dt*18)):want;return m.CameraAt.Value;
+    }
     public static ComponentMDUnit Mounted(ComponentPlayer p)=>p?.ComponentRider?.Mount?.Entity.FindComponent<ComponentMDUnit>() is {Mech:not null} u?u:null;
     static bool Collidable(int v,float _)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v);
     public static bool Clear(SubsystemTerrain t,Vector3 foot,Vector3 size) {
@@ -102,9 +111,11 @@ public class MDStatusWidget:CanvasWidget {
         heat=new RectangleWidget{Size=new(0,3),FillColor=new Color(255,150,60),OutlineThickness=0};Add(heat,10,68);
         Add(new LabelWidget{Text="R 下车  V 视角  B 武器  F 近战  Shift 冲刺  空格 跳",Size=new(300,24),FontScale=.6f,Color=Color.White},10,80);
     }
+    // the speed is smoothed (about 0.3 s) and shown in whole km/h, so the number does not flicker with the physics steps
     public void Refresh(ComponentMDUnit u) {
-        var m=u.Mech;status.Text=$"水星  装甲 {u.Damage.Hitpoints*100:0}%   {new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f:0} km/h";
-        weapon.Text=$"{m.WeaponName}   {MDMechBrain.Status(u)}";armor.Size=new(300*Math.Clamp(u.Damage.Hitpoints,0,1),3);heat.Size=new(300*m.Heat,3);
+        var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
+        string s=$"水星  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",w=$"{m.WeaponName}   {MDMechBrain.Status(u)}";
+        if(status.Text!=s)status.Text=s;if(weapon.Text!=w)weapon.Text=w;armor.Size=new(300*Math.Clamp(u.Damage.Hitpoints,0,1),3);heat.Size=new(300*m.Heat,3);
     }
     public override void MeasureOverride(Vector2 available){LayoutTransform=Matrix.CreateScale(Math.Clamp(Math.Min(available.X/700,available.Y/450),.5f,1));base.MeasureOverride(available);}
 }
@@ -117,7 +128,7 @@ public static class MDMechBoardGuard {public static bool Prefix(ComponentRider _
 public static class MDMechExitGuard {public static bool Prefix(ComponentRider __instance){if(__instance.ComponentCreature is ComponentPlayer p&&MDMechPilot.Mounted(p) is {} u){MDMechPilot.Exit(p,u);return false;}return true;}}
 // Cameras: first person at the head sensors, third person over the right shoulder; both look along the aim.
 [HarmonyPatch(typeof(FppCamera),nameof(FppCamera.Update))]
-public static class MDMechFpp {public static void Postfix(FppCamera __instance){if(MDMechPilot.Mounted(__instance.GameWidget?.PlayerData?.ComponentPlayer) is {} u){var d=MDMechBrain.AimDirection(u);__instance.SetupPerspectiveCamera(MDMechBrain.Eye(u)+d*.35f,d,Vector3.UnitY);}}}
+public static class MDMechFpp {public static void Postfix(FppCamera __instance){if(MDMechPilot.Mounted(__instance.GameWidget?.PlayerData?.ComponentPlayer) is {} u)__instance.SetupPerspectiveCamera(MDMechPilot.FirstPersonEye(u,Time.FrameDuration),MDMechBrain.AimDirection(u),Vector3.UnitY);}}
 [HarmonyPatch(typeof(TppCamera),nameof(TppCamera.Update))]
 public static class MDMechTpp {
     public static void Postfix(TppCamera __instance) {

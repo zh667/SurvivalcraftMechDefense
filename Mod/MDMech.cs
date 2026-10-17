@@ -96,11 +96,19 @@ public sealed class MDMechAnimator {
 // The pose the model draws and the weapons fire from (row form: Model[j] takes a rest-pose point of joint j's part to
 // the posed model space). Procedural on top of the clips, in posed space about the joint's posed pivot so the subtree
 // follows: the turret and cockpit (joint 02) turn about the vertical towards the aim, within TurretLimit of the body; the
-// weapon arms (05, 10) pitch about the turret's own lateral axis. The engine's bone transform for a joint is
-// T(p) L T(-p) with L its (adjusted) local deformation and p its rest pivot; the engine adds the node offset and the parent.
+// weapon arms (05, 10) pitch about the turret's own lateral axis so that the rifle points at the aim pitch: measured on the
+// clip's pose each frame (the walk's arm swing in pitch is taken out, its sideways swing stays), faded out by `aimWeight`
+// during melee / hit reactions and when destroyed. The engine's bone transform for a joint is T(p) L T(-p) with L its
+// (adjusted) local deformation and p its rest pivot; the engine adds the node offset and the parent.
 public sealed class MDMechPose {
     public Matrix[] Bone,Model;
-    public static MDMechPose Of(MDMechDef d,MDXf[] local,float turretYaw,float armPitch) {
+    public static MDMechPose Of(MDMechDef d,MDXf[] local,float turretYaw,float aimPitch,float aimWeight) {
+        var first=Build(d,local,turretYaw,0);if(aimWeight<=0)return first;
+        var mz=d.muzzles["rifle"];var dir=Vector3.Normalize(Vector3.TransformNormal(new Vector3(mz.dir[0],mz.dir[1],mz.dir[2]),first.Model[d.Joint(mz.joint[..3])]));
+        float delta=Math.Clamp(aimPitch-MathF.Asin(Math.Clamp(dir.Y,-1,1)),-.9f,.9f)*aimWeight;
+        return MathF.Abs(delta)<1e-4f?first:Build(d,local,turretYaw,delta);
+    }
+    static MDMechPose Build(MDMechDef d,MDXf[] local,float turretYaw,float armPitch) {
         int n=d.joints.Length,turret=d.Joint("02_"),armL=d.Joint("05_"),armR=d.Joint("10_");var p=new MDMechPose{Bone=new Matrix[n],Model=new Matrix[n]};
         for(int j=0;j<n;j++) {
             var L=local[j].Row;var pv=d.pivots[j];int pj=d.joints[j].parent;var parent=pj>=0?p.Model[pj]:Matrix.Identity;var M=L*parent;
@@ -119,7 +127,10 @@ public sealed class MDMechPose {
 // Drawn by the engine's model renderer like the towers (world light, fog, shadow), two-sided: the original shell is open.
 // No TextureOverride: the texture embedded in the glTF is sampled linearly with mipmaps (an override is point-sampled).
 public class ComponentMDMechModel : ComponentModel {
-    ComponentMDUnit unit; int root=-1; int[] bones;
+    ComponentMDUnit unit; int root=-1; int[] bones,allMeshes,cockpitMeshes;
+    // first person draws the rifle on its forearm and the cannon only: the head, the shoulder units right beside the eye, the
+    // arms, the legs and the back units sweep through the view at every step. The instanced data is cached per list.
+    static readonly string[] CockpitParts=["13_","14_","15_","16_","17_"];
     public static string LastError;
     public override void Load(ValuesDictionary values,IdToEntityMap map){base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);RenderingMode=ModelRenderingMode.AlphaThreshold;}
     public override void Animate() {
@@ -129,6 +140,8 @@ public class ComponentMDMechModel : ComponentModel {
             SetBoneTransform(root,m_componentFrame.Matrix);
             var pose=unit.Mech?.Pose(unit);if(pose==null)return;
             for(int j=0;j<bones.Length;j++)SetBoneTransform(bones[j],pose.Bone[j]);
+            if(allMeshes==null){allMeshes=Enumerable.Range(0,Model.Meshes.Count).ToArray();cockpitMeshes=allMeshes.Where(i=>CockpitParts.Any(p=>Model.Meshes[i].ParentBone.Name.StartsWith(p))).ToArray();}
+            MeshDrawOrders=MDMechPilot.FirstPerson(unit)?cockpitMeshes:allMeshes;
         } catch(Exception e){if(LastError==null){LastError=e.ToString();Log.Error("[MechDefense] mech model: "+e);}SetBoneTransform(Model.RootBone.Index,m_componentFrame.Matrix);}
     }
 }
@@ -140,7 +153,9 @@ public sealed class MDMechState {
     public MDMechDef Def=MDMechLibrary.Def; public MDMechAnimator Anim;
     public Vector2 Move; public bool Dash,Jump,Trigger,Melee,Switch;   // move: x right, y forward; Jump/Melee/Switch are presses
     public Vector3? AimPoint;                                          // where the pilot's crosshair is (camera ray)
-    public MDMechWeapon Weapon; public float Heat,Cooldown,MeleeCooldown,FiredAgo=99,JumpDelay=-1,AirTime;public bool Overheated,MeleeHit,Grounded;
+    public MDMechWeapon Weapon; public float Heat,Cooldown,MeleeCooldown,FiredAgo=99,AirTime,CannonIdle,ShownSpeed;public bool Overheated,MeleeHit,Grounded,PendingShot;
+    public Vector3? CameraAt;                                          // smoothed first-person camera position
+    public Vector3 MoveVelocity;                                       // the mech's own ground velocity (the body's is cut by friction)
     public enum CannonState{Stowed,Deploying,Ready,Firing,Retracting} public CannonState Cannon;
     public string ForceClip; public float ForceTime;                   // lab: show one clip at one time
     public MDStatusWidget Hud; public ComponentPlayer HudOwner;
@@ -149,7 +164,8 @@ public sealed class MDMechState {
     public MDMechPose Pose(ComponentMDUnit u) {
         if(pose!=null)return pose;
         float yaw=Math.Clamp(MDCombat.AngleDelta(u.Yaw,u.AimYaw),-MDMechBrain.TurretLimit,MDMechBrain.TurretLimit);
-        return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f));
+        float aim=u.Destroyed||ForceClip!=null?0:1-(Anim.Action!=null?Anim.ActionWeight:0);
+        return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f),aim);
     }
     public void Invalidate()=>pose=null;
     public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,2);Heat=Math.Clamp(v.GetValue("Heat",0f),0,1);}
@@ -158,9 +174,11 @@ public sealed class MDMechState {
 }
 
 public static class MDMechBrain {
-    public const float TurretLimit=1.05f,TurnRate=2.4f,Gravity=12;
-    // planted-foot speed of the clips (m/s at this scale) -> playback rate for the walking speed, so the feet do not slide
-    public const float WalkSpeed=4.5f,BackSpeed=3.2f,StrafeSpeed=3.6f,DashSpeed=10,JumpSpeed=8;
+    public const float TurretLimit=1.05f,TurnRate=3.5f,Gravity=12;
+    // The original game's speeds (decoded root motion: move/16384 units per tick, x60, x4 scale) with the clips at their own
+    // rate, as in the game: the feet glide a little and the mech covers ground. Short acceleration on the ground, steering in
+    // the air at half of it; the jump leaves at once.
+    public const float WalkSpeed=8.5f,BackSpeed=7.8f,StrafeSpeed=8.5f,DashSpeed=12,JumpSpeed=8.5f,Accel=28,AirAccel=14;
     static readonly System.Random random=new();
     // Weapons are tower-style definitions so shells, trails, impacts and blasts use the towers' effect world.
     static MDTowerDef Weapon(string type,float power,float splash,float speed,float[] color,float[] color2,float scale,string sounds) {
@@ -196,53 +214,62 @@ public static class MDMechBrain {
             if(Math.Abs(MDCombat.AngleDelta(u.Yaw,u.AimYaw))>TurretLimit)u.Yaw=u.AimYaw-Math.Sign(MDCombat.AngleDelta(u.Yaw,u.AimYaw))*TurretLimit;
             body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,u.Yaw);
         }
-        // movement: walk / strafe / dash on the ground; jumping keeps the take-off velocity
+        // movement: walk / strafe / dash; on the ground the velocity eases towards the input, in the air the pilot still steers
+        // (half the acceleration) and without input the mech keeps its momentum
         var mv=m.Move.LengthSquared()>1?Vector2.Normalize(m.Move):m.Move;bool dash=m.Dash&&moving;
         string dir=Math.Abs(mv.X)>Math.Abs(mv.Y)?(mv.X<0?"left":"right"):mv.Y>=0?"forward":"backward";
-        if(m.Grounded&&m.JumpDelay<0) {
+        // (eased in the mech's own velocity and written to the body every update: easing the body's velocity, which friction
+        // cuts after every step, never reaches the speed on the ground)
+        if(m.Grounded||moving) {
             float sp=dash?DashSpeed:dir switch{"forward"=>WalkSpeed,"backward"=>BackSpeed,_=>StrafeSpeed};
-            var v=(Forward(u.Yaw)*mv.Y+Right(u.Yaw)*mv.X)*sp;body.Velocity=new(v.X,body.Velocity.Y,v.Z);
-            if(m.Jump&&a.ActionDone){m.JumpDelay=.22f;a.PlayBase("jump",1,.08f);}
+            var want=(Forward(u.Yaw)*mv.Y+Right(u.Yaw)*mv.X)*sp;var dv=new Vector3(want.X,0,want.Z)-m.MoveVelocity;
+            float step=(m.Grounded?Accel:AirAccel)*dt;if(dv.Length()>step)dv=Vector3.Normalize(dv)*step;
+            m.MoveVelocity+=dv;body.Velocity=new(m.MoveVelocity.X,body.Velocity.Y,m.MoveVelocity.Z);
         }
-        if(m.JumpDelay>=0){m.JumpDelay-=dt;if(m.JumpDelay<0)body.Velocity=new(body.Velocity.X,JumpSpeed,body.Velocity.Z);}
-        // base clip (a jump keeps its own clip through the take-off)
-        bool jumping=m.JumpDelay>=0||(!m.Grounded&&a.Base.name=="jump"&&a.BaseTime<1.1f);
+        else m.MoveVelocity=new(body.Velocity.X,0,body.Velocity.Z);   // coasting in the air
+        if(m.Jump&&m.Grounded&&a.Action?.name!="melee"){body.Velocity=new(body.Velocity.X,JumpSpeed,body.Velocity.Z);a.PlayBase("jump",1,.06f);m.Grounded=false;m.AirTime=0;}
+        // base clip (a jump keeps its own clip on the way up)
+        bool jumping=!m.Grounded&&a.Base.name=="jump"&&a.BaseTime<1.1f;
         if(jumping){}
         else if(!m.Grounded&&m.AirTime>.15f)a.PlayBase("fall",1,.2f);
-        else if(moving) {
-            var clip=m.Def.Clip((dash?"dash_":"walk_")+dir);float speed=new Vector2(body.Velocity.X,body.Velocity.Z).Length();
-            a.PlayBase(clip.name,!dash&&clip.footSpeed is float fs&&fs>.5f?Math.Clamp(speed/fs,.6f,2.2f):1,.18f);
-        }
+        else if(moving)a.PlayBase((dash?"dash_":"walk_")+dir,1,.18f);
         else a.PlayBase(m.FiredAgo<1.5f?"combat_stance":"idle",1,.25f);
         // actions: hit reaction (from ComponentMDUnit), melee
         if(m.Melee&&m.MeleeCooldown<=0&&m.Grounded&&a.ActionDone){a.PlayAction("melee");m.MeleeCooldown=1.2f;m.MeleeHit=false;}
         if(a.Action?.name=="melee"&&!m.MeleeHit&&a.ActionTime>=.33f){m.MeleeHit=true;MeleeStrike(u);}
         // weapons: B cycles; the cannon unfolds before it can fire and folds when another weapon is chosen
-        if(m.Switch){m.Weapon=(MDMechWeapon)(((int)m.Weapon+1)%3);m.Cooldown=Math.Max(m.Cooldown,.3f);}
-        CannonStep(m,a);
-        if(m.Trigger&&m.Cooldown<=0&&!m.Overheated&&a.Action?.name!="melee")Fire(u);
+        if(m.Switch){m.Weapon=(MDMechWeapon)(((int)m.Weapon+1)%3);m.Cooldown=Math.Max(m.Cooldown,.3f);m.PendingShot=false;}
+        CannonStep(m,a,dt);
+        bool wants=m.Trigger||(m.PendingShot&&m.Weapon==MDMechWeapon.Cannon);
+        if(wants&&m.Cooldown<=0&&!m.Overheated&&a.Action?.name!="melee")Fire(u);
         a.Update(dt);
         m.Jump=m.Melee=m.Switch=false;
     }
-    static void CannonStep(MDMechState m,MDMechAnimator a) {
-        bool want=m.Weapon==MDMechWeapon.Cannon;
+    // The cannon stays folded on the back until the pilot fires it: the first press unfolds it (the original firing clip) and
+    // the shot leaves once it is open; it stays open while it keeps firing and folds after 3 s without a shot or when another
+    // weapon is chosen.
+    static void CannonStep(MDMechState m,MDMechAnimator a,float dt) {
+        bool selected=m.Weapon==MDMechWeapon.Cannon,fire=selected&&m.Trigger;
+        m.CannonIdle=fire?0:m.CannonIdle+dt;
         switch(m.Cannon) {
-            case MDMechState.CannonState.Stowed:if(want){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;}break;
-            case MDMechState.CannonState.Deploying:if(!want){a.PlayCannon("cannon_retract");m.Cannon=MDMechState.CannonState.Retracting;}else if(a.CannonDone)m.Cannon=MDMechState.CannonState.Ready;break;
+            case MDMechState.CannonState.Stowed:if(fire){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;m.PendingShot=true;}break;
+            case MDMechState.CannonState.Deploying:if(fire)m.PendingShot=true;if(a.CannonDone)m.Cannon=MDMechState.CannonState.Ready;break;
             case MDMechState.CannonState.Firing:if(a.CannonDone){a.PlayCannon("cannon_deploy_fire");a.CannonTime=99;m.Cannon=MDMechState.CannonState.Ready;}break;   // back to the held, unfolded pose
-            case MDMechState.CannonState.Ready:if(!want){a.PlayCannon("cannon_retract");m.Cannon=MDMechState.CannonState.Retracting;}break;
-            case MDMechState.CannonState.Retracting:if(a.CannonDone){a.CannonOn=false;m.Cannon=MDMechState.CannonState.Stowed;}else if(want){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;}break;
+            case MDMechState.CannonState.Ready:if(!selected||m.CannonIdle>3){a.PlayCannon("cannon_retract");m.Cannon=MDMechState.CannonState.Retracting;m.PendingShot=false;}break;
+            case MDMechState.CannonState.Retracting:if(a.CannonDone){a.CannonOn=false;m.Cannon=MDMechState.CannonState.Stowed;}else if(fire){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;m.PendingShot=true;}break;
         }
     }
     public static string Status(ComponentMDUnit u) {
         var m=u.Mech;if(m.Overheated)return "过热";
-        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon is MDMechState.CannonState.Deploying or MDMechState.CannonState.Stowed)return "展开中";
-        return m.Cooldown>0?$"装填 {m.Cooldown:0.0} s":"就绪";
+        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon==MDMechState.CannonState.Deploying)return "展开中";
+        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon is MDMechState.CannonState.Stowed or MDMechState.CannonState.Retracting)return "收起（开火即展开）";
+        return m.Cooldown>.15f?"装填中":"就绪";
     }
     static Vector3 Target(ComponentMDUnit u,Vector3 from)=>u.Mech.AimPoint??from+AimDirection(u)*60;
     static void Fire(ComponentMDUnit u) {
         var m=u.Mech;var d=m.Def;var w=MDTowerWorld.For(u.Project);var pose=m.Pose(u);var bm=u.Body.Matrix;
         if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon!=MDMechState.CannonState.Ready)return;
+        if(m.Weapon==MDMechWeapon.Cannon)m.PendingShot=false;
         string key=m.Weapon switch{MDMechWeapon.Missile=>"missile",MDMechWeapon.Cannon=>"cannon",_=>"rifle"};var mz=d.muzzles[key];
         var from=pose.Point(d,mz,bm);var fwd=pose.Dir(d,mz,bm);var to=Target(u,from);
         // a muzzle poking through a wall must not shoot past cover

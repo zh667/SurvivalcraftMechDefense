@@ -17,7 +17,8 @@
   rest; on 2e4-resilience wolves: rifle 8 impacts 206 damage, missiles 4/4 = 280, cannon (stowed → unfolding → ready →
   firing → ready, then folding → stowed on switching) 360, melee 300; leaving: rider off, first person, HUD gone; destroyed:
   explosion, death clip, removed after the wreck time. No draw or model errors. Screenshots:
-  `local/runtime-lab-mech/ScreenCapture` (mc_* clips, mt_* turntable, mp_* piloting, md_death).
+  `local/claude-work/mech-review/lab-screenshots` (mc_* clips, mt_*
+  turntable, mp_* piloting, md_death; contact sheets one folder up).
 - Old saves (`smoke`, a 0.5.0 world → 0.8.0, 3/3 and 20/20): the sample enemy is gone; the 0.5.0 sample mech is Mercury with
   its model and the player still seated, who gets out unhurt into first person; the old mech item reads “水星机甲 · 部署”
   and deploys a second Mercury, the enemy item stays “已移除的旧单位” and does not deploy; towers still deploy and shoot;

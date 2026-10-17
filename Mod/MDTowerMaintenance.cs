@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace Game;
 
-// Taking towers down and repairing them.
+// Taking towers and Mercury down and repairing them.
 // Dismantle: three pickaxe hits (at the normal hit pace, within 3 s of each other) take a tower down into its deploy item.
 // The item keeps the tower's health (MDDeploymentBlock: wear in its data, shown as the slot's health bar) and deploying it
 // again restores that health. A wrecked tower cannot be taken down.
@@ -13,6 +13,8 @@ namespace Game;
 // iron blocks). Iron and copper are the towers' own build materials; in the user's pack the Industrial Era sieve turns
 // gravel into ore and its iron/copper plates stand in for ingots, so they are easier to come by than with vanilla smelting
 // alone. Wonderful Era's wrench, for comparison, restores 10-75% of a vehicle per use by armour class.
+// Mercury (since its survival recipe) the same way: its armour (3000) is the scale, so an iron ingot restores 6.7 % and an
+// iron block 60 %; taken down it becomes its deploy item with its health (a rider is set down first, OnEntityRemoved).
 public static class MDTowerMaintenance {
     public const int HitsToDismantle=3;
     const double DismantleWindow=3,RepairPace=.3;
@@ -25,23 +27,28 @@ public static class MDTowerMaintenance {
         return null;
     }
     static int Percent(float f)=>(int)MathF.Round(f*100);
+    // Mercury (kind Mech) has no tower definition: its name, its armour as the repair scale and a fixed height for effects.
+    static string Name(ComponentMDUnit u)=>u.Tower?.name??"水星机甲";
+    static string What(ComponentMDUnit u)=>u.Tower!=null?"炮塔":"机甲";
+    static float Points(ComponentMDUnit u)=>u.Tower?.hp??u.Damage.AttackResilience;
+    static Vector3 Top(ComponentMDUnit u)=>u.Body.Position+Vector3.UnitY*(u.Tower!=null?Math.Min(1.5f,u.Tower.bounds[1][1]*.5f):1.5f);
     static void Sound(ComponentMDUnit u,string name,Vector3 at,float volume=1)=>u.Project.FindSubsystem<SubsystemAudio>(true).PlayRandomSound(name,volume,(float)random.NextDouble()*.4f-.2f,at,4,false);
 
     public static void DismantleHit(ComponentMiner miner,ComponentMDUnit u,Vector3 hitPoint) {
         var p=miner.ComponentPlayer;miner.Poke(false);
-        if(u.Destroyed){MDPlayer.Message(p,"炮塔已损毁，无法拆卸。");return;}
+        if(u.Destroyed){MDPlayer.Message(p,$"{What(u)}已损毁，无法拆卸。");return;}
         double now=u.Clock.GameTime;
         if(now-u.DismantleAt>DismantleWindow)u.DismantleHits=0;
         u.DismantleHits++;u.DismantleAt=now;miner.DamageActiveTool(1);
         Sound(u,"Audio/Impacts/Metal",hitPoint);MDTowerWorld.For(u.Project).Sparks(hitPoint,Vector3.UnitY,6,new Color(255,210,140),4,.9f,.35f,.04f);
-        if(u.DismantleHits<HitsToDismantle){MDPlayer.Message(p,$"拆卸{u.Tower.name}：{u.DismantleHits}/{HitsToDismantle}");return;}
+        if(u.DismantleHits<HitsToDismantle){MDPlayer.Message(p,$"拆卸{Name(u)}：{u.DismantleHits}/{HitsToDismantle}");return;}
         Dismantle(u,p?.ComponentBody.Position);
-        MDPlayer.Message(p,$"已拆下{u.Tower.name}（耐久 {Percent(u.Damage.Hitpoints)}%）");
+        MDPlayer.Message(p,$"已拆下{Name(u)}（耐久 {Percent(u.Damage.Hitpoints)}%）");
     }
-    // Removes the tower and drops its deploy item (with the tower's health), thrown a little towards the player.
+    // Removes the tower (or Mercury) and drops its deploy item (with its health), thrown a little towards the player.
     public static int Dismantle(ComponentMDUnit u,Vector3? towards) {
-        int value=MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints);
-        var at=u.Body.Position+Vector3.UnitY*Math.Min(1.5f,u.Tower.bounds[1][1]*.5f);
+        int value=u.Tower!=null?MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints):MDDeploymentBlock.MechValue(u.Damage.Hitpoints);
+        var at=Top(u);
         var push=towards.HasValue?Vector3.Normalize(new Vector3(towards.Value.X-at.X,0,towards.Value.Z-at.Z)+new Vector3(.001f,0,0))*2:Vector3.Zero;
         u.Project.FindSubsystem<SubsystemPickables>(true).AddPickable(value,1,at,push+Vector3.UnitY*3,null);
         MDTowerWorld.For(u.Project).SmokePuffs(u.Body.Position+Vector3.UnitY*.5f,6,.5f,new Color(120,115,108,140),.8f,1.4f,.6f);
@@ -49,7 +56,7 @@ public static class MDTowerMaintenance {
         u.Project.RemoveEntity(u.Entity,true);return value;
     }
 
-    // Right-click with a repair material (ModLoader hook OnPlayerInputInteract). True when the click was about a tower.
+    // Right-click with a repair material (ModLoader hook OnPlayerInputInteract). True when the click was about a tower or Mercury.
     public static bool TryRepair(ComponentPlayer p) {
         var ray=p.ComponentInput.PlayerInput.Interact;var miner=p.ComponentMiner;
         if(!ray.HasValue||Material(miner.ActiveBlockValue) is not {} m)return false;
@@ -62,13 +69,13 @@ public static class MDTowerMaintenance {
     }
     public static bool Repair(ComponentMiner miner,ComponentMDUnit u,float points,string material) {
         var p=miner.ComponentPlayer;
-        if(u.Destroyed){MDPlayer.Message(p,"炮塔已损毁，无法维修。");return false;}
+        if(u.Destroyed){MDPlayer.Message(p,$"{What(u)}已损毁，无法维修。");return false;}
         float hp=u.Damage.Hitpoints;
-        if(hp>=.995f){MDPlayer.Message(p,$"{u.Tower.name}耐久已满，不需要维修。");return false;}
-        float add=Math.Min(1-hp,points/u.Tower.hp);u.SetHitpoints(hp+add);miner.RemoveActiveTool(1);
-        var at=u.Body.Position+Vector3.UnitY*Math.Min(1.5f,u.Tower.bounds[1][1]*.5f);
+        if(hp>=.995f){MDPlayer.Message(p,$"{Name(u)}耐久已满，不需要维修。");return false;}
+        float add=Math.Min(1-hp,points/Points(u));u.SetHitpoints(hp+add);miner.RemoveActiveTool(1);
+        var at=Top(u);
         Sound(u,"Audio/Impacts/Metal",at,.8f);MDTowerWorld.For(u.Project).Heal(u.Body.Position);
-        MDPlayer.Message(p,$"{material}修复{u.Tower.name} +{Percent(add)}%，耐久 {Percent(u.Damage.Hitpoints)}%");
+        MDPlayer.Message(p,$"{material}修复{Name(u)} +{Percent(add)}%，耐久 {Percent(u.Damage.Hitpoints)}%");
         return true;
     }
 }

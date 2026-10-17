@@ -5,13 +5,15 @@ using System.Text.Json;
 
 namespace MechDefenseVerification;
 
-// Old-save migration test (0.6.0 removed the Destroy Gunners mech and enemy). Installed only into an isolated runtime by
+// Old-save migration test (0.6.0 removed the Destroy Gunners sample enemy; its sample mech came back as Mercury in 0.8.0).
+// Installed only into an isolated runtime by
 // tools/run_isolated.py smoke, never shipped. Mode in smoke-mode.txt next to the exe:
 //   "old": run with an older package (0.5.0). Builds the world "MDMigration": a gun tower, a mech with the player riding
 //          it, an enemy, and mech / enemy / frost tower deployment items in the inventory; saves and quits.
-//   "new": run with the current package in the same runtime. Loads that world and checks that the mech and enemy are gone,
-//          the player is off the mech and unhurt, the old items read as removed and cannot deploy, a tower still deploys
-//          and the old tower still shoots a wolf; saves, reloads and checks again.
+//   "new": run with the current package in the same runtime. Loads that world and checks that the enemy is gone and the mech
+//          is Mercury with the player still seated, who gets out unhurt; the old enemy item reads as removed, the old mech
+//          item as Mercury and deploys one, a tower still deploys and the old tower still shoots a wolf; saves, reloads and
+//          checks again.
 // Code that touches members only the current mod has (Legacy, RemovedNote) stays out of the "old" path's methods.
 public class Smoke : ModLoader {
     const string WorldName="MDMigration";
@@ -86,32 +88,41 @@ public class Smoke : ModLoader {
         }
         if(stage==3&&data.IsReadyForPlaying&&Time.RealTime-step>3) {
             var units=Units();
-            Check(units.Length>0&&units.All(u=>u.Kind=="Turret"&&u.Tower!=null),"after saving and reloading: still only towers");
+            Check(units.Length>0&&units.All(u=>(u.Kind=="Turret"&&u.Tower!=null)||(u.Kind=="Mech"&&u.Mech!=null)),"after saving and reloading: towers and Mercury only");
             Check(units.Count(u=>u.TowerId=="battle_frost_1")==1,"the tower deployed after migration survives save and reload");
-            Finish(new{passed=true,mode,checks,world=world.DirectoryName,units=units.Select(u=>u.TowerId).ToArray()});
+            Check(units.Count(u=>u.Kind=="Mech"&&!u.Destroyed)==2,"both Mercury mechs (the old one and the deployed one) survive save and reload");
+            Finish(new{passed=true,mode,checks,world=world.DirectoryName,units=units.Select(u=>u.Kind=="Mech"?"Mercury":u.TowerId).ToArray()});
         }
     }
     static void AfterLoad(string when) {
         var p=data.ComponentPlayer;var units=Units();var block=(MDDeploymentBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()];
-        Check(units.All(u=>u.Kind=="Turret"),$"{when}: the mech and the enemy are gone");
+        Check(units.All(u=>u.Kind is "Turret" or "Mech"),$"{when}: the enemy is gone");
+        var oldGun=units.First(u=>u.TowerId=="battle_turret_1");origin=new(oldGun.Body.Position.X+12,70.05f,oldGun.Body.Position.Z);   // the old run put it at origin-(12,0,0)
+        var mech=units.SingleOrDefault(u=>u.Kind=="Mech");
+        Check(mech?.Mech!=null&&!mech.Destroyed&&mech.Entity.FindComponent<ComponentMDMechModel>()?.Model!=null,$"{when}: the 0.5.0 mech is Mercury now, with its model");
         Check(units.Count(u=>u.TowerId=="battle_turret_1"&&!u.Destroyed)==1,$"{when}: the old gun tower is still there");
-        Check(p.ComponentBody.ParentBody==null&&p.ComponentRider.Mount==null,$"{when}: the player no longer rides anything");
+        Check(MDMechPilot.Mounted(p)==mech,$"{when}: the player still sits in it");
+        Check(MDMechPilot.Exit(p,mech,true)&&p.ComponentBody.ParentBody==null&&p.ComponentRider.Mount==null,$"{when}: and gets out");
         Check(p.ComponentHealth.Health>.99f,$"{when}: the player is unhurt");
         Check(p.GameWidget.ActiveCamera is FppCamera,$"{when}: first-person camera");
         var t=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
-        Check(block.GetDisplayName(t,Deploy(1))=="已移除的旧单位"&&block.GetDisplayName(t,Deploy(2))=="已移除的旧单位",$"{when}: old mech / enemy items read as removed");
+        Check(block.GetDisplayName(t,Deploy(1))=="水星机甲 · 部署"&&block.GetDisplayName(t,Deploy(2))=="已移除的旧单位",$"{when}: the old mech item reads as Mercury, the enemy item as removed");
         var creative=block.GetCreativeValues().ToArray();
-        Check(creative.Length==MDTowerLibrary.All.Count&&creative.All(v=>MDDeploymentBlock.Tower(v)!=null),"creative inventory lists the towers only");
-        var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).ToArray();
-        Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")),"no Endfield / Destroy Gunners names: "+string.Join(" ",names.Take(4)));
-        // Use the removed mech item, then the frost tower item, on the platform in front of the player
-        var inv=p.ComponentMiner.Inventory;int before=Units().Length;p.ComponentBody.Velocity=Vector3.Zero;
+        Check(creative.Length==MDTowerLibrary.All.Count+1&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&creative.Contains(Deploy(1)),"creative inventory lists the towers and Mercury");
+        var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).Append(block.GetDescription(Deploy(2))).ToArray();
+        Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")&&!n.Contains("原作")),"no Endfield / Destroy Gunners names, no 原作: "+string.Join(" ",names.Take(4)));   // AGENTS.md product rule
+        // Use the removed enemy item, then the frost tower item, on the platform in front of the player
+        var inv=p.ComponentMiner.Inventory;p.ComponentBody.Position=origin+new Vector3(-10,0,22);p.ComponentBody.Velocity=Vector3.Zero;int before=Units().Length;
         var foot=p.ComponentBody.Position;var ray=new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-4.5f)));
-        inv.ActiveSlotIndex=0;int count0=inv.GetSlotCount(0),value0=inv.GetSlotValue(0);bool used=p.ComponentMiner.Use(ray);
-        Check(Units().Length==before,$"the removed mech item does not deploy (units {before} -> {Units().Length}, Use returned {used})");
-        Check(inv.GetSlotCount(0)==count0&&inv.GetSlotValue(0)==value0,$"the removed mech item is not used up (slot 0: {count0} x {value0} -> {inv.GetSlotCount(0)} x {inv.GetSlotValue(0)}, {inv.GetType().Name})");
+        inv.ActiveSlotIndex=1;int count1=inv.GetSlotCount(1),value1=inv.GetSlotValue(1);bool used=p.ComponentMiner.Use(ray);
+        Check(Units().Length==before,$"the removed enemy item does not deploy (units {before} -> {Units().Length}, Use returned {used})");
+        Check(inv.GetSlotCount(1)==count1&&inv.GetSlotValue(1)==value1,$"the removed enemy item is not used up (slot 1: {count1} x {value1} -> {inv.GetSlotCount(1)} x {inv.GetSlotValue(1)}, {inv.GetType().Name})");
         inv.ActiveSlotIndex=2;p.ComponentMiner.Use(ray);
         Check(Units().Count(u=>u.TowerId=="battle_frost_1")==1,"a frost tower still deploys from its item");
+        // the old mech item deploys Mercury (on clear ground further along the platform)
+        p.ComponentBody.Position=origin+new Vector3(8,0,26);p.ComponentBody.Velocity=Vector3.Zero;foot=p.ComponentBody.Position;ray=new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-4.5f)));
+        inv.ActiveSlotIndex=0;int mechs=Units().Count(u=>u.Kind=="Mech");used=p.ComponentMiner.Use(ray);   // a creative inventory never runs out
+        Check(Units().Count(u=>u.Kind=="Mech")==mechs+1,$"the old mech item deploys a second Mercury (mechs {mechs} -> {Units().Count(u=>u.Kind=="Mech")}, Use returned {used})");
         var gun=Units().First(u=>u.TowerId=="battle_turret_1");towerShots=gun.ShotCount;
         var e=DatabaseManager.CreateEntity(GameManager.Project,"Wolf",true);e.FindComponent<ComponentBody>(true).Position=gun.Body.Position+new Vector3(0,0,-8);e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;
         GameManager.Project.AddEntity(e);wolf=e.FindComponent<ComponentCreature>(true);var l=wolf.ComponentLocomotion;l.WalkSpeed=l.JumpSpeed=0;

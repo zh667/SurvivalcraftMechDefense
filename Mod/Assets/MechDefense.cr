@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- MechDefense tower recipes (crafting table, vanilla materials only). Result data = tower data value in
+<!-- MechDefense tower and Mercury recipes (crafting table, vanilla materials only). Result data = tower data value in
      tools/towers.json; upgrades take the lower tower as an ingredient ("mddeploy:<data>"). -->
 <Recipes>
   <Recipe Result="MDDeploymentBlock:0" ResultCount="1" RequiredHeatLevel="0" r="rod" g="gunpowder" c="copperingot" i="ironingot" Description="铳械塔：基础防御塔">
@@ -96,5 +96,15 @@
     "mdm"
     "mkm"
     "mmm"
+  </Recipe>
+  <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
+       (cannon), two 高爆榴弹塔 (missiles, grenades), with 2 iron blocks, a diamond block and a semiconductor block; about
+       130 iron, 12 diamonds and 11 germanium in all, the top of the user's pack (docs/MECH.md). Vanilla ingredients and this
+       mod's towers only, as everywhere in this file: with RecipaediaEX (the user's pack) one unresolved ingredient drops that
+       recipe and every later one of the merged list from the crafting table. -->
+  <Recipe Result="MDDeploymentBlock:1" ResultCount="1" RequiredHeatLevel="0" a="mddeploy:4" l="mddeploy:15" c="mddeploy:8" m="ironblock" d="diamondblock" g="mddeploy:6" s="semiconductorblock" Description="水星机甲：由暴雨铳械塔、高能射线塔、序章炮塔和高爆榴弹塔组装">
+    "alc"
+    "mdm"
+    "gsg"
   </Recipe>
 </Recipes>

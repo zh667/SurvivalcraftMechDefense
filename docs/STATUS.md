@@ -1,6 +1,80 @@
-# Status — 2026-10-13
+# Status — 2026-10-17
 
-## Current delivery: 0.7.0 (PR #3, merged 2026-10-13 on the user's approval, tag v0.7.0)
+## Current delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
+
+- User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
+  the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,
+  cannon that unfolds and folds, F melee), creative inventory only (round 5: a survival recipe as well). Task brief: docs/tasks/2026-10-17-mercury-mech.md; design
+  and numbers: docs/MECH.md.
+- Assets (`tools/build_mech_assets.py`, job claude-pb-assets-1): 37 joints, 34 rigid parts, 25 clips (752 samples), texture
+  embedded (JPEG, engine mipmaps, linear). Re-posed from its own output with the engine's bone composition against Blender:
+  p99 0.001-0.002 mm on 7 poses; max 16-48 mm at the 3 head-sensor seam triangles the skinned original stretches.
+- In game (`run_isolated.py lab --mode mech`, isolated runtime of the user's build 1.9.3.1 with Neorxna; two runs on the
+  final package, same numbers): the item “水星机甲 · 部署” is in the creative list and deploys Mercury (34 meshes, 38 bones,
+  no missing bone, no texture override, two-sided); real key presses through the game's input (Keyboard.ProcessKeyDown inside
+  ComponentInput.Update): R boards from 2.4 m, W walks 5.4 m in 1.2 s, Shift+W dashes, B cycles rifle > missiles > cannon
+  (unfolded) > rifle, F strikes, V switches third/first person, E opens and closes the inventory while the mech stays, R
+  leaves; boarding, third- and first-person cameras, HUD; walk forward 10.1 m in
+  2 s (walk clip at 1.56× so the feet keep pace), strafe left 5.4 m in 1.5 s to the mech's left (walk_left), dash 10.1 m in
+  1 s, jump 2.80 m (jump → fall → landed); standing, the body turns until the aim is within ~51° and the turret takes the
+  rest; on 2e4-resilience wolves: rifle 8 impacts 206 damage, missiles 4/4 = 280, cannon (stowed → unfolding → ready →
+  firing → ready, then folding → stowed on switching) 360, melee 300; leaving: rider off, first person, HUD gone; destroyed:
+  explosion, death clip, removed after the wreck time. No draw or model errors. Screenshots:
+  `local/claude-work/mech-review/lab-screenshots` (mc_* clips, mt_*
+  turntable, mp_* piloting, md_death; contact sheets one folder up).
+- Old saves (`smoke`, a 0.5.0 world → 0.8.0, 3/3 and 20/20): the sample enemy is gone; the 0.5.0 sample mech is Mercury with
+  its model and the player still seated, who gets out unhurt into first person; the old mech item reads “水星机甲 · 部署”
+  and deploys a second Mercury, the enemy item stays “已移除的旧单位” and does not deploy; towers still deploy and shoot;
+  after saving and reloading: towers and both mechs.
+- Regression: lab fire 0.8.0 vs 0.7.0 — every tower fires the same number of times; which dummies register a hit in the
+  2 s window varies between runs of the same version (0.7.0 run: prologue cannon false, 0.8.0 run: gun tower 1 false).
+  Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
+  30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
+  Tower models unchanged (no gap/overlap rerun).
+- Package `dist/MechDefense-0.8.0.scmod`: 31,257,637 bytes, 178 entries (+19 original sound effects), SHA-256 2220167d…d450db50c (job
+  claude-pb-yuanzuo-fix-1; shown texts without 原作, smoke old/new pass). Against 0.7.0: added Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png};
+  changed MechDefense.dll, MechDefense.xdb (the MDMech template gains its model component, armour 3000), MechDefense.cr
+  (Mercury's recipe), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
+- Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
+  inventory before the mech saw the key. Boarding and leaving now use the mount key (R); input is read after ComponentInput.
+- User test 2 (2026-10-17): big steps but little ground, no steering in a jump; the cannon unfolded on its own; first person
+  shaky, own weapon hard to see, flickering; HUD speed flickering. Now: the original speeds with the clips at their own rate (lab: 17.9 m
+  walked in 2 s, 11.5 m strafed in 1.5 s, jump 3.1 m high and 11 m forward in the air); the cannon unfolds on the trigger
+  (Stowed > Deploying > Firing > Ready > Retracting > Stowed after 3 s idle); first person fixed to the body (eye height constant
+  while walking) drawing only the rifle arm and the cannon, the arms aim the rifle at the crosshair; HUD speed smoothed.
+  Weapons and sounds of the original: researched from its native code and tables (docs/MERCURY_ORIGINAL.md).
+- User test 3 (2026-10-17): the cannon folded and snapped open again after every shot; the dash looked crouched; the original
+  has an upward boost and a hover with back flames - make Shift hover. Also from test 2: laser, grenade, lock-on missiles,
+  original sounds. Now (lab mech on the final package, numbers in docs/MECH.md): one world unit of the original = 2.67 m, so
+  walk 12.2 m in 2 s (5.7 m/s); Shift hovers 0.79 m up at 8.0 m/s on the gliding boost clips with back-thruster flames,
+  energy -15,450 in 1 s of hover, +9,000 in 1 s of rest; jump 3.1 m with a burst; the cannon: one press Stowed > Deploying >
+  Ready > Retracting > Stowed (1 shot, no clip 55), held 3 shots at 0.7 / 2.4 / 4.0 s and folds on release; on 2e4-resilience
+  wolves: rifle 151 (5 hits), missiles 3 locks in one sweep and 3 homing hits of 30, laser 251 over its 1 s beam, grenade 50
+  (blast), cannon 60, jump attack (clip 45) lunges 13.8 m and hits 300; real keys: B cycles rifle > missiles > cannon >
+  laser > grenade > rifle. Smoke 0.5.0 > 0.8.0 and lab fire pass again.
+- User test 4 (2026-10-17): hover should look like the jump (legs kicked back), not crouched; jump / hover sound the same as the
+  missile; locked missiles sometimes missed; the laser smeared in steps; hover did not feel faster. Now: hover holds the jump
+  clip at 1.0 s (steady airborne pose) at 13 m/s (lab 12.96 m/s, 0.79 m up); hover hums with boss_hover, the jump keeps
+  shot_missile (the only take-off sound in the original's code; SPα has the same 32 effects); locked missiles pass through
+  terrain and burst on their target (lab: 3/3 on standing wolves, 3/3 on wolves running sideways at 6 m/s); the laser is one
+  held beam with a fading ribbon. Smoke and lab fire pass.
+- User test 5 (2026-10-17): “shift按住应该只有一段音效”; “机甲表面不用加那么多噪点，就用原版材质清晰化那个版本（…如果能再清晰就跟好了）”;
+  “数值设置和生存模式材料设置参考模组 D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1\Mods”. Now: one boss_hover per Shift press
+  (lab, real keys: 1 in a 2.5 s hold, 2 after a second press; counted on SubsystemAudio.PlaySound); the texture is the
+  clean Real-ESRGAN x4plus 2048 upscale of the original (V7) with a light unsharp mask, embedded as PNG (model.glb 4.2 MB),
+  no grain or wear; numbers from the installed mods (decompiled code and data, docs/MECH.md): damage the original's ÷ 10
+  (lab on 2e4 wolves: missiles 100 each 3/3 also on runners, cannon 200, melee 1000, laser 855 per beam, rifle 571 in 6
+  impacts), armour 3000; a crafting-table recipe from 暴雨 / 高能射线 / 序章 / 2 高爆榴弹 towers + 2 iron blocks + diamond
+  block + semiconductor block (lab recipes: 20 recipes, Mercury's grid resolves to it); repair and pickaxe take-down as for
+  towers, which before crashed on the mech (lab: iron ingot 50 % → 56.7 %, 3 hits → item “耐久 57%”, redeployed at 57 %).
+  Smoke 0.5.0 > 0.8.0 (old, new) and lab fire pass (job claude-pb-round5-bal-1).
+- Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
+  for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods; the
+  recipe with RecipaediaEX (the user's crafting table; the lab runs the vanilla one); the mod numbers in play.
+  The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was
+  not identified.
+
+## Previous delivery: 0.7.0 (PR #3, merged 2026-10-13 on the user's approval, tag v0.7.0)
 
 - User (2026-10-12): shells cannot keep up with running targets; ranges too short; Wonderful Era's captain and pirates are not
   attacked, tell friend from foe; damage can be higher since towers fire rarely; towers barely hurt the ghouls; towers cannot be

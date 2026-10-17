@@ -6,11 +6,14 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 ## Product
 
 - Target Survivalcraft API 1.9.3.1 and .NET 10. Package `local.mechdefense.sample`, version in `Mod/modinfo.json`.
-- Towers only. The Destroy Gunners mech and enemy were removed in 0.6.0 (user, 2026-10-11); their database templates stay
-  so that old worlds load, and the entities remove themselves on load.
-- In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11).
+- Towers, and since 0.8.0 one mech a player boards: Mercury from Destroy Gunners (user, 2026-10-17; crafting table or creative inventory,
+  the original model and clips via `tools/build_mech_assets.py`, details in `docs/MECH.md`). The 0.5.0 sample enemy stays
+  removed (0.6.0): its template stays so that old worlds load, and such entities remove themselves on load.
+- In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11), nor an
+  "original" (原作) the models, motions or sounds come from (user, 2026-10-17: “帮助里不要提到什么原作什么的”).
 - Towers attack hostile creatures only (`Mod/MDFaction.cs`: read from each creature's own behaviour, no list of mod names;
-  never players, towers, the player's herd or mount); require line of sight and prevent friendly fire.
+  never players, towers, the player's herd or mount); require line of sight and prevent friendly fire. The mech's pilot picks
+  its targets: its fire hurts any creature except the player's side.
 - Tower models are the authored blocky models from `E:/projects/endfield-turret-model`; `tools/towers.json` names the
   model version per tower. Details, numbers and the build pipeline: `docs/TOWERS.md`.
 - Never substitute a procedural placeholder and describe it as a recovered original game model.

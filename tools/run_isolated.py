@@ -1,6 +1,6 @@
 """Run a test mod in an isolated copy of the Survivalcraft API runtime and wait for its result file.
 
-python tools/run_isolated.py lab  [--mode all|gallery|fire|perf|special|combat] [--package dist/MechDefense-x.scmod] [--limit 1500]
+python tools/run_isolated.py lab  [--mode all|gallery|fire|perf|special|combat|mech] [--package dist/MechDefense-x.scmod] [--limit 1500]
 python tools/run_isolated.py perf --package dist/MechDefense-0.3.1.scmod --label old
 python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod --label migration   (old-save migration:
 python tools/run_isolated.py smoke --mode new --label migration                                           same runtime, both steps)

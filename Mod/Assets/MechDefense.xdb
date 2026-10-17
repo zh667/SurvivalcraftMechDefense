@@ -19,7 +19,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="757a04be-f104-5735-b106-b7d8b829c4c0" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f2650151-206a-557f-8714-793c9d9122dc" />
-        <Parameter Name="AttackResilience" Type="float" Value="1500" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
+        <Parameter Name="AttackResilience" Type="float" Value="3000" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="425581b5-4b15-5fd5-9ae9-3986d1327bab" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="09c0c39b-2b5d-54df-8da3-020b8d86264e" />
       </MemberComponentTemplate>
@@ -31,6 +31,13 @@
         <Parameter Name="MountOffset" Type="Vector3" Value="0,2.5,0" Guid="91da5015-c055-596a-9f0c-40d7dd84275e" />
         <Parameter Name="DismountOffset" Type="Vector3" Value="3,0,0" Guid="645c6948-bbb3-550c-8e83-e37583c027d3" />
         <Parameter Name="MountAllowToStartRange" Type="float" Value="5" Guid="d786bce2-a914-5fa2-a0a8-f9c1fe63a667" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="23f2590c-f473-5946-8d03-1e84fc3a6a89" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDMechModel" Guid="2f42dc00-edaf-531f-b496-3b832d1d2321" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/Mercury/model" Guid="fb60627e-0a17-52b8-bfab-27520b85264a" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="345ef6ce-439b-59b8-bf5e-29baac0df97b" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.6" Guid="01d57db2-4712-5151-a658-5d0b0f6ae9ba" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="4238968a-08c4-5c88-866e-08e389898675" />
       </MemberComponentTemplate>
     </EntityTemplate>
     <EntityTemplate Name="MDEnemy" Guid="73668d39-2809-5cce-bc98-4e03d83c2934">

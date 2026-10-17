@@ -28,8 +28,11 @@ beyond what the mech's shells need.
   `package.py` (Mercury assets, checked), lab mode `mech` (`Tests/TowerLab/Mech.cs`), smoke expectations for 0.8.0, docs.
 - Windows jobs: asset tool claude-pb-assets-1 (d2be6575…); lab claude-pb-lab-mech-1 (9944847d…), claude-pb-lab-mech-3 (two runs);
   regression claude-pb-tests-1 (86c410c8…) and claude-pb-tests-2 (6d7226d2…): smoke old/new, lab fire 0.8.0 / 0.7.0, perf pairs.
-- Package: dist/MechDefense-0.8.0.scmod, 27,926,090 bytes, SHA-256 78d74662…a619fd (details in docs/STATUS.md).
+- Package: dist/MechDefense-0.8.0.scmod, 27,926,112 bytes, SHA-256 1d0754e6…39d23ef (details in docs/STATUS.md).
 - Checks passed: asset re-pose (p99 ≤ 0.002 mm), lab mech (twice), smoke migration 3/3 + 20/20, lab fire (same as 0.7.0), perf
   (no difference beyond the spread), package scan. Not run: tower gap/overlap checks (tower models unchanged).
+- User test 1 (2026-10-17): “上机甲是哪个键？E不行” — E is ToggleInventory in this game version; the GUI opened the inventory
+  first and the mech's E handler saw the panel and ignored the key. Now the mount key (R) boards and leaves, input is read in
+  a postfix of ComponentInput.Update, reach 3 m; the lab presses real keys (job claude-pb-keys-2).
 - Remaining: not verified in the user's real game, with real keyboard input, touch/gamepad, or next to the ghoul / Wonderful
   Era mods. Rollback package: dist/MechDefense-0.7.0.scmod.

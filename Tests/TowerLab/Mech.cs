@@ -1,7 +1,28 @@
 using Engine;
+using Engine.Input;
 using Game;
+using HarmonyLib;
+using System.Reflection;
 
 namespace TowerLab;
+
+// Real key presses for the mech: queued keys go into Engine.Input.Keyboard from inside the game's own input update (just
+// before ComponentInput reads the keyboard), so the "pressed once" flags survive the frame start. The lab window is hidden,
+// and the game ignores keys of an inactive window: Window's state is set to active while keys are queued.
+[HarmonyPatch(typeof(ComponentInput),nameof(ComponentInput.Update))]
+public static class LabKeys {
+    public static readonly HashSet<Key> Held=[];public static readonly Queue<Key> Taps=new();static readonly List<Key> up=[];
+    static readonly FieldInfo state=typeof(Window).GetField("m_state",BindingFlags.NonPublic|BindingFlags.Static);
+    public static bool Busy=>Held.Count>0||Taps.Count>0||up.Count>0;
+    public static void Prefix() {
+        if(!Busy)return;
+        if(state!=null&&!Window.IsActive)state.SetValue(null,Enum.Parse(state.FieldType,"Active"));
+        foreach(var k in up)Keyboard.ProcessKeyUp(k);up.Clear();
+        if(Taps.Count>0){var k=Taps.Dequeue();Keyboard.ProcessKeyDown(k);up.Add(k);}   // down this frame, up the next
+        foreach(var k in Held)if(!Keyboard.IsKeyDown(k))Keyboard.ProcessKeyDown(k);
+    }
+    public static void Release(){up.AddRange(Held);Held.Clear();}
+}
 
 // lab --mode mech: Mercury, the mech a player boards. Deploys it from its item, shows the clips (forced, standing still),
 // then drives it through MDMechState as the pilot input would (MDMechPilot.ExternalControls): boarding and both cameras,
@@ -37,9 +58,36 @@ public partial class Lab {
         m.ForceClip="idle";m.ForceTime=0;
         for(int k=0;k<4;k++){float a=MathF.PI*.25f+k*MathF.PI*.5f;foreach(var x in Hold(c+new Vector3(MathF.Sin(a)*10,3.5f,-MathF.Cos(a)*10),focus,3))yield return x;Shot($"mt_{k}");yield return true;}
         m.ForceClip=null;
+        // ---- real keys: R boards from 2.4 m (the game's mount key), W walks, Shift dashes, B cycles weapons, F strikes,
+        // V switches the camera, E still opens the inventory, R leaves
+        {
+            var k=new Dictionary<string,object>();r["keys"]=k;MDMechPilot.ExternalControls=false;
+            pl.ComponentBody.Position=c+new Vector3(3.6f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();
+            while(Wait(.5))yield return true;
+            IEnumerable<bool> Tap(Key key,double after=.4){LabKeys.Taps.Enqueue(key);for(double s0=Time.RealTime;Time.RealTime-s0<after||LabKeys.Busy;)yield return true;}
+            IEnumerable<bool> HoldKeys(double seconds,Action each,params Key[] keys){foreach(var key in keys)LabKeys.Held.Add(key);for(double s0=Time.RealTime;Time.RealTime-s0<seconds;){each();yield return true;}LabKeys.Release();for(int i=0;i<4;i++)yield return true;}
+            foreach(var x in Tap(Key.R,.8))yield return x;k["R boards (2.4 m away)"]=MDMechPilot.Mounted(pl)==u;
+            var kp=u.Body.Position;string clip="";
+            foreach(var x in HoldKeys(1.2,()=>clip=m.Anim.Base.name,Key.W))yield return x;k["W walks"]=$"{Vector3.Distance(Flat(kp),Flat(u.Body.Position)):0.0} m, {clip}";
+            foreach(var x in During(.6,()=>{}))yield return x;
+            foreach(var x in HoldKeys(.7,()=>{if(m.Anim.Base.name.StartsWith("dash"))clip=m.Anim.Base.name;},Key.W,Key.Shift))yield return x;k["Shift+W dashes"]=clip;
+            foreach(var x in During(.6,()=>{}))yield return x;
+            var weapons=new List<string>{m.WeaponName};
+            for(int i=0;i<3;i++){foreach(var x in Tap(Key.B,.9))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
+            k["B cycles"]=string.Join(" > ",weapons);
+            bool melee=false;foreach(var x in Tap(Key.F,.1))yield return x;foreach(var x in During(.5,()=>melee|=m.Anim.Action?.name=="melee"))yield return x;k["F strikes"]=melee;
+            var cams=new List<string>{pl.GameWidget.ActiveCamera.GetType().Name};
+            for(int i=0;i<2;i++){foreach(var x in Tap(Key.V))yield return x;cams.Add(pl.GameWidget.ActiveCamera.GetType().Name);}
+            k["V switches"]=string.Join(" > ",cams);
+            foreach(var x in Tap(Key.E,.6))yield return x;bool invOpen=pl.ComponentGui.ModalPanelWidget!=null;var still=u.Body.Position;
+            foreach(var x in During(.4,()=>{}))yield return x;k["E opens the inventory, mech stays"]=invOpen&&Vector3.Distance(still,u.Body.Position)<.05f;
+            foreach(var x in Tap(Key.E,.6))yield return x;k["E closes it"]=pl.ComponentGui.ModalPanelWidget==null;
+            foreach(var x in Tap(Key.R,.8))yield return x;k["R leaves"]=MDMechPilot.Mounted(pl)==null&&pl.ComponentBody.ParentBody==null;
+            foreach(var x in During(.5,()=>{}))yield return x;
+        }
         // ---- board and look through both pilot cameras
         MDMechPilot.ExternalControls=true;
-        pl.ComponentBody.Position=c+new Vector3(2.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.4))yield return true;
+        c=u.Body.Position;pl.ComponentBody.Position=c+new Vector3(2.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.4))yield return true;
         r["board"]=MDMechPilot.Board(pl,u);while(Wait(.6))yield return true;
         r["mounted"]=MDMechPilot.Mounted(pl)==u;r["camera"]=pl.GameWidget.ActiveCamera.GetType().Name;r["hud"]=m.Hud?.ParentWidget!=null;
         ScreenCaptureManager.Capture(1280,720,"mp_tpp.png");yield return true;
@@ -47,7 +95,7 @@ public partial class Lab {
         pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<TppCamera>();
         string seen="";var side=new Vector3(9,3,0);
         // walk forward
-        var p0=u.Body.Position;bool shot=false;
+        var p0=u.Body.Position;
         foreach(var x in During(2,()=>{m.Move=new(0,1);seen=m.Anim.Base.name;}))yield return x;
         foreach(var x in During(.15,()=>{m.Move=new(0,1);Cam(u.Body.Position+side,u.Body.Position+Vector3.UnitY*2);}))yield return x;Shot("mp_walk");yield return true;
         r["walk"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),clip=seen,rate=m.Anim.Rate};

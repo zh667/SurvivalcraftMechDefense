@@ -31,7 +31,7 @@ public class MDDeploymentBlock : Block {
     const string RemovedName="已移除的旧单位";public const string RemovedNote="这个单位已在 0.6.0 移除，不能再部署。";
     const string MechName="水星机甲 · 部署";
     const string MechNote="可驾驶的机甲「水星」（原作模型和原作动作）。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
-        "靠近按 E 上下车：鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，左键开火，B 切换步枪 / 导弹 / 火炮（火炮先展开），F 近战，V 切换视角。";
+        "靠近按 R（游戏的骑乘键）上下车：鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，左键开火，B 切换步枪 / 导弹 / 火炮（火炮先展开），F 近战，V 切换视角。";
     public static bool IsMech(int value)=>(Terrain.ExtractData(value)&0xFF)==1;
     public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);

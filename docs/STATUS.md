@@ -11,7 +11,10 @@
   p99 0.001-0.002 mm on 7 poses; max 16-48 mm at the 3 head-sensor seam triangles the skinned original stretches.
 - In game (`run_isolated.py lab --mode mech`, isolated runtime of the user's build 1.9.3.1 with Neorxna; two runs on the
   final package, same numbers): the item “水星机甲 · 部署” is in the creative list and deploys Mercury (34 meshes, 38 bones,
-  no missing bone, no texture override, two-sided); boarding, third- and first-person cameras, HUD; walk forward 10.1 m in
+  no missing bone, no texture override, two-sided); real key presses through the game's input (Keyboard.ProcessKeyDown inside
+  ComponentInput.Update): R boards from 2.4 m, W walks 5.4 m in 1.2 s, Shift+W dashes, B cycles rifle > missiles > cannon
+  (unfolded) > rifle, F strikes, V switches third/first person, E opens and closes the inventory while the mech stays, R
+  leaves; boarding, third- and first-person cameras, HUD; walk forward 10.1 m in
   2 s (walk clip at 1.56× so the feet keep pace), strafe left 5.4 m in 1.5 s to the mech's left (walk_left), dash 10.1 m in
   1 s, jump 2.80 m (jump → fall → landed); standing, the body turns until the aim is within ~51° and the turret takes the
   rest; on 2e4-resilience wolves: rifle 8 impacts 206 damage, missiles 4/4 = 280, cannon (stowed → unfolding → ready →
@@ -28,11 +31,13 @@
   Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
   30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
   Tower models unchanged (no gap/overlap rerun).
-- Package `dist/MechDefense-0.8.0.scmod`: 27,926,090 bytes, 159 entries, SHA-256 78d74662…a619fd. Against 0.7.0: added
+- Package `dist/MechDefense-0.8.0.scmod`: 27,926,112 bytes, 159 entries, SHA-256 1d0754e6…39d23ef. Against 0.7.0: added
   Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png}; changed MechDefense.dll, MechDefense.xdb
   (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
-- Not verified: the user's real game with all its mods; keyboard-only controls (the lab drives MDMechState directly; the key
-  reading is the 0.5.0 code path plus Shift/Space/F); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
+- Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
+  inventory before the mech saw the key. Boarding and leaving now use the mount key (R); input is read after ComponentInput.
+- Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
+  for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
   The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was
   not identified.
 

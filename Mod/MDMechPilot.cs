@@ -4,9 +4,11 @@ using HarmonyLib;
 
 namespace Game;
 
-// Piloting Mercury: E boards the nearest mech (and leaves it), the mouse turns the body and aims, WASD walks and strafes,
-// Shift dashes, Space jumps, the left button fires, B cycles rifle / missiles / cannon, F strikes, V switches the camera.
-// The player's own input is consumed while seated; the rider is hidden and set down on free ground when leaving.
+// Piloting Mercury: the game's mount key (ToggleMount, R by default) boards the nearest mech within reach and leaves it; with no
+// mech near it mounts horses as usual. E stays the inventory. The mouse turns the body and aims, WASD walks and strafes, Shift
+// dashes, Space jumps, the left button fires, B cycles rifle / missiles / cannon, F strikes, V switches the camera. Read right
+// after ComponentInput turns keys into PlayerInput (the earliest update), and what the mech uses is taken out before the GUI
+// (inventory, creative fly, camera mode) or the locomotion see it. The rider is hidden and set down on free ground when leaving.
 public static class MDMechPilot {
     public static bool ExternalControls;   // tests drive MDMechState directly; the player's input then only boards and leaves
     public static ComponentPlayer Driver(ComponentMDUnit u)=>u.Mount?.Rider?.Entity.FindComponent<ComponentPlayer>();
@@ -22,12 +24,12 @@ public static class MDMechPilot {
     public static bool CanBoard(ComponentPlayer p,ComponentMDUnit u) {
         if(u.Mech==null||u.Destroyed||Driver(u)!=null||u.Damage.Hitpoints<=0)return false;
         var from=p.ComponentBody.Position+Vector3.UnitY;var box=u.Body.BoundingBox;var near=Vector3.Min(Vector3.Max(from,box.Min),box.Max);
-        return Vector3.DistanceSquared(from,near)<2.25f&&!u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(from,near,false,true,Collidable).HasValue;
+        return Vector3.DistanceSquared(from,near)<9&&!u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(from,near,false,true,Collidable).HasValue;
     }
     public static bool Board(ComponentPlayer p,ComponentMDUnit u) {
         if(!CanBoard(p,u))return false;
         u.AimYaw=u.Yaw;u.AimPitch=0;p.ComponentRider.StartMounting(u.Mount);p.GameWidget.ActiveCamera=p.GameWidget.FindCamera<TppCamera>();
-        MDPlayer.Message(p,"已登上水星：鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，左键开火，B 换武器，F 近战，V 视角，E 下车");return true;
+        MDPlayer.Message(p,"已登上水星：鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，左键开火，B 换武器，F 近战，V 视角，R 下车");return true;
     }
     public static bool Exit(ComponentPlayer p,ComponentMDUnit u,bool force=false) {
         var t=u.Project.FindSubsystem<SubsystemTerrain>(true);var bodies=u.Project.FindSubsystem<SubsystemBodies>(true);Vector3? destination=null;
@@ -50,13 +52,14 @@ public static class MDMechPilot {
         return near.Select(b=>b.Entity.FindComponent<ComponentMDUnit>()).Where(x=>x?.Mech!=null&&CanBoard(p,x)).OrderBy(x=>Vector3.DistanceSquared(x.Body.Position,p.ComponentBody.Position)).FirstOrDefault();
     }
     public static void Input(ComponentPlayer p,float dt) {
-        var u=Mounted(p);var gi=p.GameWidget.Input;
+        if(p?.ComponentRider==null)return;
+        var u=Mounted(p);var gi=p.GameWidget.Input;ref var v=ref p.ComponentInput.m_playerInput;
         bool blocked=p.ComponentHealth.Health<=0||DialogsManager.HasDialogs(p.GuiWidget)||p.ComponentGui.ModalPanelWidget!=null;
-        if(!blocked&&gi.IsKeyDownOnce(Key.E)) {
-            if(u!=null)Exit(p,u);else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found)Board(p,found);
-            if(u!=null||Mounted(p)!=null)p.ComponentInput.m_playerInput.ToggleInventory=false;
+        if(v.ToggleMount&&!blocked) {
+            if(u!=null){Exit(p,u);v.ToggleMount=false;}
+            else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found){Board(p,found);v.ToggleMount=false;}
         }
-        u=Mounted(p);if(u==null||ExternalControls)return;var m=u.Mech;var input=p.ComponentInput.PlayerInput;
+        u=Mounted(p);if(u==null||ExternalControls)return;var m=u.Mech;var input=v;
         if(blocked)Idle(m);
         else {
             m.Move=new Vector2(input.Move.X,input.Move.Z);m.Dash=gi.IsKeyDown(Key.Shift);
@@ -69,7 +72,7 @@ public static class MDMechPilot {
             if(gi.IsKeyDownOnce(Key.V))p.GameWidget.ActiveCamera=p.GameWidget.ActiveCamera is FppCamera?p.GameWidget.FindCamera<TppCamera>():p.GameWidget.FindCamera<FppCamera>();
             m.AimPoint=AimPoint(p,u);
         }
-        ref var v=ref p.ComponentInput.m_playerInput;v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
+        v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
     }
     // The crosshair's point: the camera ray, past the mech itself, against terrain and other bodies.
     static Vector3 AimPoint(ComponentPlayer p,ComponentMDUnit u) {
@@ -97,7 +100,7 @@ public class MDStatusWidget:CanvasWidget {
         weapon=new LabelWidget{Size=new(300,24),FontScale=.7f,Color=new Color(90,220,255)};Add(weapon,10,34);
         armor=new RectangleWidget{Size=new(300,3),FillColor=new Color(90,220,255),OutlineThickness=0};Add(armor,10,62);
         heat=new RectangleWidget{Size=new(0,3),FillColor=new Color(255,150,60),OutlineThickness=0};Add(heat,10,68);
-        Add(new LabelWidget{Text="E 下车  V 视角  B 武器  F 近战  Shift 冲刺  空格 跳",Size=new(300,24),FontScale=.6f,Color=Color.White},10,80);
+        Add(new LabelWidget{Text="R 下车  V 视角  B 武器  F 近战  Shift 冲刺  空格 跳",Size=new(300,24),FontScale=.6f,Color=Color.White},10,80);
     }
     public void Refresh(ComponentMDUnit u) {
         var m=u.Mech;status.Text=$"水星  装甲 {u.Damage.Hitpoints*100:0}%   {new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f:0} km/h";
@@ -106,8 +109,8 @@ public class MDStatusWidget:CanvasWidget {
     public override void MeasureOverride(Vector2 available){LayoutTransform=Matrix.CreateScale(Math.Clamp(Math.Min(available.X/700,available.Y/450),.5f,1));base.MeasureOverride(available);}
 }
 
-[HarmonyPatch(typeof(ComponentPlayer),nameof(ComponentPlayer.Update))]
-public static class MDMechInputPatch {public static void Prefix(ComponentPlayer __instance,float dt)=>MDMechPilot.Input(__instance,dt);}
+[HarmonyPatch(typeof(ComponentInput),nameof(ComponentInput.Update))]
+public static class MDMechInputPatch {public static void Postfix(ComponentInput __instance,float dt)=>MDMechPilot.Input(__instance.m_componentPlayer,dt);}
 [HarmonyPatch(typeof(ComponentRider),nameof(ComponentRider.StartMounting))]
 public static class MDMechBoardGuard {public static bool Prefix(ComponentRider __instance,ComponentMount componentMount)=>componentMount.Entity.FindComponent<ComponentMDUnit>() is not {Mech:not null} u||(__instance.ComponentCreature is ComponentPlayer p&&MDMechPilot.CanBoard(p,u));}
 [HarmonyPatch(typeof(ComponentRider),nameof(ComponentRider.StartDismounting))]

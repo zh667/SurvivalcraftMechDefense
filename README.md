@@ -16,7 +16,7 @@
 [docs/TOWERS.md](docs/TOWERS.md) 的 0.7.0 一节。
 
 0.8.0：加入可驾驶机甲「水星」（《毁灭枪手Σ》的原模型放大 4 倍、原作 24 段动作、清晰贴图，资产来自 `E:/projects/dguns-mech-model` 的 V8，
-由 `tools/build_mech_assets.py` 转换）：创造模式物品栏里的“水星机甲 · 部署”，靠近按 E 上车；鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，
+由 `tools/build_mech_assets.py` 转换）：创造模式物品栏里的“水星机甲 · 部署”，靠近按 R（游戏的骑乘键）上下车；鼠标转向瞄准，WASD 移动，Shift 冲刺，空格跳，
 左键开火，B 切换步枪 / 导弹 / 火炮（火炮先从背后展开），F 近战，V 切换视角。旧存档里 0.5.0 的机甲会变成水星，敌兵仍自动移除。
 设计、数字和验证见 [docs/MECH.md](docs/MECH.md)。
 

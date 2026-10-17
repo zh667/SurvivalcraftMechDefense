@@ -50,10 +50,14 @@ User (2026-10-17): bring Mercury (水星, Destroy Gunners Σ) into the mod after
 
   The pilot picks the targets: hits hurt any creature except the player's side (players, towers, the player's herd, mounts).
   Creatures that attack the mech count as aggressors for the towers (it is on the player's side).
-- Pilot (E boards within 1.5 m of the body, E again leaves to free ground 3-6 m away): mouse aims, WASD, Shift, Space, left
-  button fires, B cycles rifle → missiles → cannon, F melee, V switches between the third-person camera (over the right
-  shoulder, 10 m back) and the first-person camera at the head sensors. HUD bottom right: armour, speed, weapon, status
-  (ready / reloading / overheated / unfolding), heat bar. The rider is hidden; the player's own input is consumed.
+- Pilot: the game's mount key (ToggleMount, R by default, follows the player's key binding) boards within 3 m of the body
+  and leaves to free ground 3-6 m away; with no mech near it mounts horses as usual. E stays the inventory (in 0.8.0's first
+  build E was the boarding key and never reached the mech: the game opens the inventory on E first). Mouse aims, WASD, Shift,
+  Space, left button fires, B cycles rifle → missiles → cannon, F melee, V switches between the third-person camera (over the right
+  shoulder, 10 m back) and the first-person camera at the head sensors. Read right after ComponentInput (the earliest update);
+  what the mech uses (move, look, jump, fire, mount, crouch, fly, camera mode) is taken out of the player's input before the GUI
+  or the locomotion see it. HUD bottom right: armour, speed, weapon, status (ready / reloading / overheated / unfolding), heat
+  bar. The rider is hidden.
 - Destroyed (armour 0): the rider is set down, explosion, death clip held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, creative inventory only): stands on the clicked ground facing like the player;
   needs about 3 × 3 cells and 5 cells of headroom, no creature in the way. Old 0.5.0 mech items and mechs come back as Mercury;

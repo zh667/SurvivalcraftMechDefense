@@ -1,6 +1,6 @@
 # Task 2026-10-17: Mercury, a mech the player boards (0.8.0)
 
-Status: review — pushed with a pull request; merging needs the user's approval
+Status: done — merged into main on the user's approval (2026-10-17, “可以合并代码了”), tag v0.8.0
 Branch: feat/mercury-mech    Current writer: Claude Code (VPS, edits applied on Windows)
 User-authorized scope (2026-10-17): phase B of the Mercury plan (phase A = the asset in `E:/projects/dguns-mech-model/v8_assets`,
 accepted the same day with the side-step clipping kept as in the original): “现在就可以了” — put Mercury into the mod. Choices

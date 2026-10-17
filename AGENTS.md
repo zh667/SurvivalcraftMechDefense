@@ -6,7 +6,7 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 ## Product
 
 - Target Survivalcraft API 1.9.3.1 and .NET 10. Package `local.mechdefense.sample`, version in `Mod/modinfo.json`.
-- Towers, and since 0.8.0 one mech a player boards: Mercury from Destroy Gunners (user, 2026-10-17; creative inventory only,
+- Towers, and since 0.8.0 one mech a player boards: Mercury from Destroy Gunners (user, 2026-10-17; crafting table or creative inventory,
   the original model and clips via `tools/build_mech_assets.py`, details in `docs/MECH.md`). The 0.5.0 sample enemy stays
   removed (0.6.0): its template stays so that old worlds load, and such entities remove themselves on load.
 - In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11), nor an

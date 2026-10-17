@@ -1,6 +1,6 @@
 # Status — 2026-10-17
 
-## Current delivery: 0.8.0 (branch feat/mercury-mech, pull request open; merging needs the user's approval)
+## Current delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
 
 - User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
   the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,

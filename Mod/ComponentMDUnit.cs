@@ -91,9 +91,9 @@ public class ComponentMDUnit : Component,IUpdateable {
         if(Damage.Hitpoints<=0&&!Destroyed) {
             Destroyed=true;if(MDMechPilot.Driver(this) is {} p)MDMechPilot.Exit(p,this,true);
             var top=Body.Position+Vector3.UnitY*2.6f;MDTowerWorld.For(Project).Explosion(top,3.5f,"heavy",new Color(255,200,120),new Color(255,120,40));
-            Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Audio/Explosion1",.9f,0,top,14,false);
+            MDMechBrain.Sound(this,MDMechBrain.Se(20),top,1);   // the original's player destruction
         }
-        if(!Destroyed&&Damage.Hitpoints<lastHitpoints-.001f&&Mech.Anim.ActionDone&&Mech.Grounded)Mech.Anim.PlayAction("hit");
+        if(!Destroyed&&Damage.Hitpoints<lastHitpoints-.001f){MDMechBrain.Sound(this,MDMechBrain.Se(19),Body.Position+Vector3.UnitY*2,.6f);if(Mech.Anim.ActionDone&&Mech.Grounded)Mech.Anim.PlayAction("hit");}
         lastHitpoints=Damage.Hitpoints;
         if(MDMechPilot.Driver(this)==null)MDMechPilot.Idle(Mech);
         MDMechPilot.Hud(this);MDMechBrain.Update(this,dt);

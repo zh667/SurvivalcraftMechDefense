@@ -24,7 +24,7 @@ for s in sorted(sounds):
 mercury=assets/'Imported/Mercury';mech=json.loads((mercury/'mech.json').read_text(encoding='utf-8'))
 assert (mercury/'clips.bin').stat().st_size==4*8*len(mech['joints'])*sum(c['samples'] for c in mech['clips']),'clips.bin does not match mech.json'
 assert max(c['p99_m'] for c in mech['check'])<1e-3,'mech assets failed their re-pose check'
-for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']:files.append((mercury/f,f'Assets/Imported/Mercury/{f}'))
+for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']+[f'Audio/{k}.ogg' for k in mech['sounds']]:files.append((mercury/f,f'Assets/Imported/Mercury/{f}'))
 removed=('Assets/Imported/Mech/','Assets/Imported/Enemy/','Assets/Imported/Audio/Fire','Assets/Animations/','Assets/Towers/_legacy/')
 assert not [n for _,n in files if n.startswith(removed)],'Destroy Gunners assets in the package'
 manifest=[dict(path=n,bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p,n in files]

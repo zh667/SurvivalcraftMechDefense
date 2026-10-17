@@ -70,10 +70,10 @@ public partial class Lab {
             var kp=u.Body.Position;string clip="";
             foreach(var x in HoldKeys(1.2,()=>clip=m.Anim.Base.name,Key.W))yield return x;k["W walks"]=$"{Vector3.Distance(Flat(kp),Flat(u.Body.Position)):0.0} m, {clip}";
             foreach(var x in During(.6,()=>{}))yield return x;
-            foreach(var x in HoldKeys(.7,()=>{if(m.Anim.Base.name.StartsWith("dash"))clip=m.Anim.Base.name;},Key.W,Key.Shift))yield return x;k["Shift+W dashes"]=clip;
+            bool hov=false;foreach(var x in HoldKeys(.8,()=>{hov|=m.Hovering;if(m.Anim.Base.name.StartsWith("dash"))clip=m.Anim.Base.name;},Key.W,Key.Shift))yield return x;k["Shift+W hovers"]=$"{hov}, {clip}";
             foreach(var x in During(.6,()=>{}))yield return x;
             var weapons=new List<string>{m.WeaponName};
-            for(int i=0;i<3;i++){foreach(var x in Tap(Key.B,.9))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
+            for(int i=0;i<5;i++){foreach(var x in Tap(Key.B,.5))yield return x;weapons.Add(m.WeaponName+(m.Weapon==MDMechWeapon.Cannon?"/"+m.Cannon:""));}
             k["B cycles"]=string.Join(" > ",weapons);   // the cannon stays folded until it fires
             bool melee=false;foreach(var x in Tap(Key.F,.1))yield return x;foreach(var x in During(.5,()=>melee|=m.Anim.Action?.name=="melee"))yield return x;k["F strikes"]=melee;
             var cams=new List<string>{pl.GameWidget.ActiveCamera.GetType().Name};
@@ -112,10 +112,13 @@ public partial class Lab {
         foreach(var x in During(1.5,()=>{m.Move=new(-1,0);seen=m.Anim.Base.name;}))yield return x;
         var right=new Vector3(MathF.Cos(u.Yaw),0,-MathF.Sin(u.Yaw));r["strafeLeft"]=new{alongRight=Vector3.Dot(u.Body.Position-p0,right),clip=seen};
         foreach(var x in During(.6,()=>m.Move=Vector2.Zero))yield return x;
-        // dash forward
-        foreach(var x in Reset())yield return x;p0=u.Body.Position;
-        foreach(var x in During(1,()=>{m.Move=new(0,1);m.Dash=true;seen=m.Anim.Base.name;}))yield return x;
-        r["dash"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),clip=seen};m.Dash=false;
+        // hover (Shift held) forward: floats on its thrusters at the boost speed, gliding clip
+        foreach(var x in Reset())yield return x;p0=u.Body.Position;float hmin=99,hmax=0;
+        foreach(var x in During(1.6,()=>{m.Move=new(0,1);m.Hover=true;seen=m.Anim.Base.name;if(Time.RealTime>0){float h=u.Body.Position.Y-Home.Y;hmin=Math.Min(hmin,h);hmax=Math.Max(hmax,h);}Cam(u.Body.Position+side*1.3f,u.Body.Position+Vector3.UnitY*2);}))yield return x;
+        Shot("mp_hover");yield return true;
+        var hp1=u.Body.Position;foreach(var x in During(.5,()=>{m.Move=new(0,1);m.Hover=true;}))yield return x;
+        r["hover"]=new{metres=Vector3.Distance(Flat(p0),Flat(u.Body.Position)),lastHalfSecondSpeed=Vector3.Distance(Flat(hp1),Flat(u.Body.Position))/.5f,heightNow=u.Body.Position.Y-Home.Y,hovering=m.Hovering,clip=seen};
+        m.Hover=false;foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;r["afterHover"]=new{grounded=m.Grounded,height=u.Body.Position.Y-Home.Y};
         foreach(var x in During(.8,()=>m.Move=Vector2.Zero))yield return x;
         // jump while walking forward: it leaves at once and keeps steering in the air
         foreach(var x in Reset())yield return x;float y0=u.Body.Position.Y,top=y0;var jp=u.Body.Position;m.Jump=true;var clips=new HashSet<string>();float airMetres=0;var last=u.Body.Position;
@@ -132,32 +135,58 @@ public partial class Lab {
         // the towers' dummies take 1e-7 of a hit's power, which a wolf heals within a frame at the lab's ~800 fps; a resilience
         // of 2e4 still keeps them alive through every shot here and makes each hit show (lost = health lost)
         Dum Target(Vector3 at){var t=Dummy(at);t.C.ComponentHealth.AttackResilience=2e4f;return t;}
-        var rifleT=Target(u.Body.Position+fwd*16+right*-2);var missT=Target(u.Body.Position+fwd*18+right*2);var canT=Target(u.Body.Position+fwd*20);
-        u.AimYaw=u.Yaw;u.AimPitch=0;while(Wait(.8))yield return true;
+        Vector3 At(float ahead,float side)=>u.Body.Position+fwd*ahead+right*side;
         var cam=u.Body.Position-fwd*6+right*9+Vector3.UnitY*5;var mid=u.Body.Position+fwd*9+Vector3.UnitY*2;
-        int imp0=w.Impacts;
-        foreach(var x in During(1.4,()=>{m.Trigger=true;m.AimPoint=MDCombat.Center(rifleT.Body);Cam(cam,mid);}))yield return x;Shot("mp_rifle");yield return true;
+        u.AimYaw=u.Yaw;u.AimPitch=0;
+        IEnumerable<bool> SwitchTo(MDMechWeapon wanted){for(int i=0;i<6&&m.Weapon!=wanted;i++){m.Switch=true;for(double s0=Time.RealTime;Time.RealTime-s0<.35;)yield return true;}for(double s0=Time.RealTime;Time.RealTime-s0<.3;)yield return true;}
+        void AimAt(Dum t){m.AimPoint=MDCombat.Center(t.Body);m.AimFrom=MDMechBrain.Eye(u);m.AimDir=Vector3.Normalize(m.AimPoint.Value-m.AimFrom);}
+        // rifle
+        var rifleT=Target(At(16,-2));while(Wait(.6))yield return true;int imp0=w.Impacts;
+        foreach(var x in During(1.4,()=>{m.Trigger=true;AimAt(rifleT);Cam(cam,mid);}))yield return x;Shot("mp_rifle");yield return true;
         m.Trigger=false;foreach(var x in During(.6,()=>{}))yield return x;
-        r["rifle"]=new{hit=rifleT.Hit,lost=1-rifleT.Min,impacts=w.Impacts-imp0,heat=m.Heat,weapon=m.WeaponName};
-        m.Switch=true;foreach(var x in During(.5,()=>{}))yield return x;imp0=w.Impacts;bool fired=false;
-        foreach(var x in During(2.8,()=>{if(!fired){m.Trigger=true;m.AimPoint=MDCombat.Center(missT.Body);}if(m.FiredAgo<.05f){fired=true;m.Trigger=false;}Cam(cam,mid);}))yield return x;Shot("mp_missile");yield return true;
-        m.Trigger=false;r["missile"]=new{hit=missT.Hit,lost=1-missT.Min,impacts=w.Impacts-imp0,weapon=m.WeaponName,fired};
-        // cannon: folded when chosen, unfolds on the trigger and fires once open, folds after 3 s without a shot
-        m.Switch=true;var states=new List<string>();
-        foreach(var x in During(1,()=>{var s=m.Cannon.ToString();if(states.Count==0||states[^1]!=s)states.Add(s);}))yield return x;
+        r["rifle"]=new{hit=rifleT.Hit,damage=(1-rifleT.Min)*2e4f,impacts=w.Impacts-imp0,weapon=m.WeaponName};Remove([rifleT]);
+        // missiles: hold and sweep the crosshair over three wolves (locks), release: one homing missile per lock
+        foreach(var x in SwitchTo(MDMechWeapon.Missile))yield return x;
+        var mt=new[]{Target(At(20,-6)),Target(At(22,0)),Target(At(20,6))};while(Wait(.6))yield return true;
+        for(int k=0;k<3;k++)foreach(var x in During(.25,()=>{m.Trigger=true;AimAt(mt[k]);}))yield return x;
+        int locks=m.Locks.Count;foreach(var x in During(.1,()=>Cam(cam,mid)))yield return x;Shot("mp_missile_locked");yield return true;m.Trigger=false;
+        foreach(var x in During(4,()=>Cam(cam,mid)))yield return x;Shot("mp_missile");yield return true;
+        r["missile"]=new{locks,hits=mt.Count(t=>t.Hit),damage=string.Join(" ",mt.Select(t=>$"{(1-t.Min)*2e4f:0}")),weapon=m.WeaponName};Remove(mt);
+        // laser: a 1 s beam on a wolf at 14 m, damage every 1/6 s
+        foreach(var x in SwitchTo(MDMechWeapon.Laser))yield return x;
+        var lt=Target(At(14,1));while(Wait(.6))yield return true;
+        foreach(var x in During(.5,()=>{m.Trigger=true;AimAt(lt);Cam(cam,mid);}))yield return x;Shot("mp_laser");yield return true;
+        foreach(var x in During(1.2,()=>{m.Trigger=true;AimAt(lt);}))yield return x;m.Trigger=false;
+        r["laser"]=new{hit=lt.Hit,damage=(1-lt.Min)*2e4f,weapon=m.WeaponName};Remove([lt]);
+        // grenade: thrown at a wolf at 18 m lands at 75 % of the distance, the blast reaches it
+        foreach(var x in SwitchTo(MDMechWeapon.Grenade))yield return x;
+        var gt=Target(At(18,0));while(Wait(.6))yield return true;
+        foreach(var x in During(.05,()=>{m.Trigger=true;AimAt(gt);}))yield return x;m.Trigger=false;
+        foreach(var x in During(.6,()=>Cam(cam,mid)))yield return x;Shot("mp_grenade_flight");yield return true;
+        foreach(var x in During(2.2,()=>Cam(cam,mid)))yield return x;
+        r["grenade"]=new{hit=gt.Hit,damage=(1-gt.Min)*2e4f,weapon=m.WeaponName};Remove([gt]);
+        // cannon: folded when chosen; a single press unfolds it, fires once and folds straight back; held, it stays open and fires
+        foreach(var x in SwitchTo(MDMechWeapon.Cannon))yield return x;
+        var canT=Target(At(24,0));var states=new List<string>();void Track(){var s=m.Cannon.ToString();if(states.Count==0||states[^1]!=s)states.Add(s);}
+        foreach(var x in During(1,Track))yield return x;
         r["cannonWhenChosen"]=m.Cannon.ToString();
-        imp0=w.Impacts;fired=false;bool readyShot=false;
-        foreach(var x in During(3,()=>{if(!fired){m.Trigger=true;m.AimPoint=MDCombat.Center(canT.Body);}if(m.Cannon==MDMechState.CannonState.Firing){fired=true;m.Trigger=false;}var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);
-            if(!readyShot&&m.Cannon==MDMechState.CannonState.Ready&&!fired){readyShot=true;}Cam(cam,mid);}))yield return x;Shot("mp_cannon_fired");yield return true;
-        r["cannon"]=new{hit=canT.Hit,lost=1-canT.Min,impacts=w.Impacts-imp0,weapon=m.WeaponName,fired};
-        foreach(var x in During(4.5,()=>{var s=m.Cannon.ToString();if(states[^1]!=s)states.Add(s);Cam(u.Body.Position+fwd*-4+right*7+Vector3.UnitY*6,u.Body.Position+Vector3.UnitY*3.5f);}))yield return x;Shot("mp_cannon_folded");yield return true;
-        r["cannonStates"]=string.Join(">",states);
-        m.Switch=true;foreach(var x in During(.5,()=>{}))yield return x;r["afterSwitch"]=m.WeaponName;
-        Remove([rifleT,missT,canT]);
-        // melee on a dummy 4.5 m ahead
-        var meleeT=Target(u.Body.Position+fwd*4.5f);while(Wait(.5))yield return true;m.Melee=true;
-        foreach(var x in During(1.3,()=>Cam(u.Body.Position+right*8+Vector3.UnitY*3,u.Body.Position+fwd*2+Vector3.UnitY*2)))yield return x;Shot("mp_melee");yield return true;
-        r["melee"]=new{hit=meleeT.Hit,lost=1-meleeT.Min};Remove([meleeT]);
+        imp0=w.Impacts;var fireTimes=new List<double>();double tf=Time.RealTime;float lastFired=m.FiredAgo;
+        foreach(var x in During(.05,()=>{m.Trigger=true;AimAt(canT);Track();}))yield return x;m.Trigger=false;   // one press
+        foreach(var x in During(3.5,()=>{AimAt(canT);Track();if(m.FiredAgo<lastFired)fireTimes.Add(Time.RealTime-tf);lastFired=m.FiredAgo;Cam(cam,mid);}))yield return x;Shot("mp_cannon_fired");yield return true;
+        r["cannon"]=new{hit=canT.Hit,damage=(1-canT.Min)*2e4f,impacts=w.Impacts-imp0,weapon=m.WeaponName,shots=fireTimes.Count,states=string.Join(">",states),energy=m.Energy};
+        states.Clear();fireTimes.Clear();tf=Time.RealTime;
+        foreach(var x in During(5,()=>{m.Trigger=true;AimAt(canT);Track();if(m.FiredAgo<lastFired)fireTimes.Add(Time.RealTime-tf);lastFired=m.FiredAgo;Cam(u.Body.Position+fwd*-4+right*7+Vector3.UnitY*6,u.Body.Position+Vector3.UnitY*3.5f);}))yield return x;
+        Shot("mp_cannon_held");yield return true;m.Trigger=false;
+        foreach(var x in During(1.5,Track))yield return x;
+        r["cannonHeld"]=new{shots=fireTimes.Count,at=string.Join(" ",fireTimes.Select(t=>$"{t:0.0}")),states=string.Join(">",states)};
+        Remove([canT]);foreach(var x in SwitchTo(MDMechWeapon.Rifle))yield return x;r["afterSwitch"]=m.WeaponName;
+        // melee: a wolf 12 m ahead near the crosshair: the jump attack carries the mech to it and strikes
+        var meleeT=Target(At(12,0));while(Wait(.6))yield return true;var lp=u.Body.Position;AimAt(meleeT);m.Melee=true;string act="";
+        foreach(var x in During(1.3,()=>{AimAt(meleeT);if(m.Anim.Action!=null)act=m.Anim.Action.name;Cam(u.Body.Position+right*9+Vector3.UnitY*3,u.Body.Position+fwd*3+Vector3.UnitY*2);}))yield return x;Shot("mp_melee");yield return true;
+        r["melee"]=new{hit=meleeT.Hit,damage=(1-meleeT.Min)*2e4f,action=act,lungeMetres=Vector3.Distance(Flat(lp),Flat(u.Body.Position))};Remove([meleeT]);
+        // energy: hovering drains it, standing refills it
+        float e0=m.Energy;foreach(var x in During(1,()=>m.Hover=true))yield return x;float e1=m.Energy;m.Hover=false;foreach(var x in During(1,()=>{}))yield return x;
+        r["energy"]=new{before=e0,afterHoverSecond=e1,afterRestSecond=m.Energy};
         r["shells"]=w.Shots;
         // ---- leave, then destroy it
         r["exit"]=MDMechPilot.Exit(pl,u);r["afterExit"]=new{mounted=MDMechPilot.Mounted(pl)!=null,riding=pl.ComponentBody.ParentBody!=null,camera=pl.GameWidget.ActiveCamera.GetType().Name,hud=m.Hud!=null};

@@ -9,6 +9,7 @@ Output: Mod/Assets/Imported/Mercury/ (ignored: extracted game data, rebuilt by t
   clips.bin   float32 per clip, per sample (every 2 ticks = 1/30 s), per joint: qx qy qz qw tx ty tz s, the joint's
               deformation relative to its parent's (column vectors, game frame)
   icon.bin    inventory icon (idle pose, unit size, MDTowerLibrary.IconMesh format) with icon.png (512 texture)
+  Audio/seNN.ogg  the original sound effects Mercury uses, by the game's own id (se.bin entry NN; names in SE_NAMES)
 Game frame: Y up, the mech faces -Z, its right is +X. The V8 .blend is Z up, faces -Y, left +X: (x, y, z)_game = (-x, z, y).
 A joint's bone transform in the engine is T(p) L T(-p) (row vectors) with p its rest pivot and L the local deformation;
 this tool re-poses the model from its own output with the engine's composition and compares with Blender's evaluation.
@@ -22,6 +23,10 @@ SOURCE = Path(r'E:\projects\dguns-mech-model\v8_assets\mercury_V8.blend')
 CONTRACT = 'mercury_V8_contract.json'           # next to the .blend: measured planted-foot speeds
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 STEP = 2                                        # ticks between samples
+SE_DIR = ROOT / 'local/dguns/assets/se.bin'      # the game's se.bin as ogg files 00NN.ogg (archive entry NN = sound id NN)
+SE_NAMES = {7: 'lock_on', 8: 'shot_gun', 9: 'shot_missile (also jump / boost take-off)', 10: 'shot_laser', 11: 'shot_cannon', 13: 'hit_gun',
+            14: 'hit_missile', 16: 'punch_swing', 17: 'hit_punch', 19: 'player_damage', 20: 'player_destruction', 23: 'throw_bomb',
+            24: 'bomb_explosion', 25: 'change_to_gun', 26: 'change_to_missile', 27: 'change_to_cannon', 29: 'change_to_bomb', 30: 'change_to_laser'}
 
 
 def blender_export(work):
@@ -106,6 +111,11 @@ def blender_export(work):
     P = V[vjn == J['09_']]; muzzles['melee'] = dict(joint=names[J['09_']], at=rest_point(Db[names[J['09_']]], P.mean(0)), dir=rest_dir(Db[names[J['09_']]], fwd))
     P = V[vjn == J['04_']]; e = P[np.argmin(P[:, 1])] + np.array([0, 0, .12])
     muzzles['eye'] = dict(joint=names[J['04_']], at=rest_point(Db[names[J['04_']]], e), dir=rest_dir(Db[names[J['04_']]], fwd))
+    # thrusters (hover and jump flames): the underside of the two lower back units (33 left, 35 right), blowing down and back
+    # (inferred from the model's shape; the original's jet effect KN_JET0 is a separate effect model)
+    for key, jn in (('thrusterL', '33_'), ('thrusterR', '35_')):
+        P = V[vjn == J[jn]]; low = P[P[:, 2] < P[:, 2].min() + .06].mean(0)
+        muzzles[key] = dict(joint=names[J[jn]], at=rest_point(Db[names[J[jn]]], low), dir=rest_dir(Db[names[J[jn]]], np.array([0, .45, -1.])))
     cf = bpy.data.actions['cannon_deploy_fire']; arm.animation_data.action = cf; fl = int(cf.frame_range[1]); V2 = evaluated(fl); sc.frame_set(fl)
     D17 = arm.pose.bones[names[J['17_']]].matrix @ bones[names[J['17_']]].matrix_local.inverted()
     P = V2[vjn == J['17_']]; a, _ = axis(P, fwd); tip = P[np.argmax((P - P.mean(0)) @ a)]
@@ -226,12 +236,14 @@ def main():
     write_glb(np, OUT / 'model.glb', ex, buf.getvalue())
     im.resize((512, 512), Image.LANCZOS).save(OUT / 'icon.png')
     shutil.copyfile(work / 'clips.bin', OUT / 'clips.bin')
+    (OUT / 'Audio').mkdir(exist_ok=True)
+    for i in SE_NAMES: shutil.copyfile(SE_DIR / f'{i:04d}.ogg', OUT / 'Audio' / f'se{i:02d}.ogg')
     tris = write_icon(np, OUT / 'icon.bin', ex)
     manifest = dict(joints=[dict(name=n, parent=p, pivot=[round(x, 5) for x in v]) for n, p, v in zip(ex['names'], ex['parent'], ex['pivot'])],
                     clips=ex['clips'], step=STEP, muzzles=ex['muzzles'], spanningTriangles=ex['spanning'], height=ex['contract']['height'],
-                    source=ex['source'], check=report)
+                    source=ex['source'], check=report, sounds={f'se{i:02d}': n for i, n in SE_NAMES.items()})
     (OUT / 'mech.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding='utf-8')
-    for f in sorted(OUT.iterdir()): print(f'{f.name:10} {f.stat().st_size:>9,} B  sha256 {hashlib.sha256(f.read_bytes()).hexdigest()[:16]}')
+    for f in sorted(p for p in OUT.iterdir() if p.is_file()): print(f'{f.name:10} {f.stat().st_size:>9,} B  sha256 {hashlib.sha256(f.read_bytes()).hexdigest()[:16]}')
     print('icon triangles', tris, '| parts', len(ex['parts']), '| clips', len(ex['clips']), '| spanning triangles', ex['spanning'])
     for c in report: print(f"check {c['clip']:20} frame {c['frame']:4}  max {c['max_error_m'] * 1000:7.3f} mm  p99 {c['p99_m'] * 1000:6.3f} mm")
     worst = max(c['p99_m'] for c in report); shutil.rmtree(work, ignore_errors=True)

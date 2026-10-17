@@ -102,7 +102,9 @@ public sealed class MDMechAnimator {
 // (adjusted) local deformation and p its rest pivot; the engine adds the node offset and the parent.
 public sealed class MDMechPose {
     public Matrix[] Bone,Model;
-    public static MDMechPose Of(MDMechDef d,MDXf[] local,float turretYaw,float aimPitch,float aimWeight) {
+    public static MDMechPose Of(MDMechDef d,MDXf[] local,float turretYaw,float aimPitch,float aimWeight,float recoil=0) {
+        if(recoil>0){var c=d.muzzles["cannon"];int k=d.Joint(c.joint[..3]);var back=new Vector3(c.dir[0],c.dir[1],c.dir[2])*-recoil;
+            local=(MDXf[])local.Clone();var l=local[k];local[k]=new MDXf(l.q,l.t+Vector3.TransformNormal(back,Matrix.CreateFromQuaternion(l.q))*l.s,l.s);}   // along the barrel in its rest frame
         var first=Build(d,local,turretYaw,0);if(aimWeight<=0)return first;
         var mz=d.muzzles["rifle"];var dir=Vector3.Normalize(Vector3.TransformNormal(new Vector3(mz.dir[0],mz.dir[1],mz.dir[2]),first.Model[d.Joint(mz.joint[..3])]));
         float delta=Math.Clamp(aimPitch-MathF.Asin(Math.Clamp(dir.Y,-1,1)),-.9f,.9f)*aimWeight;
@@ -146,17 +148,23 @@ public class ComponentMDMechModel : ComponentModel {
     }
 }
 
-public enum MDMechWeapon{Rifle,Missile,Cannon}
+public enum MDMechWeapon{Rifle,Missile,Cannon,Laser,Grenade}
 
 // Per-mech state. The pilot (MDMechPilot) writes the controls every frame; without a pilot they are zero.
 public sealed class MDMechState {
     public MDMechDef Def=MDMechLibrary.Def; public MDMechAnimator Anim;
-    public Vector2 Move; public bool Dash,Jump,Trigger,Melee,Switch;   // move: x right, y forward; Jump/Melee/Switch are presses
-    public Vector3? AimPoint;                                          // where the pilot's crosshair is (camera ray)
-    public MDMechWeapon Weapon; public float Heat,Cooldown,MeleeCooldown,FiredAgo=99,AirTime,CannonIdle,ShownSpeed;public bool Overheated,MeleeHit,Grounded,PendingShot;
+    public Vector2 Move; public bool Hover,Jump,Trigger,Melee,Switch;  // move: x right, y forward; Jump/Melee/Switch are presses
+    public Vector3? AimPoint; public Vector3 AimFrom,AimDir;          // the crosshair: its point and the camera ray
+    public MDMechWeapon Weapon; public float Cooldown,MeleeCooldown,FiredAgo=99,AirTime,ShownSpeed;public bool MeleeHit,Grounded,PendingShot,WasTrigger,WasHover;
+    public float Energy=MDMechBrain.EnergyMax,EnergyLock;             // EP of the original; at 0 no boost for 3 s
+    public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer;   // missile locks; missiles still to launch
+    public float BeamTime=-1,BeamTick,BeamLength;                       // laser: seconds since the beam started (<0 off), next damage tick, length
+    public ComponentBody LungeTarget;
     public Vector3? CameraAt;                                          // smoothed first-person camera position
     public Vector3 MoveVelocity;                                       // the mech's own ground velocity (the body's is cut by friction)
-    public enum CannonState{Stowed,Deploying,Ready,Firing,Retracting} public CannonState Cannon;
+    public float Recoil=>CannonKick<=0?0:CannonKick>.28f?(.35f-CannonKick)/.07f*.45f:CannonKick/.28f*.45f;   // barrel kick back (m)
+    public enum CannonState{Stowed,Deploying,Ready,Retracting} public CannonState Cannon;
+    public bool Hovering; public float JetBurst,JetCarry,CannonKick;   // hovering now; jump burst left (s); flame particles owed; cannon recoil left (s)
     public string ForceClip; public float ForceTime;                   // lab: show one clip at one time
     public MDStatusWidget Hud; public ComponentPlayer HudOwner;
     MDMechPose pose;   // cached until the next update (the renderer may ask several times per frame)
@@ -165,161 +173,227 @@ public sealed class MDMechState {
         if(pose!=null)return pose;
         float yaw=Math.Clamp(MDCombat.AngleDelta(u.Yaw,u.AimYaw),-MDMechBrain.TurretLimit,MDMechBrain.TurretLimit);
         float aim=u.Destroyed||ForceClip!=null?0:1-(Anim.Action!=null?Anim.ActionWeight:0);
-        return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f),aim);
+        return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f),aim,Recoil);
     }
     public void Invalidate()=>pose=null;
-    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,2);Heat=Math.Clamp(v.GetValue("Heat",0f),0,1);}
-    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Heat",Heat);}
-    public string WeaponName=>Weapon switch{MDMechWeapon.Missile=>"导弹",MDMechWeapon.Cannon=>"火炮",_=>"步枪"};
+    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",MDMechBrain.EnergyMax),0,MDMechBrain.EnergyMax);}
+    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);}
+    public static string Name(MDMechWeapon w)=>w switch{MDMechWeapon.Missile=>"导弹",MDMechWeapon.Cannon=>"火炮",MDMechWeapon.Laser=>"激光",MDMechWeapon.Grenade=>"榴弹",_=>"步枪"};
+    public string WeaponName=>Name(Weapon);
 }
 
+// Mercury's behaviour after the original (Destroy Gunners Σ, decoded native code and tables; research report in
+// docs/MECH.md): one game world unit is Unit metres here (MERCURY is 1.68 units tall in the original and 4.48 m here).
 public static class MDMechBrain {
-    public const float TurretLimit=1.05f,TurnRate=3.5f,Gravity=12;
-    // The original game's speeds (decoded root motion: move/16384 units per tick, x60, x4 scale) with the clips at their own
-    // rate, as in the game: the feet glide a little and the mech covers ground. Short acceleration on the ground, steering in
-    // the air at half of it; the jump leaves at once.
-    public const float WalkSpeed=8.5f,BackSpeed=7.8f,StrafeSpeed=8.5f,DashSpeed=12,JumpSpeed=8.5f,Accel=28,AirAccel=14;
+    public const float TurretLimit=1.05f,TurnRate=3.5f,Gravity=12,Unit=2.67f;
+    // Speeds: the original's root motion (move/16384 units per tick x60) x Unit with the clips at their own rate: walk 5.7,
+    // back 5.2, sideways 5.7 m/s; boost (hover, Shift held: the original's boost mode, whose clips are the gliding "dash"
+    // clips) 8 m/s HoverHeight above the ground on the back thrusters. Short acceleration on the ground, steering in the air at
+    // half of it; the jump leaves at once with a thruster burst.
+    public const float WalkSpeed=5.7f,BackSpeed=5.2f,StrafeSpeed=5.7f,HoverSpeed=8,JumpSpeed=8.5f,Accel=24,AirAccel=12,HoverHeight=.8f;
+    // Energy (EP): 100000, +9000/s, boost -15360/s, a cannon shot -640; empty: 3 s without boost.
+    public const float EnergyMax=100000,EnergyRegen=9000,BoostCost=15360,CannonCost=640;
+    // Damage: the original's (pilot attack 1000 x part power %) x DamageScale. Mercury's default parts (rifle NO-100,
+    // missile NO-100, cannon NO-200) and the shop's first laser (NO-150) and grenade (NO-200); the punch is 1000 %.
+    public const float DamageScale=.03f;
+    public const int MaxLocks=3;                                        // MERCURY's missile lock count
     static readonly System.Random random=new();
-    // Weapons are tower-style definitions so shells, trails, impacts and blasts use the towers' effect world.
-    static MDTowerDef Weapon(string type,float power,float splash,float speed,float[] color,float[] color2,float scale,string sounds) {
-        var src=MDTowerLibrary.Get(sounds);
-        return new MDTowerDef{id="mercury_"+type,name="水星",attack=new MDTowerAttack{type=type,power=power,splash=splash,speed=speed,needsSight=false},
-            fx=new MDTowerFx{color=color,color2=color2,scale=scale,kind="heavy"},fireSounds=src?.fireSounds??[],hitSounds=src?.hitSounds??[],muzzles=[],nodes=[]};
-    }
-    static MDTowerDef rifle,missile,cannon;
-    static MDTowerDef Rifle=>rifle??=Weapon("bolt",30,0,160,[.4f,.9f,1],[.6f,.95f,1],.8f,"battle_turret_2");
-    static MDTowerDef Missile=>missile??=Weapon("shell",70,2.5f,34,[1,.7f,.25f],[1,.45f,.15f],1.1f,"battle_rocket_1");
-    static MDTowerDef CannonDef=>cannon??=Weapon("shell",360,4,58,[1,.45f,.18f],[1,.3f,.1f],1.6f,"battle_cannon_2");
-    public static float Interval(MDMechWeapon w)=>w switch{MDMechWeapon.Missile=>2.5f,MDMechWeapon.Cannon=>2.8f,_=>.2f};
+    static float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
+    public static string Se(int id)=>$"Imported/Mercury/Audio/se{id:00}";   // the original sound effects by id (se.bin)
+    static MDTowerDef Def(string id,string type,float power,float splash,float speed,float[] color,float[] color2,float scale,int hitSe)=>
+        new(){id="mercury_"+id,name="水星",attack=new MDTowerAttack{type=type,power=power,splash=splash,speed=speed,needsSight=false},
+              fx=new MDTowerFx{color=color,color2=color2,scale=scale,kind="heavy"},fireSounds=[],hitSounds=[Se(hitSe)],muzzles=[],nodes=[]};
+    static MDTowerDef rifle,missile,cannon,laser,grenade;
+    static MDTowerDef Rifle=>rifle??=Def("rifle","bolt",1000*DamageScale,0,60*Unit,[.4f,.9f,1],[.6f,.95f,1],.8f,13);           // 160 m/s, hit_gun
+    static MDTowerDef Missile=>missile??=Def("missile","shell",1000*DamageScale,0,12*Unit,[1,.7f,.25f],[1,.45f,.15f],1.1f,14);   // direct hit only, hit_missile
+    static MDTowerDef CannonDef=>cannon??=Def("cannon","shell",2000*DamageScale,5*Unit,120*Unit,[1,.45f,.18f],[1,.3f,.1f],1.6f,13);   // 320 m/s, blast 5 units
+    static MDTowerDef Laser=>laser??=Def("laser","beam",1500*DamageScale,0,0,[.35f,.85f,1],[.7f,.95f,1],1,13);
+    static MDTowerDef Grenade=>grenade??=Def("grenade","shell",2000*DamageScale,5*Unit,0,[1,.75f,.3f],[.9f,.4f,.15f],1.4f,24);   // bomb_explosion
+    static readonly int[] SwitchSe=[25,26,27,30,29];   // change_to_gun / missile / cannon / laser / bomb
 
     static Vector3 Forward(float yaw)=>new(-MathF.Sin(yaw),0,-MathF.Cos(yaw));
     static Vector3 Right(float yaw)=>new(MathF.Cos(yaw),0,-MathF.Sin(yaw));
     public static Vector3 AimDirection(ComponentMDUnit u)=>new(-MathF.Sin(u.AimYaw)*MathF.Cos(u.AimPitch),MathF.Sin(u.AimPitch),-MathF.Cos(u.AimYaw)*MathF.Cos(u.AimPitch));
     public static Vector3 Eye(ComponentMDUnit u){var m=u.Mech;return m.Pose(u).Point(m.Def,m.Def.muzzles["eye"],u.Body.Matrix);}
+    static bool Solid(int v,float _)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v);
 
     public static void Update(ComponentMDUnit u,float dt) {
         var m=u.Mech;var a=m.Anim;var body=u.Body;dt=Math.Min(dt,.1f);m.Invalidate();
-        m.Cooldown=Math.Max(0,m.Cooldown-dt);m.MeleeCooldown=Math.Max(0,m.MeleeCooldown-dt);m.FiredAgo+=dt;
-        m.Heat=Math.Max(0,m.Heat-dt*.3f);if(m.Overheated&&m.Heat<.35f)m.Overheated=false;
+        m.Cooldown=Math.Max(0,m.Cooldown-dt);m.MeleeCooldown=Math.Max(0,m.MeleeCooldown-dt);m.FiredAgo+=dt;m.SalvoTimer-=dt;m.EnergyLock=Math.Max(0,m.EnergyLock-dt);
         if(m.ForceClip!=null){a.PlayBase(m.ForceClip,1,.01f);a.BaseTime=m.ForceTime;a.Fade=1;a.Action=null;a.Update(0);return;}
         if(u.Destroyed) {
-            a.PlayBase("death",1,.1f);a.Update(dt);body.Velocity=new(0,body.Velocity.Y,0);
+            a.PlayBase("death",1,.1f);a.Update(dt);body.Velocity=new(0,body.Velocity.Y,0);m.Locks.Clear();m.Salvo.Clear();m.BeamTime=-1;
             MDTowerWorld.For(u.Project).Wreck(body.Position+Vector3.UnitY*2.2f,1.6f);return;
         }
-        m.Grounded=body.StandingOnValue.HasValue||body.StandingOnBody!=null;m.AirTime=m.Grounded?0:m.AirTime+dt;
+        m.Grounded=body.StandingOnValue.HasValue||body.StandingOnBody!=null;
+        // hover: a spring towards HoverHeight over the ground below (terrain within 4 m), a slow sink over a drop; it costs energy
+        bool hover=m.Hover&&m.EnergyLock<=0&&m.Energy>0;float? ground=null;
+        if(hover&&m.JetBurst<=.15f){var g=u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(body.Position+Vector3.UnitY*.3f,body.Position-Vector3.UnitY*4,false,true,Solid);if(g.HasValue)ground=g.Value.Distance-.3f;}
+        m.Hovering=hover&&ground.HasValue&&!(body.Velocity.Y>2&&ground>HoverHeight);
+        if(m.Hovering)body.Velocity=new(body.Velocity.X,Math.Clamp((HoverHeight-ground.Value)*7,-5,6),body.Velocity.Z);
+        else if(hover&&!m.Grounded&&body.Velocity.Y<-2.5f)body.Velocity=new(body.Velocity.X,-2.5f,body.Velocity.Z);
+        if(m.Hovering&&!m.WasHover)Sound(u,Se(9),body.Position,.5f);m.WasHover=m.Hovering;
+        m.Energy=Math.Clamp(m.Energy+(m.Hovering?-BoostCost:EnergyRegen)*dt,0,EnergyMax);if(m.Energy<=0&&m.EnergyLock<=0)m.EnergyLock=3;
+        bool footing=m.Grounded||m.Hovering;m.AirTime=footing?0:m.AirTime+dt;
         // turning: the body follows the aim; the turret covers the rest (up to TurretLimit)
         float delta=MDCombat.AngleDelta(u.Yaw,u.AimYaw);bool moving=m.Move.LengthSquared()>.01f;
-        if(m.Grounded&&(moving||Math.Abs(delta)>TurretLimit*.85f)) {
+        if(footing&&(moving||Math.Abs(delta)>TurretLimit*.85f)) {
             u.Yaw+=Math.Clamp(delta,-TurnRate*dt,TurnRate*dt);
             if(Math.Abs(MDCombat.AngleDelta(u.Yaw,u.AimYaw))>TurretLimit)u.Yaw=u.AimYaw-Math.Sign(MDCombat.AngleDelta(u.Yaw,u.AimYaw))*TurretLimit;
             body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,u.Yaw);
         }
-        // movement: walk / strafe / dash; on the ground the velocity eases towards the input, in the air the pilot still steers
-        // (half the acceleration) and without input the mech keeps its momentum
-        var mv=m.Move.LengthSquared()>1?Vector2.Normalize(m.Move):m.Move;bool dash=m.Dash&&moving;
+        // movement, eased in the mech's own velocity and written to the body every update (easing the body's velocity, which
+        // friction cuts after every step, never reaches the speed on the ground); in the air without input it keeps its momentum
+        var mv=m.Move.LengthSquared()>1?Vector2.Normalize(m.Move):m.Move;
         string dir=Math.Abs(mv.X)>Math.Abs(mv.Y)?(mv.X<0?"left":"right"):mv.Y>=0?"forward":"backward";
-        // (eased in the mech's own velocity and written to the body every update: easing the body's velocity, which friction
-        // cuts after every step, never reaches the speed on the ground)
-        if(m.Grounded||moving) {
-            float sp=dash?DashSpeed:dir switch{"forward"=>WalkSpeed,"backward"=>BackSpeed,_=>StrafeSpeed};
+        if(a.Action?.name=="lockon_special"&&m.LungeTarget!=null&&a.ActionTime<.3f) {   // the jump attack carries it at its target
+            var to=MDCombat.Center(m.LungeTarget)-body.Position;to.Y=0;float dist=to.Length();
+            m.MoveVelocity=dist>3?to/dist*Math.Min(22,dist/.3f):Vector3.Zero;body.Velocity=new(m.MoveVelocity.X,body.Velocity.Y,m.MoveVelocity.Z);
+        }
+        else if(footing||moving) {
+            float sp=m.Hovering?HoverSpeed:dir switch{"forward"=>WalkSpeed,"backward"=>BackSpeed,_=>StrafeSpeed};
             var want=(Forward(u.Yaw)*mv.Y+Right(u.Yaw)*mv.X)*sp;var dv=new Vector3(want.X,0,want.Z)-m.MoveVelocity;
-            float step=(m.Grounded?Accel:AirAccel)*dt;if(dv.Length()>step)dv=Vector3.Normalize(dv)*step;
+            float step=(footing?Accel:AirAccel)*dt;if(dv.Length()>step)dv=Vector3.Normalize(dv)*step;
             m.MoveVelocity+=dv;body.Velocity=new(m.MoveVelocity.X,body.Velocity.Y,m.MoveVelocity.Z);
         }
-        else m.MoveVelocity=new(body.Velocity.X,0,body.Velocity.Z);   // coasting in the air
-        if(m.Jump&&m.Grounded&&a.Action?.name!="melee"){body.Velocity=new(body.Velocity.X,JumpSpeed,body.Velocity.Z);a.PlayBase("jump",1,.06f);m.Grounded=false;m.AirTime=0;}
+        else m.MoveVelocity=new(body.Velocity.X,0,body.Velocity.Z);
+        if(m.Jump&&footing&&a.ActionDone){body.Velocity=new(body.Velocity.X,JumpSpeed,body.Velocity.Z);a.PlayBase("jump",1,.06f);m.Grounded=m.Hovering=false;m.AirTime=0;m.JetBurst=.35f;footing=false;Sound(u,Se(9),body.Position,.6f);}
         // base clip (a jump keeps its own clip on the way up)
-        bool jumping=!m.Grounded&&a.Base.name=="jump"&&a.BaseTime<1.1f;
+        bool jumping=!footing&&a.Base.name=="jump"&&a.BaseTime<1.1f;
         if(jumping){}
-        else if(!m.Grounded&&m.AirTime>.15f)a.PlayBase("fall",1,.2f);
-        else if(moving)a.PlayBase((dash?"dash_":"walk_")+dir,1,.18f);
+        else if(!footing&&m.AirTime>.15f)a.PlayBase("fall",1,.2f);
+        else if(moving)a.PlayBase((m.Hovering?"dash_":"walk_")+dir,1,.18f);
         else a.PlayBase(m.FiredAgo<1.5f?"combat_stance":"idle",1,.25f);
-        // actions: hit reaction (from ComponentMDUnit), melee
-        if(m.Melee&&m.MeleeCooldown<=0&&m.Grounded&&a.ActionDone){a.PlayAction("melee");m.MeleeCooldown=1.2f;m.MeleeHit=false;}
-        if(a.Action?.name=="melee"&&!m.MeleeHit&&a.ActionTime>=.33f){m.MeleeHit=true;MeleeStrike(u);}
-        // weapons: B cycles; the cannon unfolds before it can fire and folds when another weapon is chosen
-        if(m.Switch){m.Weapon=(MDMechWeapon)(((int)m.Weapon+1)%3);m.Cooldown=Math.Max(m.Cooldown,.3f);m.PendingShot=false;}
+        // melee (F): with a locked creature, or one near the crosshair within 20 m, the original's jump attack at it; else the
+        // punch combo. Both strike once at their hit frame.
+        if(m.Melee&&m.MeleeCooldown<=0&&footing&&a.ActionDone) {
+            m.LungeTarget=m.Locks.FirstOrDefault(b=>MDCombat.Living(b))??NearCrosshair(u,20,.35f);
+            a.PlayAction(m.LungeTarget!=null?"lockon_special":"melee");m.MeleeCooldown=1.2f;m.MeleeHit=false;Sound(u,Se(16),body.Position,.8f);
+        }
+        if(a.Action?.name is "melee" or "lockon_special"&&!m.MeleeHit&&a.ActionTime>=.33f){m.MeleeHit=true;MeleeStrike(u);}
+        // weapons: B cycles rifle > missiles > cannon > laser > grenade
+        if(m.Switch){m.Weapon=(MDMechWeapon)(((int)m.Weapon+1)%5);m.Cooldown=Math.Max(m.Cooldown,.3f);m.PendingShot=false;m.Locks.Clear();m.BeamTime=-1;Sound(u,Se(SwitchSe[(int)m.Weapon]),body.Position,.6f);}
+        bool pressed=m.Trigger&&!m.WasTrigger,released=!m.Trigger&&m.WasTrigger;bool busy=a.Action?.name is "melee" or "lockon_special";
         CannonStep(m,a,dt);
-        bool wants=m.Trigger||(m.PendingShot&&m.Weapon==MDMechWeapon.Cannon);
-        if(wants&&m.Cooldown<=0&&!m.Overheated&&a.Action?.name!="melee")Fire(u);
-        a.Update(dt);
-        m.Jump=m.Melee=m.Switch=false;
+        switch(m.Weapon) {
+            case MDMechWeapon.Rifle:if(m.Trigger&&m.Cooldown<=0&&!busy)FireRifle(u);break;
+            case MDMechWeapon.Missile:if(m.Trigger)LockSweep(u);if(released){if(m.Locks.Count==0)m.Salvo.Enqueue(null);foreach(var b in m.Locks)m.Salvo.Enqueue(b);m.Locks.Clear();}break;
+            case MDMechWeapon.Cannon:if((m.Trigger||m.PendingShot)&&m.Cooldown<=0&&m.Cannon==MDMechState.CannonState.Ready&&m.Energy>=CannonCost&&!busy)FireCannon(u);break;
+            case MDMechWeapon.Laser:if(m.Trigger&&m.Cooldown<=0&&m.BeamTime<0&&!busy){m.BeamTime=0;m.BeamLength=0;m.BeamTick=0;m.FiredAgo=0;Sound(u,Se(10),body.Position,.7f);}break;
+            case MDMechWeapon.Grenade:if(pressed&&m.Cooldown<=0&&!busy)ThrowGrenade(u);break;
+        }
+        if(m.Salvo.Count>0&&m.SalvoTimer<=0){LaunchMissile(u,m.Salvo.Dequeue());m.SalvoTimer=.3f;}   // one missile per lock, 0.3 s apart
+        if(m.BeamTime>=0)Beam(u,dt);
+        LockMarks(u);
+        a.Update(dt);m.CannonKick=Math.Max(0,m.CannonKick-dt);
+        Thrusters(u,dt);
+        m.WasTrigger=m.Trigger;m.Jump=m.Melee=m.Switch=false;
     }
-    // The cannon stays folded on the back until the pilot fires it: the first press unfolds it (the original firing clip) and
-    // the shot leaves once it is open; it stays open while it keeps firing and folds after 3 s without a shot or when another
-    // weapon is chosen.
+    // The cannon stays folded on the back until the pilot fires it: a press unfolds it (the original firing clip, held at its
+    // end) and the shot leaves once it is open. Holding the trigger keeps it open and firing (each shot kicks the barrel back);
+    // a single press folds it straight after its shot (the recoil), as does choosing another weapon. The original then plays
+    // clip 55 for every shot; it swings the cannon up and back down, which read as folding and snapping open again (user).
     static void CannonStep(MDMechState m,MDMechAnimator a,float dt) {
         bool selected=m.Weapon==MDMechWeapon.Cannon,fire=selected&&m.Trigger;
-        m.CannonIdle=fire?0:m.CannonIdle+dt;
         switch(m.Cannon) {
             case MDMechState.CannonState.Stowed:if(fire){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;m.PendingShot=true;}break;
             case MDMechState.CannonState.Deploying:if(fire)m.PendingShot=true;if(a.CannonDone)m.Cannon=MDMechState.CannonState.Ready;break;
-            case MDMechState.CannonState.Firing:if(a.CannonDone){a.PlayCannon("cannon_deploy_fire");a.CannonTime=99;m.Cannon=MDMechState.CannonState.Ready;}break;   // back to the held, unfolded pose
-            case MDMechState.CannonState.Ready:if(!selected||m.CannonIdle>3){a.PlayCannon("cannon_retract");m.Cannon=MDMechState.CannonState.Retracting;m.PendingShot=false;}break;
+            case MDMechState.CannonState.Ready:if(!selected||(!fire&&!m.PendingShot&&m.CannonKick<=0)){a.PlayCannon("cannon_retract");m.Cannon=MDMechState.CannonState.Retracting;m.PendingShot=false;}break;
             case MDMechState.CannonState.Retracting:if(a.CannonDone){a.CannonOn=false;m.Cannon=MDMechState.CannonState.Stowed;}else if(fire){a.PlayCannon("cannon_deploy_fire");m.Cannon=MDMechState.CannonState.Deploying;m.PendingShot=true;}break;
         }
     }
+    // flames from the back thrusters: steady while hovering, a strong burst at a jump (time-based, independent of the frame rate)
+    static void Thrusters(ComponentMDUnit u,float dt) {
+        var m=u.Mech;m.JetBurst=Math.Max(0,m.JetBurst-dt);float s=m.JetBurst>0?2.1f:m.Hovering?1:0;if(s<=0){m.JetCarry=0;return;}
+        m.JetCarry+=dt*(m.JetBurst>0?70:40);if(m.JetCarry<1)return;
+        var w=MDTowerWorld.For(u.Project);var pose=m.Pose(u);var bm=u.Body.Matrix;
+        for(;m.JetCarry>=1;m.JetCarry-=1)foreach(var k in new[]{"thrusterL","thrusterR"}){var t=m.Def.muzzles[k];w.Thruster(pose.Point(m.Def,t,bm),pose.Dir(m.Def,t,bm),s);}
+    }
     public static string Status(ComponentMDUnit u) {
-        var m=u.Mech;if(m.Overheated)return "过热";
-        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon==MDMechState.CannonState.Deploying)return "展开中";
-        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon is MDMechState.CannonState.Stowed or MDMechState.CannonState.Retracting)return "收起（开火即展开）";
+        var m=u.Mech;
+        if(m.EnergyLock>0&&m.Hover)return "能量耗尽";
+        switch(m.Weapon) {
+            case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":$"锁定 {m.Locks.Count}/{MaxLocks}";
+            case MDMechWeapon.Cannon:return m.Cannon switch{MDMechState.CannonState.Deploying=>"展开中",MDMechState.CannonState.Ready=>m.Cooldown>.15f?"装填中":"就绪",_=>"收起（开火即展开）"};
+            case MDMechWeapon.Laser:return m.BeamTime>=0?"照射中":m.Cooldown>.15f?"冷却中":"就绪";
+        }
         return m.Cooldown>.15f?"装填中":"就绪";
     }
     static Vector3 Target(ComponentMDUnit u,Vector3 from)=>u.Mech.AimPoint??from+AimDirection(u)*60;
-    static void Fire(ComponentMDUnit u) {
-        var m=u.Mech;var d=m.Def;var w=MDTowerWorld.For(u.Project);var pose=m.Pose(u);var bm=u.Body.Matrix;
-        if(m.Weapon==MDMechWeapon.Cannon&&m.Cannon!=MDMechState.CannonState.Ready)return;
-        if(m.Weapon==MDMechWeapon.Cannon)m.PendingShot=false;
-        string key=m.Weapon switch{MDMechWeapon.Missile=>"missile",MDMechWeapon.Cannon=>"cannon",_=>"rifle"};var mz=d.muzzles[key];
-        var from=pose.Point(d,mz,bm);var fwd=pose.Dir(d,mz,bm);var to=Target(u,from);
-        // a muzzle poking through a wall must not shoot past cover
-        var cockpit=Eye(u);if(u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(cockpit,from,false,true,(v,_)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v)).HasValue){m.Cooldown=.2f;return;}
-        m.Cooldown=Interval(m.Weapon);m.FiredAgo=0;
-        switch(m.Weapon) {
-            case MDMechWeapon.Rifle: {
-                var dir=Vector3.Normalize(to-from);w.Muzzle(Rifle,from,dir,false);Sound(u,Rifle.fireSounds,from,.55f);
-                w.LaunchShell(u,from,dir*Rifle.attack.speed,0,Rifle.attack.power,0,false,Rifle);
-                m.Heat=Math.Min(1,m.Heat+.055f);if(m.Heat>=1)m.Overheated=true;break;
-            }
-            case MDMechWeapon.Missile: {
-                var side=Vector3.Normalize(Vector3.Cross(fwd,Vector3.UnitY));float span=Math.Max(.3f,mz.spread);
-                for(int i=0;i<4;i++) {
-                    var p=from+side*span*((i-1.5f)/3f)+Vector3.UnitY*(i%2==0?.08f:-.08f);
-                    var jitter=new Vector3((float)random.NextDouble()-.5f,(float)random.NextDouble()*.5f,(float)random.NextDouble()-.5f)*.9f;
-                    var dir=Vector3.Normalize(to+jitter-p);w.Muzzle(Missile,p,dir,false);
-                    w.LaunchShell(u,p,dir*Missile.attack.speed,1.5f,Missile.attack.power,Missile.attack.splash,false,Missile);
-                }
-                Sound(u,Missile.fireSounds,from,.7f);break;
-            }
-            case MDMechWeapon.Cannon: {
-                var vel=Ballistic(from,to,CannonDef.attack.speed)??Vector3.Normalize(to-from)*CannonDef.attack.speed;
-                w.Muzzle(CannonDef,from,Vector3.Normalize(vel),true);Sound(u,CannonDef.fireSounds,from,.85f);
-                w.LaunchShell(u,from,vel,Gravity,CannonDef.attack.power,CannonDef.attack.splash,false,CannonDef);
-                m.Anim.PlayCannon("cannon_fire_loop");m.Cannon=MDMechState.CannonState.Firing;break;
-            }
+    static bool Covered(ComponentMDUnit u,Vector3 muzzle)=>u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(Eye(u),muzzle,false,true,Solid).HasValue;   // a muzzle poking through a wall
+    static Vector3 Muzzle(ComponentMDUnit u,string key,out Vector3 fwd){var m=u.Mech;var pose=m.Pose(u);var mz=m.Def.muzzles[key];fwd=pose.Dir(m.Def,mz,u.Body.Matrix);return pose.Point(m.Def,mz,u.Body.Matrix);}
+    static void FireRifle(ComponentMDUnit u) {
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"rifle",out _);m.Cooldown=.25f;if(Covered(u,from))return;
+        var dir=Vector3.Normalize(Target(u,from)-from);m.FiredAgo=0;w.Muzzle(Rifle,from,dir,false);Sound(u,Se(8),from,.55f);
+        w.LaunchShell(u,from,dir*Rifle.attack.speed,0,Rifle.attack.power,0,false,Rifle);
+    }
+    static void FireCannon(ComponentMDUnit u) {
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"cannon",out _);m.Cooldown=1.63f;m.PendingShot=false;m.CannonKick=.35f;
+        if(Covered(u,from))return;
+        m.Energy-=CannonCost;m.FiredAgo=0;var dir=Vector3.Normalize(Target(u,from)-from);
+        w.Muzzle(CannonDef,from,dir,true);Sound(u,Se(11),from,.85f);w.LaunchShell(u,from,dir*CannonDef.attack.speed,0,CannonDef.attack.power,CannonDef.attack.splash,false,CannonDef);
+    }
+    // Missiles lock while the trigger is held: a creature the crosshair sweeps over (within 3.5 deg of the camera ray or 1.3 m of
+    // it, 0.8-133 m away, in sight beyond 13 m) locks at once, up to MaxLocks; releasing launches one missile per lock.
+    static void LockSweep(ComponentMDUnit u) {
+        var m=u.Mech;m.Locks.RemoveAll(b=>!b.Entity.IsAddedToProject||!MDCombat.Living(b));if(m.Locks.Count>=MaxLocks||m.AimDir.LengthSquared()<.5f)return;
+        var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),50*Unit,bodies);
+        ComponentBody best=null;float bestAlong=float.MaxValue;
+        foreach(var b in bodies) {
+            if(m.Locks.Contains(b)||!MDCombat.IsEnemy(u,b))continue;var v=MDCombat.Center(b)-m.AimFrom;float along=Vector3.Dot(v,m.AimDir);
+            float range=Vector3.Distance(MDCombat.Center(b),u.Body.Position);if(along<=0||range<.3f*Unit||range>50*Unit)continue;
+            float off=(v-m.AimDir*along).Length();if(off>Math.Max(1.3f,along*.06f)||along>=bestAlong)continue;
+            if(range>=5*Unit&&MDCombat.Trace(u,Eye(u),MDCombat.Center(b),out _)!=b)continue;
+            best=b;bestAlong=along;
         }
+        if(best!=null){m.Locks.Add(best);Sound(u,Se(7),u.Body.Position,.7f);}
     }
-    // low-arc launch velocity reaching `to` at muzzle speed v under the shells' gravity, or null when out of reach
-    static Vector3? Ballistic(Vector3 from,Vector3 to,float v) {
-        var dd=to-from;var hd=new Vector2(dd.X,dd.Z);float x=hd.Length();if(x<.5f)return null;
-        float v2=v*v,disc=v2*v2-Gravity*(Gravity*x*x+2*dd.Y*v2);if(disc<0)return null;
-        float angle=MathF.Atan((v2-MathF.Sqrt(disc))/(Gravity*x));hd/=x;
-        return new Vector3(hd.X*MathF.Cos(angle),MathF.Sin(angle),hd.Y*MathF.Cos(angle))*v;
+    static void LockMarks(ComponentMDUnit u){var m=u.Mech;if(m.Locks.Count==0)return;var w=MDTowerWorld.For(u.Project);foreach(var b in m.Locks)if(b.Entity.IsAddedToProject)w.LockMark(MDCombat.Center(b),Math.Max(.7f,b.BoxSize.Y*.7f));}
+    static void LaunchMissile(ComponentMDUnit u,ComponentBody target) {
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"missile",out var fwd);if(Covered(u,from))return;
+        var side=Vector3.Normalize(Vector3.Cross(fwd,Vector3.UnitY));var aim=target==null?Vector3.Normalize(Target(u,from)-from):fwd;
+        var v=Vector3.Normalize(aim+Vector3.UnitY*.35f+side*R(-.3f,.3f))*(.05f*Unit*60);   // leaves slowly, drifting up and aside
+        w.Muzzle(Missile,from,Vector3.Normalize(v),false);Sound(u,Se(9),from,.6f);m.FiredAgo=0;
+        w.LaunchMissile(u,Missile,from,v,target,target==null?0:R(.33f,.67f),.004f*Unit*3600,12*Unit,R(8,12),Missile.attack.power);
     }
-    // melee: the creatures in a 120 deg wedge up to 5.5 m in front, at the hit frame of the clip
+    // The laser: a beam from the rifle that follows the crosshair for 1 s, growing at 160 m/s up to 59 m, hurting what it
+    // touches every 1/6 s; then 1 s cooldown.
+    static void Beam(ComponentMDUnit u,float dt) {
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);m.BeamTime+=dt;
+        if(m.BeamTime>=1){m.BeamTime=-1;m.Cooldown=1;return;}
+        var from=Muzzle(u,"rifle",out _);if(Covered(u,from))return;var dir=Vector3.Normalize(Target(u,from)-from);
+        m.BeamLength=Math.Min(m.BeamLength+60*Unit*dt,22*Unit);var hit=MDCombat.Trace(u,from,from+dir*m.BeamLength,out var end);
+        var c=new Color(Laser.fx.color[0],Laser.fx.color[1],Laser.fx.color[2]);w.AddBeam(from,end,.16f,c,.05f,false);w.Flash(from,.35f,c,.05f);
+        if(Vector3.Distance(end,from)<m.BeamLength-.05f)w.Flash(end,.45f,c,.05f);
+        m.BeamTick-=dt;if(m.BeamTick<=0&&hit!=null){m.BeamTick=1/6f;MDTowerBrain.Hit(u,hit,Laser.attack.power,end,dir);w.Sparks(end,-dir,4,c,4,.8f,.3f,.04f);Sound(u,Se(13),end,.4f);}
+    }
+    // The grenade: thrown from the cannon's base in an arc 4 m high that lands at 75 % of the crosshair's distance (40 m at most).
+    static void ThrowGrenade(ComponentMDUnit u) {
+        var m=u.Mech;var d=m.Def;var pose=m.Pose(u);int j=d.Joint("15_");var from=Vector3.Transform(d.pivots[j],pose.Model[j]*u.Body.Matrix)+Vector3.UnitY*.3f;
+        m.Cooldown=1.33f;if(Covered(u,from))return;
+        var aim=Target(u,from);var flat=new Vector3(aim.X-from.X,0,aim.Z-from.Z);float dist=Math.Min(flat.Length()*.75f,15*Unit);flat=flat.LengthSquared()>1e-4f?Vector3.Normalize(flat):Forward(u.Yaw);
+        float landY=aim.Y,top=Math.Max(from.Y,landY)+1.5f*Unit,vy=MathF.Sqrt(2*Gravity*(top-from.Y)),t=(vy+MathF.Sqrt(2*Gravity*(top-landY)))/Gravity;
+        var v=flat*(dist/t)+Vector3.UnitY*vy;m.FiredAgo=0;Sound(u,Se(23),from,.7f);
+        MDTowerWorld.For(u.Project).LaunchShell(u,from,v,Gravity,Grenade.attack.power,Grenade.attack.splash,false,Grenade);
+    }
+    static ComponentBody NearCrosshair(ComponentMDUnit u,float range,float cone) {
+        var m=u.Mech;var dir=m.AimDir.LengthSquared()>.5f?m.AimDir:AimDirection(u);var bodies=new DynamicArray<ComponentBody>();
+        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),range,bodies);
+        return bodies.Where(b=>MDCombat.IsEnemy(u,b)&&Vector3.Distance(b.Position,u.Body.Position)<=range&&Vector3.Dot(Vector3.Normalize(MDCombat.Center(b)-u.Body.Position-Vector3.UnitY*2),dir)>MathF.Cos(cone))
+            .OrderBy(b=>Vector3.DistanceSquared(b.Position,u.Body.Position)).FirstOrDefault();
+    }
+    // melee: the creatures in a 120 deg wedge up to 5.5 m in front, at the hit frame of the clip (the punch is 1000 %)
     static void MeleeStrike(ComponentMDUnit u) {
         var w=MDTowerWorld.For(u.Project);var f=Forward(u.Yaw);var c=u.Body.Position+Vector3.UnitY*1.6f;var bodies=new DynamicArray<ComponentBody>();bool any=false;
-        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(c.X,c.Z),6.5f,bodies);
+        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(c.X,c.Z),7,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var to=MDCombat.Center(b)-c;var flat=new Vector3(to.X,0,to.Z);float dist=flat.Length();
             if(dist>5.5f+b.BoxSize.X*.5f||Vector3.Dot(flat/Math.Max(dist,.01f),f)<.5f)continue;
-            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,300,at,f);w.Impact(CannonDef,at,f,true);any=true;
+            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f);w.Impact(CannonDef,at,f,true);any=true;
             if(b.Mass<=800)b.Velocity+=f*7+Vector3.UnitY*3;
         }
-        if(any)Sound(u,CannonDef.hitSounds,c,.8f);
+        if(any)Sound(u,Se(17),c,.8f);
     }
-    public static void Sound(ComponentMDUnit u,string[] list,Vector3 at,float volume) {
-        if(list==null||list.Length==0)return;
-        u.Project.FindSubsystem<SubsystemAudio>(true).PlaySound(list[random.Next(list.Length)],volume,MathUtils.Lerp(-.05f,.05f,(float)random.NextDouble()),at,14,false);
-    }
+    public static void Sound(ComponentMDUnit u,string name,Vector3 at,float volume)=>
+        u.Project.FindSubsystem<SubsystemAudio>(true).PlaySound(name,volume,MathUtils.Lerp(-.05f,.05f,(float)random.NextDouble()),at,16,false);
 }

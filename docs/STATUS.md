@@ -31,7 +31,7 @@
   Frame time (`perf`, three alternating pairs): hotbar only 0.7.0 2.91 / 2.88 / 2.92 ms, 0.8.0 2.05 / 3.05 / 2.00 ms;
   30 towers 0.7.0 1.86 / 3.34 / 3.30 ms, 0.8.0 3.47 / 3.50 / 1.87 ms — no difference beyond today's spread (1.8-3.5 ms).
   Tower models unchanged (no gap/overlap rerun).
-- Package `dist/MechDefense-0.8.0.scmod`: 27,926,112 bytes, 159 entries, SHA-256 1d0754e6…39d23ef. Against 0.7.0: added
+- Package `dist/MechDefense-0.8.0.scmod`: 28,138,752 bytes, 177 entries (+18 original sound effects), SHA-256 266e24d8…166b31ba. Against 0.7.0: added
   Assets/Imported/Mercury/{model.glb, mech.json, clips.bin, icon.bin, icon.png}; changed MechDefense.dll, MechDefense.xdb
   (the MDMech template gains its model component), modinfo.json, the manifest. No 终末地 / 毁灭枪手 / 机兵 in any entry.
 - Fix after the user's first try (2026-10-17, “上机甲是哪个键？E不行”): E is the game's inventory key and the GUI opened the
@@ -41,7 +41,16 @@
   walked in 2 s, 11.5 m strafed in 1.5 s, jump 3.1 m high and 11 m forward in the air); the cannon unfolds on the trigger
   (Stowed > Deploying > Firing > Ready > Retracting > Stowed after 3 s idle); first person fixed to the body (eye height constant
   while walking) drawing only the rifle arm and the cannon, the arms aim the rifle at the crosshair; HUD speed smoothed.
-  Weapons and sounds of the original: being researched (next commit).
+  Weapons and sounds of the original: researched from its native code and tables (docs/MERCURY_ORIGINAL.md).
+- User test 3 (2026-10-17): the cannon folded and snapped open again after every shot; the dash looked crouched; the original
+  has an upward boost and a hover with back flames - make Shift hover. Also from test 2: laser, grenade, lock-on missiles,
+  original sounds. Now (lab mech on the final package, numbers in docs/MECH.md): one world unit of the original = 2.67 m, so
+  walk 12.2 m in 2 s (5.7 m/s); Shift hovers 0.79 m up at 8.0 m/s on the gliding boost clips with back-thruster flames,
+  energy -15,450 in 1 s of hover, +9,000 in 1 s of rest; jump 3.1 m with a burst; the cannon: one press Stowed > Deploying >
+  Ready > Retracting > Stowed (1 shot, no clip 55), held 3 shots at 0.7 / 2.4 / 4.0 s and folds on release; on 2e4-resilience
+  wolves: rifle 151 (5 hits), missiles 3 locks in one sweep and 3 homing hits of 30, laser 251 over its 1 s beam, grenade 50
+  (blast), cannon 60, jump attack (clip 45) lunges 13.8 m and hits 300; real keys: B cycles rifle > missiles > cannon >
+  laser > grenade > rifle. Smoke 0.5.0 > 0.8.0 and lab fire pass again.
 - Not verified: the user's real game with all its mods; mouse look and the left button with a real mouse (keys were pressed
   for real in the lab, the mouse was not); touch or gamepad play; the mech among the ghoul / Wonderful Era mods.
   The faint green-circle overlay in some lab screenshots is screen-space (also in first person with no mech in view) and was

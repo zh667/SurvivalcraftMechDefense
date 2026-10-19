@@ -10,7 +10,7 @@ namespace TowerLab;
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
 // Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four);
-// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury).
+// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "robots" (Robots.cs, 0.9.0).
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -152,6 +152,7 @@ public partial class Lab:ModLoader {
         }
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
+        if(mode=="robots")foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {
             var (pid,pu,pat)=placed[0];var focus=pat+Vector3.UnitY*1.4f;var eye=focus+new Vector3(.75f,.45f,-1f)*3.6f;
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_a_hold");yield return true;
@@ -164,23 +165,8 @@ public partial class Lab:ModLoader {
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_f_one_tower");yield return true;
         }
         if(mode is "recipes" or "special") {
-            // every tower and Mercury has a crafting recipe, and its own ingredient grid resolves to it (no clash with vanilla or each other)
-            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
-            var mine=CraftingRecipesManager.Recipes.Where(r=>Terrain.ExtractContents(r.ResultValue)==block.BlockIndex).ToList();
-            var rec=new Dictionary<string,object>();var bad=new List<string>();
-            void Check(string id,int data) {
-                var r=mine.FirstOrDefault(x=>Terrain.ExtractData(x.ResultValue)==data);
-                if(r==null){bad.Add(id+": no recipe");return;}
-                var grid=r.Ingredients.Select(s=>s==null?null:s.Contains(':')?s:s+":0").ToArray();   // what the crafting table builds from real items
-                var found=CraftingRecipesManager.FindMatchingRecipe(terrain,grid,0,1);
-                bool ok=found!=null&&found.ResultValue==r.ResultValue&&found.ResultCount==1;
-                if(!ok)bad.Add($"{id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
-                rec[id]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),remains=r.RemainsValue,description=r.Description,resolves=ok};
-            }
-            foreach(var d in towers)Check(d.id,d.data);
-            Check("mercury",1);   // Mercury, the mech (survival recipe since 0.8.0)
-            results["recipes"]=new{count=mine.Count,bad,rec};
-            if(bad.Count>0||mine.Count!=towers.Count+1)throw new Exception($"recipes: {mine.Count} for {towers.Count} towers and Mercury; "+string.Join("; ",bad));
+            // every tower, Mercury and progression item recipe resolves from its own grid (no clash with vanilla or each other); tiers (Robots.cs)
+            results["recipes"]=RecipeChecks(towers);
         }
         if(mode is "hand" or "special") {
             // the deploy item held in first person (game camera) and third person (fixed camera in front of the player)

@@ -20,6 +20,8 @@
   30 s, the devil mech flies in and hovers at 3.00 m, weak channel 900 vs 360 of 900, in 30 s against three tier-3 towers:
   3 volleys, 2 beam sweeps, 2 sabre charges, 2 weak-channel changes, then destroyed it drops the blueprint (+ cores, chips,
   scrap, experience); kits: Mk2 refused before Mk1, Mk1 then Mk2, a 1000 hit deals 1300, kept through take-down and redeploy.
+  Screenshots: `local/claude-work/progression/lab-screenshots` (ri_* items, rb_* robots and every walker clip, rf_* fight,
+  rr_* raid, rx_* boss), contact sheets one folder up (sheet3.jpg is the final run).
 - Found and fixed in the lab: a stunned creature's locomotion turns gravity back on, so every tower hit (0.2 s stun) made the
   boss sink to the ground; the boss now takes no stun or knockback. The lab's first fight placed the tower on the player
   (crushed, orange death screen in the screenshots): test bug, fixed.

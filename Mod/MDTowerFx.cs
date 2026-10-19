@@ -22,6 +22,17 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     sealed class Shot { public ComponentMDUnit owner; public MDTowerDef def; public Vector3 pos,vel; public float age,gravity,power,splash; public bool enhanced; public int muzzle; public Vector3 last;
         public bool missile; public ComponentBody target; public float homeAfter,accel,maxSpeed,life=8; }   // a homing missile (the mech's)
     sealed class Zone { public ComponentMDUnit owner; public Vector3 c; public float r,age,life,tick,power,slow; public string kind; }
+    // Fire of creatures that are not towers (the robot enemies, MDRobots.cs): a tower definition gives the look (colours, trail,
+    // impact); `pass` names the bodies it flies through (its own side); `landed` deals the damage where it stops. A missile homes
+    // in on its target with a limited turn rate, so it can be outrun.
+    public sealed class Foreign {
+        public Entity owner; public MDTowerDef look; public Vector3 pos,vel,last; public float age,gravity,life=6;
+        public bool missile; public ComponentBody target; public float homeAfter,accel,maxSpeed,turn=2.5f;
+        public Func<ComponentBody,bool> pass; public Action<Vector3,Vector3,ComponentBody> landed;
+    }
+    readonly List<Foreign> foreign=[];
+    public int ForeignShots=>foreign.Count;
+    public void LaunchForeign(Foreign f){f.last=f.pos;foreign.Add(f);}
     sealed class Status {
         public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick;
         public ComponentMDUnit poisonOwner; public Color slowColor=new(200,235,255),armorColor=new(220,255,110);
@@ -240,6 +251,14 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced);continue;}
             s.pos=next;ShellTrail(s,dt);
         }
+        for(int i=foreign.Count-1;i>=0;i--) {
+            var f=foreign[i];f.age+=dt;f.last=f.pos;f.vel.Y-=f.gravity*dt;
+            if(f.age>f.life||!f.owner.IsAddedToProject){foreign.RemoveAt(i);continue;}
+            if(f.missile)SteerForeign(f,dt);
+            var next=f.pos+f.vel*dt;var hit=TraceForeign(f,f.pos,next,out var point);
+            if(hit!=null||Vector3.DistanceSquared(point,next)>1e-6f){foreign.RemoveAt(i);f.landed?.Invoke(point,f.vel.LengthSquared()>1e-6f?Vector3.Normalize(f.vel):Vector3.UnitY,hit);continue;}
+            f.pos=next;ForeignTrail(f);
+        }
         for(int i=zones.Count-1;i>=0;i--) {
             var z=zones[i];z.age+=dt;z.tick-=dt;
             if(z.age>=z.life||!z.owner.Entity.IsAddedToProject){zones.RemoveAt(i);continue;}
@@ -248,6 +267,27 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         }
         ApplyStatus(dt);
         return false;
+    }
+    ComponentBody TraceForeign(Foreign f,Vector3 a,Vector3 b,out Vector3 point) {
+        var terrain=project.FindSubsystem<SubsystemTerrain>(true).Raycast(a,b,false,true,(v,d)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));
+        var body=project.FindSubsystem<SubsystemBodies>(true).Raycast(a,b,0,(x,d)=>f.pass==null||!f.pass(x));
+        float max=Vector3.Distance(a,b);float tt=terrain?.Distance??max;float bd=body?.Distance??float.PositiveInfinity;
+        point=a+(max>1e-6f?(b-a)/max:Vector3.Zero)*Math.Min(tt,bd);return bd<tt?body?.ComponentBody:null;
+    }
+    static void SteerForeign(Foreign f,float dt) {
+        float speed=Math.Min(f.maxSpeed,f.vel.Length()+f.accel*dt);var dir=f.vel.LengthSquared()>1e-6f?Vector3.Normalize(f.vel):Vector3.UnitY;
+        if(f.target!=null&&f.age>=f.homeAfter&&f.target.Entity.IsAddedToProject) {
+            var want=Vector3.Normalize(MDCombat.Center(f.target)-f.pos);float angle=MathF.Acos(Math.Clamp(Vector3.Dot(dir,want),-1,1)),turn=f.turn*dt;
+            dir=angle<=turn?want:Vector3.Normalize(Vector3.Lerp(dir,want,turn/angle));
+        }
+        f.vel=dir*speed;
+    }
+    void ForeignTrail(Foreign f) {
+        var c=C(f.look.fx.color);var c2=C(f.look.fx.color2);var dir=f.vel.LengthSquared()>.01f?Vector3.Normalize(f.vel):Vector3.UnitY;
+        if(f.look.attack.type=="bolt"){Emit(S.Glow,f.pos-dir*.3f,Vector3.Zero,.15f,.18f*f.look.fx.scale,.06f,c2*.8f,c2*0f,true);Emit(S.Streak,f.pos,dir*2,.05f,.2f*f.look.fx.scale,.1f,c,c*0f,true,0,0,.25f);return;}
+        Emit(S.Glow,f.pos,Vector3.Zero,.12f,.18f,.05f,c*.8f,c*0f,true);
+        if(f.missile){Emit(S.Fire,f.pos-dir*.3f,-dir*2,.12f,.13f,.04f,new Color(255,220,160),new Color(255,120,40,0),true);Emit(S.Smoke,f.pos-dir*.4f,RDir()*.15f,R(.7f,1.2f),.1f,.45f,new Color(200,200,200,140),new Color(200,200,200,0),false,0,.8f);return;}
+        if(random.Next(2)==0)Emit(S.Smoke,f.pos,RDir()*.2f,R(.5f,.9f),.08f,.3f,new Color(c2.R,c2.G,c2.B,(byte)120),new Color(c2.R,c2.G,c2.B,(byte)0),false,0,1);
     }
     static void Steer(Shot s,float dt) {
         float speed=Math.Min(s.maxSpeed,s.vel.Length()+s.accel*dt);var dir=s.vel.LengthSquared()>1e-6f?Vector3.Normalize(s.vel):Vector3.UnitY;

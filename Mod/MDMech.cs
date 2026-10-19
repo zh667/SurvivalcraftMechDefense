@@ -14,6 +14,9 @@ public sealed class MDMechClip { public string name; public int slot,samples,tic
 public sealed class MDMechMuzzle { public string joint; public float[] at,dir; public float spread; }
 public sealed class MDMechDef {
     public MDMechJoint[] joints; public MDMechClip[] clips; public int step=2; public Dictionary<string,MDMechMuzzle> muzzles; public float height;
+    // robot units (tools/build_unit_assets.py, unit.json): suggested body box (m), lowest idle point, skin model names
+    public float scale=1,feet; public float[] box; public string[] skins;
+    public bool Has(string clip)=>clipIndex.ContainsKey(clip);
     [System.Text.Json.Serialization.JsonIgnore] public float[] data;
     [System.Text.Json.Serialization.JsonIgnore] public Vector3[] pivots;
     [System.Text.Json.Serialization.JsonIgnore] public Dictionary<string,int> clipIndex;
@@ -44,18 +47,20 @@ public readonly record struct MDXf(Quaternion q,Vector3 t,float s) {
 }
 
 public static class MDMechLibrary {
-    static MDMechDef def;
+    static readonly Dictionary<string,MDMechDef> defs=[];
     public const string Root="Imported/Mercury/";
-    public static MDMechDef Def{get{
-        if(def!=null)return def;
-        var d=JsonSerializer.Deserialize<MDMechDef>(ContentManager.Get<string>(Root+"mech",".json"),new JsonSerializerOptions{IncludeFields=true});
-        var s=ContentManager.GetStream(Root+"clips.bin");s.Position=0;var bytes=new byte[s.Length];s.ReadExactly(bytes);
+    public static MDMechDef Def=>Load(Root,"mech");
+    // Mercury (mech.json) and the robot enemies (Imported/<unit>/unit.json) share the format of tools/build_mech_assets.py.
+    public static MDMechDef Load(string root,string file) {
+        if(defs.TryGetValue(root,out var d))return d;
+        d=JsonSerializer.Deserialize<MDMechDef>(ContentManager.Get<string>(root+file,".json"),new JsonSerializerOptions{IncludeFields=true});
+        var s=ContentManager.GetStream(root+"clips.bin");s.Position=0;var bytes=new byte[s.Length];s.ReadExactly(bytes);
         d.data=new float[bytes.Length/4];Buffer.BlockCopy(bytes,0,d.data,0,bytes.Length);
-        int need=d.clips.Sum(c=>c.samples)*d.joints.Length*8;if(d.data.Length!=need)throw new InvalidDataException($"clips.bin has {d.data.Length} floats, mech.json needs {need}");
+        int need=d.clips.Sum(c=>c.samples)*d.joints.Length*8;if(d.data.Length!=need)throw new InvalidDataException($"{root}clips.bin has {d.data.Length} floats, {file}.json needs {need}");
         d.pivots=d.joints.Select(j=>new Vector3(j.pivot[0],j.pivot[1],j.pivot[2])).ToArray();
         d.clipIndex=d.clips.Select((c,i)=>(c.name,i)).ToDictionary(x=>x.name,x=>x.i);
-        return def=d;
-    }}
+        return defs[root]=d;
+    }
     public static MDTowerLibrary.IconData Icon=>MDTowerLibrary.IconMesh(Root+"icon.bin",Root+"icon");
 }
 
@@ -178,8 +183,11 @@ public sealed class MDMechState {
         return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f),aim,Recoil);
     }
     public void Invalidate()=>pose=null;
-    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",MDMechBrain.EnergyMax),0,MDMechBrain.EnergyMax);}
-    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);}
+    // Weapon kits Mk1-Mk3 (MDPartBlock, installed one level after the other): every weapon's damage x1.15 / x1.3 / x1.5.
+    public int Kit;
+    public static float KitFactor(int kit)=>kit switch{1=>1.15f,2=>1.3f,3=>1.5f,_=>1};
+    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",MDMechBrain.EnergyMax),0,MDMechBrain.EnergyMax);Kit=Math.Clamp(v.GetValue("MechKit",0),0,3);}
+    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);v.SetValue("MechKit",Kit);}
     public static string Name(MDMechWeapon w)=>w switch{MDMechWeapon.Missile=>"导弹",MDMechWeapon.Cannon=>"火炮",MDMechWeapon.Laser=>"激光",MDMechWeapon.Grenade=>"榴弹",_=>"步枪"};
     public string WeaponName=>Name(Weapon);
 }
@@ -397,7 +405,7 @@ public static class MDMechBrain {
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var to=MDCombat.Center(b)-c;var flat=new Vector3(to.X,0,to.Z);float dist=flat.Length();
             if(dist>5.5f+b.BoxSize.X*.5f||Vector3.Dot(flat/Math.Max(dist,.01f),f)<.5f)continue;
-            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f);w.Impact(CannonDef,at,f,true);any=true;
+            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f,false,"kinetic");w.Impact(CannonDef,at,f,true);any=true;
             if(b.Mass<=800)b.Velocity+=f*7+Vector3.UnitY*3;
         }
         if(any)Sound(u,Se(17),c,.8f);

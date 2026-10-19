@@ -9,6 +9,9 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 - Towers, and since 0.8.0 one mech a player boards: Mercury from Destroy Gunners (user, 2026-10-17; crafting table or creative inventory,
   the original model and clips via `tools/build_mech_assets.py`, details in `docs/MECH.md`). The 0.5.0 sample enemy stays
   removed (0.6.0): its template stays so that old worlds load, and such entities remove themselves on load.
+- Since 0.9.0 (user, 2026-10-20) robot enemies from the same game (normal walkers, elite missile / cannon walkers, the devil
+  mech boss) drop progression materials; towers come in three tiers; the boss's blueprint is used up by Mercury's recipe.
+  Fallback recipes without fighting cost 5x; only the mech needs a player level. Details: `docs/PROGRESSION.md`.
 - In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11), nor an
   "original" (原作) the models, motions or sounds come from (user, 2026-10-17: “帮助里不要提到什么原作什么的”).
 - Towers attack hostile creatures only (`Mod/MDFaction.cs`: read from each creature's own behaviour, no list of mod names;

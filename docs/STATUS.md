@@ -1,6 +1,40 @@
-# Status — 2026-10-17
+# Status — 2026-10-20
 
-## Current delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
+## Current work: 0.9.0 progression (branch feat/progression-robots, PR open, not merged)
+
+- User (2026-10-20): asked how towers and mechs should be crafted and grow from low to high tier, with three player
+  suggestions (Industrial Era's T-100, the devil mech dropping blueprints, hostile robots dropping materials). Accepted plan with
+  decisions: 4 materials + 1 blueprint, fallback recipes without fighting cost 5x, the blueprint is used up; robots both spawn
+  in the wild and raid the towers at night; only the mech needs a player level; modelling by the modeling-workflow skill.
+  Brief: docs/tasks/2026-10-20-progression-robots.md; design and numbers: docs/PROGRESSION.md.
+- Enemy assets: `E:/projects/dguns-enemy-models` (V1, helper agent; README, 反馈记录表.md, HANDOFF.md with job ids) and
+  `tools/build_unit_assets.py` -> `Mod/Assets/Imported/RD05|RD06|RD07|RD17` (ignored). Walkers x4 like Mercury (3.1-3.4 m),
+  three skins each; the devil mech x3 as recommended (9.6 m tall, 15.4 m wings; x4 would be 12.8 m / 20.5 m). Re-pose
+  p99 <= 0.005 mm, glb readback 0.0005 mm, 16-bit indices (<= 794 vertices per part).
+- In game (isolated runtime of the user's build 1.9.3.1 with Neorxna, creative flat world, daytime; `lab --mode robots`, job
+  md-prog-t_robots-8): 28 recipes resolve from their own grids (19 towers, Mercury, 8 items; tier rules; Mercury blocked at
+  level 7); 9 items with names, stacks, flat icons and hand-held extrusions; 9 robot templates load (16 meshes, 19 bones, no
+  missing joint, loot lists); every walker clip rendered; one normal robot against a tier-1 gun tower: walks to 21 m,
+  fires 8 bolts, the tower loses 9 %, the robot dies and drops scrap x3-4 + experience; a raid (day 12) sends 4 incl. an
+  elite, natural spawn rules spawn 1-2 normal + 1 elite when forced and nothing in Creative / by day; the beacon counts down
+  30 s, the devil mech flies in and hovers at 3.00 m, weak channel 900 vs 360 of 900, in 30 s against three tier-3 towers:
+  3 volleys, 2 beam sweeps, 2 sabre charges, 2 weak-channel changes, then destroyed it drops the blueprint (+ cores, chips,
+  scrap, experience); kits: Mk2 refused before Mk1, Mk1 then Mk2, a 1000 hit deals 1300, kept through take-down and redeploy.
+- Found and fixed in the lab: a stunned creature's locomotion turns gravity back on, so every tower hit (0.2 s stun) made the
+  boss sink to the ground; the boss now takes no stun or knockback. The lab's first fight placed the tower on the player
+  (crushed, orange death screen in the screenshots): test bug, fixed.
+- Regression on the final package: `lab --mode special` (recipes, hand, effects, artillery) and `lab --mode mech` pass, Mercury's
+  weapon damage as in 0.8.0 (rifle 571, missiles 3 x 100, laser 855, grenade 167, cannon 200, melee 1000); old saves
+  (`smoke`, a 0.5.0 world -> 0.9.0) 3/3 and 20/20. Frame time (`perf`, alternating, no robots in that scene): 0.8.0 1.08 / 1.15
+  and 1.15 / 1.25 ms, 0.9.0 1.35 / 1.22 and 1.17 / 1.15 ms: within the spread. Tower models unchanged (no gap/overlap rerun).
+- Package `dist/MechDefense-0.9.0.scmod`: 49,104,914 bytes, 206 entries, SHA-256 682281de8f2fea96f467603f16fc5397ba1615e1212a41e6f7d20f5ca5a450cb;
+  no 终末地 / 毁灭枪手 / 原作 in names or data. Against 0.8.0: new Assets/Imported/RD05, RD06, RD07, RD17 (models, unit.json,
+  clips.bin) and Assets/Parts; changed MechDefense.dll, MechDefense.xdb (10 robot templates added; regenerating drifted
+  turret_1's radius 2.98 -> 2.97 again, restored), MechDefense.cr, modinfo.json. 0.8.0 stays the rollback.
+- Not verified: the nightly raid trigger itself (Raid() is tested), natural spawn rates in a survival world at night,
+  Android phones, a long session in a real world, robots against other mods' creatures, multiplayer.
+
+## Previous delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
 
 - User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
   the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,

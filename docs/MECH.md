@@ -128,6 +128,16 @@ research notes are outside the repository). Damage is power against AttackResili
   mod. Industrial Era items cannot be named in a `.cr` at all; an optional Industrial Era recipe would go in its own
   `.ier` file (read only when Industrial Era is installed; not done, not tested).
 
+## Since 0.9.0: blueprint, player level, weapon kits
+
+- Recipe: the same towers, two alloy plates around the devil mech's blueprint (used up), an energy core between the two HE
+  grenade towers; player level 8 (user, 2026-10-20: only the mech has a level requirement). The blueprint only drops from the
+  devil mech (decoy beacon). Details and numbers: `docs/PROGRESSION.md`.
+- Weapon kits Mk1-Mk3 (right-click Mercury, in order): every weapon's damage x1.15 / x1.3 / x1.5, applied in
+  `MDTowerBrain.Hit`; kept in the deploy item when it is taken down (data bits 15-16, name “（改装 MkN）”).
+- Mercury's hits carry a damage channel for the devil mech's weak channel: rifle bolts and melee kinetic, missiles,
+  cannon and grenades explosion, the laser energy.
+
 ## Not done
 
 - The original's projectile and effect models (KN_BULET, KN_MISSILE, KN_BOMB, KN_JET0 in `local/dguns/unit-library`):

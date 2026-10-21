@@ -6,10 +6,14 @@ The 0.5.0 Destroy Gunners sample assets (mech/enemy models, icons, motion catalo
 the package (checked below). Since 0.9.0: the robot enemies (Assets/Imported/RD05, RD06, RD07, RD17 from
 tools/build_unit_assets.py, checked like Mercury's) and the progression item models (Assets/Parts, tools/build_part_models.py).
 Mod settings: one entry in modinfo.json "Settings" opens the mod's own page (Mod/MDSettingsScreen.cs).
+The mech and robot models (Assets/Imported/*/*.glb) get their embedded PNG textures re-encoded as WebP quality 90
+(tools/webp_glb.py, EXT_texture_webp); the source files stay PNG.
 """
 from pathlib import Path
-import hashlib,json,zipfile,subprocess
+import hashlib,json,zipfile,subprocess,sys
 root=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(root/'tools'))
+from webp_glb import webp_glb   # noqa: E402
 subprocess.run(['dotnet','build',str(root/'Mod/MechDefense.csproj'),'-c','Release','--nologo'],check=True)
 assets=root/'Mod/Assets'
 files=[(root/'Mod/bin/Release/net10.0/MechDefense.dll','MechDefense.dll'),(root/'Mod/modinfo.json','modinfo.json'),(assets/'MechDefense.xdb','Assets/MechDefense.xdb')]
@@ -52,12 +56,14 @@ for unit in ['RD05','RD06','RD07','RD17']:
 assert {f'se{i:02d}' for i in (7,8,9,10,11,13,14,20,24,25,31)}<=set(mech['sounds']),'a robot sound is missing from Mercury\'s audio'
 removed=('Assets/Imported/Mech/','Assets/Imported/Enemy/','Assets/Imported/Audio/Fire','Assets/Animations/','Assets/Towers/_legacy/')
 assert not [n for _,n in files if n.startswith(removed)],'Destroy Gunners assets in the package'
-manifest=[dict(path=n,bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p,n in files]
+def content(p,n):return webp_glb(p.read_bytes(),90) if n.startswith('Assets/Imported/') and n.endswith('.glb') else p.read_bytes()
+data={n:content(p,n) for p,n in files}
+manifest=[dict(path=n,bytes=len(data[n]),sha256=hashlib.sha256(data[n]).hexdigest()) for p,n in files]
 out=root/'dist';out.mkdir(exist_ok=True)
 version=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
 package=out/f'MechDefense-{version}.scmod'
 with zipfile.ZipFile(package,'w',zipfile.ZIP_DEFLATED) as z:
-    for p,n in files:z.write(p,n)
+    for p,n in files:z.writestr(zipfile.ZipInfo.from_file(p,n),data[n],zipfile.ZIP_DEFLATED)
     z.writestr('asset-manifest.json',json.dumps(manifest,indent=2))
 (out/'package-manifest.json').write_text(json.dumps(manifest,indent=2))
 print('Package:',package,'bytes:',package.stat().st_size,'files:',len(files))

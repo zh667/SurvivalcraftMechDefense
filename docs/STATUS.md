@@ -45,8 +45,14 @@ inventory icons miss chunks). Plans confirmed the same day (balance numbers, her
   result had still exited 0: tools/run_isolated.py now exits non-zero unless the result says passed. Perf (9 towers in the
   hotbar / 30 towers + hotbar): 0.8.0 1.18 / 1.27 and 1.22 / 1.19 ms, 0.9.0 0.65 / 1.09 and 0.65 / 1.08 ms (slot pictures instead
   of 1,500-triangle meshes).
-- Package dist/MechDefense-0.9.0.scmod 58,615,878 bytes, 242 entries (19 tower pictures; polygon rocket), SHA-256
-  8f3bf9299afc44943888a29214443282a985505dccf4878bca273de153b21598 (before the polygon rocket: 61,061,299 bytes, 0d38974d…682ba50f) (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
+- Package size (user 2026-10-21 asked how to shrink it; chose lossy WebP quality 90 for the mech and robot textures): package.py
+  re-encodes the PNG textures embedded in Assets/Imported/*/*.glb as WebP (tools/webp_glb.py, glTF EXT_texture_webp, which the
+  1.9.3.1 engine lists; sources stay PNG). 28.6 MB of textures -> about 3.8 MB, PSNR 36.8-42.8 dB, mean difference 1-1.7 levels.
+  Lab mech, robots-gallery, robots-heroes pass on both packages with the textures drawn (local/claude-work/r5/webp/), smoke
+  0.5.0 -> 0.9.0 passes. Not changed: sounds (already OGG, 2.3 MB), tower atlases and icons (to do with the polygon towers).
+- Package dist/MechDefense-0.9.0.scmod 32,700,124 bytes, 242 entries (19 tower pictures; polygon rocket; WebP mech/robot textures),
+  SHA-256 693db7945f2a6491f3b58301b6d6c7d27ab67b2091541e66b641a20e1b3cdd15 (polygon rocket with PNG textures: 58,615,878 bytes;
+  before the polygon rocket: 61,061,299 bytes) (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
 - Not tested: Android (picture loading and mipmaps on phones), real touch, a survival night with raids, long play; the medic
   rate for mechs (50 -> 100 % in 6 s) is untuned and may be strong in real fights.
 

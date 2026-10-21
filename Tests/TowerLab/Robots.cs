@@ -22,7 +22,7 @@ public partial class Lab {
         string[] Grid(CraftingRecipe r)=>r.Ingredients.Select(s=>s==null?null:s.Contains(':')?s:s+":0").ToArray();   // what a table builds from real items
         foreach(var r in mine) {
             int c=Terrain.ExtractContents(r.ResultValue),d=Terrain.ExtractData(r.ResultValue);
-            string id=c==deploy?(d==1?"mercury":MDTowerLibrary.ByData(d)?.id??"tower?"+d):"part"+d+(r.RequiredHeatLevel>0?"_furnace":"");
+            string id=c==deploy?(MDMechType.ByData(d)?.Id.ToLowerInvariant()??MDTowerLibrary.ByData(d)?.id??"tower?"+d):"part"+d+(r.RequiredHeatLevel>0?"_furnace":"");
             var found=CraftingRecipesManager.FindMatchingRecipe(terrain,Grid(r),r.RequiredHeatLevel,Math.Max(1,r.RequiredPlayerLevel));
             bool ok=found==r;if(!ok)bad.Add($"{id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
             rec[id+(rec.ContainsKey(id)?"_2":"")]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),heat=r.RequiredHeatLevel,level=r.RequiredPlayerLevel,count=r.ResultCount,description=r.Description,resolves=ok};
@@ -33,14 +33,21 @@ public partial class Lab {
             int d=Terrain.ExtractData(r.ResultValue);
             if(tier2.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:1")!=3)bad.Add($"tier 2 tower {d}: not 3 alloy plates");
             if(tier3.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:2")!=2)bad.Add($"tier 3 tower {d}: not 2 chips");
-            if(!tier2.Contains(d)&&!tier3.Contains(d)&&d!=1&&r.Ingredients.Any(s=>s?.StartsWith("mdpart")==true))bad.Add($"tier 1 tower {d} uses a progression item");
+            if(!tier2.Contains(d)&&!tier3.Contains(d)&&MDMechType.ByData(d)==null&&r.Ingredients.Any(s=>s?.StartsWith("mdpart")==true))bad.Add($"tier 1 tower {d} uses a progression item");
         }
         var merc=mine.First(r=>Terrain.ExtractContents(r.ResultValue)==deploy&&Terrain.ExtractData(r.ResultValue)==1);
         var at7=CraftingRecipesManager.FindMatchingRecipe(terrain,Grid(merc),0,7);
         bool blocked7=at7!=null&&at7!=merc&&!string.IsNullOrEmpty(at7.Message);
         if(merc.RequiredPlayerLevel!=8||!blocked7)bad.Add($"mercury: level {merc.RequiredPlayerLevel}, at level 7 {(at7==merc?"craftable":at7?.Message)}");
         if(!merc.Ingredients.Contains("mdpart:4")||merc.RemainsValue!=0)bad.Add("mercury: blueprint missing or given back");
-        int expect=towers.Count+1+8;
+        // the hero mechs (round 5): 复仇女神 from Mercury at level 12 with one blueprint, 轩辕十四 from 复仇女神 at level 16 with two
+        foreach(var (data,level,from,prints) in new[]{(30,12,"mddeploy:1",1),(31,16,"mddeploy:30",2)}) {
+            var hr=mine.FirstOrDefault(r=>Terrain.ExtractContents(r.ResultValue)==deploy&&Terrain.ExtractData(r.ResultValue)==data);
+            if(hr==null){bad.Add($"hero {data}: no recipe");continue;}
+            var below=CraftingRecipesManager.FindMatchingRecipe(terrain,Grid(hr),0,level-1);
+            if(hr.RequiredPlayerLevel!=level||below==hr||!hr.Ingredients.Contains(from)||hr.Ingredients.Count(s=>s=="mdpart:4")!=prints)bad.Add($"hero {data}: level {hr.RequiredPlayerLevel}, below {(below==hr?"craftable":below?.Message)}");
+        }
+        int expect=towers.Count+MDMechType.All.Length+8;
         if(mine.Count!=expect)bad.Add($"{mine.Count} recipes, want {expect}");
         if(bad.Count>0)throw new Exception("recipes: "+string.Join("; ",bad));
         return new{count=mine.Count,mercuryAtLevel7=at7?.Message,rec};
@@ -273,11 +280,12 @@ public partial class Lab {
             if(MDDeploymentBlock.Kit(item)!=2||u2.Mech.Kit!=2||Math.Abs(dealt-1300)>15)throw new Exception("kits: "+string.Join(", ",k.Select(kv=>kv.Key+"="+kv.Value)));
             proj.RemoveEntity(u2.Entity,true);
         }
-        ComponentMDUnit Deploy(Vector3 standAt) {   // Mercury from its item, 5 m ahead of the player (facing -Z)
+        ComponentMDUnit Deploy(Vector3 standAt,MDMechType type=null,float hitpoints=1,int kit=0) {   // a mech from its item, 5 m ahead of the player (facing -Z)
             var inv=pl.ComponentMiner.Inventory;pl.ComponentBody.Position=standAt;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;
-            inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(1),1);inv.ActiveSlotIndex=0;
+            var before=proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(x=>x?.Mech!=null).ToHashSet();
+            inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(hitpoints,kit,type),1);inv.ActiveSlotIndex=0;
             pl.ComponentMiner.Use(new Ray3(standAt+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
-            return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null)??throw new Exception("Mercury did not deploy");
+            return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null&&!before.Contains(x))??throw new Exception((type??MDMechType.Mercury).Name+" did not deploy");
         }
         var pkg=MDSettings.Package;var gameInfo=proj.FindSubsystem<SubsystemGameInfo>(true);
         // ---- mod settings (round 4, user: one page like the CS weapons mod, the panel adjusted on a game page): the game's
@@ -507,6 +515,68 @@ public partial class Lab {
             Cam(Home+new Vector3(24,14,-18),Home+new Vector3(0,3,6));Shot("rb5_fight");yield return true;
             if(MDMechPilot.Mounted(pl)!=null)MDMechPilot.Exit(pl,u,true);MDMechPilot.ExternalControls=false;
             Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());Remove(tw);if(u.Entity.IsAddedToProject)proj.RemoveEntity(u.Entity,true);ClearPickables();health.Health=1;while(Wait(1))yield return true;
+        }
+        // ---- the hero mechs (round 5): 复仇女神 and 轩辕十四 next to Mercury. Each from its item: model, joints, clips, armour; its
+        // clips at start / middle / end; then piloted by the lab: walking speed, hover, rifle timing (复仇女神's burst), cannon,
+        // damage factor, blast protection, first and third person, taken down and deployed again, the Neorxna name. Shots rh5_*.
+        if(Part("heroes")) {
+            var hz=new Dictionary<string,object>();r["heroes"]=hz;var types=MDMechType.All;var units=new List<ComponentMDUnit>();
+            for(int i=0;i<types.Length;i++)units.Add(Deploy(Home+new Vector3(-12+i*12,0,10),types[i]));
+            pl.ComponentBody.Position=Home+new Vector3(0,0,24);while(Wait(1.5))yield return true;
+            var lineup=Home+new Vector3(0,2.6f,5);foreach(var x in Hold(lineup+new Vector3(4,3,-22),lineup,4))yield return x;Shot("rh5_lineup");yield return true;
+            foreach(var x in Hold(lineup+new Vector3(22,2,-6),lineup,4))yield return x;Shot("rh5_lineup_side");yield return true;
+            for(int i=0;i<types.Length;i++) {
+                var u=units[i];var tp=types[i];var mm=u.Entity.FindComponent<ComponentMDMechModel>(true);var d=u.Mech.Def;
+                hz[tp.Id]=$"type {u.Mech.Type.Id}, armour {u.Damage.AttackResilience}, box {u.Body.BoxSize}, height {d.height:0.00} m, {mm.Model?.Meshes.Count} meshes, missing bones {d.joints.Count(j=>mm.Model?.FindBone(j.name,false)==null)}, clips {d.clips.Length}, roles turret {d.roles.turret} arms {d.roles.armL}/{d.roles.armR} cannon {string.Join(",",d.roles.cannon)}";
+                if(u.Mech.Type!=tp||u.Damage.AttackResilience!=tp.Armour||mm.Model==null||d.joints.Any(j=>mm.Model.FindBone(j.name,false)==null))throw new Exception("hero "+tp.Id+": "+hz[tp.Id]);
+            }
+            foreach(var (u,tp) in units.Skip(1).Zip(types.Skip(1))) {   // the heroes' clips
+                var c=u.Body.Position+Vector3.UnitY*2.4f;var m=u.Mech;
+                foreach(var name in new[]{"idle","walk_forward","dash_forward","jump","melee","cannon_deploy_fire","death"})for(int k=0;k<3;k++){m.ForceClip=name;m.ForceTime=m.Def.Seconds(m.Def.Clip(name))*k/2f;foreach(var x in Hold(c+new Vector3(7,1.5f,-9),c,3))yield return x;Shot($"rh5_{tp.Id}_{name}_{k}");yield return true;}
+                m.ForceClip=null;
+            }
+            foreach(var u in units)proj.RemoveEntity(u.Entity,true);while(Wait(.5))yield return true;
+            var dummy=Dummy(Home+new Vector3(0,0,-30));dummy.C.ComponentHealth.AttackResilience=1e4f;
+            var shooter=Spawn("MDRobot06",Home+new Vector3(30,0,-30),0);shooter.ForceClip="idle";
+            foreach(var tp in types) {
+                var res=new Dictionary<string,object>();hz[tp.Id+"_drive"]=res;
+                var u=Deploy(Home,tp);var m=u.Mech;while(Wait(1))yield return true;
+                pl.ComponentBody.Position=u.Body.Position+new Vector3(tp.Box.X/2+1.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.3))yield return true;
+                MDMechPilot.ExternalControls=true;if(!MDMechPilot.Board(pl,u))throw new Exception("cannot board "+tp.Id);
+                // walk 2 s forward, then hover 2 s
+                var p0=u.Body.Position;m.Move=new Vector2(0,1);foreach(var x in During(2,()=>m.Move=new Vector2(0,1)))yield return x;m.Move=Vector2.Zero;
+                float walked=Vector3.Distance(Flat(p0),Flat(u.Body.Position));while(Wait(1))yield return true;
+                string hoverClip="";foreach(var x in During(2,()=>{m.Hover=true;hoverClip=m.Anim.Base.name;}))yield return x;bool hovering=m.Hovering;m.Hover=false;while(Wait(1))yield return true;
+                res["move"]=$"walked {walked:0.0} m in 2 s, hovering {hovering} in {hoverClip}, energy {m.Energy:0} / {tp.EnergyMax:0}";
+                // the rifle for 1.6 s at the dummy: the times between shots
+                var dc=MDCombat.Center(dummy.Body);var times=new List<double>();int s0=LabSounds.Of(MDMechBrain.Se(8));double t0r=Time.RealTime;
+                void Aim(){var from=MDMechBrain.Eye(u);var dd=dc-from;u.AimYaw=MathF.Atan2(-dd.X,-dd.Z);u.AimPitch=Math.Clamp(MathF.Asin(dd.Y/dd.Length()),-.5f,.65f);m.AimPoint=dc;}
+                m.Weapon=MDMechWeapon.Rifle;foreach(var x in During(1.6,()=>{Aim();m.Trigger=true;int n=LabSounds.Of(MDMechBrain.Se(8))-s0;while(times.Count<n)times.Add(Time.RealTime-t0r);}))yield return x;m.Trigger=false;
+                var gaps=times.Zip(times.Skip(1),(a,b)=>b-a).Select(g=>g.ToString("0.00")).ToList();res["rifleGaps"]=string.Join(" ",gaps);
+                // the cannon: one press, the shot leaves once it is open
+                int c0=LabSounds.Of(MDMechBrain.Se(11));m.Weapon=MDMechWeapon.Cannon;foreach(var x in During(2.5,()=>{Aim();m.Trigger=LabSounds.Of(MDMechBrain.Se(11))==c0;}))yield return x;m.Trigger=false;
+                res["cannon"]=$"shots {LabSounds.Of(MDMechBrain.Se(11))-c0}, state {m.Cannon}";
+                // damage factor and blast protection
+                float hd=dummy.C.ComponentHealth.Health;MDTowerBrain.Hit(u,dummy.Body,1000,dc,Vector3.UnitZ);float dealt=(hd-dummy.C.ComponentHealth.Health)*1e4f;dummy.C.ComponentHealth.Health=1;
+                float mh=u.Damage.Hitpoints;MDRobots.Hit(shooter.Entity,u.Body,shooter.Kind,1,MDCombat.Center(u.Body),Vector3.UnitZ);float taken=(mh-u.Damage.Hitpoints)*u.Damage.AttackResilience;u.Damage.Hitpoints=1;
+                res["damage"]=$"a 1000 hit deals {dealt:0}; a {shooter.Kind.VsStructure:0} missile takes {taken:0}";
+                // first and third person
+                pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();foreach(var x in During(1,Aim))yield return x;ScreenCaptureManager.Capture(1280,720,$"rh5_{tp.Id}_first_person.png");yield return true;
+                pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<TppCamera>();foreach(var x in During(1,Aim))yield return x;ScreenCaptureManager.Capture(1280,720,$"rh5_{tp.Id}_third_person.png");yield return true;
+                MDMechPilot.Exit(pl,u,true);MDMechPilot.ExternalControls=false;
+                // Neorxna, then taken down with a kit and deployed again
+                var panelType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)).FirstOrDefault(x=>x!=null);
+                if(panelType!=null){MDNeorxnaCompatibility.Install();var panel=Activator.CreateInstance(panelType);panelType.GetMethod("SetInfo_Entity").Invoke(panel,[u.Entity]);res["neorxna"]=((LabelWidget)panelType.GetField("m_name").GetValue(panel)).Text;}
+                u.Mech.Kit=2;int item=MDTowerMaintenance.Dismantle(u,null);ClearPickables();
+                res["item"]=$"{BlocksManager.Blocks[Terrain.ExtractContents(item)].GetDisplayName(terrain,item)}: type {MDDeploymentBlock.MechType(item)?.Id}, kit {MDDeploymentBlock.Kit(item)}";
+                var u2=Deploy(Home,MDDeploymentBlock.MechType(item),1,MDDeploymentBlock.Kit(item));res["redeployed"]=$"{u2.Mech.Type.Id} kit {u2.Mech.Kit}";
+                proj.RemoveEntity(u2.Entity,true);while(Wait(.5))yield return true;
+                bool burstOk=!tp.BurstRifle||gaps.Count>=4&&gaps.Any(g=>double.Parse(g)>.3);   // 复仇女神: short gaps inside a burst, a long one between bursts
+                if(walked<5*tp.Speed||!hovering||times.Count<3||!burstOk||LabSounds.Of(MDMechBrain.Se(11))==c0||Math.Abs(dealt-1000*tp.Damage)>20||Math.Abs(taken-shooter.Kind.VsStructure*tp.ExplosionTaken)>3
+                   ||MDDeploymentBlock.MechType(item)!=tp||u2.Mech.Type!=tp||u2.Mech.Kit!=2||panelType!=null&&(string)res["neorxna"]!=tp.Name+"机甲")
+                    throw new Exception("hero drive "+tp.Id+": "+string.Join("; ",res.Select(kv=>kv.Key+"="+kv.Value)));
+            }
+            Remove([dummy]);Kill([shooter]);pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();while(Wait(.5))yield return true;
         }
     }
 }

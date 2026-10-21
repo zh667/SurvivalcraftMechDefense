@@ -739,7 +739,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="e00679eb-a6a2-5c97-a003-7e6efbc9b31f" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="bfcb4b58-9949-539f-9790-49f3acf3ed0e">
-        <Parameter Name="AttackResilience" Type="float" Value="400" Guid="82d17cdd-9d59-59af-bd78-0971d912fce1" />
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="82d17cdd-9d59-59af-bd78-0971d912fce1" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="d1ec5311-9860-5339-8ba2-08d5677ec56c" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="f9d4cb09-fc01-5c58-86ff-5eed70960ad5" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="a1027e5d-7bcb-5dc4-967c-3eb4e8783836" />
@@ -799,7 +799,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="cceea588-4ca0-51c4-b2a2-a3859297889b" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="bc3625be-0cc5-57fe-886e-3556e4efbaed">
-        <Parameter Name="AttackResilience" Type="float" Value="400" Guid="9afdc170-6eda-57cf-bbcb-a05c3198a077" />
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="9afdc170-6eda-57cf-bbcb-a05c3198a077" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="184cd5c4-72b4-53e4-a936-77a8de6b84e7" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="fe42175a-e422-578c-b850-a7f46defe3c8" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="fcbd8071-501a-523c-9705-af1cce93be35" />
@@ -859,7 +859,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="de10f39b-9d7a-5995-9e26-ea91dd3ddb75" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="70ef3802-b904-59b1-91d8-5848272e311d">
-        <Parameter Name="AttackResilience" Type="float" Value="400" Guid="4504a9fe-68fc-59ac-824c-14bc5b5c9489" />
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="4504a9fe-68fc-59ac-824c-14bc5b5c9489" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="e1606b4d-3629-5c0e-9bb6-3eef8469e292" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="fc250533-37f9-5d45-8c5f-c7376cc65c66" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="54191da1-51f2-5b1a-bb32-c1db4cf3b040" />
@@ -919,7 +919,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="fe2340f0-345d-5c6b-a65f-b1a50449baa0" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="38d5d6cb-dee6-508f-b596-29f67e7e511f">
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="fce1cb8a-2987-55d7-84cd-aca7840ea17c" />
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="fce1cb8a-2987-55d7-84cd-aca7840ea17c" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="c43de41b-5f04-50b0-b458-312d44ed2500" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="84c55e6b-4117-537f-846f-5d42c0dbd831" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="3cf9b900-6ea0-5d58-92db-0f326fc11e2c" />
@@ -981,7 +981,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="e304d7f2-9bec-5a5a-befa-8e04594f8ce6" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="856e5f2a-e667-5b13-b0c7-d1c9782fa270">
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="381b82ed-8abe-5805-91ef-4cfabaccc024" />
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="381b82ed-8abe-5805-91ef-4cfabaccc024" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="9da5a7a5-6f7c-55fe-bae6-3148780561ec" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="ce0b37ef-e324-57ca-9fec-78fc538d1c03" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="48da2cac-c5c4-5d49-b69d-64410b3b0e56" />
@@ -1043,7 +1043,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="0a092f00-f95c-5ee1-b9a6-32c85eea1c56" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="87973bfb-8473-58d6-89ff-ba5fb9d7cd90">
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="4bd2a001-20ba-5c2c-aaa9-29e679160f96" />
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="4bd2a001-20ba-5c2c-aaa9-29e679160f96" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="7bee17e8-baec-555b-a3d5-f3071821b231" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="8d8c7b52-8f69-5a1c-9269-cd6e8699fd77" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="0f44f08f-5546-5f20-b9a3-9803e407aa95" />
@@ -1105,7 +1105,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="5cf7c5a1-93e3-527d-8d0f-f4fd5f370703" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="c206d79e-acba-5b95-82cf-4549cd5ab108">
-        <Parameter Name="AttackResilience" Type="float" Value="1100" Guid="e5ddab86-f481-5b2d-96f7-09d8dacb9f8d" />
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="e5ddab86-f481-5b2d-96f7-09d8dacb9f8d" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="0032cd4c-845f-5166-af48-e2fa1baf6899" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="201163cd-da27-5650-ad4a-dab7508288e1" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="4efbcf3d-a6ff-527a-8b40-b7f71d12c043" />
@@ -1167,7 +1167,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="1232b28e-13a5-5901-b0c1-b09c06cb9134" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="a3d5f79b-1dc5-5f72-a8fe-f4663c565a53">
-        <Parameter Name="AttackResilience" Type="float" Value="1100" Guid="2a3cccbc-340b-54dc-bd12-7e12395c0e41" />
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="2a3cccbc-340b-54dc-bd12-7e12395c0e41" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="1ee1370b-8247-5751-9c91-20838ebaef71" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="9f59de17-f537-5943-83f3-75a21d3466bf" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="b61f9d33-3a95-58f5-865a-3e42a6dd7d7f" />
@@ -1229,7 +1229,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="4f036e1f-8344-5cdc-8486-b107a6e05435" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="bcfd11a7-f049-5adc-a68a-03ce57735534">
-        <Parameter Name="AttackResilience" Type="float" Value="1100" Guid="11286b56-dc2a-5531-9738-44f5feab19e4" />
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="11286b56-dc2a-5531-9738-44f5feab19e4" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="7905052f-b738-5d8f-8d20-a75ac68015e6" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="632489fa-14ee-5859-be40-161c62d8d17c" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="14881336-fc5f-5b0d-a963-1a4af713a655" />
@@ -1291,7 +1291,7 @@
         <Parameter Name="AirDrag" Type="Vector2" Value="0.1,0.1" Guid="71069b60-0a06-5392-87c1-c0b4c8f9e682" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Health" Guid="14ae3892-0f9b-5827-b7e5-83ba96cbb2b8">
-        <Parameter Name="AttackResilience" Type="float" Value="18000" Guid="cc8f5f7e-8b8b-5a0a-9ed2-90f7be8db732" />
+        <Parameter Name="AttackResilience" Type="float" Value="40000" Guid="cc8f5f7e-8b8b-5a0a-9ed2-90f7be8db732" />
         <Parameter Name="FallResilience" Type="float" Value="60" Guid="3e707fea-9c3e-538a-96da-34a665f2d6b7" />
         <Parameter Name="FireResilience" Type="float" Value="500" Guid="4e467389-ccfb-55d1-a266-e13f15a472e7" />
         <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="a9f5701f-a499-5918-ae8d-95b72cc1572d" />
@@ -1299,7 +1299,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Creature" Guid="df9d293b-64ab-53e7-8963-1a74ffa16c98">
         <Parameter Name="DisplayName" Type="string" Value="恶魔机甲" Guid="c66c8c75-39cf-55b6-806f-80d22fce0a3e" />
-        <Parameter Name="Description" Type="string" Value="用诱敌信标引来的首领。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。" Guid="a5fbceed-b65b-5957-a955-c3a34498e452" />
+        <Parameter Name="Description" Type="string" Value="用诱敌信标引来的首领，按附近炮塔数量强化耐久。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。" Guid="a5fbceed-b65b-5957-a955-c3a34498e452" />
         <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="f63f64c0-8f72-52ca-8e15-5c95e20b26e7" />
         <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="e99d15e2-d10e-5548-b625-6b4865cf722f" />
       </MemberComponentTemplate>

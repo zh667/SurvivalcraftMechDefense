@@ -28,18 +28,19 @@ public sealed class MDRobotKind {
 public static class MDRobots {
     public const string Root="Imported/";
     static MDTowerDef Look(string id,string type,float[] c,float[] c2,float scale,string kind="heavy")=>new(){id="robot_"+id,name=id,attack=new MDTowerAttack{type=type},fx=new MDTowerFx{color=c,color2=c2,scale=scale,kind=kind},muzzles=[],nodes=[]};
-    // Numbers (starting values, not play-tested): a normal walker loses one on one against a tier-1 gun tower (400 vs its
-    // 64 per 2 s; it deals 4 x 7 per 1.8 s to the tower's 650), three of them win against one tower and lose against three.
-    // Against a player: a bolt 1.0 / 10 resilience = 10 % health before armour, a missile 20 %, a shell 30 %.
+    // Numbers (starting values; raised 2026-10-21, user: "难度需要提高，因为玩家一般会放置很多炮塔"): a normal walker (1000)
+    // beats one tier-1 gun tower (it deals 4 x 14 per 1.8 s = 31/s to the tower's 650; the tower 32/s to its 1000) and loses
+    // to two; elites (2400 / 2800) take a tier-3 tower to stop. Raids and the boss grow with the defence (MDRaids, MDBoss).
+    // Against a player: a bolt 1.5 / 10 resilience = 15 % health before armour, a missile 30 %, a shell 40 %.
     public static readonly MDRobotKind[] Kinds=[
         new(){Id="RD05",Name="双管步行机兵",Root=Root+"RD05/",Weapon="twin",Sight=32,Range=24,Interval=1.8f,Shots=4,ShotGap=.14f,ShotSpeed=70,Spread=.03f,Windup=.25f,
-              VsCreature=1f,VsStructure=7,Muzzles=["gunL","gunR"],FireSe=8,HitSe=13,Speed=3.4f,Look=Look("bolt","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
+              VsCreature=1.5f,VsStructure=14,Muzzles=["gunL","gunR"],FireSe=8,HitSe=13,Speed=3.4f,Look=Look("bolt","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
         new(){Id="RD06",Name="导弹步行机兵",Root=Root+"RD06/",Elite=true,Weapon="missile",Sight=44,Range=40,MinRange=6,Interval=5,Shots=2,ShotGap=.4f,ShotSpeed=14,Splash=2,Windup=1,
-              VsCreature=2f,VsStructure=28,Muzzles=["podL","podR"],FireSe=9,HitSe=14,Speed=3f,Look=Look("missile","shell",[1,.6f,.25f],[1,.4f,.15f],1.1f)},
+              VsCreature=3f,VsStructure=60,Muzzles=["podL","podR"],FireSe=9,HitSe=14,Speed=3f,Look=Look("missile","shell",[1,.6f,.25f],[1,.4f,.15f],1.1f)},
         new(){Id="RD07",Name="炮击步行机兵",Root=Root+"RD07/",Elite=true,Weapon="cannon",Sight=48,Range=44,MinRange=7,Interval=5.5f,Shots=1,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
-              VsCreature=3f,VsStructure=65,Muzzles=["cannonL","cannonR"],FireSe=11,HitSe=24,Speed=2.8f,Look=Look("shell","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f)},
-        new(){Id="RD17",Name="恶魔机甲",Root=Root+"RD17/",Boss=true,Weapon="devil",Sight=64,Range=40,MinRange=0,Interval=9,Shots=6,ShotGap=.25f,ShotSpeed=16,Splash=2.5f,Windup=1,
-              VsCreature=2.5f,VsStructure=45,Muzzles=["armL","armR"],FireSe=9,HitSe=14,Speed=7,Look=Look("devil","shell",[1,.3f,.35f],[1,.2f,.25f],1.3f)},
+              VsCreature=4f,VsStructure=140,Muzzles=["cannonL","cannonR"],FireSe=11,HitSe=24,Speed=2.8f,Look=Look("shell","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f)},
+        new(){Id="RD17",Name="恶魔机甲",Root=Root+"RD17/",Boss=true,Weapon="devil",Sight=64,Range=40,MinRange=0,Interval=8,Shots=10,ShotGap=.2f,ShotSpeed=16,Splash=2.5f,Windup=1,
+              VsCreature=3f,VsStructure=80,Muzzles=["armL","armR"],FireSe=9,HitSe=14,Speed=7,Look=Look("devil","shell",[1,.3f,.35f],[1,.2f,.25f],1.3f)},
     ];
     public static MDRobotKind Kind(string id)=>Kinds.FirstOrDefault(k=>k.Id==id)??throw new KeyNotFoundException("robot kind "+id);
     // Entity templates (tools/prepare_database.py): one per skin; elites and the boss as below.
@@ -270,7 +271,7 @@ public static class MDRobotSpawnTypes {
         var s=__instance;var tod=s.Project.FindSubsystem<SubsystemTimeOfDay>(true);
         s.m_creatureTypes.Add(new SubsystemCreatureSpawn.CreatureType("MechDefense Robots",SpawnLocationType.Surface,false,true){
             SpawnSuitabilityFunction=(_,p)=>(MDRobots.LabSpawnAnytime||MDRobots.Spawns(s.Project)&&tod.Day>=MDRobots.NormalFromDay&&s.m_subsystemSky.SkyLightIntensity<.1f)&&Ground(s,p)?.5f:0,
-            SpawnFunction=(ct,p)=>s.SpawnCreatures(ct,MDRobots.Pick(MDRobots.Normal),p,s.m_random.Int(1,2)).Count});
+            SpawnFunction=(ct,p)=>s.SpawnCreatures(ct,MDRobots.Pick(MDRobots.Normal),p,s.m_random.Int(1,3)).Count});
         s.m_creatureTypes.Add(new SubsystemCreatureSpawn.CreatureType("MechDefense Elite Robots",SpawnLocationType.Surface,false,true){
             SpawnSuitabilityFunction=(_,p)=>(MDRobots.LabSpawnAnytime||MDRobots.Spawns(s.Project)&&tod.Day>=MDRobots.EliteFromDay&&s.m_subsystemSky.SkyLightIntensity<.1f)&&Ground(s,p)?.15f:0,
             SpawnFunction=(ct,p)=>s.SpawnCreatures(ct,MDRobots.Pick(MDRobots.Elites),p,1).Count});
@@ -279,49 +280,65 @@ public static class MDRobotSpawnTypes {
 [HarmonyPatch(typeof(SubsystemCreatureSpawn),nameof(SubsystemCreatureSpawn.Update))]
 public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDRaids.Update(__instance.Project,dt);MDBoss.Tick(__instance.Project,dt);}}
 
-// Night raids: shortly after nightfall (from day 3, on 60 % of the nights, decided per day and world) a group of robots
-// comes for the biggest cluster of the player's towers near a player, from 48-64 m away. Size: 2 + towers / 4 + days / 10
-// (at most 7); from day 10 one in three is an elite, one more with a tier-3 tower in the cluster.
+// Night raids: shortly after nightfall (from day 3, on 75 % of the nights, decided per day and world) a group of robots
+// comes for the strongest cluster of the player's towers near a player (within 30 m of each other), from 48-64 m away.
+// The group grows with the defence (user, 2026-10-21: players place many towers): defence = tier-1 towers 1, tier-2 2,
+// tier-3 3, a Mercury 4; size 3 + defence / 2 + day / 8 (3-20); elites from day 6 a quarter, from day 10 a third, half when
+// the cluster has a tier-3 tower; a defence of 20 or more gets a second wave of half the size 60 s later.
 public static class MDRaids {
-    sealed class State { public float lastTime=-1; }
+    sealed class Wave { public double at; public Vector3 centre; public int size,elites; public float dir; }
+    sealed class State { public float lastTime=-1; public readonly List<Wave> waves=[]; }
     static readonly ConditionalWeakTable<Project,State> states=new();
-    static readonly HashSet<int> Tier3=[4,7,8,13,15,17];
-    public static int LastRaid;   // robots in the last raid (tests)
+    static readonly HashSet<int> Tier2=[3,6,14,16,18,19],Tier3=[4,7,8,13,15,17];
+    public static int Weight(ComponentMDUnit u)=>u.Mech!=null?4:Tier3.Contains(u.Tower.data)?3:Tier2.Contains(u.Tower.data)?2:1;
+    public static int LastRaid,LastDefence,LastElites,LastSecondWave,SecondWavesSent;   // the last raid (tests)
     public static void Update(Project p,float dt) {
         var st=states.GetOrCreateValue(p);var tod=p.FindSubsystem<SubsystemTimeOfDay>(true);float now=tod.TimeOfDay;
+        var clock=p.FindSubsystem<SubsystemTime>(true).GameTime;
+        for(int i=st.waves.Count-1;i>=0;i--)if(clock>=st.waves[i].at){var w=st.waves[i];st.waves.RemoveAt(i);Send(p,w.centre,w.size,w.elites,w.dir,new System.Random(),"第二波：");}
         float at=IntervalUtils.Add(tod.NightStart,tod.NightInterval*.15f);bool crossed=st.lastTime>=0&&IntervalUtils.Interval(st.lastTime,now)<.5f&&IntervalUtils.Interval(st.lastTime,at)<IntervalUtils.Interval(st.lastTime,now);
         st.lastTime=now;
         if(!crossed||!MDRobots.Spawns(p)||p.FindSubsystem<SubsystemGameInfo>(true).WorldSettings.EnvironmentBehaviorMode!=EnvironmentBehaviorMode.Living)return;
         int day=(int)Math.Floor(tod.Day);if(day<MDRobots.NormalFromDay)return;
-        var rng=new System.Random(p.FindSubsystem<SubsystemGameInfo>(true).WorldSeed*31+day*7919);if(rng.NextDouble()>.6)return;
+        var rng=new System.Random(p.FindSubsystem<SubsystemGameInfo>(true).WorldSeed*31+day*7919);if(rng.NextDouble()>.75)return;
         Raid(p,day,rng);
     }
-    // Starts a raid now on the biggest tower cluster near a player; returns the robots sent (0 without towers or ground).
+    // Starts a raid now on the strongest tower cluster near a player; returns the robots sent (0 without towers or ground).
     public static int Raid(Project p,int day,System.Random rng) {
-        var towers=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u?.Tower!=null&&!u.Destroyed).ToList();
+        var units=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed).ToList();
         var players=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers;
-        var near=towers.Where(t=>players.Any(pl=>Vector3.Distance(pl.ComponentBody.Position,t.Body.Position)<80)).ToList();if(near.Count==0)return 0;
-        var anchor=near.OrderByDescending(t=>near.Count(o=>Vector3.Distance(o.Body.Position,t.Body.Position)<24)).First();
-        var cluster=near.Where(o=>Vector3.Distance(o.Body.Position,anchor.Body.Position)<24).ToList();
+        var near=units.Where(t=>t.Tower!=null&&players.Any(pl=>Vector3.Distance(pl.ComponentBody.Position,t.Body.Position)<80)).ToList();if(near.Count==0)return 0;
+        int Score(ComponentMDUnit a)=>near.Where(o=>Vector3.Distance(o.Body.Position,a.Body.Position)<30).Sum(Weight);
+        var anchor=near.OrderByDescending(Score).First();
+        var cluster=near.Where(o=>Vector3.Distance(o.Body.Position,anchor.Body.Position)<30).ToList();
         var centre=cluster.Aggregate(Vector3.Zero,(a,t)=>a+t.Body.Position)/cluster.Count;
-        int size=Math.Clamp(2+cluster.Count/4+day/10,2,7);
-        int elites=day>=MDRobots.EliteFromDay?Math.Clamp(size/3+(cluster.Any(t=>Tier3.Contains(t.Tower.data))?1:0),1,3):0;
-        var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
+        int defence=cluster.Sum(Weight)+units.Where(u=>u.Mech!=null&&Vector3.Distance(u.Body.Position,centre)<30).Sum(Weight);
+        int size=Math.Clamp(3+(int)MathF.Round(defence*.5f)+day/8,3,20);
+        float share=day>=MDRobots.EliteFromDay?(cluster.Any(t=>Tier3.Contains(t.Tower.data))?.5f:1/3f):day>=5?.25f:0;
+        int elites=(int)MathF.Round(size*share);float dir=(float)(rng.NextDouble()*Math.PI*2);
+        LastDefence=defence;LastElites=elites;LastSecondWave=0;
+        int sent=Send(p,centre,size,elites,dir,rng,"");
+        if(defence>=20&&sent>0){var st=states.GetOrCreateValue(p);LastSecondWave=size/2;st.waves.Add(new Wave{at=p.FindSubsystem<SubsystemTime>(true).GameTime+60,centre=centre,size=size/2,elites=(int)MathF.Round(size/2*share),dir=dir+MathF.PI*.5f});}
+        return sent;
+    }
+    static int Send(Project p,Vector3 centre,int size,int elites,float dir,System.Random rng,string prefix) {
+        var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;
         for(int i=0;i<size;i++) {
             var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
             var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;
             p.AddEntity(e);sent++;
         }
-        LastRaid=sent;
-        if(sent>0)foreach(var pl in players)if(Vector3.Distance(pl.ComponentBody.Position,centre)<120)
-            pl.ComponentGui.DisplaySmallMessage($"警报：{sent} 台机兵正在逼近你的炮塔阵地（约 {Math.Round(Vector3.Distance(pl.ComponentBody.Position,centre)+55)} 米外）。",new Color(255,120,100),true,true);
+        LastRaid=sent;if(prefix.Length>0)SecondWavesSent+=sent;
+        if(sent>0)foreach(var pl in p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers)if(Vector3.Distance(pl.ComponentBody.Position,centre)<120)
+            pl.ComponentGui.DisplaySmallMessage($"警报：{prefix}{sent} 台机兵正在逼近你的炮塔阵地（约 {Math.Round(Vector3.Distance(pl.ComponentBody.Position,centre)+55)} 米外）。",new Color(255,120,100),true,true);
         return sent;
     }
-    // a dry surface cell around `centre` at `dist`, in loaded terrain, with room for a 4 m robot
+    // a dry surface cell around `centre` at `dist`, in loaded terrain, with room for a 4 m robot: near `angle` first, then from
+    // any side (a second wave aimed over the sea found nothing at all in the lab, 2026-10-21)
     public static Vector3? Ground(SubsystemTerrain t,Vector3 centre,float angle,float dist,System.Random rng) {
-        for(int k=0;k<12;k++) {
-            float a=angle+(k==0?0:(float)(rng.NextDouble()-.5)*1.2f),d=dist+(k==0?0:(float)(rng.NextDouble()-.5)*10);
+        for(int k=0;k<24;k++) {
+            float a=k==0?angle:k<10?angle+(float)(rng.NextDouble()-.5)*1.2f:(float)(rng.NextDouble()*Math.PI*2),d=dist+(k==0?0:(float)(rng.NextDouble()-.5)*10);
             int x=(int)MathF.Floor(centre.X-MathF.Sin(a)*d),z=(int)MathF.Floor(centre.Z-MathF.Cos(a)*d);
             if(t.Terrain.GetChunkAtCell(x,z) is not {State:>=TerrainChunkState.InvalidVertices1})continue;
             int y=t.Terrain.GetTopHeight(x,z);if(y<=1||y>=250)continue;

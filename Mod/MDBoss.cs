@@ -12,6 +12,9 @@ namespace Game;
 // explosion or energy (MDTowerBrain.Hit tags the towers' and Mercury's; bullets and other attacks count as kinetic); only the
 // current weak channel does full damage, the other two 40 %. The weak channel changes every 20 s, shown by the colour of its
 // aura and a message, so a defence of one tower type is slow and a mixed one fast.
+// Strength grows with the defence it meets (user, 2026-10-21: players place many towers): armour 40000 + 2000 per tower and
+// 4000 per Mercury within 48 m of the beacon (at most 160000); at 70 % and 35 % health it calls an escort of robots
+// (2 + towers / 5, at most 8, half of them elites).
 // Attacks: a homing missile volley at up to three targets (towers first), a beam sweep across its target and a sabre charge (the
 // original's three-slash clip) at a target within 35 m; below half health all come faster. Model x3 (9.6 m tall, 15 m wings,
 // tools/build_unit_assets.py): it hovers 3 m above the ground, circling its target 20 m away.
@@ -22,16 +25,23 @@ public sealed class MDBossState {
     public const float WeakFactor=1,OtherFactor=.4f,WeakPeriod=20,Altitude=3,Orbit=20,ChargeSpeed=16,SlashReach=7;
     readonly ComponentMDRobot r;
     public int Weak; public float WeakTimer,Volley=4,SweepCool=7,Sweep=-1,SweepTick,Orbiting,ChargeCool=12,Charge=-1,Slash=-1; public int Slashes; public Vector3? Home;
+    public float Armour; public int Escorts,EscortSize;   // armour set at arrival (saved: the template's is the base), escorts called (bits 1, 2), their size
     public readonly List<ComponentBody> Volleyed=[]; float aura;
-    public Vector3 LastWant,LastFly; public int Charges,Sweeps,Volleys;   // lab: where it wanted to be, the velocity it asked for, attacks started
+    float stuck;
+    public Vector3 LastWant,LastFly; public int Charges,Sweeps,Volleys,EscortsSent;   // lab: where it wanted to be, the velocity it asked for, attacks started
     public MDBossState(ComponentMDRobot robot,ValuesDictionary v) {
         r=robot;Weak=Math.Clamp(v.GetValue("BossWeak",0),0,2);WeakTimer=v.GetValue("BossWeakTimer",WeakPeriod);
         if(v.GetValue("BossHasHome",false))Home=v.GetValue("BossHome",Vector3.Zero);
+        Armour=v.GetValue("BossArmour",0f);Escorts=v.GetValue("BossEscorts",0);EscortSize=v.GetValue("BossEscortSize",2);if(Armour>0)r.Health.AttackResilience=Armour;
     }
     // Flight goes through the creature's own locomotion (FlySpeed 16 in its template): a fly order is the wanted velocity over
     // that speed. Setting the body's gravity or velocity directly does not hold: locomotion turns gravity back on every update.
-    void Fly(Vector3 velocity){var l=r.Creature.ComponentLocomotion;l.FlyOrder=l.FlySpeed>0?velocity/l.FlySpeed:Vector3.Zero;}
-    public void Save(ValuesDictionary v){v.SetValue("BossWeak",Weak);v.SetValue("BossWeakTimer",WeakTimer);v.SetValue("BossHasHome",Home.HasValue);if(Home.HasValue)v.SetValue("BossHome",Home.Value);}
+    // The vanilla pilot adds a (0, -0.5, 0) fly order to every idle flying creature (birds settle down); depending on the update
+    // order of the components it was added on top of this one and pulled the boss to the ground (full lab run, 2026-10-21), so
+    // the wanted order is also set right before locomotion runs (MDBossFlyOrder).
+    public Vector3? Wanted;
+    void Fly(Vector3 velocity){var l=r.Creature.ComponentLocomotion;Wanted=l.FlySpeed>0?velocity/l.FlySpeed:Vector3.Zero;l.FlyOrder=Wanted;}
+    public void Save(ValuesDictionary v){v.SetValue("BossArmour",Armour);v.SetValue("BossEscorts",Escorts);v.SetValue("BossEscortSize",EscortSize);v.SetValue("BossWeak",Weak);v.SetValue("BossWeakTimer",WeakTimer);v.SetValue("BossHasHome",Home.HasValue);if(Home.HasValue)v.SetValue("BossHome",Home.Value);}
     public bool Enraged=>r.Health.Health<.5f;
     public void Died(){r.Body.Velocity=new(0,-2,0);MDBoss.Announce(r.Project,r.Body.Position,"恶魔机甲被击毁了！它掉落了机甲设计图。",new Color(255,220,120));}
     string Clip(params string[] names)=>names.FirstOrDefault(r.Def.Has)??"idle";
@@ -40,6 +50,7 @@ public sealed class MDBossState {
         // weak channel
         WeakTimer-=dt;if(WeakTimer<=0){WeakTimer=WeakPeriod;Weak=(Weak+1+MDRobots.Pick(new[]{0,1}))%3;MDBoss.Announce(r.Project,body.Position,"恶魔机甲的弱点变成了："+ChannelNames[Weak],ChannelColors[Weak]);}
         aura-=dt;if(aura<=0){aura=.12f;var c=MDCombat.Center(body);w.Ring(c-Vector3.UnitY*body.BoxSize.Y*.45f,4.5f,ChannelColors[Weak],.25f,0);w.Flash(r.Point("weak",out _),1.1f,ChannelColors[Weak],.12f);}
+        foreach(var (bit,at) in new[]{(1,.7f),(2,.35f)})if((Escorts&bit)==0&&r.Health.Health<at){Escorts|=bit;MDBoss.Escort(r,EscortSize);}
         if(Charge>=0||Slash>=0){ChargeStep(dt,w);return;}
         // movement: hover over the ground, circle the target (or the beacon), always facing what it fights
         var focus=r.Target!=null?r.Target.Position:Home??body.Position;
@@ -47,8 +58,13 @@ public sealed class MDBossState {
         var want=focus+new Vector3(MathF.Sin(Orbiting),0,MathF.Cos(Orbiting))*(r.Target!=null?Orbit:6);
         var ground=r.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(new Vector3(want.X,body.Position.Y+4,want.Z),new Vector3(want.X,body.Position.Y-40,want.Z),false,true,(cv,cd)=>BlocksManager.Blocks[Terrain.ExtractContents(cv)].IsCollidable_(cv));
         want.Y=(ground.HasValue?body.Position.Y+4-ground.Value.Distance:focus.Y)+Altitude;
+        // and clear of the towers under it: a 4.6 m body box sinking onto a tower got wedged against it and could not rise (full lab run)
+        var under=new DynamicArray<ComponentBody>();r.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(want.X,want.Z),body.BoxSize.X*.5f+3,under);
+        foreach(var b in under)if(b!=body&&b.Entity.FindComponent<ComponentMDUnit>()!=null)want.Y=Math.Max(want.Y,b.BoundingBox.Max.Y+1);
         var to=want-body.Position;var v=to.LengthSquared()>.01f?Vector3.Normalize(to)*Math.Min(r.Kind.Speed,to.Length()*.7f):Vector3.Zero;   // gentle: the fly order lags ~0.4 s
         Fly(v);LastWant=want;LastFly=v;
+        // stuck: asked to rise but not rising for half a second (pressed against a tower's box) -> lifted straight out of it
+        stuck=v.Y>.8f&&body.Velocity.Y<.2f?stuck+dt:0;if(stuck>.5f)body.Position+=Vector3.UnitY*Math.Min(3,want.Y-body.Position.Y)*Math.Min(1,4*dt);
         if(r.Target!=null)r.Face(MDCombat.Center(r.Target),dt,1.6f);
         // attacks
         float pace=Enraged?.7f:1;Volley-=dt;SweepCool-=dt;ChargeCool-=dt;
@@ -65,30 +81,43 @@ public sealed class MDBossState {
         }
         else if(r.Target!=null&&SweepCool<=0&&r.Sight(r.Eye,r.Target)){Sweep=0;SweepTick=0;Sweeps++;MDRobots.Sound(r.Project,10,body.Position,1);r.Anim.PlayAction(Clip("attack_fire"));}
         else if(r.Target!=null&&ChargeCool<=0&&Vector3.Distance(r.Target.Position,body.Position)<35){Charge=0;Charges++;r.Anim.PlayAction(Clip("dash_charge"));MDRobots.Sound(r.Project,31,body.Position,1);}
-        var flat=new Vector3(body.Velocity.X,0,body.Velocity.Z);
-        r.Anim.PlayBase(flat.Length()<3?"idle":Clip("fly_forward"),1,.3f);
+        GlideClip();
+    }
+    // Flight pose (user, 2026-10-21: "一直蹬脚"): the looping fly_forward (58) and strafe (15/16) clips pedal with the legs, so
+    // moving it holds the end pose of the original's one-shot dash clip in the direction it moves relative to its facing
+    // (10-13: a steady glide), hovering slowly it plays the idle hover (0, legs still). A new direction must lead by 30 %.
+    string glide="idle";
+    void GlideClip() {
+        var v=r.Body.Velocity;var f=r.Body.Matrix.Forward;var right=r.Body.Matrix.Right;float fw=Vector3.Dot(v,f),rt=Vector3.Dot(v,right);
+        float speed=new Vector2(v.X,v.Z).Length();string want=speed<1.5f?"idle":MathF.Abs(fw)>=MathF.Abs(rt)?(fw>=0?"dash_forward":"dash_backward"):(rt>=0?"dash_right":"dash_left");
+        if(want!=glide&&glide!="idle"&&want!="idle") {   // hysteresis between directions
+            float cur=glide switch{"dash_forward"=>fw,"dash_backward"=>-fw,"dash_right"=>rt,_=>-rt};float nxt=want switch{"dash_forward"=>fw,"dash_backward"=>-fw,"dash_right"=>rt,_=>-rt};
+            if(nxt<cur*1.3f)want=glide;
+        }
+        glide=want;
+        if(glide=="idle"||!r.Def.Has(glide))r.Anim.PlayBase("idle",1,.35f);else r.Anim.HoldBase(glide,r.Def.Seconds(r.Def.Clip(glide)),.35f);
     }
     // The sabre charge: flies at its target at 16 m/s, low (feet at the target's), for at most 2.5 s; within 7 m it plays the
     // original's slash clip (2.2 s, three slashes) and each slash hits what stands in a 120 degree wedge 7 m in front:
-    // 3 x 45 x 2.7 = 365 against a tower, 3 x 2.5 x 1.6 = 1.2 x a player's health before armour.
+    // 3 x 80 x 2.5 = 600 against a tower, 3 x 3 x 1.4 = 1.3 x a player's health before armour.
     void ChargeStep(float dt,MDTowerWorld w) {
         var body=r.Body;
         if(Charge>=0) {
             Charge+=dt;if(r.Target==null||Charge>2.5f){Charge=-1;Slash=0;Slashes=0;r.Anim.PlayAction(Clip("attack_saber_once","attack_saber"));return;}
             var to=r.Target.Position-body.Position;var flat=new Vector3(to.X,0,to.Z);
-            var v=flat.LengthSquared()>.01f?Vector3.Normalize(flat)*ChargeSpeed:Vector3.Zero;v.Y=Math.Clamp(to.Y,-4,4);Fly(v);r.Face(MDCombat.Center(r.Target),dt,4);
+            var v=flat.LengthSquared()>.01f?Vector3.Normalize(flat)*ChargeSpeed:Vector3.Zero;v.Y=Math.Clamp(to.Y,-4,4);Fly(v);glide="dash_forward";if(r.Def.Has(glide))r.Anim.HoldBase(glide,r.Def.Seconds(r.Def.Clip(glide)),.2f);r.Face(MDCombat.Center(r.Target),dt,4);
             w.Thruster(body.Position+Vector3.UnitY*body.BoxSize.Y*.5f-body.Matrix.Forward*1.5f,-body.Matrix.Forward,2);
             if(flat.Length()<SlashReach-1){Charge=-1;Slash=0;Slashes=0;r.Anim.PlayAction(Clip("attack_saber_once","attack_saber"));}
             return;
         }
-        Slash+=dt;Fly(Vector3.Zero);
+        Slash+=dt;Fly(Vector3.Zero);r.Anim.PlayBase("idle",1,.3f);glide="idle";
         if(Slashes<3&&Slash>=.55f+.55f*Slashes) {
             Slashes++;var f=body.Matrix.Forward;var c=body.Position+Vector3.UnitY*2+f*2;MDRobots.Sound(r.Project,16,c,1);
             var near=new DynamicArray<ComponentBody>();r.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(c.X,c.Z),SlashReach+2,near);
             foreach(var b in near) {
                 if(b==body||MDRobots.IsRobot(b.Entity))continue;var to=MDCombat.Center(b)-body.Position;var flat=new Vector3(to.X,0,to.Z);float d=flat.Length();
                 if(d>SlashReach+b.BoxSize.X*.5f||Vector3.Dot(flat/Math.Max(d,.01f),f)<.5f)continue;
-                bool structure=b.Entity.FindComponent<ComponentHealth>()==null;MDRobots.Hit(r.Entity,b,r.Kind,structure?2.7f:1.6f,MDCombat.Center(b),f);
+                bool structure=b.Entity.FindComponent<ComponentHealth>()==null;MDRobots.Hit(r.Entity,b,r.Kind,structure?2.5f:1.4f,MDCombat.Center(b),f);
                 w.Sparks(MDCombat.Center(b),-f,14,new Color(255,140,160),7,1,.4f,.06f);
             }
             w.Flash(c+f*2,2.2f,new Color(255,90,120),.12f);
@@ -104,7 +133,7 @@ public sealed class MDBossState {
         var hit=r.Project.FindSubsystem<SubsystemBodies>(true).Raycast(from,end,0,(b,d)=>b!=r.Body&&!MDRobots.IsRobot(b.Entity));
         float t=Math.Min(terrain?.Distance??float.MaxValue,hit?.Distance??float.MaxValue);if(t<float.MaxValue)end=from+dir*t;
         w.HoldBeam(r,from,end,.28f,new Color(255,70,90));
-        SweepTick-=dt;if(SweepTick<=0){SweepTick=.15f;w.Sparks(end,-dir,5,new Color(255,120,120),5,.9f,.3f,.05f);if(hit.HasValue&&(terrain==null||hit.Value.Distance<=terrain.Value.Distance))MDRobots.Hit(r.Entity,hit.Value.ComponentBody,r.Kind,.36f,end,dir);}
+        SweepTick-=dt;if(SweepTick<=0){SweepTick=.15f;w.Sparks(end,-dir,5,new Color(255,120,120),5,.9f,.3f,.05f);if(hit.HasValue&&(terrain==null||hit.Value.Distance<=terrain.Value.Distance))MDRobots.Hit(r.Entity,hit.Value.ComponentBody,r.Kind,.3f,end,dir);}
     }
 }
 
@@ -135,12 +164,28 @@ public static class MDBoss {
         if(c.left>0)return;
         c.left=-1;Spawn(p,c.at);
     }
-    public static ComponentMDRobot Spawn(Project p,Vector3 at) {
-        var rng=new System.Random();float a=(float)(rng.NextDouble()*Math.PI*2);var from=at+new Vector3(MathF.Sin(a),0,MathF.Cos(a))*40+Vector3.UnitY*18;
+    // Arrives from `from` (the beacon: 40 m away, 18 m up; a creative summon: right there) and fights around `at`.
+    public static ComponentMDRobot Spawn(Project p,Vector3 at,Vector3? arrive=null) {
+        var rng=new System.Random();float a=(float)(rng.NextDouble()*Math.PI*2);var from=arrive??at+new Vector3(MathF.Sin(a),0,MathF.Cos(a))*40+Vector3.UnitY*18;
         var e=DatabaseManager.CreateEntity(p,MDRobots.Boss,true);e.FindComponent<ComponentBody>(true).Position=from;
-        var r=e.FindComponent<ComponentMDRobot>(true);p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
-        Announce(p,at,"恶魔机甲来了！当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
+        var r=e.FindComponent<ComponentMDRobot>(true);
+        var units=p.Entities.Select(x=>x.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed&&Vector3.Distance(u.Body.Position,at)<48).ToList();
+        int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null);
+        r.Boss.Armour=Math.Clamp(40000+2000*towers+4000*mechs,40000,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
+        p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
+        Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;
+    }
+    // An escort wave: robots from 40 m around the beacon, half of them elites, raiding towards it.
+    public static void Escort(ComponentMDRobot boss,int size) {
+        var p=boss.Project;var home=boss.Boss.Home??boss.Body.Position;var rng=new System.Random();var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
+        for(int i=0;i<size;i++) {
+            var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng);if(at==null)continue;
+            var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+            e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=home;p.AddEntity(e);sent++;
+        }
+        boss.Boss.EscortsSent+=sent;
+        if(sent>0)Announce(p,home,$"恶魔机甲呼叫了 {sent} 台护卫机兵！",new Color(255,120,100));
     }
     // ModLoader hook ProcessAttackment (MDModLoader): the weak channel takes full damage, the others 40 %. No knockback and no
     // stun: every hit stuns a creature 0.2 s, and a stunned creature's locomotion stops flying and turns gravity back on, so
@@ -151,4 +196,9 @@ public static class MDBoss {
         string ch=a is MDTowerAttackment t?t.Channel??"kinetic":"kinetic";
         a.AttackPower*=ch==MDBossState.Channels[b.Weak]?MDBossState.WeakFactor:MDBossState.OtherFactor;
     }
+}
+
+[HarmonyLib.HarmonyPatch(typeof(ComponentLocomotion),nameof(ComponentLocomotion.Update))]
+public static class MDBossFlyOrder {
+    public static void Prefix(ComponentLocomotion __instance){if(__instance.Entity.FindComponent<ComponentMDRobot>() is {Boss:{Wanted:{} w}} r&&r.Health.Health>0)__instance.FlyOrder=w;}
 }

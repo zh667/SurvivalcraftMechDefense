@@ -1,6 +1,30 @@
-# Status — 2026-10-20
+# Status — 2026-10-21
 
-## Current work: 0.9.0 progression (branch feat/progression-robots, PR open, not merged)
+## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
+
+Round 2 (user 2026-10-21: the devil mech "一直蹬脚"; enemy robots placeable -> chose creative summons; difficulty up because players
+place many towers; the item models were only pictures -> 3D model plan confirmed the same day):
+- Devil mech flight: holds the end pose of the one-shot dash clips (10-13) by movement direction, idle hover when slow; the
+  pedalling fly_forward / strafe loops are never played (lab: base clips idle, dash_forward/backward/right only). Its fly order is
+  re-set right before locomotion (Harmony prefix MDBossFlyOrder): the vanilla pilot adds (0,-0.5,0) to idle flyers and, depending
+  on component update order, pulled it onto the ground in the full lab run. It also keeps 1 m above the towers under it.
+- Difficulty: robots 1000 / 2400 / 2800 armour, per shot vs structures 14 / 60 / 140; raids sized by the cluster's defence
+  (tier 1/2/3 = 1/2/3, Mercury 4): 3 + defence/2 + day/8 (max 20), elites up to half, a second wave at defence >= 20; 75 % of
+  nights. Boss armour 40000 + 2000 per tower (+4000 per Mercury) within 48 m (max 160000), escorts at 70 % and 35 %, 10-missile
+  volleys, stronger beam and slashes. Lab: one robot beats one tier-1 tower, two towers kill it; 9 towers (defence 21) drew 14 +
+  7 robots and lost 3 towers in 28 s; the boss (46000 vs 3 tier-3 towers) left them at 24 / 33 / 64 % after 30 s.
+- Creative summons (Mod/MDSummon.cs): one per robot template + the devil mech, the unit's icon mesh in slots, right-click the ground.
+- Item 3D models: helper agent, `E:/projects/md-item-models` V1 (README, 反馈记录表.md), tools/build_part_models.py replaces
+  build_part_icons.py (deleted); 52-214 triangles each, drawn x8/3 so the alloy plate matches the vanilla iron ingot; emissive
+  core band, beacon lamp, Mk3 connector. In game: ground by day and night (glow shows), hotbar, first person (same crop and size
+  as vanilla ingot / battery / diamond in the same view), third person. Sheets: local/claude-work/progression/items_a|b|c.jpg.
+- Lab now runs parts: `lab --mode robots-<items|gallery|fight|raid|boss|summons|kits>`; full `robots` passes (job md-prog2-robots-5).
+  Regression on the final package: special and mech pass (Mercury damage unchanged), smoke 0.5.0 -> 0.9.0 3/3 + 20/20, perf
+  0.8.0 1.05/1.08 and 1.03/1.09 ms vs 0.9.0 1.02/1.08 and 1.03/1.09 ms.
+- Package dist/MechDefense-0.9.0.scmod 50,776,034 bytes, 214 entries, SHA-256 475b550f635a9967f86b3d118b122f6a679042ac7f1047f332cd347d3f33db82
+  (no 终末地 / 毁灭枪手 / 原作 in data or the dll; the drifted turret_1 radius restored again).
+
+Round 1 (2026-10-20):
 
 - User (2026-10-20): asked how towers and mechs should be crafted and grow from low to high tier, with three player
   suggestions (Industrial Era's T-100, the devil mech dropping blueprints, hostile robots dropping materials). Accepted plan with

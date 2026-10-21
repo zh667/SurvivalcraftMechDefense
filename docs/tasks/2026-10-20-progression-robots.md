@@ -64,3 +64,12 @@ Optional Industrial Era exchange (`Assets/MechDefense.ier`, read only by Industr
 - Package dist/MechDefense-0.9.0.scmod 49,104,914 bytes, SHA-256 682281de…a450cb.
 - Decisions made here without asking: the devil mech at x3 (the helper's recommendation: x4 is taller than trees); no
   Industrial Era exchange recipe (its steel, circuits and condensers can be manufactured, which would bypass the 5x rule).
+
+## Round 2 (2026-10-21)
+
+User: "恶魔机甲的移动方式有问题（一直蹬脚），敌方机兵最好做成那种可放置的。难度……需要提高，因为玩家一般会放置很多炮塔。而且现在物品材料模型没建好，
+都是贴图". Asked and answered: placeable = creative-inventory summons (not craftable); item models = the confirmed plan (vanilla
+item style, low-poly + 32 px textures, sizes per item, <= 300 triangles). Done: glide poses + fly-order fix, difficulty scaled to
+the defence, summons, 3D item models (helper agent, E:/projects/md-item-models), lab parts; numbers and checks in docs/STATUS.md and
+docs/PROGRESSION.md. Package SHA-256 475b550f…3f33db82.
+

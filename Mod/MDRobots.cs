@@ -105,7 +105,7 @@ public class MDRobotAttackment:Attackment {
 
 public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public MDRobotKind Kind; public MDMechDef Def; public MDMechAnimator Anim;
-    public ComponentCreature Creature; public ComponentBody Body; public ComponentHealth Health; ComponentPathfinding path;
+    public ComponentCreature Creature; public ComponentBody Body; public ComponentHealth Health; ComponentPathfinding path; ComponentSpawn spawn;
     SubsystemTime time; SubsystemBodies bodies; SubsystemTerrain terrain;
     public ComponentBody Target; public Vector3? RaidGoal; public bool Raider;
     public ComponentBody Hunt;                      // the nearest tower or Mercury within HuntRange, walked to while nothing is in sight
@@ -120,7 +120,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public void Provoke(ComponentBody b){Provoker=b;ProvokedUntil=time.GameTime+MDRobots.ProvokeMemory;nextScan=0;}
     public override void Load(ValuesDictionary v,IdToEntityMap map) {
         Kind=MDRobots.Kind(v.GetValue<string>("Kind"));Def=MDMechLibrary.Load(Kind.Root,"unit");Anim=new MDMechAnimator(Def);
-        Creature=Entity.FindComponent<ComponentCreature>(true);Body=Entity.FindComponent<ComponentBody>(true);Health=Entity.FindComponent<ComponentHealth>(true);path=Entity.FindComponent<ComponentPathfinding>(true);
+        Creature=Entity.FindComponent<ComponentCreature>(true);Body=Entity.FindComponent<ComponentBody>(true);Health=Entity.FindComponent<ComponentHealth>(true);path=Entity.FindComponent<ComponentPathfinding>(true);spawn=Entity.FindComponent<ComponentSpawn>();
         time=Project.FindSubsystem<SubsystemTime>(true);bodies=Project.FindSubsystem<SubsystemBodies>(true);terrain=Project.FindSubsystem<SubsystemTerrain>(true);
         Raider=v.GetValue("Raider",false);if(v.GetValue("HasRaidGoal",false))RaidGoal=v.GetValue("RaidGoal",Vector3.Zero);
         Cooldown=MDRobots.R(.5f,1.5f);lastHealth=Health.Health;
@@ -152,6 +152,11 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(time.GameTime>=nextHunt){nextHunt=time.GameTime+2+MDRobots.R(0,.5f);Hunt=FindHunt();}
         if(Hunt!=null&&!Valid(Hunt))Hunt=null;
         if(time.GameTime>=nextScan){nextScan=time.GameTime+.5f+MDRobots.R(0,.2f);Target=FindTarget();}
+        // The game packs away every creature that may despawn and is over 60 m from all players (SubsystemSpawn, every 2 s)
+        // and brings it back later as a fresh copy without its orders. Raids and the devil mech's escorts arrive 40-64 m beyond
+        // the towers, often farther from the player: they vanished on arrival (lab, 2026-10-21, user: escorts never attack).
+        // Raiders stay while they have something to do; idle, they may be packed away again.
+        if(Raider&&spawn!=null){bool busy=Target!=null||Hunt!=null||RaidGoal.HasValue;if(spawn.AutoDespawn==busy)spawn.AutoDespawn=!busy;}
         if(Target!=null&&!Valid(Target))Target=null;
         if(Boss!=null)Boss.Update(dt);
         else if(IsActive)Engage(dt);
@@ -209,8 +214,8 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         float want=MathF.Atan2(-(at.X-Body.Position.X),-(at.Z-Body.Position.Z));
         Body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,MDCombat.AngleTowards(Yaw,want,rate*dt));
     }
-    // Walk into range (or around cover), stop and turn to fire; without a target a raider walks on to the towers, any other
-    // robot to the nearest tower or Mercury (Hunt).
+    // Walk into range (or around cover), stop and turn to fire; without a target, to the nearest tower or Mercury (Hunt), or a
+    // raider to its raid's goal.
     void Engage(float dt) {
         if(Target!=null) {
             var tc=MDCombat.Center(Target);var flat=new Vector2(tc.X-Body.Position.X,tc.Z-Body.Position.Z);float dist=flat.Length();bool sight=Sight(Eye,Target);
@@ -223,11 +228,13 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         }
         else {
             ShotsLeft=0;Windup=-1;
-            if(RaidGoal.HasValue) {
+            // the nearest tower or Mercury first (user, 2026-10-21: straight for the nearest tower); the raid's goal only
+            // without one (an escort around a devil mech summoned in the open walks to it)
+            if(Hunt!=null)path.SetDestination(Hunt.Position,1,Kind.Sight*.5f,300,true,false,true,Hunt);
+            else if(RaidGoal.HasValue) {
                 if(Vector2.Distance(new(RaidGoal.Value.X,RaidGoal.Value.Z),new(Body.Position.X,Body.Position.Z))<8)RaidGoal=null;
                 else path.SetDestination(RaidGoal.Value,1,6,300,true,false,false,null);
             }
-            else if(Hunt!=null)path.SetDestination(Hunt.Position,1,Kind.Sight*.5f,300,true,false,true,Hunt);
         }
     }
     // A wind-up (the missile lock is a visible warning on the target), then a burst of Shots, Gap apart, then Interval.
@@ -297,7 +304,7 @@ public class ComponentMDRobotModel:ComponentCreatureModel {
 // ------------------------------------------------------------------------------------------------ spawning
 // Wild robots (own spawner since 2026-10-21, user: spawn time and density should be adjustable; the vanilla night spawner
 // shared its small limit with wolves and bears and offered nothing to adjust). Mod settings (MDSettings): every SpawnInterval
-// seconds, at the times SpawnTime allows (night: the sky is dark), from game day StartDay (elites from 7 days later, a quarter
+// seconds, at the times SpawnTime allows (night: the sky is dark), from game day StartDay (0: never; elites 7 days later, a quarter
 // of the robots), a group of 1-2.5 x SpawnDensity robots appears 32-56 m from each player on dry open ground, while fewer than
 // 4 x SpawnDensity wild robots are within 80 m of that player. Not in Creative or Harmless, not with a static environment,
 // not for a player more than 8 m under the surface. Constant-spawn creatures like the vanilla night spawns.
@@ -317,6 +324,7 @@ public static class MDWildSpawns {
     public static int Day(Project p)=>(int)Math.Floor(p.FindSubsystem<SubsystemTimeOfDay>(true).Day)+1;   // the game's day number, 1 on the first day
     // why a spawn round does nothing now ("" when robots may spawn)
     public static string Blocked(Project p) {
+        if(MDSettings.StartDay<=0)return "start day 0";
         if(MDSettings.SpawnTime==MDSpawnTime.Off)return "off";
         if(!MDRobots.Spawns(p))return "game mode";
         if(p.FindSubsystem<SubsystemGameInfo>(true).WorldSettings.EnvironmentBehaviorMode!=EnvironmentBehaviorMode.Living)return "static environment";
@@ -369,7 +377,7 @@ public static class MDRaids {
         float at=IntervalUtils.Add(tod.NightStart,tod.NightInterval*.15f);bool crossed=st.lastTime>=0&&IntervalUtils.Interval(st.lastTime,now)<.5f&&IntervalUtils.Interval(st.lastTime,at)<IntervalUtils.Interval(st.lastTime,now);
         st.lastTime=now;
         if(!crossed||!MDRobots.Spawns(p)||p.FindSubsystem<SubsystemGameInfo>(true).WorldSettings.EnvironmentBehaviorMode!=EnvironmentBehaviorMode.Living)return;
-        int day=(int)Math.Floor(tod.Day);if(day+1<MDSettings.StartDay)return;
+        int day=(int)Math.Floor(tod.Day);if(MDSettings.StartDay<=0||day+1<MDSettings.StartDay)return;   // start day 0: no raids
         var rng=new System.Random(p.FindSubsystem<SubsystemGameInfo>(true).WorldSeed*31+day*7919);if(rng.NextDouble()*100>=MDSettings.RaidChance)return;
         Raid(p,day,rng);
     }
@@ -396,7 +404,7 @@ public static class MDRaids {
         for(int i=0;i<size;i++) {
             var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
             var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
-            e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;
+            e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;   // see ComponentMDRobot.Update
             p.AddEntity(e);sent++;
         }
         LastRaid=sent;if(prefix.Length>0)SecondWavesSent+=sent;

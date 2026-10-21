@@ -176,13 +176,14 @@ public static class MDBoss {
         Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;
     }
-    // An escort wave: robots from 40 m around the beacon, half of them elites, raiding towards it.
+    // An escort wave: robots 40-50 m from the beacon, half of them elites; they go for the nearest tower or Mercury (or, with
+    // none within 96 m, to the beacon) and are not packed away while they have that to do.
     public static void Escort(ComponentMDRobot boss,int size) {
         var p=boss.Project;var home=boss.Boss.Home??boss.Body.Position;var rng=new System.Random();var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
         for(int i=0;i<size;i++) {
             var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng);if(at==null)continue;
             var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
-            e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=home;p.AddEntity(e);sent++;
+            e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=home;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;p.AddEntity(e);sent++;   // kept while busy (ComponentMDRobot.Update)
         }
         boss.Boss.EscortsSent+=sent;
         if(sent>0)Announce(p,home,$"恶魔机甲呼叫了 {sent} 台护卫机兵！",new Color(255,120,100));

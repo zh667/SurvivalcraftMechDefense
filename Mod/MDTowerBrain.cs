@@ -236,7 +236,7 @@ public static class MDTowerBrain {
             if(Vector3.DistanceSquared(b.Position,p)>a.range*a.range)continue;
             var player=b.Entity.FindComponent<ComponentPlayer>();var unit=b.Entity.FindComponent<ComponentMDUnit>();
             if(player!=null&&player.ComponentHealth.Health<1&&player.ComponentHealth.Health>0){player.ComponentHealth.Heal(a.power);w.Heal(b.Position);any=true;}
-            else if(unit!=null&&unit!=u&&unit.Kind=="Turret"&&!unit.Destroyed&&unit.Damage.Hitpoints<1){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Heal(b.Position);any=true;}
+            else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Heal(b.Position);any=true;}   // towers and, since 0.9.0 round 5, Mercury
         }
         u.Cooldown=any?a.interval:.5f;
         if(any){w.Ring(p,a.range,MDTowerWorldColor(d.fx.color),.8f);w.Flash(Muzzle(u,0),.5f,MDTowerWorldColor(d.fx.color),.2f);Sound(u,d.fireSounds,p,.5f);}

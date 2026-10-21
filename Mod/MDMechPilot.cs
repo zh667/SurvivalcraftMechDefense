@@ -168,6 +168,17 @@ public static class MDMechTpp {
         __instance.SetupPerspectiveCamera(pos,d,Vector3.UnitY);
     }
 }
+// The pilot takes no damage while seated in a working mech (user, 2026-10-21: "在机甲里就不受伤害，不然有的时候机甲还能用，玩家先死了"):
+// every injury (attacks, explosions, fire, falls, drowning, hunger) ends in ComponentHealth.Injure(Injury). A wrecked mech sets its
+// pilot down first (ComponentMDUnit.MechUpdate), so from then on the player is hurt as usual.
+[HarmonyPatch(typeof(ComponentHealth),nameof(ComponentHealth.Injure),new[]{typeof(Injury)})]
+public static class MDMechPilotShield {
+    public static int Blocked;   // tests
+    public static bool Prefix(ComponentHealth __instance,Injury injury) {
+        if(injury==null||injury.Amount<=0||MDMechPilot.Mounted(__instance.Entity.FindComponent<ComponentPlayer>()) is not {Destroyed:false})return true;
+        Blocked++;return false;
+    }
+}
 [HarmonyPatch(typeof(ComponentModel),nameof(ComponentModel.CalculateIsVisible))]
 public static class MDMechHideRider {public static void Postfix(ComponentModel __instance){if(MDMechPilot.Mounted(__instance.Entity.FindComponent<ComponentPlayer>())!=null)__instance.IsVisibleForCamera=false;}}
 [HarmonyPatch(typeof(ComponentFirstPersonModel),nameof(ComponentFirstPersonModel.Draw))]

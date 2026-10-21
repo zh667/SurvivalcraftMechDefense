@@ -71,6 +71,7 @@ public static class MDRobots {
 
     // A robot's hit: structures (towers, Mercury, boats: ComponentDamage without health) take VsStructure, creatures VsCreature.
     public static void Hit(Entity attacker,ComponentBody b,MDRobotKind k,float scale,Vector3 point,Vector3 dir) {
+        if(b?.ParentBody?.Entity.FindComponent<ComponentMDUnit>() is {Mech:not null} carrier)b=carrier.Body;   // the pilot sits inside: the mech takes it
         if(b==null||IsRobot(b.Entity)||!MDCombat.Living(b))return;
         bool structure=b.Entity.FindComponent<ComponentHealth>()==null;
         float power=(structure?k.VsStructure:k.VsCreature)*scale;if(power<=0)return;
@@ -181,6 +182,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(b==null||!b.Entity.IsAddedToProject||!MDCombat.Living(b))return false;
         var e=b.Entity;
         if(e.FindComponent<ComponentMDUnit>() is {} u)return !u.Destroyed&&!u.Legacy;
+        if(MDMechPilot.Mounted(e.FindComponent<ComponentPlayer>())!=null)return false;   // seated in a mech: the mech is the target
         if(e.FindComponent<ComponentPlayer>()!=null?!MDRobots.FightsPlayers(Project):!(MDFaction.Friendly(e)&&e.FindComponent<ComponentCreature>()!=null&&MDRobots.Hostile(Project)))return false;
         if(b==Provoker&&time.GameTime<ProvokedUntil)return true;
         return Hunt!=null&&Vector3.Distance(b.Position,Body.Position)<=Kind.Range;

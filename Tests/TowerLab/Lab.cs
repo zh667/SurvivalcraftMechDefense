@@ -353,9 +353,11 @@ public partial class Lab:ModLoader {
             // one tower (mode view-<id>) seen the way a player sees it; the same shots from two packages make a before / after
             // (0.9.0 round 5: the reduced battle_rocket_1). Aim locked (no targets: a long-range tower turns to whatever wild
             // creature is around), no clouds, so only the model differs. Around, player height, close-ups from outside its box,
-            // night, in the hand, tiny camera steps near and far (flicker), then firing at a wolf.
+            // night, in the hand, tiny camera steps near and far (flicker), firing at a wolf, then fog and a torch-lit cave.
             var d=towers.First(t=>t.id==mode[5..]);var views=new List<string>();
-            Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
+            // 5 s for the gallery's shells to land and their ground effects to fade: an acid puddle (3.5 s) from the 腐蚀塔
+            // showed up in the first shots of a run
+            Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(5))yield return true;
             SettingsManager.SkyRenderingMode=SkyRenderingMode.NoClouds;
             var at=origin+new Vector3(10,0,14);var u=Place(d,at,0);   // faces -Z
             void Freeze(){u.Target=null;u.ScanTimer=1e6f;u.Cooldown=1e6f;u.Yaw=u.AimYaw=0;}
@@ -396,6 +398,32 @@ public partial class Lab:ModLoader {
                 double start=Time.RealTime;int k=0;
                 foreach(var dt in new[]{.04,.25,.8,2.0}){while(Time.RealTime-start<dt){Cam(lastEye,lastFocus);yield return true;}Shot($"v_fire_{k}");views.Add($"fire_{k++}");yield return true;}
                 results["fired"]=u.ShotCount-shots0;Remove([target]);
+            }
+            {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start
+                // time, so step the start time back until the layer reaches the ground around the tower.
+                var wx=GameManager.Project.FindSubsystem<SubsystemWeather>(true);var sky=GameManager.Project.FindSubsystem<SubsystemSky>(true);
+                gi.WorldSettings.AreWeatherEffectsEnabled=true;wx.m_precipitationStartTime=wx.m_precipitationEndTime=double.MaxValue;
+                double fogNow=Math.Floor(gi.TotalElapsedGameTime);string fogInfo="none";
+                for(int k=1;k<=400&&fogInfo=="none";k++) {
+                    for(int n=0;n<2;n++){Freeze();wx.m_fogStartTime=fogNow-k;wx.m_fogEndTime=double.PositiveInfinity;wx.FogIntensity=1;Cam(at+new Vector3(.8f,1.7f,-5),focus);yield return true;}
+                    if(sky.ViewFogBottom<=at.Y+.5f&&sky.ViewFogTop>=at.Y+h+2&&sky.ViewFogDensity>=.05f)fogInfo=$"start -{k} s: bottom {sky.ViewFogBottom:0.0}, top {sky.ViewFogTop:0.0}, density {sky.ViewFogDensity:0.000}";
+                }
+                results["fog"]=fogInfo;
+                foreach(var x in View("fog_front",at+new Vector3(.8f,1.7f,-5),focus,10))yield return x;
+                foreach(var x in View("fog_mid",focus+new Vector3(.9f,.25f,-1.1f)*9f,focus,6))yield return x;
+                foreach(var x in View("fog_far",focus+new Vector3(.9f,.25f,-1.1f)*22f,focus,6))yield return x;
+                wx.FogIntensity=0;gi.WorldSettings.AreWeatherEffectsEnabled=false;for(int n=0;n<3;n++){Freeze();yield return true;}
+            }
+            {   // cave: a closed granite room around the tower, four torches on the floor
+                var ter=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);int ax=(int)MathF.Floor(at.X),ay=(int)MathF.Floor(at.Y),az=(int)MathF.Floor(at.Z);
+                for(int cx=ax-7;cx<=ax+7;cx++)for(int cz=az-9;cz<=az+7;cz++)for(int cy=ay-1;cy<=ay+8;cy++)
+                    if(cx==ax-7||cx==ax+7||cz==az-9||cz==az+7||cy==ay-1||cy==ay+8)ter.ChangeCell(cx,cy,cz,3);
+                foreach(var (cx,cz) in new[]{(ax-3,az-3),(ax+3,az-3),(ax-3,az+3),(ax+3,az+3)})ter.ChangeCell(cx,ay,cz,Terrain.MakeBlockValue(31,0,4));
+                for(double s0=Time.RealTime;Time.RealTime-s0<3;){Freeze();yield return true;}
+                results["caveLight"]=Terrain.ExtractLight(ter.Terrain.GetCellValue(ax,ay+2,az-4));
+                foreach(var x in View("cave_front",at+new Vector3(.8f,1.7f,-5),focus,10))yield return x;
+                foreach(var x in View("cave_right",at+new Vector3(5,1.7f,-2.5f),focus,6))yield return x;
+                foreach(var x in View("cave_back",at+new Vector3(-1.2f,1.7f,4.5f),focus,6))yield return x;
             }
             SettingsManager.SkyRenderingMode=SkyRenderingMode.Full;results["views"]=views;results["box"]=$"{s:0.00} x {h:0.00}";
         }

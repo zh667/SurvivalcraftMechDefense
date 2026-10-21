@@ -1,13 +1,17 @@
 using Engine;
 using Game;
 using GameEntitySystem;
+using System.Reflection;
 
 namespace TowerLab;
 
 // lab --mode robots (0.9.0, docs/tasks/2026-10-20-progression-robots.md): the progression items and recipes, the robot
 // enemies (models, clips, a fight against a tower, loot), a night raid on a tower cluster, the devil mech (beacon countdown,
-// flight, weak channel, fight, blueprint drop) and Mercury's weapon kits. Results under "robots" and "recipes"; screenshots
-// ri_* (items), rb_* (robots and clips), rf_* (fight), rr_* (raid), rx_* (boss), rk_* (kits).
+// flight, weak channel, fight, blueprint drop) and Mercury's weapon kits; since round 3 (2026-10-21) the mod settings, the mech
+// panel's options and the rifle status, the wild spawner (with a short survival run) and the robots' targets (the nearest
+// tower, Mercury before towers, players only when provoked or at the defences, a tower behind a tower). Results under
+// "robots" and "recipes"; screenshots ri_* (items), rb_* (robots and clips), rf_* (fight), rr_* (raid), rx_* (boss),
+// rk_* (kits), rh_* (mech panel), rt_* (targets).
 public partial class Lab {
     // Every tower, Mercury and progression item recipe resolves from its own grid at its own heat and player level; tier 2
     // takes alloy plates, tier 3 also fire-control chips; Mercury needs level 8 and the blueprint.
@@ -42,7 +46,8 @@ public partial class Lab {
         return new{count=mine.Count,mercuryAtLevel7=at7?.Message,rec};
     }
 
-    // mode "robots" runs every part; "robots-<part>" (items, gallery, fight, raid, boss, summons, kits) one of them, after the recipe checks
+    // mode "robots" runs every part; "robots-<part>" (items, gallery, fight, raid, boss, summons, kits, settings, hud, spawns,
+    // targets) one of them, after the recipe checks
     static bool Part(string name)=>mode=="robots"||mode=="robots-"+name;
     static IEnumerable<bool> Robots() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
@@ -146,16 +151,8 @@ public partial class Lab {
                               Place(defs.First(t=>t.data==4),Home+new Vector3(-6,0,-6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(6,0,-6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(-6,0,6),0),
                               Place(defs.First(t=>t.data==4),Home+new Vector3(6,0,6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(-12,0,0),0)};
             pl.ComponentBody.Position=Home+new Vector3(0,0,14);while(Wait(1))yield return true;
-            var types=proj.FindSubsystem<SubsystemCreatureSpawn>(true).m_creatureTypes.Select(t=>t.Name).Where(n=>n.StartsWith("MechDefense")).ToList();q["spawnTypes"]=types;
             int sent=MDRaids.Raid(proj,12,new System.Random(5));q["sent"]=sent;q["defence"]=MDRaids.LastDefence;q["elites"]=MDRaids.LastElites;q["secondWave"]=MDRaids.LastSecondWave;double raidAt=Time.RealTime;
-            // the natural spawn rules spawn their robots (their suitability is off in Creative, so the spawn function is called directly)
-            var spawner=proj.FindSubsystem<SubsystemCreatureSpawn>(true);var natural=new List<string>();
-            foreach(var ct in spawner.m_creatureTypes.Where(c=>c.Name.StartsWith("MechDefense"))){var pt=new Point3((int)Home.X-30,(int)Home.Y,(int)Home.Z+30);
-                float off=ct.SpawnSuitabilityFunction(ct,pt);MDRobots.LabSpawnAnytime=true;natural.Add($"{ct.Name}: suitability in this creative day world {off}, forced {ct.SpawnSuitabilityFunction(ct,pt)}, spawned {ct.SpawnFunction(ct,pt)}");MDRobots.LabSpawnAnytime=false;
-                if(off!=0)throw new Exception("natural spawn on in Creative / by day");}
-            q["natural"]=natural;
             var raiders=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x.Raider).ToList();
-            var wild=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&!x.Raider).ToList();q["naturalUnits"]=string.Join(",",wild.Select(x=>x.Kind.Id));
             q["units"]=string.Join(",",raiders.Select(x=>x.Kind.Id));q["startDistance"]=string.Join(" ",raiders.Select(x=>$"{Vector3.Distance(x.Body.Position,Home):0}"));
             foreach(var x in During(1,()=>Cam(Home+new Vector3(0,60,-.1f),Home)))yield return x;Shot("rr_start_top");yield return true;
             foreach(var x in During(28,()=>{}))yield return x;
@@ -166,8 +163,17 @@ public partial class Lab {
             var all=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x.Raider).ToList();q["raidersAfterSecondWave"]=$"{before} -> {all.Count}";q["towersAfterSecondWave"]=string.Join(" ",cluster.Select(t=>$"{t.Damage.Hitpoints:0.00}"));raiders=all.Union(raiders).ToList();
             Cam(Home+new Vector3(20,22,-30),Home);Shot("rr_second_wave");yield return true;
             q["secondWaveSent"]=MDRaids.SecondWavesSent;
-            if(MDRaids.LastDefence!=21||MDRaids.LastSecondWave==0||MDRaids.SecondWavesSent==0||sent<12||types.Count!=2||!raiders.Any(x=>x.Kind.Elite)||wild.Count<2||!wild.Any(x=>x.Kind.Elite))throw new Exception("raid: "+string.Join(", ",q.Select(kv=>kv.Key+"="+kv.Value)));
-            Kill(raiders);Kill(wild);Remove(cluster);ClearPickables();while(Wait(.5))yield return true;
+            if(MDRaids.LastDefence!=21||MDRaids.LastSecondWave==0||MDRaids.SecondWavesSent==0||sent<12||!raiders.Any(x=>x.Kind.Elite))throw new Exception("raid: "+string.Join(", ",q.Select(kv=>kv.Key+"="+kv.Value)));
+            List<ComponentMDRobot> AllRobots()=>proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList();
+            Kill(AllRobots());Remove(cluster);ClearPickables();while(Wait(.5))yield return true;
+            // the raid size setting: four tier-1 towers (defence 4, no second wave), x1 and x2 in the same frame (same defence)
+            var gun0=defs.First(t=>t.data==0);var small=new[]{Place(gun0,Home+new Vector3(-6,0,0),0),Place(gun0,Home+new Vector3(6,0,0),0),Place(gun0,Home+new Vector3(0,0,-6),0),Place(gun0,Home+new Vector3(0,0,6),0)};
+            while(Wait(1))yield return true;
+            int a1=MDRaids.Raid(proj,12,new System.Random(7)),p1=MDRaids.LastPlanned;Kill(AllRobots());
+            MDSettings.RaidSize=2;int a2=MDRaids.Raid(proj,12,new System.Random(7)),p2=MDRaids.LastPlanned;Kill(AllRobots());MDSettings.Defaults();
+            q["raidSize"]=$"defence {MDRaids.LastDefence}: x1 plans {p1} (sent {a1}), x2 plans {p2} (sent {a2})";
+            if(p2!=2*p1||a2<p2-4)throw new Exception("raid size: "+q["raidSize"]);
+            Remove(small);ClearPickables();while(Wait(.5))yield return true;
         }
 
         // ---- the devil mech: beacon countdown, arrival, weak channel, a fight against tier-3 towers, the blueprint
@@ -252,6 +258,144 @@ public partial class Lab {
             var u2=proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).First(x=>x?.Mech!=null);k["redeployedKit"]=u2.Mech.Kit;
             if(MDDeploymentBlock.Kit(item)!=2||u2.Mech.Kit!=2||Math.Abs(dealt-1300)>15)throw new Exception("kits: "+string.Join(", ",k.Select(kv=>kv.Key+"="+kv.Value)));
             proj.RemoveEntity(u2.Entity,true);
+        }
+        ComponentMDUnit Deploy(Vector3 standAt) {   // Mercury from its item, 5 m ahead of the player (facing -Z)
+            var inv=pl.ComponentMiner.Inventory;pl.ComponentBody.Position=standAt;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;
+            inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(1),1);inv.ActiveSlotIndex=0;
+            pl.ComponentMiner.Use(new Ray3(standAt+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
+            return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null)??throw new Exception("Mercury did not deploy");
+        }
+        var pkg=MDSettings.Package;var gameInfo=proj.FindSubsystem<SubsystemGameInfo>(true);
+        // ---- mod settings: registered with the engine from modinfo.json, the settings page builds with the Chinese names and
+        // option names (Assets/Lang), and a change made through the engine reaches the mod at once (OnModSettingChanged)
+        if(Part("settings")) {
+            var s=new Dictionary<string,object>();r["settings"]=s;
+            var pages=ModSettingsManager.GetPages(pkg)??throw new Exception("settings: no pages registered");
+            s["pages"]=pages.Select(pg=>$"{pg.Id} {pg.Name}: "+string.Join(", ",pg.Items.OfType<ModSettingItem>().Select(i=>$"{i.Id} {i.Type.Name} {(ModSettingsManager.TryGet<object>(out var v,pkg,pg.Id,i.Id)?v:"(no value)")} {i.WidgetType?.Name}"))).ToList();
+            s["spawnTimeNames"]=string.Join(" / ",Enum.GetValues<MDSpawnTime>().Select(e=>ModSettingLocalizer.GetEnumMemberText(pkg,typeof(MDSpawnTime),e)));
+            var screen=ScreensManager.FindScreen<ModSettingsScreen>("ModSettings");var F=BindingFlags.NonPublic|BindingFlags.Instance;
+            var stack=(Stack<(string,string[],string)>)typeof(ModSettingsScreen).GetField("m_pageStack",F).GetValue(screen);
+            foreach(var pg in pages) {
+                stack.Clear();stack.Push((pkg,new[]{pg.Id},pg.Title));typeof(ModSettingsScreen).GetMethod("NavigateCurrent",F).Invoke(screen,null);
+                int widgets=((System.Collections.ICollection)typeof(ModSettingsScreen).GetField("m_itemWidgets",F).GetValue(screen)).Count;
+                var texts=screen.AllChildren.OfType<LabelWidget>().Select(l=>l.Text).Concat(screen.AllChildren.OfType<SliderWidget>().Select(l=>l.Text)).Where(x=>!string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+                s["page_"+pg.Id]=$"{widgets} widgets: "+string.Join(" | ",texts);
+                if(widgets!=pg.Items.Count)throw new Exception($"settings page {pg.Id}: {widgets} widgets for {pg.Items.Count} items");
+            }
+            stack.Clear();
+            ModSettingsManager.Set([pkg,"Hud","Scale"],60f);s["setScale60"]=MDSettings.HudScale;ModSettingsManager.Set([pkg,"Hud","Scale"],100f);
+            ModSettingsManager.Set([pkg,"Robots","SpawnTime"],MDSpawnTime.Always);s["setAlways"]=MDSettings.SpawnTime.ToString();ModSettingsManager.Set([pkg,"Robots","SpawnTime"],MDSpawnTime.Night);
+            if(pages.Count!=2||(string)s["spawnTimeNames"]!="关闭 / 仅夜晚 / 全天"||(float)s["setScale60"]!=60||(string)s["setAlways"]!="Always"||MDSettings.HudScale!=100)
+                throw new Exception("settings: "+string.Join(", ",s.Select(kv=>kv.Key+"="+kv.Value)));
+        }
+        // ---- the mech panel: default place, small at the top left, large at the top centre, without the key line, hidden; the
+        // rifle's status while firing (it flickered 装填中 / 就绪 four times a second)
+        if(Part("hud")) {
+            var h=new Dictionary<string,object>();r["hud"]=h;void Set(string id,object v)=>ModSettingsManager.Set([pkg,"Hud",id],v);
+            var u=Deploy(Home);var m=u.Mech;while(Wait(1))yield return true;
+            pl.ComponentBody.Position=u.Body.Position+new Vector3(2.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.3))yield return true;
+            MDMechPilot.ExternalControls=true;if(!MDMechPilot.Board(pl,u))throw new Exception("hud: cannot board");
+            SettingsManager.ShowGuiInScreenshots=true;
+            string Panel(){var w=m.Hud;return w==null?"none":$"scale {w.PanelScale:0.00}, at {w.MarginLeft:0},{w.MarginTop:0}, size {w.Size.X:0}x{w.Size.Y:0}, area {w.LastArea}";}
+            // the screenshot lays the GUI out at its own size; the place is read after the screen size is back
+            IEnumerable<bool> Snap(string name){foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");h[name+"_capture"]=Panel();foreach(var x in During(.3,()=>{}))yield return x;h[name]=Panel();}
+            foreach(var x in Snap("rh_default"))yield return x;
+            var area=m.Hud.LastArea;float fit=Math.Clamp(Math.Min(area.X/700,area.Y/450),.5f,1);
+            bool Near(float a,float b)=>Math.Abs(a-b)<1.5f;
+            if(!Near(m.Hud.MarginLeft,area.X-320*fit-20)||!Near(m.Hud.MarginTop,area.Y-112*fit-85))throw new Exception("hud default place: "+Panel());
+            Set("Scale",60f);Set("X",0f);Set("Y",0f);foreach(var x in Snap("rh_small_top_left"))yield return x;
+            if(!Near(m.Hud.MarginLeft,20)||!Near(m.Hud.MarginTop,20)||Math.Abs(m.Hud.PanelScale-fit*.6f)>.01f)throw new Exception("hud small top left: "+Panel());
+            Set("Scale",150f);Set("X",50f);foreach(var x in Snap("rh_large_top_centre"))yield return x;
+            if(!Near(m.Hud.MarginLeft+160*m.Hud.PanelScale,m.Hud.LastArea.X/2))throw new Exception("hud top centre: "+Panel());
+            Set("Keys",false);foreach(var x in Snap("rh_no_keys"))yield return x;
+            if(m.Hud.Size.Y!=86)throw new Exception("hud without keys: "+Panel());
+            Set("Show",false);foreach(var x in Snap("rh_hidden"))yield return x;
+            if(m.Hud!=null||pl.ComponentGui.ControlsContainerWidget.AllChildren.OfType<MDStatusWidget>().Any())throw new Exception("hud still shown");
+            foreach(var (id,v) in new (string,object)[]{("Show",true),("Keys",true),("Scale",100f),("X",100f),("Y",100f)})Set(id,v);
+            foreach(var x in Snap("rh_back"))yield return x;
+            // the rifle held down for 2.5 s, then released: its status and the old rule's on the same frames
+            m.Weapon=MDMechWeapon.Rifle;var seen=new List<string>();string last=null,lastOld=null;int oldChanges=0;int shots0=LabSounds.Of(MDMechBrain.Se(8));
+            void Sample(){var st=MDMechBrain.Status(u);if(st!=last){seen.Add(st);last=st;}var old=m.Cooldown>.15f?"装填中":"就绪";if(old!=lastOld){oldChanges++;lastOld=old;}}
+            foreach(var x in During(2.5,()=>{m.Trigger=true;Sample();}))yield return x;
+            m.Trigger=false;foreach(var x in During(1,Sample))yield return x;
+            h["rifleStatus"]=string.Join(" -> ",seen);h["oldRuleChanges"]=oldChanges;h["rifleShots"]=LabSounds.Of(MDMechBrain.Se(8))-shots0;
+            if(seen.Count>3||!seen.Contains("射击中")||seen[^1]!="就绪")throw new Exception("rifle status: "+h["rifleStatus"]);
+            MDMechPilot.Exit(pl,u,true);MDMechPilot.ExternalControls=false;SettingsManager.ShowGuiInScreenshots=false;proj.RemoveEntity(u.Entity,true);while(Wait(.5))yield return true;
+        }
+        // ---- the wild spawner: its rules as a survival world sees them, the number near the player at two densities, then
+        // 40 s of a real survival world (every 15 s, any time of day): robots appear and leave a player without towers alone
+        if(Part("spawns")) {
+            var s=new Dictionary<string,object>();r["spawns"]=s;MDSettings.Defaults();Kill(MDWildSpawns.Wild(proj));
+            pl.ComponentBody.Position=Home;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
+            s["creative"]=MDWildSpawns.Blocked(proj);s["labDay"]=MDWildSpawns.Day(proj);
+            gameInfo.WorldSettings.GameMode=GameMode.Survival;var rules=new Dictionary<string,string>();   // for these calls only: no frame passes
+            MDSettings.StartDay=1;rules["night only, by day"]=MDWildSpawns.Blocked(proj);
+            MDSettings.SpawnTime=MDSpawnTime.Always;rules["all day"]=MDWildSpawns.Blocked(proj);
+            MDSettings.StartDay=30;rules["from day 30"]=MDWildSpawns.Blocked(proj);
+            MDSettings.SpawnTime=MDSpawnTime.Off;rules["off"]=MDWildSpawns.Blocked(proj);
+            gameInfo.WorldSettings.GameMode=GameMode.Creative;MDSettings.Defaults();s["rules"]=rules;
+            if(s["creative"] is not "game mode"||rules["night only, by day"]!="daytime"||rules["all day"]!=""||rules["from day 30"]!="before day 30"||rules["off"]!="off")throw new Exception("spawn rules: "+string.Join(", ",rules)+" creative "+s["creative"]);
+            var rounds=new List<string>();s["rounds"]=rounds;
+            foreach(var dens in new[]{1f,2f}) {
+                MDSettings.SpawnDensity=dens;Kill(MDWildSpawns.Wild(proj));while(Wait(.3))yield return true;var rng=new System.Random(11);
+                for(int i=0;i<8;i++){int n=MDWildSpawns.Spawn(proj,rng,true);rounds.Add($"x{dens} round {i}: +{n} {MDWildSpawns.LastReason}");}
+                var wild=MDWildSpawns.Wild(proj);var dist=wild.Select(q=>Vector3.Distance(Flat(q.Body.Position),Flat(pl.ComponentBody.Position))).DefaultIfEmpty(0).ToList();
+                s[$"density{dens}"]=$"{wild.Count} robots (limit {MDWildSpawns.Cap}): {string.Join(",",wild.Select(q=>q.Kind.Id))}, {dist.Min():0}-{dist.Max():0} m from the player";
+                if(wild.Count!=MDWildSpawns.Cap||dist.Min()<24||dist.Max()>64)throw new Exception("wild spawns: "+s[$"density{dens}"]);
+            }
+            Kill(MDWildSpawns.Wild(proj));MDSettings.Defaults();while(Wait(.5))yield return true;
+            Cam(Home+new Vector3(0,70,-.1f),Home);Shot("rt_spawn_area");yield return true;
+            MDSettings.SpawnTime=MDSpawnTime.Always;MDSettings.SpawnInterval=15;MDSettings.StartDay=1;
+            var health=pl.ComponentHealth;float resilience=health.AttackResilience;health.AttackResilience=1e6f;
+            gameInfo.WorldSettings.GameMode=GameMode.Survival;int most=0;bool chased=false;double ts=Time.RealTime,first=-1;
+            foreach(var x in During(40,()=>{var wl=MDWildSpawns.Wild(proj);if(wl.Count>0&&first<0)first=Time.RealTime-ts;most=Math.Max(most,wl.Count);if(wl.Any(q=>q.Target==pl.ComponentBody||q.Hunt!=null))chased=true;}))yield return x;
+            s["survival"]=$"first robots after {first:0} s, at most {most}, last round: +{MDWildSpawns.LastSpawned} {MDWildSpawns.LastReason}, a robot went for the player: {chased}";
+            // a robot 14 m away ignores the player until hit, then fights back
+            var rb=Spawn("MDRobot05",Home+new Vector3(0,0,-14),0);while(Wait(1.5))yield return true;
+            string before=rb.Target==null?"none":"rank "+ComponentMDRobot.Rank(rb.Target);
+            ComponentMiner.AttackBody(new ProjectileAttackment(rb.Entity,pl.Entity,MDCombat.Center(rb.Body),-Vector3.UnitZ,1,null));
+            foreach(var x in During(4,()=>{}))yield return x;
+            s["provoked"]=$"target before the hit: {before}; after: {(rb.Target==pl.ComponentBody?"the player":rb.Target==null?"none":"other")}, shots {rb.ShotsFired}";
+            bool fought=rb.Target==pl.ComponentBody&&rb.ShotsFired>0;
+            gameInfo.WorldSettings.GameMode=GameMode.Creative;health.AttackResilience=resilience;health.Health=1;MDSettings.Defaults();Kill(MDWildSpawns.Wild(proj));Kill([rb]);while(Wait(.5))yield return true;
+            if(first<0||chased||before!="none"||!fought)throw new Exception("survival spawns: "+s["survival"]+"; "+s["provoked"]);
+        }
+        // ---- targets: a robot 50 m from the only tower walks there and attacks; Mercury before a nearer tower; players only when
+        // provoked or within weapon range at the defences; a tower behind another tower sees and hits a robot
+        if(Part("targets")) {
+            var g=new Dictionary<string,object>();r["targets"]=g;var gun=MDTowerLibrary.All.First(t=>t.data==0);
+            pl.ComponentBody.Position=Home+new Vector3(16,0,16);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.3))yield return true;
+            var tower=Place(gun,Home,0);var rb=Spawn("MDRobot05",Home+new Vector3(0,0,-50),0);double ta=Time.RealTime,hunted=-1,targeted=-1,fired=-1;
+            foreach(var x in During(35,()=>{double el=Time.RealTime-ta;if(hunted<0&&rb.Hunt==tower.Body)hunted=el;if(targeted<0&&rb.Target==tower.Body)targeted=el;if(fired<0&&rb.ShotsFired>0){fired=el;Cam(Home+new Vector3(16,10,-24),(Home+rb.Body.Position)/2+Vector3.UnitY*1.5f);Shot("rt_hunt");}}))yield return x;
+            g["hunt"]=$"walks to the tower after {hunted:0.0} s, targets it after {targeted:0.0} s, first shot after {fired:0.0} s; now {Vector3.Distance(rb.Body.Position,Home):0} m away, tower {tower.Damage.Hitpoints:0.00}";
+            if(hunted<0||targeted<0||fired<0)throw new Exception("targets/hunt: "+g["hunt"]);
+            Kill([rb]);Remove([tower]);while(Wait(.5))yield return true;
+            // Mercury 20 m away before a tower 12 m away; the tower once Mercury is gone
+            var t2=Place(gun,Home+new Vector3(-8,0,0),0);var mech=Deploy(Home+new Vector3(10,0,5));pl.ComponentBody.Position=Home+new Vector3(16,0,16);
+            var rb2=Spawn("MDRobot05",Home+new Vector3(-8,0,-12),0);while(Wait(2))yield return true;
+            string first=rb2.Target==mech.Body?"Mercury":rb2.Target==t2.Body?"tower":"none";
+            // players (decision only; switched to survival for these calls): not while the robot sees the tower, not without
+            // towers around, yes within weapon range at the defences, yes when provoked
+            gameInfo.WorldSettings.GameMode=GameMode.Survival;var pb=pl.ComponentBody;var keepHunt=rb2.Hunt;
+            pb.Position=rb2.Body.Position+new Vector3(10,0,0);bool atDefences=rb2.Valid(pb);var pick=rb2.FindTarget();
+            rb2.Hunt=null;bool noTowers=rb2.Valid(pb);rb2.Provoke(pb);bool provoked=rb2.Valid(pb);rb2.ProvokedUntil=0;rb2.Hunt=keepHunt;
+            gameInfo.WorldSettings.GameMode=GameMode.Creative;pb.Position=Home+new Vector3(16,0,16);
+            proj.RemoveEntity(mech.Entity,true);while(Wait(1.5))yield return true;
+            string then=rb2.Target==t2.Body?"tower":rb2.Target==null?"none":"other";
+            g["priority"]=$"with Mercury: {first}; without: {then}; player 10 m away at the defences valid {atDefences} (picked {(pick==mech.Body?"Mercury":pick==t2.Body?"tower":pick==pb?"player":"none")}), without towers {noTowers}, provoked {provoked}";
+            if(first!="Mercury"||then!="tower"||!atDefences||pick==pb||noTowers||!provoked)throw new Exception("targets/priority: "+g["priority"]);
+            Kill([rb2]);Remove([t2]);while(Wait(.5))yield return true;
+            // a tower behind another tower: the robot stands still in front of both
+            float reach=Math.Min(gun.attack.range*.7f,20);var back=Place(gun,Home,0);var front=Place(gun,Home+new Vector3(0,0,-3.5f),0);
+            var still=Spawn("MDRobot05",Home+new Vector3(0,0,-reach),0);still.ForceClip="idle";still.Creature.ComponentLocomotion.WalkSpeed=0;
+            while(Wait(.5))yield return true;
+            var muzzle=back.Muzzle;var old=proj.FindSubsystem<SubsystemBodies>(true).Raycast(muzzle,MDCombat.Center(still.Body),0,(b,d)=>b!=back.Body);   // the rule before: the first body on the line
+            int b0=back.ShotCount,f0=front.ShotCount;float h0=still.Health.Health;
+            foreach(var x in During(6,()=>{}))yield return x;
+            Cam(Home+new Vector3(12,6,-reach/2),Home+new Vector3(0,1.5f,-reach/2));Shot("rt_tower_behind");yield return true;
+            g["behind"]=$"first body on the back tower's line (old rule): {(old?.ComponentBody==front.Body?"the front tower":old?.ComponentBody==still.Body?"the robot":"none")}; back tower target {(back.Target==still.Body?"the robot":"none")}, shots {back.ShotCount-b0}; front shots {front.ShotCount-f0}; robot health {h0:0.00} -> {still.Health.Health:0.00}";
+            if(back.Target!=still.Body||back.ShotCount<=b0)throw new Exception("targets/behind: "+g["behind"]);
+            Kill([still]);Remove([back,front]);ClearPickables();while(Wait(.5))yield return true;
         }
     }
 }

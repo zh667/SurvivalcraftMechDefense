@@ -8,8 +8,10 @@ namespace Game;
 // Robots drop scrap, chips and cores (MDRobots.cs); a player who does not fight crafts plates, chips and cores from
 // vanilla materials at five times their normal price (Assets/MechDefense.cr). The blueprint only drops from the boss and the
 // mech recipe uses it up.
-// Icons: Assets/Parts/parts.png (4x4 cells of 32 px, tools/build_part_icons.py), flat in slots, a pixel extrusion
-// (Assets/Parts/part<N>.bin) in the hand and on the ground.
+// Models: tools/build_part_models.py (plan confirmed by the user 2026-10-21; Blender files and checks in
+// E:/projects/md-item-models): low-poly in the vanilla items' style, 32 px pixel textures in Assets/Parts/parts.png (cell =
+// data), face shading baked into Assets/Parts/part<N>.bin; the energy core's band, the beacon's lamp and the Mk3 kit's
+// connector are emissive (they stay lit in the dark). The same model in slots, in the hand and on the ground.
 public class MDPartBlock : Block {
     public enum Kind { Scrap, Alloy, Chip, Core, Blueprint, Beacon, Kit1, Kit2, Kit3 }
     public const int Count=9;
@@ -38,19 +40,38 @@ public class MDPartBlock : Block {
     public override int GetTextureSlotCount(int value)=>4;
     public override int GetFaceTextureSlot(int face,int value)=>Data(value);
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
-    // held like vanilla flat items (feather, string)
+    // held like the vanilla iron ingot (first person 0.4, (0.5, -0.5, -0.6), 40 degrees; in hand 0.3, tilted 60 degrees);
+    // the upright core and beacon stand upright in the hand like the battery
+    static bool Upright(int v)=>(Kind)Data(v) is Kind.Core or Kind.Beacon;
     public override float GetFirstPersonScale(int value)=>.4f;
     public override Vector3 GetFirstPersonOffset(int value)=>new(.5f,-.5f,-.6f);
-    public override Vector3 GetFirstPersonRotation(int value)=>new(0,-70,0);
-    public override float GetInHandScale(int value)=>.3f;
-    public override Vector3 GetInHandOffset(int value)=>new(0,.12f,0);
-    public override Vector3 GetInHandRotation(int value)=>new(0,0,45);
-    static Texture2D texture; static readonly BlockMesh[] meshes=new BlockMesh[Count];
+    public override Vector3 GetFirstPersonRotation(int value)=>new(0,40,0);
+    public override float GetInHandScale(int value)=>Upright(value)?.38f:.3f;
+    public override Vector3 GetInHandOffset(int value)=>new(0,.2f,0);
+    public override Vector3 GetInHandRotation(int value)=>Upright(value)?Vector3.Zero:new(60,0,0);
+    // Draw scale (calibrated against the vanilla iron ingot, which IngotBlock draws at 1.6 blocks long): the models keep the
+    // plan's proportions (alloy plate 0.6 long ...) and are drawn x8/3, so the alloy plate is as long as an iron ingot.
+    public const float DrawScale=8/3f;
+    static Texture2D texture; static readonly (BlockMesh mesh,float ui)?[] meshes=new (BlockMesh,float)?[Count];
     public static Texture2D Texture=>texture??=ContentManager.Get<Texture2D>("Parts/parts");
-    static BlockMesh Mesh(int data)=>meshes[data]??=MDTowerLibrary.IconMesh($"Parts/part{data}.bin","Parts/parts").mesh;
+    // part<N>.bin: int32 vertex count, int32 index count, per vertex x y z u v shade (2 + shade: emissive), int32 indices
+    // (clockwise front). ui: the slot scale that makes every item span what a vanilla ingot does there (1.6 x its 0.85).
+    static (BlockMesh mesh,float ui) Mesh(int data) {
+        if(meshes[data] is {} m)return m;
+        var s=ContentManager.GetStream($"Parts/part{data}.bin");s.Position=0;using var r=new BinaryReader(s);
+        int nv=r.ReadInt32(),ni=r.ReadInt32();var mesh=new BlockMesh();float half=0;
+        for(int i=0;i<nv;i++) {
+            var p=new Vector3(r.ReadSingle(),r.ReadSingle(),r.ReadSingle());var uv=new Vector2(r.ReadSingle(),r.ReadSingle());float sh=r.ReadSingle();
+            bool emissive=sh>=1.5f;if(emissive)sh-=2;byte b=(byte)(255*Math.Clamp(sh,0,1));
+            mesh.Vertices.Add(new BlockMeshVertex{Position=p,TextureCoordinates=uv,Color=new Color(b,b,b),IsEmissive=emissive});
+            half=MathF.Max(half,MathF.Max(MathF.Abs(p.X),MathF.Max(MathF.Abs(p.Y),MathF.Abs(p.Z))));
+        }
+        for(int i=0;i<ni;i++)mesh.Indices.Add(r.ReadInt32());
+        var made=(mesh,Math.Clamp(1.36f/(2*half*DrawScale),.8f,1.4f));meshes[data]=made;return made;
+    }
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
-        if(e==null||e.DrawBlockMode==DrawBlockMode.UI){BlocksManager.DrawFlatBlock(r,value,size,ref matrix,Texture,color,false,e);return;}
-        BlocksManager.DrawMeshBlock(r,Mesh(Data(value)),Texture,color,size*1.7f,ref matrix,e);   // the flat quad spans 1.7 units
+        var (mesh,ui)=Mesh(Data(value));
+        BlocksManager.DrawMeshBlock(r,mesh,Texture,color,size*DrawScale*(e?.DrawBlockMode==DrawBlockMode.UI?ui:1),ref matrix,e);
     }
 }
 

@@ -88,10 +88,13 @@ the user's installed mods (below). Facts about the original game, with their sou
   crouch, fly, camera mode) is taken out of the player's input before the GUI or the locomotion see it. HUD bottom right:
   armour, speed (smoothed over ~0.3 s, whole km/h), weapon and its state (ready / reloading / locks n/3 / firing / beam /
   unfolding / folded / out of energy), armour and energy bars. The rider is hidden.
-  Since 0.9.0 round 3 (user 2026-10-21: a phone screen is already full) the game's mod settings (page 机甲面板, Mod/MDSettings.cs)
-  show or hide the panel, size it 50-150 %, place it anywhere (0-100 % across and down; 100 / 100 is the old place) and drop
-  the key-hint line together with the key hints of the boarding and weapon messages. The rifle shows 射击中 while it fires: its
+  Since 0.9.0 round 3 (user 2026-10-21: a phone screen is already full) it can be hidden and lose its key-hint line (with the
+  key hints of the boarding and weapon messages); since round 4 it is placed on a game page like the CS weapons mod's HUD
+  editor (MDHudLayoutScreen, from the mod's settings page): drag, two fingers to move / pinch / twist, mouse wheel to scale,
+  Shift + wheel or Q / E to turn, buttons for both; in play MDHudHost places it from MDSettings.Hud while the layout is measured. The rifle shows 射击中 while it fires: its
   0.25 s between shots used to read as 装填中 and flip with 就绪 four times a second (user report).
+- Neorxna's info panel (optional mod) names it 水星机甲 with armour, kit level and pilot state (MDNeorxnaCompatibility; until
+  0.9.0 round 4 it read 已移除的旧单位, the name meant for the removed 0.5.0 enemy, because Mercury uses the old mech template).
 - Damage taken plays player_damage; destroyed (armour 0): the rider is set down, explosion and player_destruction, death clip
   held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, crafting table or creative inventory): stands on the clicked ground facing like the player;

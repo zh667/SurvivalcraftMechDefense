@@ -92,3 +92,22 @@ User: "应该加模组设置给玩家一些自定义选项：1.希望机甲下�
 - Results: docs/STATUS.md (round 3). Lab parts settings / hud / spawns / targets and the full robots mode pass (job md-r3-full2);
   regression md-r3-reg1 (special, mech, smoke 0.5.0 -> 0.9.0, perf). Package SHA-256 956129bf…f9a1c4ce. The panel test found a
   second bug (placed from the previous frame's screen size, cut off when the size changes), fixed by placing it during layout.
+
+## Round 4 (2026-10-21)
+
+User: "1.把面板调到你想要的位置和大小 这个应该是给玩家一个游戏页面，再加上调整的HUD（像CS枪械那样，并且手指和电脑按键可缩放，旋转之类）
+2.恶魔机甲召唤的敌兵不会自动找机甲，炮塔，玩家攻击 3.把模组设置都放在一个页面（类似于cs枪械）并且玩家可以选择刷新开始天数为0（就是不刷新）
+4.炮塔被自己人挡住怎么办？". Not asked back; decisions:
+- Followed the CS weapons mod (E:/projects/ScCsgoKnives: ScGunModSettingsWidget, ScGunSettingsScreen, ScGunLayoutScreen,
+  ScHudGesture, ScGunWorldBackground): one entry in 模组设置 opens the mod's own page; a HUD editor over a frozen game picture.
+  Settings now saved by MDModLoader.SaveSettings / LoadSettings (the data-driven items of round 3 are gone; round 3 was not
+  released, so nothing to migrate). Start day 0 stops wild spawns and raids; the beacon still works.
+- Cause of 2 (lab, escorts diagnostic): the game packs away every creature that may despawn and is over 60 m from all players
+  and later recreates it from its template without its orders. Escorts appear 40-50 m beyond the beacon and raids 48-64 m beyond
+  the towers, so with the player standing back they vanished on arrival (2 of 3 escorts within 3 s at full health) and came
+  back as plain wild robots. Raiders now keep AutoDespawn off while they have a target, a tower to go to or a goal, and go for
+  the nearest tower or Mercury before their raid goal. In Creative robots still never attack players (by design since round 1).
+- 4 was already handled in round 3 (sight lines and shots pass through the player's side); answered, no change.
+- Follow-up in the same round (user: "还有水星机甲，用那个显示物品信息的mod看，是已移除的旧单位"): the mod's own Neorxna hook
+  (MDNeorxnaCompatibility, 0.6.0) named every unit that was not a tower 已移除的旧单位; Mercury (0.8.0) lives on the old mech
+  template, so it read as removed. It now reads 水星机甲 · 机甲防线 · 机甲 with armour, kit level and pilot state.

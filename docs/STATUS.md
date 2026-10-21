@@ -2,6 +2,34 @@
 
 ## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
 
+Round 4 (user 2026-10-21: adjust the panel on a game page like the CS weapons mod, fingers and mouse/keys to scale and turn; the
+devil mech's escorts never attack mech, towers or player; all settings on one page like the CS weapons mod, start day 0 = no
+spawns; what if a tower is blocked by its own side):
+- Settings: the game's 模组设置 has one entry (MDSettingsEntryWidget) that opens the mod's page MDSettingsScreen (Mod/MDSettingsScreen.cs):
+  mech panel button + summary, start day 0-30 (0: no wild spawns and no raids; beacon still works), spawn time, interval, density
+  (with its group size and limit spelled out), raid chance and size; 恢复默认 / 取消 / 保存 on a copy. Saved by
+  MDModLoader.SaveSettings / LoadSettings into ModSettings.xml (round 3's data-driven items and Assets/Lang removed).
+- HUD editor MDHudLayoutScreen over a frozen game picture (MDWorldBackground): the real panel where it will be; drag, two fingers
+  move / pinch / twist (MDHudGesture), wheel scales, Shift + wheel or Q / E turns, buttons 放大 / 缩小 / 左转 / 右转 / 恢复默认,
+  show and key-hint switches, controls collapse, swap sides and move away by themselves when they cover the panel. In play
+  MDHudHost places the panel from MDHudPlacement (centre, scale x screen fit, turn) while measuring.
+- Escorts (and raids) vanished: SubsystemSpawn packs away every AutoDespawn creature over 60 m from all players every 2 s and
+  recreates it later from its template without its orders; escorts appear 40-50 m beyond the beacon, raids 48-64 m beyond the
+  towers. Diagnostic lab part `robots-escorts`: 2 of 3 escorts gone within 3 s at full health, back later as plain robots.
+  Raiders now keep AutoDespawn off while busy (target, tower to go to, goal) and go for the nearest tower or Mercury first.
+- Tower blocked by its own side: already handled in round 3 (MDCombat.Trace passes the player's side); answered, no change.
+- Lab parts (first runs after the changes): settings, hud, escorts (A 3/3 and B 2/2 escorts fired, none vanished), spawns
+  (start day 0 blocks), raid (0 vanished) pass. Shots: local/claude-work/r4 (sheet_r4.jpg).
+- Mercury in Neorxna's info panel read 已移除的旧单位 (user): the mod's own hook named every non-tower unit so since 0.6.0, and
+  Mercury uses the old mech template. Now 水星机甲 with armour, kit and pilot state (lab: real Neorxna panel, after a tower).
+- Full `lab --mode robots` passes (job md-r4-reg1, 172 shots); special, mech, smoke 0.5.0 -> 0.9.0 pass; kits with the Neorxna
+  check (md-r4-fin1). Perf on the final package: 0.8.0 1.08/1.14 and 1.08/1.12 ms vs 1.06/1.14 and 1.17/1.22 ms (an earlier
+  pair in this round spread 1.04-1.55 in both builds: machine noise).
+- Package dist/MechDefense-0.9.0.scmod 50,788,769 bytes, 214 entries, SHA-256 87612cdd5b55195d9cc1aae9a564f227aa06bb81a426cd3e91ea9b013ed78917
+  (no 终末地 / 毁灭枪手 / 原作; MechDefense.xdb unchanged).
+- Not tested: touch gestures on a real phone (the editor's pinch / twist are only exercised through the same code path the
+  buttons use; the drag and wheel paths were not driven by real input in the lab), Android, the nightly raid trigger, long play.
+
 Round 3 (user 2026-10-21: mod settings for the mech panel (place, size, off: a phone screen is full) and the robot spawns (time,
 density); the rifle flips between 装填中 and 就绪; robots and towers sometimes miss each other; robots should go for the nearest
 tower at once, leave players alone without towers, priority mech > tower > player):

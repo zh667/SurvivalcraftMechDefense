@@ -13,8 +13,9 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
   mech boss) drop progression materials; towers come in three tiers; the boss's blueprint is used up by Mercury's recipe.
   Fallback recipes without fighting cost 5x; only the mech needs a player level. Details: `docs/PROGRESSION.md`.
 - Robots go for Mercury, then towers, a player last (user, 2026-10-21: "机甲>炮塔>玩家"): without towers or Mercury near they
-  leave players alone unless hit. Player options live in the game's mod settings (`Mod/modinfo.json` `Settings`,
-  `Mod/MDSettings.cs`), not in the vanilla settings screen.
+  leave players alone unless hit. Player options: one entry in the game's mod settings (`Mod/modinfo.json` `Settings`) opens
+  the mod's own page (`Mod/MDSettingsScreen.cs`, like the CS weapons mod, user 2026-10-21), saved through
+  `ModLoader.SaveSettings` into ModSettings.xml; never in the vanilla settings screen.
 - In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11), nor an
   "original" (原作) the models, motions or sounds come from (user, 2026-10-17: “帮助里不要提到什么原作什么的”).
 - Towers attack hostile creatures only (`Mod/MDFaction.cs`: read from each creature's own behaviour, no list of mod names;

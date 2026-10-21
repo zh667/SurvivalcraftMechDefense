@@ -42,6 +42,8 @@ public partial class Lab {
         return new{count=mine.Count,mercuryAtLevel7=at7?.Message,rec};
     }
 
+    // mode "robots" runs every part; "robots-<part>" (items, gallery, fight, raid, boss, summons, kits) one of them, after the recipe checks
+    static bool Part(string name)=>mode=="robots"||mode=="robots-"+name;
     static IEnumerable<bool> Robots() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
         var r=new Dictionary<string,object>();results["robots"]=r;var proj=GameManager.Project;var pl=player.ComponentPlayer;var w=MDTowerWorld.For(proj);
@@ -57,22 +59,42 @@ public partial class Lab {
         void ClearPickables(){foreach(var p in proj.FindSubsystem<SubsystemPickables>(true).Pickables.ToList())p.ToRemove=true;}
 
         // ---- items: names, stacks, creative values; on the ground and in the hand
-        {
+        if(Part("items")) {
             var block=(MDPartBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDPartBlock>()];var it=new List<string>();
             foreach(var v in block.GetCreativeValues())it.Add($"{block.GetDisplayName(terrain,v)} (stack {block.GetMaxStacking(v)}, {block.GetCategory(v)}, useable {block.IsUseable_(v)})");
             r["items"]=it;if(it.Count!=MDPartBlock.Count)throw new Exception("items: "+it.Count);
-            var pick=proj.FindSubsystem<SubsystemPickables>(true);
+            // 3D item models (tools/build_part_models.py): on the ground by day and by night (the core band, beacon lamp and Mk3
+            // connector glow), every item in the first-person hand, a few in third person, the hotbar with GUI (slot icons)
+            var pick=proj.FindSubsystem<SubsystemPickables>(true);var gi=proj.FindSubsystem<SubsystemGameInfo>(true);
             for(int i=0;i<MDPartBlock.Count;i++)pick.AddPickable(Terrain.MakeBlockValue(block.BlockIndex,0,i),1,Home+new Vector3(i*.9f-3.6f,.2f,-3),Vector3.Zero,null);
-            while(Wait(1))yield return true;
+            while(Wait(1.5))yield return true;
             foreach(var x in Hold(Home+new Vector3(0,2.4f,-.2f),Home+new Vector3(0,0,-3)))yield return x;Shot("ri_ground");yield return true;
+            foreach(var x in Hold(Home+new Vector3(-1.5f,1.2f,-1.2f),Home+new Vector3(.5f,0,-3)))yield return x;Shot("ri_ground_low");yield return true;
+            gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Night;foreach(var x in Hold(Home+new Vector3(0,2.4f,-.2f),Home+new Vector3(0,0,-3),20))yield return x;Shot("ri_ground_night");yield return true;
+            gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Day;
             ClearPickables();
-            var inv=pl.ComponentMiner.Inventory;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Beacon),1);inv.ActiveSlotIndex=0;
-            pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();foreach(var x in During(.4,()=>{}))yield return x;
-            ScreenCaptureManager.Capture(1280,720,"ri_hand_beacon.png");yield return true;
-            inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Alloy),5);foreach(var x in During(1.2,()=>{}))yield return x;
-            ScreenCaptureManager.Capture(1280,720,"ri_hand_alloy.png");yield return true;inv.RemoveSlotItems(0,inv.GetSlotCount(0));
+            var inv=pl.ComponentMiner.Inventory;pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();
+            for(int i=0;i<MDPartBlock.Count;i++) {
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,i),1);inv.ActiveSlotIndex=0;
+                foreach(var x in During(1.2,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_hand_{i}.png");yield return true;
+            }
+            foreach(var (name,cls) in new[]{("ingot","IronIngotBlock"),("battery","BatteryBlock"),("diamond","DiamondBlock")}) {   // vanilla references, same camera
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(BlocksManager.GetBlockIndex(cls,true),0,0),1);
+                foreach(var x in During(1.2,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_hand_vanilla_{name}.png");yield return true;
+            }
+            pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<TppCamera>();
+            foreach(int i in new[]{1,3,5}){inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,i),1);foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_third_{i}.png");yield return true;}
+            pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();inv.RemoveSlotItems(0,inv.GetSlotCount(0));
+            SettingsManager.ShowGuiInScreenshots=true;var cinv=pl.Entity.FindComponent<ComponentCreativeInventory>(true);
+            var pages=new[]{block.GetCreativeValues().ToList(),((MDSummonBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDSummonBlock>()]).GetCreativeValues().Take(9).ToList()};
+            for(int page=0;page<pages.Length;page++) {
+                for(int i=0;i<9;i++){cinv.RemoveSlotItems(i,cinv.GetSlotCount(i));if(i<pages[page].Count)cinv.AddSlotItems(i,pages[page][i],1);}
+                foreach(var x in Hold(Home+new Vector3(-8,7,-12),Home+new Vector3(3,1,-1)))yield return x;Shot($"ri_hotbar_{page}");yield return true;
+            }
+            for(int i=0;i<9;i++)cinv.RemoveSlotItems(i,cinv.GetSlotCount(i));SettingsManager.ShowGuiInScreenshots=false;
         }
         // ---- every robot template: model, joints, loot; a gallery and each unit's clips
+        if(Part("gallery")) {
         var tpl=MDRobots.Normal.Concat(MDRobots.Elites).ToList();var loads=new Dictionary<string,object>();var gallery=new List<ComponentMDRobot>();
         for(int i=0;i<tpl.Count;i++)gallery.Add(Spawn(tpl[i],origin+new Vector3(i*4.5f-4,0,12),MathF.PI));
         foreach(var g in gallery){g.ForceClip="idle";g.ForceTime=0;}
@@ -94,16 +116,17 @@ public partial class Lab {
             g.ForceClip="idle";g.ForceTime=0;
         }
         Kill(gallery);while(Wait(.5))yield return true;
+        }
 
-        // ---- a normal robot raids one tier-1 gun tower: walks into range, fires, the tower kills it, it drops scrap
-        {
+        // ---- a normal robot raids two tier-1 gun towers (since 2026-10-21 it beats one): walks into range, fires, the towers kill it, it drops scrap
+        if(Part("fight")) {
             var f=new Dictionary<string,object>();r["fight"]=f;var gun=MDTowerLibrary.All.First(t=>t.data==0);
             pl.ComponentBody.Position=Home+new Vector3(10,0,10);while(Wait(.3))yield return true;   // not where the tower goes (a tower placed on the player crushes it)
-            var tower=Place(gun,Home,0);var start=Home+new Vector3(0,0,-38);var rb=Spawn("MDRobot05",start,0);rb.Raider=true;rb.RaidGoal=Home;
+            var tower=Place(gun,Home,0);var tower2=Place(gun,Home+new Vector3(5,0,0),0);var start=Home+new Vector3(0,0,-38);var rb=Spawn("MDRobot05",start,0);rb.Raider=true;rb.RaidGoal=Home;
             float towerMin=1,closest=99;double firstShot=-1,t0f=Time.RealTime;Vector3 diedAt=Vector3.Zero;bool died=false;int frames=0,shots=0;var track=new List<string>();
             foreach(var x in During(45,()=>{
                 double el=Time.RealTime-t0f;if(shots<4&&el>=4+shots*7){var rp=rb.Body.Position;track.Add($"{el:0}s robot {Vector3.Distance(rp,Home):0.0} m, hp {rb.Health.Health:0.00}, shots {rb.ShotsFired}, tower {tower.Damage.Hitpoints:0.00}, clip {rb.Anim.Base?.name}");Cam(Home+new Vector3(14,9,-12),(Home+rp)/2+Vector3.UnitY*1.5f);ScreenCaptureManager.Capture(1280,720,$"rf_mid_{shots}.png");shots++;}
-                towerMin=Math.Min(towerMin,tower.Damage.Hitpoints);if(rb.Entity.IsAddedToProject){closest=Math.Min(closest,Vector3.Distance(rb.Body.Position,Home));if(rb.ShotsFired>0&&firstShot<0)firstShot=Time.RealTime-t0f;}
+                towerMin=Math.Min(towerMin,Math.Min(tower.Damage.Hitpoints,tower2.Damage.Hitpoints));if(rb.Entity.IsAddedToProject){closest=Math.Min(closest,Vector3.Distance(rb.Body.Position,Home));if(rb.ShotsFired>0&&firstShot<0)firstShot=Time.RealTime-t0f;}
                 if(!died&&rb.Health.Health<=0){died=true;diedAt=rb.Body.Position;}
                 if(++frames%40==0)Cam(Home+new Vector3(14,9,-12),(Home+rb.Body.Position)/2+Vector3.UnitY*1.5f);
             }))yield return x;
@@ -112,17 +135,19 @@ public partial class Lab {
             foreach(var x in During(4,()=>{}))yield return x;
             var drops=died?Pickables(diedAt,6):[];f["drops"]=Names(drops);
             if(rb.ShotsFired==0||towerMin>=1||!died||!drops.Any(d=>MDPartBlock.Of(d.value)==MDPartBlock.Kind.Scrap))throw new Exception("fight: "+string.Join(", ",f.Select(kv=>kv.Key+"="+kv.Value)));
-            ClearPickables();Remove([tower]);Kill([rb]);while(Wait(.5))yield return true;
+            ClearPickables();Remove([tower,tower2]);Kill([rb]);while(Wait(.5))yield return true;
         }
 
-        // ---- a raid on four towers (day 12: elites come too)
-        {
+        // ---- a raid on a strong cluster (day 12): four towers plus five tier-3 ones = defence 21: elites, and a second wave after 60 s
+        if(Part("raid")) {
             var q=new Dictionary<string,object>();r["raid"]=q;var defs=MDTowerLibrary.All;
             var cluster=new[]{Place(defs.First(t=>t.data==0),Home+new Vector3(-6,0,0),0),Place(defs.First(t=>t.data==5),Home+new Vector3(6,0,0),0),
-                              Place(defs.First(t=>t.data==3),Home+new Vector3(0,0,-6),0),Place(defs.First(t=>t.data==14),Home+new Vector3(0,0,6),0)};
+                              Place(defs.First(t=>t.data==3),Home+new Vector3(0,0,-6),0),Place(defs.First(t=>t.data==14),Home+new Vector3(0,0,6),0),
+                              Place(defs.First(t=>t.data==4),Home+new Vector3(-6,0,-6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(6,0,-6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(-6,0,6),0),
+                              Place(defs.First(t=>t.data==4),Home+new Vector3(6,0,6),0),Place(defs.First(t=>t.data==4),Home+new Vector3(-12,0,0),0)};
             pl.ComponentBody.Position=Home+new Vector3(0,0,14);while(Wait(1))yield return true;
             var types=proj.FindSubsystem<SubsystemCreatureSpawn>(true).m_creatureTypes.Select(t=>t.Name).Where(n=>n.StartsWith("MechDefense")).ToList();q["spawnTypes"]=types;
-            int sent=MDRaids.Raid(proj,12,new System.Random(5));q["sent"]=sent;
+            int sent=MDRaids.Raid(proj,12,new System.Random(5));q["sent"]=sent;q["defence"]=MDRaids.LastDefence;q["elites"]=MDRaids.LastElites;q["secondWave"]=MDRaids.LastSecondWave;double raidAt=Time.RealTime;
             // the natural spawn rules spawn their robots (their suitability is off in Creative, so the spawn function is called directly)
             var spawner=proj.FindSubsystem<SubsystemCreatureSpawn>(true);var natural=new List<string>();
             foreach(var ct in spawner.m_creatureTypes.Where(c=>c.Name.StartsWith("MechDefense"))){var pt=new Point3((int)Home.X-30,(int)Home.Y,(int)Home.Z+30);
@@ -137,12 +162,16 @@ public partial class Lab {
             q["distanceAfter28s"]=string.Join(" ",raiders.Select(x=>x.Entity.IsAddedToProject&&x.Health.Health>0?$"{Vector3.Distance(x.Body.Position,Home):0}":"dead"));
             q["shots"]=string.Join(" ",raiders.Select(x=>x.ShotsFired));q["towers"]=string.Join(" ",cluster.Select(t=>$"{t.Damage.Hitpoints:0.00}"));
             Cam(Home+new Vector3(20,22,-30),Home);Shot("rr_fight");yield return true;
-            if(types.Count!=2||sent<3||!raiders.Any(x=>x.Kind.Elite)||wild.Count<2||!wild.Any(x=>x.Kind.Elite))throw new Exception("raid: "+string.Join(", ",q.Select(kv=>kv.Key+"="+kv.Value)));
+            int before=proj.Entities.Count(e=>e.FindComponent<ComponentMDRobot>() is {Raider:true});while(MDRaids.SecondWavesSent==0&&Time.RealTime-raidAt<90)yield return true;q["secondWaveAfter"]=Time.RealTime-raidAt;foreach(var x in During(4,()=>{}))yield return x;   // 60 s of game time (~12 % slower than real time in the lab)
+            var all=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x.Raider).ToList();q["raidersAfterSecondWave"]=$"{before} -> {all.Count}";q["towersAfterSecondWave"]=string.Join(" ",cluster.Select(t=>$"{t.Damage.Hitpoints:0.00}"));raiders=all.Union(raiders).ToList();
+            Cam(Home+new Vector3(20,22,-30),Home);Shot("rr_second_wave");yield return true;
+            q["secondWaveSent"]=MDRaids.SecondWavesSent;
+            if(MDRaids.LastDefence!=21||MDRaids.LastSecondWave==0||MDRaids.SecondWavesSent==0||sent<12||types.Count!=2||!raiders.Any(x=>x.Kind.Elite)||wild.Count<2||!wild.Any(x=>x.Kind.Elite))throw new Exception("raid: "+string.Join(", ",q.Select(kv=>kv.Key+"="+kv.Value)));
             Kill(raiders);Kill(wild);Remove(cluster);ClearPickables();while(Wait(.5))yield return true;
         }
 
         // ---- the devil mech: beacon countdown, arrival, weak channel, a fight against tier-3 towers, the blueprint
-        {
+        if(Part("boss")) {
             var x2=new Dictionary<string,object>();r["boss"]=x2;var defs=MDTowerLibrary.All;
             pl.ComponentBody.Position=Home+new Vector3(0,0,18);pl.ComponentBody.Rotation=Quaternion.Identity;while(Wait(.5))yield return true;
             var inv=pl.ComponentMiner.Inventory;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Beacon),1);inv.ActiveSlotIndex=0;
@@ -153,9 +182,10 @@ public partial class Lab {
             double tb=Time.RealTime;ComponentMDRobot boss=null;
             foreach(var x in During(34,()=>boss??=MDBoss.Alive(proj)))yield return x;
             x2["arrivedAfter"]=boss==null?-1:Time.RealTime-tb;if(boss==null)throw new Exception("boss did not come");
-            x2["flyingAfterArrival"]=boss.Creature.ComponentLocomotion.m_flying;
+            x2["flyingAfterArrival"]=boss.Creature.ComponentLocomotion.m_flying;x2["armour"]=boss.Health.AttackResilience;x2["escortSize"]=boss.Boss.EscortSize;
+            if(boss.Health.AttackResilience!=46000)throw new Exception("boss armour "+boss.Health.AttackResilience+" (want 40000 + 3 towers x 2000)");
             var hover=new List<string>();double th=Time.RealTime;int hs=0;
-            foreach(var x in During(8,()=>{if(Time.RealTime-th>=hs*.5){hs++;var l=boss.Creature.ComponentLocomotion;hover.Add($"{Time.RealTime-th:0.0}s y {boss.Body.Position.Y-Home.Y:0.00} want {boss.Boss.LastWant.Y-Home.Y:0.00} ask {boss.Boss.LastFly} vel {boss.Body.Velocity} grav {boss.Body.IsGravityEnabled} stand {boss.Body.StandingOnValue.HasValue} fly {l.FlySpeed:0.0} charge {boss.Boss.Charge:0.0}/{boss.Boss.Slash:0.0} target {boss.Target?.Entity.FindComponent<ComponentMDUnit>()?.TowerId}");}}))yield return x;
+            foreach(var x in During(8,()=>{if(Time.RealTime-th>=hs*.5){hs++;var l=boss.Creature.ComponentLocomotion;hover.Add($"{Time.RealTime-th:0.0}s y {boss.Body.Position.Y-Home.Y:0.00} want {boss.Boss.LastWant.Y-Home.Y:0.00} ask {boss.Boss.LastFly} vel {boss.Body.Velocity} grav {boss.Body.IsGravityEnabled} stand {boss.Body.StandingOnValue.HasValue} fly {l.FlySpeed:0.0} order {l.LastFlyOrder} flying {l.m_flying} imm {boss.Body.ImmersionFactor:0.00} crushed {boss.Body.CrushedTime:0.00} stun {l.StunTime:0.00} onBody {boss.Body.StandingOnBody?.Entity.FindComponent<ComponentCreature>()?.DisplayName} charge {boss.Boss.Charge:0.0}/{boss.Boss.Slash:0.0} target {boss.Target?.Entity.FindComponent<ComponentMDUnit>()?.TowerId}");}}))yield return x;
             x2["hover"]=hover;var ground=Home.Y;x2["altitude"]=boss.Body.Position.Y-ground;x2["flying"]=boss.Creature.ComponentLocomotion.m_flying;
             if(boss.Body.Position.Y-ground<1.5f)throw new Exception($"boss does not hover: {boss.Body.Position.Y-ground:0.00} m");x2["distanceToBeacon"]=Vector3.Distance(new Vector3(boss.Body.Position.X,0,boss.Body.Position.Z),new Vector3(Home.X,0,Home.Z+12));
             Cam(Home+new Vector3(26,14,-26),boss.Body.Position);Shot("rx_arrived");yield return true;
@@ -166,7 +196,11 @@ public partial class Lab {
             x2["weak"]=$"{weak}: {dWeak*boss.Health.AttackResilience:0} of 900, {other}: {dOther*boss.Health.AttackResilience:0} of 900";
             if(Math.Abs(dOther/dWeak-MDBossState.OtherFactor)>.02f)throw new Exception("weak channel: "+x2["weak"]);
             boss.Boss.WeakTimer=3;float bh=boss.Health.Health;float lowest=99;int weakChanges=0,lastWeak=boss.Boss.Weak;
-            foreach(var x in During(30,()=>{lowest=Math.Min(lowest,boss.Body.Position.Y-Home.Y);if(boss.Boss.Weak!=lastWeak){weakChanges++;lastWeak=boss.Boss.Weak;}}))yield return x;
+            var clipsSeen=new HashSet<string>();
+            foreach(var x in During(30,()=>{lowest=Math.Min(lowest,boss.Body.Position.Y-Home.Y);if(boss.Boss.Weak!=lastWeak){weakChanges++;lastWeak=boss.Boss.Weak;}clipsSeen.Add(boss.Anim.Base.name);}))yield return x;
+            x2["baseClips"]=string.Join(",",clipsSeen);if(clipsSeen.Overlaps(new[]{"fly_forward","strafe_left","strafe_right"}))throw new Exception("boss pedals: "+x2["baseClips"]);
+            boss.Health.Health=Math.Min(boss.Health.Health,.69f);foreach(var x in During(1,()=>{}))yield return x;x2["escortsAt69"]=boss.Boss.EscortsSent;
+            if(boss.Boss.EscortsSent<2)throw new Exception("no escort at 69 %");
             x2["attacks"]=$"volleys {boss.Boss.Volleys}, sweeps {boss.Boss.Sweeps}, charges {boss.Boss.Charges}";x2["lowestIn30s"]=lowest;x2["weakChanges"]=weakChanges;
             if(boss.Boss.Volleys==0||boss.Boss.Sweeps==0||boss.Boss.Charges==0||weakChanges==0)throw new Exception("boss attacks: "+x2["attacks"]+", weak changes "+weakChanges);
             x2["healthLostIn30s"]=(bh-boss.Health.Health)*boss.Health.AttackResilience;x2["bossShots"]=boss.ShotsFired;x2["towers"]=string.Join(" ",towers.Select(t=>$"{t.Damage.Hitpoints:0.00}"));
@@ -181,8 +215,27 @@ public partial class Lab {
             Remove(towers);ClearPickables();Kill([boss]);while(Wait(.5))yield return true;
         }
 
+        Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());ClearPickables();while(Wait(.5))yield return true;   // the escorts
+        // ---- creative summons: every robot template placed from its item, facing the player; the devil mech too
+        if(Part("summons")) {
+            var s=new List<string>();r["summons"]=s;var inv=pl.ComponentMiner.Inventory;var placedRobots=new List<ComponentMDRobot>();
+            var block=(MDSummonBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDSummonBlock>()];
+            if(block.GetCreativeValues().Count()!=MDSummonBlock.Count)throw new Exception("summons in the creative list: "+block.GetCreativeValues().Count());
+            for(int i=0;i<MDSummonBlock.Count;i++) {
+                var spot=Home+new Vector3(-27+i*6,0,-22);pl.ComponentBody.Position=spot+new Vector3(0,0,5);pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;
+                foreach(var x in During(.3,()=>{}))yield return x;
+                int v=MDSummonBlock.Value(i);inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,v,1);inv.ActiveSlotIndex=0;
+                var before=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToHashSet();
+                pl.ComponentMiner.Use(new Ray3(pl.ComponentBody.Position+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
+                var made=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).FirstOrDefault(x=>x!=null&&!before.Contains(x));
+                s.Add($"{block.GetDisplayName(terrain,v)} -> {(made==null?"nothing":made.Kind.Id+" at "+Vector3.Distance(made.Body.Position,spot).ToString("0.0")+" m, armour "+made.Health.AttackResilience)}");
+                if(made==null)throw new Exception("summon "+i+": "+s[^1]);placedRobots.Add(made);
+            }
+            Cam(Home+new Vector3(0,14,-6),Home+new Vector3(0,2,-22));Shot("rs_summons");yield return true;
+            Kill(placedRobots);while(Wait(.5))yield return true;
+        }
         // ---- Mercury's weapon kits: Mk1 before Mk2, kept through taking it down and deploying it again
-        {
+        if(Part("kits")) {
             var k=new Dictionary<string,object>();r["kits"]=k;var inv=pl.ComponentMiner.Inventory;
             pl.ComponentBody.Position=Home;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
             inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(1),1);inv.ActiveSlotIndex=0;

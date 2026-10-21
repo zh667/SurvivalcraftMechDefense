@@ -152,7 +152,7 @@ public partial class Lab:ModLoader {
         }
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
-        if(mode=="robots")foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
+        if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {
             var (pid,pu,pat)=placed[0];var focus=pat+Vector3.UnitY*1.4f;var eye=focus+new Vector3(.75f,.45f,-1f)*3.6f;
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_a_hold");yield return true;

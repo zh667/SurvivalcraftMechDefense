@@ -1,6 +1,6 @@
 # SurvivalcraftMechDefense: project instructions
 
-One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it). Updated 2026-10-10; Git rules follow
+One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it). Git workflow updated 2026-10-21; Git rules follow
 `E:/projects/ScCsgoKnives/AGENTS.md`.
 
 ## Product
@@ -32,9 +32,11 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 - Before the first edit of a feature, fix, release or policy change, create a task branch from `main`:
   `feat/…`, `fix/…`, `perf/…`, `refactor/…`, `docs/…`, `build/…`, `chore/…` (short kebab-case). Never implement on `main`.
 - This tree has one checked-out branch at a time. Before switching: commit or set aside your own changes and confirm no
-  other writer, game or test job is active (uncommitted edits travel with the checkout). A concurrent second task uses
-  its own `git worktree` outside this folder. When another agent's branch must stay checked out, a commit to your task
-  branch may be written with a temporary index (`GIT_INDEX_FILE` + `commit-tree` + `update-ref`).
+  other writer, game or test job is active (uncommitted edits travel with the checkout). Each concurrent task must use
+  its own task branch and `git worktree` outside this folder. Leave another task's checkout and index alone.
+- Edit, verify, stage and commit the task's changes in that same worktree. Do not use a temporary index
+  (`GIT_INDEX_FILE`), `commit-tree` or manual `update-ref` as a substitute for an isolated task checkout. Record the tested
+  source/artifact identity; do not treat another checkout's build as verification of this task's changed files.
 - Commits follow Conventional Commits: `<type>(<optional scope>): <description>`, types feat / fix / perf / refactor /
   docs / test / build / chore, scopes such as `towers`, `mech`, `tools`, `docs` (for example
   `feat(towers): ship V5 tower models`). Keep each commit to the task's own files.
@@ -42,14 +44,18 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
   and report the branch, commits, verification and remaining gaps.
 - Merge into `main` only after the user explicitly approves merging that task. Approval to develop, commit or push is
   not merge approval, and approval for an earlier task does not carry over.
+- GitHub protects `main`: changes go through PRs, review conversations must be resolved, and force pushes/deletion are
+  disabled, including for administrators. No second reviewer or CI status check is required. A mergeable PR is not
+  user approval; perform the applicable local verification and report its results before asking to merge.
 - Releases: bump `Mod/modinfo.json` (semver), package `dist/MechDefense-<version>.scmod`, and after the approved merge
   tag the merge commit `v<version>` and push the tag. Keep the previous package as rollback until the user accepts the
   new one. Packages go to the user only; installing them is a separate request.
 - Git operations that rewrite files (checkout, merge, pull, reset) run on Windows; from the VPS use Git read-only or
   through Windows jobs. Line endings follow `.gitattributes` (C# CRLF in the working tree, Python and JSON LF, stored
   as LF); never let a tool or checkout rewrite the line endings of files you did not change.
-- Remote: `https://github.com/zh667/SurvivalcraftMechDefense` (private). No CI: the mod builds against the user's
-  local game assemblies, which are not in the repository.
+- Remote: `https://github.com/zh667/SurvivalcraftMechDefense` (public, authorized 2026-10-21). No CI: the mod builds
+  against the user's local game assemblies, which are not in the repository. Do not add automatic CI or required
+  status checks without a new user request.
 
 ## Files and assets
 

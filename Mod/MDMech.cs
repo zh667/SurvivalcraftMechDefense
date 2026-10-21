@@ -333,6 +333,7 @@ public static class MDMechBrain {
             case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":$"锁定 {m.Locks.Count}/{MaxLocks}";
             case MDMechWeapon.Cannon:return m.Cannon switch{MDMechState.CannonState.Deploying=>"展开中",MDMechState.CannonState.Ready=>m.Cooldown>.15f?"装填中":"就绪",_=>"收起（开火即展开）"};
             case MDMechWeapon.Laser:return m.BeamTime>=0?"照射中":m.Cooldown>.15f?"冷却中":"就绪";
+            case MDMechWeapon.Rifle:return m.Trigger&&m.FiredAgo<.5f?"射击中":"就绪";   // 4 shots a second: its 0.25 s between shots is no reload (it flickered 装填中 / 就绪, user 2026-10-21)
         }
         return m.Cooldown>.15f?"装填中":"就绪";
     }

@@ -191,7 +191,7 @@ public partial class Lab {
             foreach(var x in During(34,()=>boss??=MDBoss.Alive(proj)))yield return x;
             x2["arrivedAfter"]=boss==null?-1:Time.RealTime-tb;if(boss==null)throw new Exception("boss did not come");
             x2["flyingAfterArrival"]=boss.Creature.ComponentLocomotion.m_flying;x2["armour"]=boss.Health.AttackResilience;x2["escortSize"]=boss.Boss.EscortSize;
-            if(boss.Health.AttackResilience!=46000)throw new Exception("boss armour "+boss.Health.AttackResilience+" (want 40000 + 3 towers x 2000)");
+            if(boss.Health.AttackResilience!=39000)throw new Exception("boss armour "+boss.Health.AttackResilience+" (want 30000 + 3 tier-3 towers x 3000)");
             var hover=new List<string>();double th=Time.RealTime;int hs=0;
             foreach(var x in During(8,()=>{if(Time.RealTime-th>=hs*.5){hs++;var l=boss.Creature.ComponentLocomotion;hover.Add($"{Time.RealTime-th:0.0}s y {boss.Body.Position.Y-Home.Y:0.00} want {boss.Boss.LastWant.Y-Home.Y:0.00} ask {boss.Boss.LastFly} vel {boss.Body.Velocity} grav {boss.Body.IsGravityEnabled} stand {boss.Body.StandingOnValue.HasValue} fly {l.FlySpeed:0.0} order {l.LastFlyOrder} flying {l.m_flying} imm {boss.Body.ImmersionFactor:0.00} crushed {boss.Body.CrushedTime:0.00} stun {l.StunTime:0.00} onBody {boss.Body.StandingOnBody?.Entity.FindComponent<ComponentCreature>()?.DisplayName} charge {boss.Boss.Charge:0.0}/{boss.Boss.Slash:0.0} target {boss.Target?.Entity.FindComponent<ComponentMDUnit>()?.TowerId}");}}))yield return x;
             x2["hover"]=hover;var ground=Home.Y;x2["altitude"]=boss.Body.Position.Y-ground;x2["flying"]=boss.Creature.ComponentLocomotion.m_flying;
@@ -464,6 +464,49 @@ public partial class Lab {
                 if(escorts.Count<2||gone>0||idle>0)throw new Exception($"escorts {name}: "+es[name+"_summary"]);
                 Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());Remove(towers);if(mech.Entity.IsAddedToProject)proj.RemoveEntity(mech.Entity,true);ClearPickables();while(Wait(1))yield return true;
             }
+        }
+        // ---- round 5 (user, 2026-10-21): the pilot takes no damage in the mech (and a robot's shot at the pilot hits the mech), the
+        // medic tower heals Mercury and the player, the devil mech's armour by tower tier, and 30 s of the devil mech against three
+        // tier-1 towers and Mercury firing its rifle (lab pilot). Screenshots rb5_*.
+        if(Part("balance")) {
+            var bl=new Dictionary<string,object>();r["balance"]=bl;var defs=MDTowerLibrary.All;var health=pl.ComponentHealth;
+            var u=Deploy(Home);var m=u.Mech;while(Wait(1))yield return true;
+            bl["armour"]=u.Damage.AttackResilience;if(u.Damage.AttackResilience!=4000)throw new Exception("Mercury armour "+u.Damage.AttackResilience);
+            pl.ComponentBody.Position=u.Body.Position+new Vector3(2.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.3))yield return true;
+            MDMechPilot.ExternalControls=true;if(!MDMechPilot.Board(pl,u))throw new Exception("balance: cannot board");
+            var mode=gameInfo.WorldSettings.GameMode;gameInfo.WorldSettings.GameMode=GameMode.Survival;   // creative players take no damage anyway
+            float h0=health.Health;int blocked0=MDMechPilotShield.Blocked;
+            health.Injure(new Injury(.3f,null,true,"lab"));   // ignores invulnerability (a creative player has it): the shield must still block
+            var shooter=Spawn("MDRobot05",Home+new Vector3(0,0,-20),0);shooter.ForceClip="idle";float mh0=u.Damage.Hitpoints;
+            MDRobots.Hit(shooter.Entity,pl.ComponentBody,shooter.Kind,10,MDCombat.Center(pl.ComponentBody),Vector3.UnitZ);
+            bl["seated"]=$"player {h0:0.00} -> {health.Health:0.00} (blocked {MDMechPilotShield.Blocked-blocked0}); robot shot at the pilot: mech {mh0:0.000} -> {u.Damage.Hitpoints:0.000}";
+            bool shielded=health.Health==h0&&u.Damage.Hitpoints<mh0;
+            MDMechPilot.Exit(pl,u,true);MDMechPilot.ExternalControls=false;while(Wait(.3))yield return true;
+            health.Injure(new Injury(.2f,null,true,"lab"));float hOut=health.Health;bl["outside"]=$"player {h0:0.00} -> {hOut:0.00} after an injury outside the mech";
+            gameInfo.WorldSettings.GameMode=mode;Kill([shooter]);
+            if(!shielded||hOut>=h0-.1f)throw new Exception("pilot shield: "+bl["seated"]+"; "+bl["outside"]);
+            // the medic tower: Mercury at 50 % and the player at 60 % beside it
+            var medic=Place(defs.First(t=>t.data==19),u.Body.Position+new Vector3(-6,0,0),0);u.Damage.Hitpoints=.5f;health.Health=.6f;pl.ComponentBody.Position=u.Body.Position+new Vector3(-3,.1f,3);
+            foreach(var x in During(6,()=>{}))yield return x;
+            bl["medic"]=$"Mercury 0.50 -> {u.Damage.Hitpoints:0.00}, player 0.60 -> {health.Health:0.00} in 6 s";
+            if(u.Damage.Hitpoints<=.5f||health.Health<=.6f)throw new Exception("medic: "+bl["medic"]);
+            health.Health=1;Remove([medic]);while(Wait(.5))yield return true;
+            // three tier-1 gun towers and Mercury around a devil mech placed in the middle: armour 30000 + 3 x 1000 + 3000
+            var tw=new[]{Place(defs.First(t=>t.data==0),Home+new Vector3(-8,0,10),0),Place(defs.First(t=>t.data==0),Home+new Vector3(8,0,10),0),Place(defs.First(t=>t.data==0),Home+new Vector3(0,0,16),0)};
+            u.Damage.Hitpoints=1;u.Body.Position=Home+new Vector3(14,.1f,4);pl.ComponentBody.Position=u.Body.Position+new Vector3(2.4f,.1f,0);while(Wait(.5))yield return true;
+            MDMechPilot.ExternalControls=true;MDMechPilot.Board(pl,u);
+            var boss=MDBoss.Spawn(proj,Home+new Vector3(0,0,4),Home+new Vector3(0,3,4));while(Wait(.5))yield return true;
+            bl["bossArmour"]=boss.Health.AttackResilience;if(boss.Health.AttackResilience!=36000)throw new Exception("boss armour "+boss.Health.AttackResilience+" (want 36000)");
+            m.Weapon=MDMechWeapon.Rifle;float bh=boss.Health.Health;double tf=Time.RealTime;var track=new List<string>();int step=0;
+            foreach(var x in During(30,()=>{
+                if(!boss.Entity.IsAddedToProject||u.Destroyed)return;var c=MDCombat.Center(boss.Body);var from=MDMechBrain.Eye(u);var d=c-from;
+                u.AimYaw=MathF.Atan2(-d.X,-d.Z);u.AimPitch=Math.Clamp(MathF.Asin(Math.Clamp(d.Y/d.Length(),-1,1)),-.5f,.65f);m.AimPoint=c;m.Trigger=true;
+                if(Time.RealTime-tf>=step*5){step++;track.Add($"{Time.RealTime-tf:0}s boss {boss.Health.Health*100:0}% Mercury {u.Damage.Hitpoints*100:0}% towers {string.Join(" ",tw.Select(t=>$"{t.Damage.Hitpoints*100:0}"))}");}
+            }))yield return x;
+            m.Trigger=false;bl["fight30s"]=track;bl["fightEnd"]=$"boss lost {(bh-boss.Health.Health)*boss.Health.AttackResilience:0} of {boss.Health.AttackResilience:0} ({(bh-boss.Health.Health)*100:0}%), Mercury {u.Damage.Hitpoints*100:0}%{(u.Destroyed?" (wrecked)":"")}, towers {string.Join(" ",tw.Select(t=>$"{t.Damage.Hitpoints*100:0}%"))}";
+            Cam(Home+new Vector3(24,14,-18),Home+new Vector3(0,3,6));Shot("rb5_fight");yield return true;
+            if(MDMechPilot.Mounted(pl)!=null)MDMechPilot.Exit(pl,u,true);MDMechPilot.ExternalControls=false;
+            Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());Remove(tw);if(u.Entity.IsAddedToProject)proj.RemoveEntity(u.Entity,true);ClearPickables();health.Health=1;while(Wait(1))yield return true;
         }
     }
 }

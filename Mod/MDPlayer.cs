@@ -75,11 +75,13 @@ public class MDDeploymentBlock : Block {
     public override int GetTextureSlotCount(int value)=>1;
     public override int GetFaceTextureSlot(int face,int value)=>0;
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
-    // Small 3D icon (~1500 triangles, the tower's own atlas) instead of the full 10-40k-triangle model.
+    // In a slot a tower is its pre-rendered picture; in the hand its full model; elsewhere (dropped) and for the mechs a small
+    // 3D icon mesh (the largest ~1500 triangles, the tower's own atlas) instead of the full model.
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
         if(e?.DrawBlockMode is DrawBlockMode.FirstPerson or DrawBlockMode.ThirdPerson&&Tower(value) is {} held&&MDHeldModel.Draw(held,color,size,matrix,e))return;
         var d=Tower(value);
         if(d==null&&!IsMech(value)){d=MDTowerLibrary.All[0];color*=.35f;}   // the removed enemy (data 2): the first tower's icon, dimmed
+        if(e?.DrawBlockMode==DrawBlockMode.UI&&d!=null&&MDTowerLibrary.Picture(d) is {} picture){MDTowerLibrary.DrawPicture(r,picture,color,size,matrix,e);return;}
         var icon=d!=null?MDTowerLibrary.Icon(d):(MechType(value)??MDMechType.Mercury).Icon;
         if(e?.DrawBlockMode==DrawBlockMode.UI) {
             size*=icon.fit;var m=Matrix.CreateTranslation(-icon.center*size)*matrix;

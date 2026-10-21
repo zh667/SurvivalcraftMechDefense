@@ -17,7 +17,8 @@ files.append((assets/'MechDefense.cr','Assets/MechDefense.cr'))   # crafting rec
 towers=json.loads((assets/'Towers/towers.json').read_text(encoding='utf-8'))['towers']
 files+=[(assets/'Towers/towers.json','Assets/Towers/towers.json'),(assets/'Towers/fx.png','Assets/Towers/fx.png')]
 for t in towers:
-    for f in ['model.glb','atlas.png','icon.bin']:
+    # icon.png: the slot picture (tools/render_tower_icons.py, rerun after any tower rebuild); icon.bin: the dropped item
+    for f in ['model.glb','atlas.png','icon.bin','icon.png']:
         p=assets/'Towers'/t['id']/f;assert p.exists(),p;files.append((p,f'Assets/Towers/{t["id"]}/{f}'))
 sounds={s for t in towers for k in ('fireSounds','hitSounds','chargeSounds') for s in t.get(k,[])}
 for s in sorted(sounds):

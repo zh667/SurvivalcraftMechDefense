@@ -121,9 +121,12 @@ public static class MDCombat {
         if(source.Mech!=null)return creature!=null&&!MDFaction.Friendly(b.Entity);
         return creature!=null&&MDFaction.Hostile(creature,source.Clock.GameTime);
     }
+    // The first body or terrain on a segment, for sight checks and shots. Bodies of the player's side (other towers, Mercury,
+    // players, the player's herd and mounts) are passed through: a tower behind another tower used to see only its neighbour
+    // and never fired, and its shots stopped on the neighbour (user, 2026-10-21: towers and robots sometimes miss each other).
     public static ComponentBody Trace(ComponentMDUnit source,Vector3 start,Vector3 end,out Vector3 point) {
         var terrain=source.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(start,end,false,true,(v,d)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));
-        var body=source.Project.FindSubsystem<SubsystemBodies>(true).Raycast(start,end,0,(b,d)=>b!=source.Body&&b.ParentBody!=source.Body);
+        var body=source.Project.FindSubsystem<SubsystemBodies>(true).Raycast(start,end,0,(b,d)=>b!=source.Body&&b.ParentBody!=source.Body&&!MDFaction.Friendly(b.Entity));
         float max=Vector3.Distance(start,end);float t=terrain?.Distance??max;float bdist=body?.Distance??float.PositiveInfinity;
         point=start+Vector3.Normalize(end-start)*Math.Min(t,bdist);return bdist<t?body?.ComponentBody:null;
     }

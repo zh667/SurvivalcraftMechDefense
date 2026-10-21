@@ -108,7 +108,7 @@ public class Smoke : ModLoader {
         var t=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
         Check(block.GetDisplayName(t,Deploy(1))=="水星机甲 · 部署"&&block.GetDisplayName(t,Deploy(2))=="已移除的旧单位",$"{when}: the old mech item reads as Mercury, the enemy item as removed");
         var creative=block.GetCreativeValues().ToArray();
-        Check(creative.Length==MDTowerLibrary.All.Count+1&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&creative.Contains(Deploy(1)),"creative inventory lists the towers and Mercury");
+        Check(creative.Length==MDTowerLibrary.All.Count+MDMechType.All.Length&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&MDMechType.All.All(m=>creative.Contains(Deploy(m.Data))),"creative inventory lists the towers and the three mechs");
         var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).Append(block.GetDescription(Deploy(2))).ToArray();
         Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")&&!n.Contains("原作")),"no Endfield / Destroy Gunners names, no 原作: "+string.Join(" ",names.Take(4)));   // AGENTS.md product rule
         // Use the removed enemy item, then the frost tower item, on the platform in front of the player

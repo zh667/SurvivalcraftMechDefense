@@ -2,6 +2,37 @@
 
 ## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
 
+Round 3 (user 2026-10-21: mod settings for the mech panel (place, size, off: a phone screen is full) and the robot spawns (time,
+density); the rifle flips between 装填中 and 就绪; robots and towers sometimes miss each other; robots should go for the nearest
+tower at once, leave players alone without towers, priority mech > tower > player):
+- Mod settings in the game's 模组设置 (modinfo.json `Settings`, Mod/MDSettings.cs, option names in Mod/Assets/Lang): page 机甲面板
+  (show, size 50-150 %, position 0-100 % across / down, key hints) and page 敌方机兵 (wild spawn time off / night / all day,
+  interval 15-600 s, density 0.25-4x, first day 1-30, raid chance 0-100 %, raid size 0.5-3x). Changes apply at once.
+- Panel (MDStatusWidget) placed while the layout is measured: placed from the previous frame's size it was cut off when the
+  screen size changed (seen in the lab's 1280x720 capture). Rifle status 射击中 while firing (its 0.25 s between shots showed as
+  装填中: 21 flips in 3.5 s in the lab, now 就绪 -> 射击中 -> 就绪).
+- Towers: sight lines and shots pass through the player's own side (MDCombat.Trace): a tower behind another tower used to see only
+  the front tower and never fired (lab: the old rule's first body was the front tower; now the back tower fires).
+- Robots (ComponentMDRobot): order Mercury in sight > tower in sight > either out of sight > players / the player's herd; walk to
+  the nearest tower or Mercury within 96 m at once (Hunt); players only for 30 s after they hit the robot, or in weapon range when
+  the robot is at the defences. Wild spawns: own spawner MDWildSpawns (the vanilla night spawner shared a limit of 6 with wolves
+  and bears and had no knobs): every interval, 32-56 m from each player, 1-2.5 x density per group, at most 4 x density within
+  80 m; raids take the chance, size and first day from the settings; spawn points never on tree tops.
+- Lab parts `robots-settings|hud|spawns|targets` (Tests/TowerLab/Robots.cs), first runs: settings, spawns, targets passed;
+  hud failed on the panel place (the bug above), passed after the fix. Results and shots: local/claude-work/r3.
+  - settings: 2 pages / 11 items registered, page widgets built with the Chinese names, 关闭 / 仅夜晚 / 全天, Set -> OnModSettingChanged.
+  - spawns: rules (creative: game mode; by day: daytime; all day: spawns; day 30: blocked; off), limit 4 at 1x and 8 at 2x,
+    33-59 m away; 40 s of survival every 15 s: robots after 15 s, none went for the player; a hit robot fired back 8 times.
+  - targets: a robot 50 m from the only tower targeted it after 8 s and fired after 11 s; Mercury before a nearer tower; the back
+    tower of two in a line fired 6 times.
+- Full `lab --mode robots` passes (job md-r3-full2, 165 shots; boss 46000 armour, hovers 3.0 m, glide clips only, three attacks,
+  escorts at 69 %, blueprint; raid 14 + 7; raid size x2 plans 12 for 6). Regression (job md-r3-reg1): special and mech pass, smoke
+  0.5.0 -> 0.9.0 passes, perf 0.8.0 1.02/1.08 and 1.01/1.09 ms vs 1.02/1.09 and 1.04/1.09 ms.
+- Package dist/MechDefense-0.9.0.scmod 50,780,004 bytes, 216 entries, SHA-256 956129bfa6e6179f4939bf13e8e976c92af7247cbe4e6721eebf8bc8f9a1c4ce
+  (no 终末地 / 毁灭枪手 / 原作; MechDefense.xdb unchanged this round).
+- Not tested: the nightly raid trigger itself, a whole survival night of wild spawns, Android (the settings page and the panel on
+  a phone), long play in a real save, multiplayer.
+
 Round 2 (user 2026-10-21: the devil mech "一直蹬脚"; enemy robots placeable -> chose creative summons; difficulty up because players
 place many towers; the item models were only pictures -> 3D model plan confirmed the same day):
 - Devil mech flight: holds the end pose of the one-shot dash clips (10-13) by movement direction, idle hover when slow; the

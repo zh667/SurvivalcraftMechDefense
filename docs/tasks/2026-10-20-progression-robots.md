@@ -73,3 +73,22 @@ item style, low-poly + 32 px textures, sizes per item, <= 300 triangles). Done: 
 the defence, summons, 3D item models (helper agent, E:/projects/md-item-models), lab parts; numbers and checks in docs/STATUS.md and
 docs/PROGRESSION.md. Package SHA-256 475b550f…3f33db82.
 
+
+## Round 3 (2026-10-21)
+
+User: "应该加模组设置给玩家一些自定义选项：1.希望机甲下面的提示可以自定义位置，或者关掉……（可调整显示面板UI大小或者直接关闭），而且现在有个
+问题，机甲的步枪会一直在装填和就绪之间来回切换 2.敌对机甲刷新可自定义刷新时间和刷新密度 3.一些bug，敌兵和我们的炮塔有时候互相识别不到，
+敌兵刷新之后应该直接找离自己最近的炮塔攻击（没有炮塔就正常呆着，不要找玩家……优先级，机甲>炮塔>玩家）". Not asked back; decisions:
+- Settings go into the game's "模组设置" (API 1.9.3+, modinfo.json `Settings`; the user asked for plugin-version settings there on
+  2026-10-20). Panel: show, size 50-150 %, position as two 0-100 % sliders (any place, not a few presets), key hints. Robots:
+  wild spawn time (off / night / all day), interval, density, first day, raid chance, raid size.
+- Wild spawns use an own spawner (MDWildSpawns): the vanilla night spawner shared its small limit with wolves and bears and had no
+  interval to set. "刷新时间" read as both the time of day and the interval.
+- Player as a target: never sought out; fought back for 30 s after the player (or the player's herd) hits a robot, or when the
+  robot is at the defences (a tower or Mercury within 96 m) and the player is in its weapon range with no mech or tower to hit.
+- Root causes found: the rifle's 0.25 s between shots was shown as 装填中 (Cooldown > 0.15 s); a tower's sight line and its shots
+  stopped at the first body, so a tower behind another tower (or the player, or Mercury) never fired; robots only looked 32-64 m
+  around them, so a robot spawned farther from the towers wandered.
+- Results: docs/STATUS.md (round 3). Lab parts settings / hud / spawns / targets and the full robots mode pass (job md-r3-full2);
+  regression md-r3-reg1 (special, mech, smoke 0.5.0 -> 0.9.0, perf). Package SHA-256 956129bf…f9a1c4ce. The panel test found a
+  second bug (placed from the previous frame's screen size, cut off when the size changes), fixed by placing it during layout.

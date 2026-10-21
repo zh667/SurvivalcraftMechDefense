@@ -12,10 +12,14 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 - Since 0.9.0 (user, 2026-10-20) robot enemies from the same game (normal walkers, elite missile / cannon walkers, the devil
   mech boss) drop progression materials; towers come in three tiers; the boss's blueprint is used up by Mercury's recipe.
   Fallback recipes without fighting cost 5x; only the mech needs a player level. Details: `docs/PROGRESSION.md`.
+- Robots go for Mercury, then towers, a player last (user, 2026-10-21: "机甲>炮塔>玩家"): without towers or Mercury near they
+  leave players alone unless hit. Player options live in the game's mod settings (`Mod/modinfo.json` `Settings`,
+  `Mod/MDSettings.cs`), not in the vanilla settings screen.
 - In-game names and descriptions (mod name, items, info panels) never mention 终末地 (user, 2026-10-11), nor an
   "original" (原作) the models, motions or sounds come from (user, 2026-10-17: “帮助里不要提到什么原作什么的”).
 - Towers attack hostile creatures only (`Mod/MDFaction.cs`: read from each creature's own behaviour, no list of mod names;
-  never players, towers, the player's herd or mount); require line of sight and prevent friendly fire. The mech's pilot picks
+  never players, towers, the player's herd or mount); require line of sight (the player's own side does not block it) and
+  prevent friendly fire. The mech's pilot picks
   its targets: its fire hurts any creature except the player's side.
 - Tower models are the authored blocky models from `E:/projects/endfield-turret-model`; `tools/towers.json` names the
   model version per tower. Details, numbers and the build pipeline: `docs/TOWERS.md`.

@@ -88,6 +88,10 @@ the user's installed mods (below). Facts about the original game, with their sou
   crouch, fly, camera mode) is taken out of the player's input before the GUI or the locomotion see it. HUD bottom right:
   armour, speed (smoothed over ~0.3 s, whole km/h), weapon and its state (ready / reloading / locks n/3 / firing / beam /
   unfolding / folded / out of energy), armour and energy bars. The rider is hidden.
+  Since 0.9.0 round 3 (user 2026-10-21: a phone screen is already full) the game's mod settings (page 机甲面板, Mod/MDSettings.cs)
+  show or hide the panel, size it 50-150 %, place it anywhere (0-100 % across and down; 100 / 100 is the old place) and drop
+  the key-hint line together with the key hints of the boarding and weapon messages. The rifle shows 射击中 while it fires: its
+  0.25 s between shots used to read as 装填中 and flip with 就绪 four times a second (user report).
 - Damage taken plays player_damage; destroyed (armour 0): the rider is set down, explosion and player_destruction, death clip
   held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, crafting table or creative inventory): stands on the clicked ground facing like the player;

@@ -173,7 +173,7 @@ public sealed class MDMechState {
     public enum CannonState{Stowed,Deploying,Ready,Retracting} public CannonState Cannon;
     public bool Hovering; public float JetBurst,JetCarry,CannonKick;   // hovering now; jump burst left (s); flame particles owed; cannon recoil left (s)
     public string ForceClip; public float ForceTime;                   // lab: show one clip at one time
-    public MDStatusWidget Hud; public ComponentPlayer HudOwner;
+    public MDHudHost Hud; public ComponentPlayer HudOwner;
     MDMechPose pose;   // cached until the next update (the renderer may ask several times per frame)
     public MDMechState(){Anim=new MDMechAnimator(Def);}
     public MDMechPose Pose(ComponentMDUnit u) {

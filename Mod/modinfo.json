@@ -5,161 +5,25 @@
   "ScVersion": "2.4",
   "PackageName": "local.mechdefense.sample",
   "Author": "Local Mod Project",
-  "Description": "19 种防御塔的自制方块模型（原色贴图），走游戏原生模型渲染；液氮冻结、毒沼中毒减速、酸蚀降防、声波晕眩等特殊效果；自制像素特效；配有音效。射程和弹速按目标移动预判；按生物自身行为分辨敌我；用镐拆卸炮塔（保留耐久），手持铁、铜右键维修。可驾驶机甲「水星」：R 上下车，鼠标转向瞄准，WASD 移动，按住 Shift 悬浮，空格跳；步枪、锁定追踪导弹、火炮、激光、榴弹和近战。0.9.0 加入成长线：敌方机兵（夜里出没，也会夜袭炮塔阵地）掉落机兵残骸、火控芯片、能量核心；炮塔分三阶，二阶要合金板、三阶还要火控芯片；用诱敌信标引出恶魔机甲首领，击毁后得到机甲设计图，合成水星机甲时消耗设计图（需要玩家等级 8）；武器改装件 Mk1～Mk3 提升机甲伤害。不打机兵也能用原版材料硬做合金板、芯片和核心，但贵 5 倍。夜袭规模和首领耐久随炮塔数量增长；创造模式物品栏有机兵召唤物。机兵先打机甲、再打炮塔，附近没有炮塔时不主动找玩家。“模组设置”里可调机甲面板的开关、大小、位置，以及机兵刷新的时段、间隔、密度和夜袭。",
+  "Description": "19 种防御塔的自制方块模型（原色贴图），走游戏原生模型渲染；液氮冻结、毒沼中毒减速、酸蚀降防、声波晕眩等特殊效果；自制像素特效；配有音效。射程和弹速按目标移动预判；按生物自身行为分辨敌我；用镐拆卸炮塔（保留耐久），手持铁、铜右键维修。可驾驶机甲「水星」：R 上下车，鼠标转向瞄准，WASD 移动，按住 Shift 悬浮，空格跳；步枪、锁定追踪导弹、火炮、激光、榴弹和近战。0.9.0 加入成长线：敌方机兵（夜里出没，也会夜袭炮塔阵地）掉落机兵残骸、火控芯片、能量核心；炮塔分三阶，二阶要合金板、三阶还要火控芯片；用诱敌信标引出恶魔机甲首领，击毁后得到机甲设计图，合成水星机甲时消耗设计图（需要玩家等级 8）；武器改装件 Mk1～Mk3 提升机甲伤害。不打机兵也能用原版材料硬做合金板、芯片和核心，但贵 5 倍。夜袭规模和首领耐久随炮塔数量增长；创造模式物品栏有机兵召唤物。机兵先打机甲、再打炮塔，附近没有炮塔时不主动找玩家。“模组设置”里有本模组的设置页：在游戏画面上拖动、缩放、旋转机甲面板，调整机兵刷新的时段、间隔、密度、开始天数（0 为不刷新）和夜袭。",
   "LoadOrder": 1100,
   "NonPersistentMod": false,
   "GameplayImpactLevel": "Break",
   "Dependencies": {},
   "Settings": [
     {
-      "Id": "Hud",
-      "Name": "机甲面板",
-      "Title": "机甲面板",
-      "Description": "驾驶水星机甲时屏幕上的状态面板（装甲、速度、武器）。手机屏幕放不下时可以缩小、挪开或关掉。",
+      "Id": "MechDefense",
+      "Name": "机甲防线",
+      "Title": "机甲防线 · 模组设置",
+      "Description": "机甲面板（拖动摆放、缩放、旋转、开关）和敌方机兵刷新，都在一个设置页里。",
       "Items": [
         {
-          "Id": "Show",
+          "Id": "Open",
+          "Name": "全部设置",
+          "Description": "直接打开机甲防线的设置页，修改后点“保存”生效。",
           "Type": "System.Boolean",
-          "Default": true,
-          "Widget": "BoolButtonSettingWidget",
-          "Name": "显示状态面板",
-          "Description": "关掉后驾驶时只剩准星；换武器时会在屏幕下方提示当前武器。"
-        },
-        {
-          "Id": "Scale",
-          "Type": "System.Single",
-          "Default": 100,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "面板大小（%）",
-          "Description": "100 是原来的大小。",
-          "WidgetProperties": {
-            "MinValue": 50,
-            "MaxValue": 150,
-            "Granularity": 10,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "X",
-          "Type": "System.Single",
-          "Default": 100,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "水平位置（%）",
-          "Description": "0 贴左边，100 贴右边。",
-          "WidgetProperties": {
-            "MinValue": 0,
-            "MaxValue": 100,
-            "Granularity": 5,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "Y",
-          "Type": "System.Single",
-          "Default": 100,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "垂直位置（%）",
-          "Description": "0 贴顶部，100 在右下角快捷栏上方（原来的位置）。",
-          "WidgetProperties": {
-            "MinValue": 0,
-            "MaxValue": 100,
-            "Granularity": 5,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "Keys",
-          "Type": "System.Boolean",
-          "Default": true,
-          "Widget": "BoolButtonSettingWidget",
-          "Name": "显示按键提示",
-          "Description": "面板最下面一行按键说明，以及上车、换武器时的按键提示。手机上用不到，可以关掉。"
-        }
-      ]
-    },
-    {
-      "Id": "Robots",
-      "Name": "敌方机兵",
-      "Title": "敌方机兵",
-      "Description": "野外刷新、夜袭的时间和数量。改动立即生效，所有存档通用。",
-      "Items": [
-        {
-          "Id": "SpawnTime",
-          "Type": "Game.MDSpawnTime",
-          "Default": "Night",
-          "Widget": "EnumSliderSettingWidget",
-          "Name": "野外刷新时段",
-          "Description": "关闭：野外不刷机兵（夜袭另算）。仅夜晚：天黑后。全天：白天也刷。"
-        },
-        {
-          "Id": "Interval",
-          "Type": "System.Single",
-          "Default": 60,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "野外刷新间隔（秒）",
-          "Description": "每隔多少秒在玩家附近刷一批。",
-          "WidgetProperties": {
-            "MinValue": 15,
-            "MaxValue": 600,
-            "Granularity": 15,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "Density",
-          "Type": "System.Single",
-          "Default": 1,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "野外刷新密度（倍）",
-          "Description": "1 倍：每批 1～2 台，玩家 80 米内最多 4 台。2 倍：每批 2～5 台，最多 8 台。",
-          "WidgetProperties": {
-            "MinValue": 0.25,
-            "MaxValue": 4,
-            "Granularity": 0.25,
-            "DecimalPlaces": 2
-          }
-        },
-        {
-          "Id": "StartDay",
-          "Type": "System.Single",
-          "Default": 3,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "从第几天开始出现",
-          "Description": "野外机兵和夜袭都从这一天开始；精英机兵再晚 7 天。",
-          "WidgetProperties": {
-            "MinValue": 1,
-            "MaxValue": 30,
-            "Granularity": 1,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "RaidChance",
-          "Type": "System.Single",
-          "Default": 75,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "夜袭概率（%）",
-          "Description": "每晚有多大机会夜袭你的炮塔阵地。0 = 不夜袭。",
-          "WidgetProperties": {
-            "MinValue": 0,
-            "MaxValue": 100,
-            "Granularity": 5,
-            "DecimalPlaces": 0
-          }
-        },
-        {
-          "Id": "RaidSize",
-          "Type": "System.Single",
-          "Default": 1,
-          "Widget": "NumberSliderSettingWidget",
-          "Name": "夜袭规模（倍）",
-          "Description": "夜袭机兵数量的倍数（单波最多 40 台）。",
-          "WidgetProperties": {
-            "MinValue": 0.5,
-            "MaxValue": 3,
-            "Granularity": 0.25,
-            "DecimalPlaces": 2
-          }
+          "Default": false,
+          "Widget": "Game.MDSettingsEntryWidget"
         }
       ]
     }

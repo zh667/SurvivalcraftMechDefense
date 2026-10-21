@@ -1,40 +1,102 @@
 using Engine;
+using System.Globalization;
+using System.Xml.Linq;
 
 namespace Game;
 
-// When wild robots may appear (mod setting Robots/SpawnTime). The names shown in the settings are in Assets/Lang.
-public enum MDSpawnTime { Off, Night, Always }
+// When wild robots may appear (MDSettingsScreen cycles through these).
+public enum MDSpawnTime { Night, Always, Off }
 
-// Player options (user, 2026-10-21: the mech panel covers a phone screen; the rifle status flickers; robot spawning should be
-// adjustable). They live in the game's "模组设置" (API 1.9.3+, declared in modinfo.json "Settings"; ModSettingsManager keeps the
-// values in ModSettings.xml, for every world). Read once after loading and again whenever one changes (MDModLoader), so the
-// per-frame code reads plain fields; tests set the fields directly.
+// Where the mech's status panel sits. Not custom: above the bottom right corner, clear of the hotbar (the place before
+// 0.9.0 round 4). Custom: its centre at (X, Y) of the controls area (0-1), Scale x the screen fit, turned by Rotation
+// (radians, clockwise on screen). The same layout serves the panel in play (MDHudHost) and the editor (MDHudLayoutScreen).
+public sealed class MDHudPlacement {
+    public bool Custom; public float X=.85f,Y=.8f,Scale=1,Rotation;
+    public const float Edge=20,Bottom=85,MinScale=.5f,MaxScale=2.5f;
+    public MDHudPlacement Copy()=>new(){Custom=Custom,X=X,Y=Y,Scale=Scale,Rotation=Rotation};
+    public MDHudPlacement Normalize() {
+        X=float.IsFinite(X)?Math.Clamp(X,0,1):.85f;Y=float.IsFinite(Y)?Math.Clamp(Y,0,1):.8f;
+        Scale=float.IsFinite(Scale)?Math.Clamp(Scale,MinScale,MaxScale):1;Rotation=float.IsFinite(Rotation)?MathF.IEEERemainder(Rotation,MathF.PI*2):0;return this;
+    }
+    // phones get 0.5-1 of the panel's size, as before
+    public static float Fit(Vector2 area)=>Math.Clamp(Math.Min(area.X/700,area.Y/450),.5f,1);
+    public float TotalScale(Vector2 area)=>Fit(area)*(Custom?Scale:1);
+    public float Turn=>Custom?Rotation:0;
+    // the screen box of a size x scale panel turned by the rotation
+    public static Vector2 Extent(Vector2 size,float scale,float rotation){float c=MathF.Abs(MathF.Cos(rotation)),s=MathF.Abs(MathF.Sin(rotation));return new Vector2(size.X*c+size.Y*s,size.X*s+size.Y*c)*scale;}
+    // the panel's centre in the area, kept fully on screen
+    public Vector2 Centre(Vector2 area,Vector2 size) {
+        var ext=Extent(size,TotalScale(area),Turn);
+        if(!Custom)return new Vector2(area.X-Edge-ext.X/2,area.Y-Bottom-ext.Y/2);
+        var half=Vector2.Min(ext/2,area/2);
+        return new Vector2(Math.Clamp(X*area.X,half.X,area.X-half.X),Math.Clamp(Y*area.Y,half.Y,area.Y-half.Y));
+    }
+    // where the unscaled panel goes (top left, for CanvasWidget.SetWidgetPosition) and its render transform (scale and turn
+    // about its own centre)
+    public Vector2 Corner(Vector2 area,Vector2 size,out Matrix transform) {
+        transform=Matrix.CreateTranslation(-size.X/2,-size.Y/2,0)*Matrix.CreateScale(TotalScale(area))*Matrix.CreateRotationZ(Turn)*Matrix.CreateTranslation(size.X/2,size.Y/2,0);
+        return Centre(area,size)-size/2;
+    }
+    public bool Hit(Vector2 point,Vector2 area,Vector2 size) {
+        var q=Vector2.Transform(point-Centre(area,size),Matrix.CreateRotationZ(-Turn))/TotalScale(area);
+        return MathF.Abs(q.X)<=size.X/2+10&&MathF.Abs(q.Y)<=size.Y/2+10;
+    }
+    // a custom place that starts where the panel is now
+    public void MakeCustom(Vector2 area,Vector2 size){if(Custom)return;var c=Centre(area,size);X=c.X/area.X;Y=c.Y/area.Y;Scale=1;Rotation=0;Custom=true;}
+}
+
+// Player options (user, 2026-10-21, rounds 3-4): the mech panel (shown, key hints, place / size / turn in MDHudLayoutScreen)
+// and the robots (MDWildSpawns, MDRaids). Edited in the mod's own settings page (MDSettingsScreen, reached from the game's
+// "模组设置" through one entry, like the CS weapons mod) and saved by MDModLoader into the game's ModSettings.xml
+// (ModLoader.SaveSettings / LoadSettings), so they hold for every world. The per-frame code reads these plain fields.
 public static class MDSettings {
-    public const string Package="local.mechdefense.sample";
-    // mech panel (MDStatusWidget): shown, size in percent, position in percent of the free space (0 left / top, 100 right /
-    // bottom; 100 / 100 is the old place above the bottom right corner), the key hints (panel line, boarding and weapon messages)
+    public const string Package="local.mechdefense.sample",Element="MechDefenseSettings";
     public static bool HudShow=true,HudKeys=true;
-    public static float HudScale=100,HudX=100,HudY=100;
-    // robots (MDWildSpawns, MDRaids): wild spawns by time of day, every Interval seconds, Density x the group size and the number
-    // near a player; robots from game day StartDay (elites 7 days later); raids on RaidChance % of the nights, RaidSize x the size
+    public static MDHudPlacement Hud=new();
+    // robots: wild spawns by time of day, every SpawnInterval s, SpawnDensity x the group size and the number near a player;
+    // robots from game day StartDay (0: none at all, wild or raids; elites 7 days later); raids on RaidChance % of the nights,
+    // RaidSize x their size
     public static MDSpawnTime SpawnTime=MDSpawnTime.Night;
-    public static float SpawnInterval=60,SpawnDensity=1,StartDay=3,RaidChance=75,RaidSize=1;
+    public static float SpawnInterval=60,SpawnDensity=1,RaidChance=75,RaidSize=1;
+    public static int StartDay=3;
+    public const int MaxStartDay=30;
     public static string LastError;
 
-    public static void Load() {
-        try {
-            HudShow=Get("Hud","Show",true);HudKeys=Get("Hud","Keys",true);
-            HudScale=Math.Clamp(Get("Hud","Scale",100f),50,150);HudX=Math.Clamp(Get("Hud","X",100f),0,100);HudY=Math.Clamp(Get("Hud","Y",100f),0,100);
-            SpawnTime=Get("Robots","SpawnTime",MDSpawnTime.Night);
-            SpawnInterval=Math.Clamp(Get("Robots","Interval",60f),15,600);SpawnDensity=Math.Clamp(Get("Robots","Density",1f),.25f,4);
-            StartDay=Math.Clamp(MathF.Round(Get("Robots","StartDay",3f)),1,30);
-            RaidChance=Math.Clamp(Get("Robots","RaidChance",75f),0,100);RaidSize=Math.Clamp(Get("Robots","RaidSize",1f),.5f,3);
-        } catch(Exception e){LastError=e.Message;Log.Warning("[MechDefense] settings: "+e.Message);}
-    }
-    // a missing or mistyped value (no settings support, an edited ModSettings.xml) keeps the default
-    static T Get<T>(string page,string item,T fallback)=>ModSettingsManager.TryGet<T>(out var v,Package,page,item)?v:fallback;
     public static void Defaults() {
-        HudShow=HudKeys=true;HudScale=HudX=HudY=100;
+        HudShow=HudKeys=true;Hud=new();
         SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;
     }
+    public static void Normalize() {
+        Hud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
+        StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,75),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
+        if(!Enum.IsDefined(SpawnTime))SpawnTime=MDSpawnTime.Night;
+    }
+    static float Finite(float v,float d)=>float.IsFinite(v)?v:d;
+    static string F(float v)=>v.ToString("R",CultureInfo.InvariantCulture);
+    public static void Save(XElement mod) {
+        mod.Element(Element)?.Remove();
+        mod.Add(new XElement(Element,
+            new XAttribute("HudShow",HudShow),new XAttribute("HudKeys",HudKeys),new XAttribute("HudCustom",Hud.Custom),
+            new XAttribute("HudX",F(Hud.X)),new XAttribute("HudY",F(Hud.Y)),new XAttribute("HudScale",F(Hud.Scale)),new XAttribute("HudRotation",F(Hud.Rotation)),
+            new XAttribute("SpawnTime",SpawnTime),new XAttribute("SpawnInterval",F(SpawnInterval)),new XAttribute("SpawnDensity",F(SpawnDensity)),
+            new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize))));
+    }
+    // a missing or unreadable value keeps the default
+    public static void Load(XElement mod) {
+        try {
+            Defaults();var e=mod?.Element(Element);if(e==null)return;
+            bool B(string n,bool d)=>bool.TryParse((string)e.Attribute(n),out var v)?v:d;
+            float N(string n,float d)=>float.TryParse((string)e.Attribute(n),NumberStyles.Float,CultureInfo.InvariantCulture,out var v)?v:d;
+            HudShow=B("HudShow",true);HudKeys=B("HudKeys",true);
+            Hud=new MDHudPlacement{Custom=B("HudCustom",false),X=N("HudX",.85f),Y=N("HudY",.8f),Scale=N("HudScale",1),Rotation=N("HudRotation",0)};
+            SpawnTime=Enum.TryParse<MDSpawnTime>((string)e.Attribute("SpawnTime"),out var st)?st:MDSpawnTime.Night;
+            SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",75);RaidSize=N("RaidSize",1);
+            Normalize();
+        } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}
+    }
+    // writes ModSettings.xml now (the game also writes it when it closes)
+    public static void Persist(){try{ModSettingsManager.SaveModSettings();}catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] saving settings: "+x.Message);}}
+    // texts shared by the settings page and the docs
+    public static string SpawnTimeName(MDSpawnTime t)=>t switch{MDSpawnTime.Always=>"全天",MDSpawnTime.Off=>"关闭（夜袭照常）",_=>"仅夜晚"};
+    public static string StartDayText(int day)=>day<=0?"开始天数：0（不刷新，野外和夜袭都没有）":$"开始天数：第 {day} 天（精英第 {day+7} 天）";
 }

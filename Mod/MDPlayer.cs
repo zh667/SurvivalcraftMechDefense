@@ -9,9 +9,11 @@ public class MDModLoader : ModLoader {
         new Harmony("local.mechdefense.sample").PatchAll();
         foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract"})ModsManager.RegisterHook(hook,this);
     }
-    public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettings.Load);}
-    // "模组设置" (modinfo.json Settings): the engine calls this on every change, during play too
-    public override void OnModSettingChanged(string[] idPath,object value)=>MDSettings.Load();
+    public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
+    // The mod's settings (MDSettings) live in the game's ModSettings.xml, under this mod's own element; the engine calls these
+    // directly (load: while loading, when the file has this mod; save: whenever it writes the file).
+    public override void LoadSettings(System.Xml.Linq.XElement xElement)=>MDSettings.Load(xElement);
+    public override void SaveSettings(System.Xml.Linq.XElement xElement)=>MDSettings.Save(xElement);
     public override void BeforeMinerPlace(ComponentMiner miner,TerrainRaycastResult hit,int x,int y,int z,BlockPlacementData data,out bool placementNotAllowed) {
         placementNotAllowed=MDTowerPlacement.IsReserved(miner.Project.FindSubsystem<SubsystemBodies>(true),x,y,z);
         if(placementNotAllowed)MDPlayer.Message(miner.ComponentPlayer,"此格属于炮塔固定占地区域。");

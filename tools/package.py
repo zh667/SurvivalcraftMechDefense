@@ -5,7 +5,7 @@ Tower audio mixes: Assets/Imported/Endfield/Audio. Mercury, the mech: Assets/Imp
 The 0.5.0 Destroy Gunners sample assets (mech/enemy models, icons, motion catalogue, fire sound) must not come back into
 the package (checked below). Since 0.9.0: the robot enemies (Assets/Imported/RD05, RD06, RD07, RD17 from
 tools/build_unit_assets.py, checked like Mercury's) and the progression item models (Assets/Parts, tools/build_part_models.py).
-Mod settings (modinfo.json "Settings") name their enum options in Assets/Lang (merged into the game's language files).
+Mod settings: one entry in modinfo.json "Settings" opens the mod's own page (Mod/MDSettingsScreen.cs).
 """
 from pathlib import Path
 import hashlib,json,zipfile,subprocess
@@ -30,10 +30,9 @@ for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']+[f'Audio/{k
 # progression items (Mod/MDParts.cs): texture atlas and 3D models (tools/build_part_models.py, committed)
 parts=assets/'Parts';files.append((parts/'parts.png','Assets/Parts/parts.png'))
 for n in range(9):p=parts/f'part{n}.bin';assert p.exists(),p;files.append((p,f'Assets/Parts/part{n}.bin'))
-# mod settings texts (Mod/MDSettings.cs): the enum options of the settings page
-for lang in ['zh-CN','en-US']:p=assets/f'Lang/{lang}.json';json.loads(p.read_text(encoding='utf-8'));files.append((p,f'Assets/Lang/{lang}.json'))
+# mod settings (Mod/MDSettingsScreen.cs): one entry in the game's list that opens the mod's own page
 settings=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8')).get('Settings')
-assert settings and all(i['Id'] and '/' not in i['Id'] for page in settings for i in page['Items']),'modinfo.json Settings'
+assert settings and settings[0]['Items'][0]['Widget']=='Game.MDSettingsEntryWidget','modinfo.json Settings'
 # robot enemies (Mod/MDRobots.cs, tools/build_unit_assets.py): same checks as Mercury's assets
 for unit in ['RD05','RD06','RD07','RD17']:
     d=assets/'Imported'/unit;u=json.loads((d/'unit.json').read_text(encoding='utf-8'))

@@ -90,22 +90,22 @@ public static class MDMechPilot {
         var b=u.Project.FindSubsystem<SubsystemBodies>(true).Raycast(from,to,0,(x,_)=>x!=u.Body&&x.ParentBody!=u.Body&&x!=p.ComponentBody);
         return from+dir*Math.Min(t?.Distance??90,b?.Distance??90);
     }
-    // the status panel follows the driver; the mod setting Hud/Show hides it (checked every frame, so it applies during play)
+    // the status panel follows the driver; the setting "显示状态面板" hides it (checked every frame, so it applies during play)
     public static void Hud(ComponentMDUnit u) {
         var m=u.Mech;var driver=u.Destroyed||!MDSettings.HudShow?null:Driver(u);
-        if(driver!=m.HudOwner){if(m.Hud?.ParentWidget is ContainerWidget c)c.Children.Remove(m.Hud);m.Hud=null;m.HudOwner=driver;if(driver!=null){m.Hud=new MDStatusWidget();driver.ComponentGui.ControlsContainerWidget.Children.Add(m.Hud);}}
-        m.Hud?.Refresh(u);
+        if(driver!=m.HudOwner){if(m.Hud?.ParentWidget is ContainerWidget c)c.Children.Remove(m.Hud);m.Hud=null;m.HudOwner=driver;if(driver!=null){m.Hud=new MDHudHost();driver.ComponentGui.ControlsContainerWidget.Children.Add(m.Hud);}}
+        m.Hud?.Panel.Refresh(u);
     }
     public static void RemoveHud(ComponentMDUnit u){if(u.Mech?.Hud?.ParentWidget is ContainerWidget c)c.Children.Remove(u.Mech.Hud);if(u.Mech!=null){u.Mech.Hud=null;u.Mech.HudOwner=null;}}
 }
 
-// The mech's status panel. Mod settings (MDSettings): size 50-150 % on top of the screen fit (phones get 0.5-1 of it), position
-// anywhere in the free space (0-100 % across and down; the default 100 / 100 is above the bottom right corner, clear of the
-// hotbar), and the key-hint line, which phones do not need (user, 2026-10-21: the screen is already full).
+// The mech's status panel: armour and speed, the weapon and its state, armour and energy bars, the key hints. Its place, size
+// and turn come from MDSettings.Hud (MDHudPlacement), set in the mod's HUD editor (MDHudLayoutScreen; user, 2026-10-21:
+// drag it on a game page, scale and turn it with fingers or the mouse); the editor shows this same widget.
 public class MDStatusWidget:CanvasWidget {
     readonly LabelWidget status,weapon,keys;readonly RectangleWidget back,armor,energy;
-    public const float Width=320,Height=112,ShortHeight=86,Edge=20,Bottom=85;
-    public float PanelScale{get;private set;}=1; public Vector2 LastArea{get;private set;}
+    public const float Width=320,Height=112,ShortHeight=86;
+    bool showKeys=true;
     public MDStatusWidget() {
         Size=new(Width,Height);HorizontalAlignment=VerticalAlignment=WidgetAlignment.Near;IsHitTestVisible=false;
         void Add(Widget w,float x,float y){Children.Add(w);SetWidgetPosition(w,new(x,y));}
@@ -116,26 +116,36 @@ public class MDStatusWidget:CanvasWidget {
         energy=new RectangleWidget{Size=new(0,3),FillColor=new Color(120,170,255),OutlineThickness=0};Add(energy,10,68);
         keys=new LabelWidget{Text="R 下车  V 视角  B 武器  F 近战  Shift 悬浮  空格 跳",Size=new(300,24),FontScale=.6f,Color=Color.White};Add(keys,10,80);
     }
+    // without the key line the panel is 26 units shorter
+    public bool ShowKeys{get=>showKeys;set{showKeys=value;keys.IsVisible=value;var size=new Vector2(Width,value?Height:ShortHeight);if(Size!=size){Size=size;back.Size=size;}}}
+    void Show(string s,string w,float armour,float energyShare,bool locked) {
+        if(status.Text!=s)status.Text=s;if(weapon.Text!=w)weapon.Text=w;
+        armor.Size=new(300*Math.Clamp(armour,0,1),3);energy.Size=new(300*Math.Clamp(energyShare,0,1),3);energy.FillColor=locked?new Color(255,90,70):new Color(120,170,255);
+    }
     // the speed is smoothed (about 0.3 s) and shown in whole km/h, so the number does not flicker with the physics steps
     public void Refresh(ComponentMDUnit u) {
         var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
-        string s=$"水星  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",w=$"{m.WeaponName}   {MDMechBrain.Status(u)}";
-        if(status.Text!=s)status.Text=s;if(weapon.Text!=w)weapon.Text=w;armor.Size=new(300*Math.Clamp(u.Damage.Hitpoints,0,1),3);energy.Size=new(300*m.Energy/MDMechBrain.EnergyMax,3);energy.FillColor=m.EnergyLock>0?new Color(255,90,70):new Color(120,170,255);
-        keys.IsVisible=MDSettings.HudKeys;var size=new Vector2(Width,MDSettings.HudKeys?Height:ShortHeight);if(Size!=size){Size=size;back.Size=size;}
+        Show($"水星  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}",u.Damage.Hitpoints,m.Energy/MDMechBrain.EnergyMax,m.EnergyLock>0);
+        if(ShowKeys!=MDSettings.HudKeys)ShowKeys=MDSettings.HudKeys;
     }
-    // Scaled and placed while the layout is measured, from the area it is measured in (the game's controls area, in UI units:
-    // what the parent offers plus the margins it took off), so a change of the screen size (a phone turned round, a screenshot
-    // at another size) places it right in the same frame.
+    // the editor's sample
+    public void Sample()=>Show("水星  装甲 100%   0 km/h","步枪   就绪",1,.8f,false);
+}
+
+// The panel in play: a host over the whole controls area that places the panel while the layout is measured, from the area
+// it is measured in, so a change of the screen size (a phone turned round, a screenshot at another size) places it right
+// in the same frame.
+public class MDHudHost:CanvasWidget {
+    public readonly MDStatusWidget Panel=new();
+    public Vector2 LastArea{get;private set;}
+    public MDHudHost(){Size=new Vector2(float.PositiveInfinity);IsHitTestVisible=false;Children.Add(Panel);}
     public override void MeasureOverride(Vector2 available) {
-        var area=available+new Vector2(MarginLeft+MarginRight,MarginTop+MarginBottom);
-        if(float.IsFinite(area.X)&&float.IsFinite(area.Y)&&area.X>0&&area.Y>0) {
-            LastArea=area;PanelScale=Math.Clamp(Math.Min(area.X/700,area.Y/450),.5f,1)*MDSettings.HudScale/100;LayoutTransform=Matrix.CreateScale(PanelScale);
-            var size=Size*PanelScale;
-            MarginLeft=MathUtils.Lerp(Edge,Math.Max(Edge,area.X-size.X-Edge),MDSettings.HudX/100);
-            MarginTop=MathUtils.Lerp(Edge,Math.Max(Edge,area.Y-size.Y-Bottom),MDSettings.HudY/100);MarginRight=MarginBottom=0;
+        if(float.IsFinite(available.X)&&float.IsFinite(available.Y)&&available.X>0&&available.Y>0) {
+            LastArea=available;var corner=MDSettings.Hud.Corner(available,Panel.Size,out var m);SetWidgetPosition(Panel,corner);Panel.RenderTransform=m;
         }
         base.MeasureOverride(available);
     }
+    public Vector2 PanelCorner=>GetWidgetPosition(Panel)??Vector2.Zero;
 }
 
 [HarmonyPatch(typeof(ComponentInput),nameof(ComponentInput.Update))]

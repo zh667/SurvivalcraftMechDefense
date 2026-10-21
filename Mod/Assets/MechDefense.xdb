@@ -19,7 +19,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="757a04be-f104-5735-b106-b7d8b829c4c0" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f2650151-206a-557f-8714-793c9d9122dc" />
-        <Parameter Name="AttackResilience" Type="float" Value="3000" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
+        <Parameter Name="AttackResilience" Type="float" Value="4000" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="425581b5-4b15-5fd5-9ae9-3986d1327bab" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="09c0c39b-2b5d-54df-8da3-020b8d86264e" />
       </MemberComponentTemplate>

@@ -12,8 +12,9 @@ namespace Game;
 // explosion or energy (MDTowerBrain.Hit tags the towers' and Mercury's; bullets and other attacks count as kinetic); only the
 // current weak channel does full damage, the other two 40 %. The weak channel changes every 20 s, shown by the colour of its
 // aura and a message, so a defence of one tower type is slow and a mixed one fast.
-// Strength grows with the defence it meets (user, 2026-10-21: players place many towers): armour 40000 + 2000 per tower and
-// 4000 per Mercury within 48 m of the beacon (at most 160000); at 70 % and 35 % health it calls an escort of robots
+// Strength grows with the defence it meets (user, 2026-10-21: players place many towers): armour 30000 + 1000 / 2000 / 3000 per
+// tier-1 / 2 / 3 tower and 3000 per Mercury within 48 m of the beacon (at most 160000; round 5: early players only have tier-1
+// towers); at 70 % and 35 % health it calls an escort of robots
 // (2 + towers / 5, at most 8, half of them elites).
 // Attacks: a homing missile volley at up to three targets (towers first), a beam sweep across its target and a sabre charge (the
 // original's three-slash clip) at a target within 35 m; below half health all come faster. Model x3 (9.6 m tall, 15 m wings,
@@ -139,6 +140,9 @@ public sealed class MDBossState {
 
 public static class MDBoss {
     public const float Countdown=30;
+    // armour at arrival: 30000 + 1000 / 2000 / 3000 per tier-1 / 2 / 3 tower and 3000 per Mercury within 48 m, at most 160000
+    // (user, 2026-10-21, round 5: early players only have tier-1 towers; was 40000 + 2000 per tower + 4000 per Mercury)
+    public const float BaseArmour=30000;
     sealed class Pending { public Vector3 at; public float left=-1,blink; }
     static readonly ConditionalWeakTable<Project,Pending> pending=new();
     public static ComponentMDRobot Alive(Project p)=>p.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).FirstOrDefault(x=>x?.Kind.Boss==true&&x.Health.Health>0);
@@ -170,8 +174,8 @@ public static class MDBoss {
         var e=DatabaseManager.CreateEntity(p,MDRobots.Boss,true);e.FindComponent<ComponentBody>(true).Position=from;
         var r=e.FindComponent<ComponentMDRobot>(true);
         var units=p.Entities.Select(x=>x.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed&&Vector3.Distance(u.Body.Position,at)<48).ToList();
-        int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null);
-        r.Boss.Armour=Math.Clamp(40000+2000*towers+4000*mechs,40000,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
+        int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null),tiers=units.Where(u=>u.Tower!=null).Sum(MDRaids.Weight);
+        r.Boss.Armour=Math.Clamp(BaseArmour+1000*tiers+3000*mechs,BaseArmour,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
         p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
         Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;

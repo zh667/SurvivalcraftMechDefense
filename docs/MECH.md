@@ -34,7 +34,8 @@ the user's installed mods (below). Facts about the original game, with their sou
 
 ## Runtime (`Mod/MDMech.cs`, `Mod/MDMechPilot.cs`)
 
-- Entity: the `MDMech` template of the 0.5.0 sample mech (body 2.4 × 4.8 × 2.4, mass 3000, armour (AttackResilience) 3000, mount), with
+- Entity: the `MDMech` template of the 0.5.0 sample mech (body 2.4 × 4.8 × 2.4, mass 3000, armour (AttackResilience) 3000, since
+  0.9.0 round 5 4000 (user: too fragile against the devil mech, "不要提升太多"), mount), with
   `ComponentMDMechModel` (the engine's model renderer like the towers: world light, fog, shadow; two-sided because the
   original shell is open). `ComponentMDUnit` with kind `Mech` holds an `MDMechState`.
 - Bone transforms: the engine's for joint j is T(p) L T(−p) (row form), p its rest pivot, L its local deformation from the
@@ -95,6 +96,9 @@ the user's installed mods (below). Facts about the original game, with their sou
   0.25 s between shots used to read as 装填中 and flip with 就绪 four times a second (user report).
 - Neorxna's info panel (optional mod) names it 水星机甲 with armour, kit level and pilot state (MDNeorxnaCompatibility; until
   0.9.0 round 4 it read 已移除的旧单位, the name meant for the removed 0.5.0 enemy, because Mercury uses the old mech template).
+- The pilot takes no damage while seated in a working mech (0.9.0 round 5; Harmony prefix on ComponentHealth.Injure(Injury),
+  MDMechPilotShield): robots never target a seated pilot and a robot shot that hits the pilot's body lands on the mech. The medic
+  tower heals Mercury like a tower.
 - Damage taken plays player_damage; destroyed (armour 0): the rider is set down, explosion and player_destruction, death clip
   held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, crafting table or creative inventory): stands on the clicked ground facing like the player;
@@ -144,6 +148,18 @@ research notes are outside the repository). Damage is power against AttackResili
   `MDTowerBrain.Hit`; kept in the deploy item when it is taken down (data bits 15-16, name “（改装 MkN）”).
 - Mercury's hits carry a damage channel for the devil mech's weak channel: rifle bolts and melee kinetic, missiles,
   cannon and grenades explosion, the laser energy.
+
+## Since 0.9.0 round 5: hero mechs 复仇女神 (NEMESIS) and 轩辕十四 (REGULUS)
+
+User 2026-10-21: "主角机甲可以再加个复仇女神和轩辕十四（实力方面：水星<复仇女神<轩辕十四）"; plan confirmed the same day. `MDMechType`
+(Mod/MDMech.cs) holds each mech's name, asset folder, template (MDMech / MDMechNemesis / MDMechRegulus), item data (1 / 30 / 31),
+damage factor (1 / 1.25 / 1.5), energy (100000 / 130000 / 160000), speed (轩辕十四 1.15, its walk clip played faster to match),
+missile locks (3 / 3 / 2, the original's), the burst rifle (复仇女神), blast protection (复仇女神 0.8, MDMechArmour on robot missiles /
+shells / blasts and explosive tower hits), the hover pose (轩辕十四 holds its gliding dash_forward), raid weight and boss armour.
+Armour 4000 / 6000 / 8000 is in the templates. Joint roles come from each mech.json's `roles` (defaults = Mercury's):
+turret, armL / armR (pitch to the aim), cannon joints (the cannon layer), grenade, firstPerson parts; the first-person eye from
+`cockpit.firstPersonEye`; the third-person camera scales with the mech's height. Assets: tools/build_hero_assets.py (helper agent,
+E:/projects/dguns-mech-model/v9_heroes); original data: docs/HEROES_ORIGINAL.md.
 
 ## Not done
 

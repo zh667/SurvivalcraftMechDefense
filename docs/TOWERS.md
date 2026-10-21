@@ -225,6 +225,36 @@
 
 见 docs/STATUS.md 的 0.7.0 一节（隔离运行时，带你的尸鬼、美好时代模组）。
 
+## 0.9.0 第五轮：物品栏图标缺块、减面试做（2026-10-21）
+
+用户：“炮塔那边有的模型面数太多的话也可以减面……而且模型那边有的物品栏显示的还不对，会缺一块（比如医疗塔，可能别的也有）”。当天确认的方案：
+图标改成整座模型预先渲染的图片；减面先做重锤迫击炮给用户看，点头后再做其余 18 座。
+
+**图标缺块。** 根因：`build_tower_assets.py` 给物品栏导出的立体小网格只留面积最大的 1,500 个三角形，倒角、垫块、细杆这些
+小面组成的零件整块被丢掉。按格子视角对比整座模型，19 座全部缺 7.5 %～26.7 % 的像素，医疗塔的球罩整块没了（`local/claude-work/r5/towers/icons_sheet.jpg`）。
+做法：`tools/render_tower_icons.py` 用 Blender 把整座模型按物品格的视角（BlockIconWidget 从 (1,1,1) 正交看，取景和明暗都和旧网格图标一样）
+渲成 `Towers/<id>/icon.png`（256×256，透明底）；格子里画这张图（一个正对格子相机的四边形，预乘透明、带多级纹理），比旧图标每帧变换 1,500 个三角形还省。
+0.4.0 被说“像张纸”的图片是用 `DrawFlatBlock` 画的：图片躺在方块自己的平面上，格子相机斜着看，手上也是同一张卡片；
+这次图片正对格子相机、就是从这个视角渲的，格子里和立体图标看起来一样（隔离运行时快捷栏截图 `local/claude-work/r5/icons/hotbar_big.jpg`），
+手上仍画完整模型，掉在地上的仍用旧的小网格。机甲和机兵的图标网格本来就是每个三角形都留（水星 2,466 个），不缺块，不改。
+
+**减面试做（只做重锤迫击炮 `battle_rocket_1`，没换进模组）。** `tools/reduce_tower.py` 只读现在的构建，输出到
+`local/claude-work/r5/towers/battle_rocket_1/`：
+
+| | 现在 | 减面后 |
+|---|---|---|
+| 三角形（底座 / 转台 / 俯仰） | 142,608（27,594 / 23,329 / 91,685） | 23,702（3,306 / 5,174 / 15,222） |
+| 单个部件最多顶点 | 141,020（要 32 位索引） | 23,765（16 位索引） |
+| 12 个视角逐像素差异（白天光照） | | 平均 0.77 %，最大 1.37 %（正后方） |
+| 透光缝（静止双面） | 124 处、888 像素 | 132 处、848 像素 |
+| 同部件叠面（闪烁） | 14 对、9.4 cm² | 4 对、约 0 |
+| 贴图 | 1024×1024 | 2048×1024 |
+
+做法：① 删掉任何视角都看不到的面（每个刚体部件单独算，704 个视角）；② 同一平面上的面合并，贴图按原像素网格的 2 倍密度重新烘焙；
+③ 窄斜面条并进旁边的大面，比表面只高 ≤ 3.5 mm 的贴板压平到表面上（颜色烘进贴图）。节点名、顺序、父子、轴心不变。
+代价：0.6 m 内的极近处，黄色色带边缘 3 mm 宽的深色细线没了（`extra_closeup_band.jpg`，这个视角差 2.9 %）；新增 8 处很小的透光缝没逐个定位。
+不压平贴板的方案是 27,287 个三角形、最大差异 0.71 %（`variants.json`），超了 25,000 的目标。
+
 ## 结构
 
 - `tools/towers.json`：每种塔的来源、可动部件（按方块标签切出炮管等）、玩法参数、特效颜色、音效。
@@ -233,7 +263,9 @@
   `Mod/Assets/Towers/towers.json`（骨骼、炮口、俯仰范围、占地）。隐藏面处理和碰撞检查都在这里。
 - `tools/check_tower_gaps.py`：透光缝检查。在 GPU 上把每种塔按静止、偏航 45°、俯仰两端摆好，从 86 个方向各画一张
   1024 像素的图（单面、双面各一遍），数被模型围住、宽度不超过约 4 像素（约 1.5 cm）的背景像素块，即能透过去看见天空的缝和针孔。
-- `tools/make_fx_atlas.py`：特效像素图集 `Towers/fx.png`。物品图标网格 `Towers/<id>/icon.bin` 由 build_tower_assets.py 一起导出。
+- `tools/make_fx_atlas.py`：特效像素图集 `Towers/fx.png`。物品图标网格 `Towers/<id>/icon.bin`（掉在地上时用）由 build_tower_assets.py 一起导出。
+- `tools/render_tower_icons.py`：物品栏图标图片 `Towers/<id>/icon.png`（整座模型，物品格视角），塔重新构建后要重跑。
+- `tools/reduce_tower.py`：减面（第五轮试做，只输出到 local/）。
 - `tools/extract_tower_audio.py`：其余 16 种塔的终末地原始音效（技能数据里的事件名 + 约定事件名，只保留银行里真实存在的）。
 - `Mod/MDTowers.cs`：定义加载、骨骼姿态、`ComponentMDTowerModel`（游戏原生模型组件，按瞄准和后坐设置骨骼）。
 - `Mod/MDTowerBrain.cs`：索敌、瞄准（预判、打头）、各攻击方式。`Mod/MDTowerFx.cs`：特效、炮弹、持续区域、减速/眩晕/破甲。
@@ -244,6 +276,7 @@
 ```
 python tools/build_tower_assets.py [ids]      # V5 一个进程约 3 小时：分几组并行（每组给一串 id），再跑一次 --runtime-only 汇总
                                               # （每座的元数据在 local/tower-meta/；MD_TRACE=1 另出三角形→源方块对照）
+python tools/render_tower_icons.py              # 物品栏图标图片（Blender，约 30 秒）；对照图 --sheet
 python tools/make_fx_atlas.py
 python tools/extract_tower_audio.py           # 读取已安装的终末地（只读）
 python tools/prepare_database.py

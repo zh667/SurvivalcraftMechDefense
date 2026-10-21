@@ -111,3 +111,24 @@ User: "1.把面板调到你想要的位置和大小 这个应该是给玩家一�
 - Follow-up in the same round (user: "还有水星机甲，用那个显示物品信息的mod看，是已移除的旧单位"): the mod's own Neorxna hook
   (MDNeorxnaCompatibility, 0.6.0) named every unit that was not a tower 已移除的旧单位; Mercury (0.8.0) lives on the old mech
   template, so it read as removed. It now reads 水星机甲 · 机甲防线 · 机甲 with armour, kit level and pilot state.
+
+## Round 5 (2026-10-21)
+
+User: "感觉现在敌对势力有点超标了？（恶魔机甲可以感应防御塔数量来强化，这是个很好的设计，但是玩家一开始只有初级防御塔，而且做出了水星机甲
+感觉也难以匹敌恶魔机甲……现在水星太脆了……不过不要提升太多，毕竟水星是初级机甲……而且在机甲里玩家还会受到伤害（最好在机甲里就不受伤害……），
+可以设置医疗塔也可以对玩家和机甲治疗），主角机甲可以再加个复仇女神和轩辕十四（实力方面：水星<复仇女神<轩辕十四）。并且炮塔那边有的模型面数太多的话
+也可以减面……机甲这边也可以做对应处理，而且模型那边有的物品栏显示的还不对，会缺一块（比如医疗塔，可能别的也有）". Asked; the user chose the three
+recommended plans:
+- Balance: Mercury armour 3000 -> 4000; devil mech armour 30000 + 1000 / 2000 / 3000 per tier-1/2/3 tower + 3000 per Mercury
+  (at most 160000); the medic tower heals players, mechs and towers; no damage to a seated pilot.
+- Hero mechs: original NEMESIS (model 208) and REGULUS (model 216) like Mercury (original model, sharpened texture, original clips,
+  x4, same controls); armour 4000 / 6000 / 8000, damage x1 / 1.25 / 1.5, energy 100000 / 130000 / 160000; 复仇女神 = 水星 +
+  blueprint + 2 cores ..., level 12; 轩辕十四 = 复仇女神 + 2 blueprints + 4 cores ..., level 16; creative inventory; kits shared.
+  Budget <= 4000 triangles, 2048 texture. Not doing: other skins, new sounds.
+- Towers: reduce by merging coplanar faces (texture rebaked) and folding small bevels; <= 25,000 triangles per tower, < 65,536
+  vertices per part, <= 2 % pixel difference; icons become pictures of the whole model; battle_rocket_1 first, the other 18
+  only after the user has seen it.
+Decisions made here without asking: devil mech armour +4000 / +5000 per hero mech and raid weights 5 / 6 (the plan named only
+Mercury's +3000); dropped towers keep the old icon mesh; mechs not reduced (2,345-2,481 triangles already).
+Results: docs/STATUS.md (round 5), docs/TOWERS.md (0.9.0 第五轮), docs/PROGRESSION.md, docs/MECH.md. Helper agents: hero
+assets (E:/projects/dguns-mech-model/v9_heroes), tower icons and the reduction prototype (local/claude-work/r5/towers).

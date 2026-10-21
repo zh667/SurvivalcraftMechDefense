@@ -2,6 +2,45 @@
 
 ## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
 
+Round 5 (user 2026-10-21: enemies a bit too strong early, Mercury too fragile but "不要提升太多"; no damage to the pilot in the
+mech; medic tower heals players and mechs; new hero mechs 复仇女神 / 轩辕十四 (水星 < 复仇女神 < 轩辕十四); fewer tower triangles;
+inventory icons miss chunks). Plans confirmed the same day (balance numbers, hero mech plan, one reduced tower first):
+- Done (commits 190c993, 843c636, f7d3d6a): pilot shield (MDMechPilotShield), robots skip a seated pilot and their shots at it hit
+  the mech; the medic tower now also heals the mechs (players and towers already); Mercury armour 4000; devil mech armour 30000 + 1000 / 2000 / 3000 per tier-1/2/3
+  tower + 3000 per Mercury. Lab part `robots-balance`: shield blocks even invulnerability-ignoring injuries; medic: Mercury
+  50 -> 100 % and player 60 -> 100 % in 6 s; boss vs 3 tier-1 towers + Mercury 36000 armour, after 30 s boss 70 %, Mercury 68 %.
+- Hero mechs (commits dcb55f9, d08abe7; plan confirmed: original NEMESIS model 208 / REGULUS model 216 like Mercury, x4,
+  same controls): MDMechType (Mercury / 复仇女神 / 轩辕十四: armour 4000 / 6000 / 8000, damage x1 / 1.25 / 1.5, energy 100000 /
+  130000 / 160000). 复仇女神: the original's 3-round rifle burst (0.133 / 0.133 / 0.433 s) and explosions -20 %; 轩辕十四: 15 %
+  faster walking and hover, its own glide pose, 2 missile locks (original). Recipes: 水星 + blueprint + 2 cores + 2 chips + 3 alloy,
+  level 12; 复仇女神 + 2 blueprints + 4 cores + 2 chips, level 16; both in the creative inventory; kits shared. Assets by
+  tools/build_hero_assets.py (helper agent, E:/projects/dguns-mech-model/v9_heroes; 2,481 / 2,345 triangles, 2048 texture).
+  Devil mech armour per hero +4000 / +5000 and raid weight 5 / 6 (my extension of the confirmed +3000 per Mercury).
+  Lab part `robots-heroes` (55 shots): armour, no missing bones, rifle gaps 0.14 / 0.14 / 0.44 s, damage 1000 / 1250 / 1500,
+  复仇女神 takes 48 of a 60 missile, 轩辕十四 walks 12.2 m vs 10.8 m and hovers in dash_forward, cannons fire, dismantle keeps
+  type and kit, Neorxna names, 30 recipes resolve (levels 12 / 16). Shots: local/claude-work/r5/sheet_heroes.jpg.
+- Inventory icons missing chunks (commits 57fc378, ea9a45a): the tower icon mesh kept only the 1,500 largest triangles, so
+  7.5-26.7 % of each tower was missing in a slot (the medic tower's whole dome). tools/render_tower_icons.py (helper agent)
+  renders each full model from the slot's view into Towers/<id>/icon.png; the slot draws it as one quad facing the slot camera
+  (premultiplied, mipmapped). 0.4.0's "像张纸" picture was a DrawFlatBlock card lying in the block's plane, seen at a slant and
+  also held in the hand; the hand keeps the full model. Mech and robot icon meshes keep every triangle: unchanged. Lab mode
+  `icons`: 19 pictures load at 256x256, hotbar pages at 1280x720 and 2560x1440 (local/claude-work/r5/icons/hotbar_big.jpg).
+- Tower reduction prototype (commit b754763, tools/reduce_tower.py, not in the package): battle_rocket_1 142,608 -> 23,702
+  triangles, largest part 141,020 -> 23,765 vertices (16-bit), 12 views 0.77 % different on average, worst 1.37 %; gaps 124 -> 132
+  (888 -> 848 px), same-part overlaps 14 -> 4; atlas 1024x1024 -> 2048x1024. Cost: thin 3 mm dark lines along the yellow band
+  edges gone within 0.6 m. Waiting for the user before the other 18 (docs/TOWERS.md 0.9.0 第五轮). Mech models are already
+  2,345-2,481 triangles: no reduction.
+- Final regression on the package (jobs md-r5-final-reg-1, md-r5-smoke-2): full `lab --mode robots` passes (223 shots; all parts
+  incl. heroes, balance, settings, hud, escorts, raid, boss, kits); special and mech pass. Smoke 0.5.0 -> 0.9.0 first failed one
+  stale check (it expected towers + Mercury in the creative inventory; the hero mechs add two): check updated, passes. The failed
+  result had still exited 0: tools/run_isolated.py now exits non-zero unless the result says passed. Perf (9 towers in the
+  hotbar / 30 towers + hotbar): 0.8.0 1.18 / 1.27 and 1.22 / 1.19 ms, 0.9.0 0.65 / 1.09 and 0.65 / 1.08 ms (slot pictures instead
+  of 1,500-triangle meshes).
+- Package dist/MechDefense-0.9.0.scmod 61,061,299 bytes, 243 entries (19 tower pictures), SHA-256
+  0d38974d117352f8a9ecafcb7461b60e75baed60883400f6d7565cdf682ba50f (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
+- Not tested: Android (picture loading and mipmaps on phones), real touch, a survival night with raids, long play; the medic
+  rate for mechs (50 -> 100 % in 6 s) is untuned and may be strong in real fights.
+
 Round 4 (user 2026-10-21: adjust the panel on a game page like the CS weapons mod, fingers and mouse/keys to scale and turn; the
 devil mech's escorts never attack mech, towers or player; all settings on one page like the CS weapons mod, start day 0 = no
 spawns; what if a tower is blocked by its own side):

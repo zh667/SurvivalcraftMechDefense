@@ -98,6 +98,7 @@ public partial class Lab:ModLoader {
             if(model.Model==null)throw new Exception("model missing "+d.id);
             foreach(var n in d.nodes.Skip(1))if(model.Model.FindBone(n.name,false)==null)throw new Exception($"bone {n.name} missing in {d.id}");
             if(MDTowerLibrary.Icon(d).mesh.Vertices.Count<100)throw new Exception("icon mesh missing "+d.id);
+            if(MDTowerLibrary.Picture(d) is not {Width:256,Height:256})throw new Exception("slot picture missing "+d.id);
             checks.Add($"{d.id}: model {model.Model.Meshes.Count} meshes, {model.Model.Bones.Count} bones, icon ok");
         }
         results["loadChecks"]=checks;
@@ -333,6 +334,20 @@ public partial class Lab:ModLoader {
                 foreach(var x in Hold(origin+new Vector3(-8,7,-12),origin+new Vector3(25,1,20)))yield return x;Shot($"icons_{page}");yield return true;
             }
             SettingsManager.ShowGuiInScreenshots=false;
+        }
+        if(mode=="icons") {
+            // slot pictures (0.9.0 round 5): hotbar pages of every tower and mech, then the robot summons, GUI on; each page
+            // also at 2560x1440, where the slots are twice as large
+            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var summon=BlocksManager.Blocks.First(b=>b is MDSummonBlock);
+            var inv=player.ComponentPlayer.Entity.FindComponent<ComponentCreativeInventory>(true);
+            var pages=block.GetCreativeValues().Chunk(9).Concat(summon.GetCreativeValues().Chunk(9)).ToList();
+            SettingsManager.ShowGuiInScreenshots=true;
+            for(int page=0;page<pages.Count;page++) {
+                for(int i=0;i<9;i++){inv.RemoveSlotItems(i,inv.GetSlotCount(i));if(i<pages[page].Length)inv.AddSlotItems(i,pages[page][i],1);}
+                foreach(var x in Hold(origin+new Vector3(-8,7,-12),origin+new Vector3(25,1,20)))yield return x;
+                Shot($"icons_{page}");ScreenCaptureManager.Capture(2560,1440,$"icons_{page}_big.png");yield return true;
+            }
+            SettingsManager.ShowGuiInScreenshots=false;results["iconPages"]=pages.Count;
         }
         if(mode is "fire" or "all") {
             // one tower at a time: a dummy target in range, capture the sequence after its first shot

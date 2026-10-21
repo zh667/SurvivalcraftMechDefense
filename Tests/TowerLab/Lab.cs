@@ -349,6 +349,56 @@ public partial class Lab:ModLoader {
             }
             SettingsManager.ShowGuiInScreenshots=false;results["iconPages"]=pages.Count;
         }
+        if(mode.StartsWith("view-")) {
+            // one tower (mode view-<id>) seen the way a player sees it; the same shots from two packages make a before / after
+            // (0.9.0 round 5: the reduced battle_rocket_1). Aim locked (no targets: a long-range tower turns to whatever wild
+            // creature is around), no clouds, so only the model differs. Around, player height, close-ups from outside its box,
+            // night, in the hand, tiny camera steps near and far (flicker), then firing at a wolf.
+            var d=towers.First(t=>t.id==mode[5..]);var views=new List<string>();
+            Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
+            SettingsManager.SkyRenderingMode=SkyRenderingMode.NoClouds;
+            var at=origin+new Vector3(10,0,14);var u=Place(d,at,0);   // faces -Z
+            void Freeze(){u.Target=null;u.ScanTimer=1e6f;u.Cooldown=1e6f;u.Yaw=u.AimYaw=0;}
+            for(double s0=Time.RealTime;Time.RealTime-s0<1.5;){Freeze();yield return true;}
+            float h=d.bounds[1][1],s=Math.Max(h,Math.Max(d.bounds[1][0]-d.bounds[0][0],d.bounds[1][2]-d.bounds[0][2]));var focus=at+Vector3.UnitY*h*.5f;
+            IEnumerable<bool> View(string name,Vector3 eye,Vector3 look,int frames=4){for(int k=0;k<frames;k++){Freeze();Cam(eye,look);yield return true;}Freeze();Shot("v_"+name);views.Add(name);yield return true;}
+            Vector3 P(float x,float y,float z)=>at+new Vector3(x*s,y*h,z*s);   // x, z in tower sizes from its axis, y in heights
+            for(int k=0;k<8;k++){float a=k*MathF.PI/4;foreach(var x in View($"around_{k*45:000}",focus+new Vector3(-MathF.Sin(a),.36f,-MathF.Cos(a))*s*1.6f,focus))yield return x;}
+            foreach(var x in View("top",focus+new Vector3(.02f,s*1.8f,-.3f),focus))yield return x;
+            foreach(var x in View("player_front",at+new Vector3(.8f,1.7f,-5),focus))yield return x;
+            foreach(var x in View("player_back",at+new Vector3(-1.2f,1.7f,4.5f),focus))yield return x;
+            foreach(var x in View("close_upper_front",P(.25f,.95f,-.8f),P(0,.75f,-.15f)))yield return x;
+            foreach(var x in View("close_upper_right",P(.8f,.85f,-.1f),P(0,.7f,0)))yield return x;
+            foreach(var x in View("close_upper_back",P(-.2f,.9f,.8f),P(0,.7f,0)))yield return x;
+            foreach(var x in View("close_mid_right",P(.8f,.45f,-.3f),P(0,.4f,0)))yield return x;
+            foreach(var x in View("close_base_front",P(.35f,.3f,-.8f),P(0,.15f,0)))yield return x;
+            foreach(var x in View("close_base_back",P(-.4f,.3f,.8f),P(0,.15f,0)))yield return x;
+            var pose=MDTowerBrain.Pose(u);var mz=d.muzzles.Length>0?MDTowerLibrary.Muzzle(d,pose,0):P(0,.9f,0);
+            foreach(var x in View("close_muzzle",mz+new Vector3(.45f,.5f,-.7f),mz))yield return x;
+            foreach(var x in View("very_close_muzzle",mz+new Vector3(.22f,.25f,-.35f),mz))yield return x;
+            var gi=GameManager.Project.FindSubsystem<SubsystemGameInfo>(true);gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Night;
+            foreach(var x in View("night_front",at+new Vector3(.8f,1.7f,-5),focus,20))yield return x;
+            gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Day;foreach(var x in View("day_again",at+new Vector3(.8f,1.7f,-5),focus,20))yield return x;
+            var near=P(0,.7f,0);
+            for(int k=0;k<6;k++)foreach(var x in View($"flicker_near_{k}",near+new Vector3(.9f+k*.004f,.35f,-1.1f)*s*.9f,near,2))yield return x;
+            for(int k=0;k<6;k++)foreach(var x in View($"flicker_far_{k}",focus+new Vector3(.9f+k*.002f,.25f,-1.1f)*22f,focus,2))yield return x;
+            {   // in the hand, first person (the full model is drawn there)
+                var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var pl=player.ComponentPlayer;var gw=pl.GameWidget;var H=origin+new Vector3(-17,0,40);
+                var inv=pl.Entity.FindComponent<ComponentCreativeInventory>(true);inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,d.data),1);inv.ActiveSlotIndex=0;
+                foreach(var x in During(1.2,()=>{Freeze();pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentLocomotion.LookAngles=new(0,-.15f);gw.ActiveCamera=gw.FindCamera<FppCamera>();}))yield return x;
+                ScreenCaptureManager.Capture(1280,720,"v_hand_first.png");views.Add("hand_first");yield return true;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));pl.ComponentBody.Position=Home;
+            }
+            {   // firing at a wolf (aim free again)
+                var a=d.attack;float dist=Math.Max(a.minRange+2,Math.Min(a.range*.6f,9));var target=Dummy(at+new Vector3(0,0,-dist));
+                u.ScanTimer=0;u.Cooldown=1e6f;while(Wait(.6))yield return true;
+                u.Cooldown=0;int shots0=u.ShotCount;var f=at+new Vector3(0,h*.45f,-dist*.5f);Cam(f+new Vector3(1.0f,.55f,-.25f)*Math.Max(9,dist*1.6f),f);
+                double start=Time.RealTime;int k=0;
+                foreach(var dt in new[]{.04,.25,.8,2.0}){while(Time.RealTime-start<dt){Cam(lastEye,lastFocus);yield return true;}Shot($"v_fire_{k}");views.Add($"fire_{k++}");yield return true;}
+                results["fired"]=u.ShotCount-shots0;Remove([target]);
+            }
+            SettingsManager.SkyRenderingMode=SkyRenderingMode.Full;results["views"]=views;results["box"]=$"{s:0.00} x {h:0.00}";
+        }
         if(mode is "fire" or "all") {
             // one tower at a time: a dummy target in range, capture the sequence after its first shot
             var shotsLog=new Dictionary<string,object>();

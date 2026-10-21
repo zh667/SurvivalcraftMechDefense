@@ -1,6 +1,6 @@
 """Inventory icon pictures: every tower's FULL rest-pose model, seen the way an inventory slot sees a block.
 
-python tools/render_tower_icons.py [ids...] [--sheet local/claude-work/r5/towers/icons_sheet.jpg] [--blender PATH]
+python tools/render_tower_icons.py [ids...] [--towers DIR] [--sheet local/claude-work/r5/towers/icons_sheet.jpg] [--blender PATH]
   -> Mod/Assets/Towers/<id>/icon.png   256 x 256 RGBA, transparent background (default: every tower in towers.json)
 
 Why: the old icon (icon.bin) kept only the 1,500 largest triangles, so small pieces (bevels, pads, thin parts) were
@@ -171,13 +171,14 @@ def downsample(png_hi, ss):
 def main():
     import numpy as np
     from PIL import Image, ImageDraw, ImageFont
-    args = sys.argv[1:]; sheet = None; blender = DEFAULT_BLENDER; ids = []
+    args = sys.argv[1:]; sheet = None; blender = DEFAULT_BLENDER; ids = []; towers_dir = None
     i = 0
     while i < len(args):
         if args[i] == '--sheet': sheet = args[i + 1]; i += 2
         elif args[i] == '--blender': blender = args[i + 1]; i += 2
+        elif args[i] == '--towers': towers_dir = Path(args[i + 1]); i += 2   # another Towers folder (tools/stage_tower_preview.py)
         else: ids.append(args[i]); i += 1
-    root = Path(__file__).resolve().parents[1]; towers_dir = root / 'Mod/Assets/Towers'
+    root = Path(__file__).resolve().parents[1]; towers_dir = towers_dir or root / 'Mod/Assets/Towers'
     towers = json.loads((towers_dir / 'towers.json').read_text(encoding='utf-8'))['towers']
     if ids: towers = [t for t in towers if t['id'] in ids]
     tmp = Path(tempfile.mkdtemp(prefix='md_icons_')); jobs = []; meta = {}

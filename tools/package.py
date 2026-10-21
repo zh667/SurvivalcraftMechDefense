@@ -36,7 +36,7 @@ for unit in ['RD05','RD06','RD07','RD17']:
     checks=u.get('check') or []
     assert checks and max(c['p99_m'] for c in checks)<1e-3,f'{unit} assets failed their re-pose check'
     for s in u.get('skins') or ['model']:files.append((d/f'{s}.glb',f'Assets/Imported/{unit}/{s}.glb'))
-    files.append((d/'unit.json',f'Assets/Imported/{unit}/unit.json'));files.append((d/'clips.bin',f'Assets/Imported/{unit}/clips.bin'))
+    for f in ['unit.json','clips.bin','icon.bin','icon.png']:files.append((d/f,f'Assets/Imported/{unit}/{f}'))   # icon: the creative summon item (MDSummon.cs)
 # the robots' and the boss's sounds are Mercury's (MDRobots.Sound -> MDMechBrain.Se): already in the package above
 assert {f'se{i:02d}' for i in (7,8,9,10,11,13,14,20,24,25,31)}<=set(mech['sounds']),'a robot sound is missing from Mercury\'s audio'
 removed=('Assets/Imported/Mech/','Assets/Imported/Enemy/','Assets/Imported/Audio/Fire','Assets/Animations/','Assets/Towers/_legacy/')

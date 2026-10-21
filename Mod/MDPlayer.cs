@@ -125,6 +125,7 @@ public static class MDPlayer {
 public static class MDDeployPatch {
     public static bool Prefix(ComponentMiner __instance,Ray3 ray,ref bool __result) {
         if(MDPartBlock.Of(__instance.ActiveBlockValue)==MDPartBlock.Kind.Beacon){__result=true;MDBoss.PlaceBeacon(__instance,ray);return false;}   // the devil mech's beacon
+        if(Terrain.ExtractContents(__instance.ActiveBlockValue)==BlocksManager.GetBlockIndex<MDSummonBlock>()){__result=true;MDSummonBlock.Place(__instance,ray);return false;}   // creative robot summons
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)!=BlocksManager.GetBlockIndex<MDDeploymentBlock>())return true;
         __result=true;var hit=__instance.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4)return false;
         var terrain=__instance.Project.FindSubsystem<SubsystemTerrain>(true);

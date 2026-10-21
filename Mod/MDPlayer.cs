@@ -9,14 +9,17 @@ public class MDModLoader : ModLoader {
         new Harmony("local.mechdefense.sample").PatchAll();
         foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract"})ModsManager.RegisterHook(hook,this);
     }
-    public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);}
+    public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettings.Load);}
+    // "模组设置" (modinfo.json Settings): the engine calls this on every change, during play too
+    public override void OnModSettingChanged(string[] idPath,object value)=>MDSettings.Load();
     public override void BeforeMinerPlace(ComponentMiner miner,TerrainRaycastResult hit,int x,int y,int z,BlockPlacementData data,out bool placementNotAllowed) {
         placementNotAllowed=MDTowerPlacement.IsReserved(miner.Project.FindSubsystem<SubsystemBodies>(true),x,y,z);
         if(placementNotAllowed)MDPlayer.Message(miner.ComponentPlayer,"此格属于炮塔固定占地区域。");
     }
     // Creatures that hurt a player, a tower or the player's herd become tower targets (MDFaction).
     // The devil mech's weak channel scales the hit first (MDBoss).
-    public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDFaction.Attacked(attackment);}
+    // A robot remembers a player (or the player's herd) that hits it and fights back (MDRobots.Provoked).
+    public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);}
     // Right-click on a tower with iron or copper repairs it (MDTowerMaintenance); the engine's own use/place is skipped then.
     public override void OnPlayerInputInteract(ComponentPlayer componentPlayer,ref bool playerOperated,ref double timeIntervalLastActionTime,ref int priorityUse,ref int priorityInteract,ref int priorityPlace) {
         if(!playerOperated&&(MDKits.TryInstall(componentPlayer)||MDTowerMaintenance.TryRepair(componentPlayer)))playerOperated=true;

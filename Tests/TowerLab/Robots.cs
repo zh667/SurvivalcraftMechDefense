@@ -158,6 +158,8 @@ public partial class Lab {
             foreach(var x in During(28,()=>{}))yield return x;
             q["distanceAfter28s"]=string.Join(" ",raiders.Select(x=>x.Entity.IsAddedToProject&&x.Health.Health>0?$"{Vector3.Distance(x.Body.Position,Home):0}":"dead"));
             q["shots"]=string.Join(" ",raiders.Select(x=>x.ShotsFired));q["towers"]=string.Join(" ",cluster.Select(t=>$"{t.Damage.Hitpoints:0.00}"));
+            int vanished=raiders.Count(x=>!x.Entity.IsAddedToProject&&x.Health.Health>0);q["vanishedAlive"]=vanished;   // packed away by the game's despawn (round 4)
+            if(vanished>0)throw new Exception($"raid: {vanished} raiders vanished alive");
             Cam(Home+new Vector3(20,22,-30),Home);Shot("rr_fight");yield return true;
             int before=proj.Entities.Count(e=>e.FindComponent<ComponentMDRobot>() is {Raider:true});while(MDRaids.SecondWavesSent==0&&Time.RealTime-raidAt<90)yield return true;q["secondWaveAfter"]=Time.RealTime-raidAt;foreach(var x in During(4,()=>{}))yield return x;   // 60 s of game time (~12 % slower than real time in the lab)
             var all=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x.Raider).ToList();q["raidersAfterSecondWave"]=$"{before} -> {all.Count}";q["towersAfterSecondWave"]=string.Join(" ",cluster.Select(t=>$"{t.Damage.Hitpoints:0.00}"));raiders=all.Union(raiders).ToList();
@@ -252,6 +254,18 @@ public partial class Lab {
             var dummy=Dummy(u.Body.Position+new Vector3(0,0,-10));dummy.C.ComponentHealth.AttackResilience=1e4f;while(Wait(.3))yield return true;
             float hd=dummy.C.ComponentHealth.Health;MDTowerBrain.Hit(u,dummy.Body,1000,MDCombat.Center(dummy.Body),Vector3.UnitZ);float dealt=(hd-dummy.C.ComponentHealth.Health)*1e4f;
             k["hit1000WithMk2"]=dealt;Remove([dummy]);
+            // the Neorxna info panel (the user's item / entity info mod): Mercury by its name, not 已移除的旧单位 (user, 2026-10-21)
+            var panelType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)).FirstOrDefault(t=>t!=null);
+            if(panelType==null)k["neorxna"]="not installed";
+            else {
+                MDNeorxnaCompatibility.Install();var panel=Activator.CreateInstance(panelType);
+                var tw=Place(MDTowerLibrary.All.First(t=>t.data==0),u.Body.Position+new Vector3(8,0,0),0);
+                panelType.GetMethod("SetInfo_Entity").Invoke(panel,[tw.Entity]);panelType.GetMethod("SetInfo_Entity").Invoke(panel,[u.Entity]);
+                string name=((LabelWidget)panelType.GetField("m_name").GetValue(panel)).Text;
+                var texts=(panel as ContainerWidget)?.AllChildren.OfType<LabelWidget>().Select(l=>l.Text).Where(x=>!string.IsNullOrWhiteSpace(x)).ToList()??[];
+                k["neorxna"]=$"name {name}; labels: "+string.Join(" | ",texts);Remove([tw]);
+                if(name!="水星机甲"||!texts.Any(x=>x.Contains("武器改装 Mk2"))||texts.Any(x=>x.Contains("已移除")))throw new Exception("Neorxna on Mercury: "+k["neorxna"]);
+            }
             int item=MDTowerMaintenance.Dismantle(u,null);k["item"]=$"{BlocksManager.Blocks[Terrain.ExtractContents(item)].GetDisplayName(terrain,item)}, kit {MDDeploymentBlock.Kit(item)}";
             ClearPickables();inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,item,1);while(Wait(.5))yield return true;
             pl.ComponentMiner.Use(new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
@@ -266,53 +280,76 @@ public partial class Lab {
             return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null)??throw new Exception("Mercury did not deploy");
         }
         var pkg=MDSettings.Package;var gameInfo=proj.FindSubsystem<SubsystemGameInfo>(true);
-        // ---- mod settings: registered with the engine from modinfo.json, the settings page builds with the Chinese names and
-        // option names (Assets/Lang), and a change made through the engine reaches the mod at once (OnModSettingChanged)
+        // ---- mod settings (round 4, user: one page like the CS weapons mod, the panel adjusted on a game page): the game's
+        // "模组设置" has one entry for this mod, which opens the mod's own page; Save writes ModSettings.xml and a reload reads it
+        // back; the HUD editor opens from the page, edits a copy, and Save stores the place. Screenshots rs_* of both pages.
         if(Part("settings")) {
-            var s=new Dictionary<string,object>();r["settings"]=s;
+            var s=new Dictionary<string,object>();r["settings"]=s;MDSettings.Defaults();
             var pages=ModSettingsManager.GetPages(pkg)??throw new Exception("settings: no pages registered");
-            s["pages"]=pages.Select(pg=>$"{pg.Id} {pg.Name}: "+string.Join(", ",pg.Items.OfType<ModSettingItem>().Select(i=>$"{i.Id} {i.Type.Name} {(ModSettingsManager.TryGet<object>(out var v,pkg,pg.Id,i.Id)?v:"(no value)")} {i.WidgetType?.Name}"))).ToList();
-            s["spawnTimeNames"]=string.Join(" / ",Enum.GetValues<MDSpawnTime>().Select(e=>ModSettingLocalizer.GetEnumMemberText(pkg,typeof(MDSpawnTime),e)));
-            var screen=ScreensManager.FindScreen<ModSettingsScreen>("ModSettings");var F=BindingFlags.NonPublic|BindingFlags.Instance;
-            var stack=(Stack<(string,string[],string)>)typeof(ModSettingsScreen).GetField("m_pageStack",F).GetValue(screen);
-            foreach(var pg in pages) {
-                stack.Clear();stack.Push((pkg,new[]{pg.Id},pg.Title));typeof(ModSettingsScreen).GetMethod("NavigateCurrent",F).Invoke(screen,null);
-                int widgets=((System.Collections.ICollection)typeof(ModSettingsScreen).GetField("m_itemWidgets",F).GetValue(screen)).Count;
-                var texts=screen.AllChildren.OfType<LabelWidget>().Select(l=>l.Text).Concat(screen.AllChildren.OfType<SliderWidget>().Select(l=>l.Text)).Where(x=>!string.IsNullOrWhiteSpace(x)).Distinct().ToList();
-                s["page_"+pg.Id]=$"{widgets} widgets: "+string.Join(" | ",texts);
-                if(widgets!=pg.Items.Count)throw new Exception($"settings page {pg.Id}: {widgets} widgets for {pg.Items.Count} items");
-            }
-            stack.Clear();
-            ModSettingsManager.Set([pkg,"Hud","Scale"],60f);s["setScale60"]=MDSettings.HudScale;ModSettingsManager.Set([pkg,"Hud","Scale"],100f);
-            ModSettingsManager.Set([pkg,"Robots","SpawnTime"],MDSpawnTime.Always);s["setAlways"]=MDSettings.SpawnTime.ToString();ModSettingsManager.Set([pkg,"Robots","SpawnTime"],MDSpawnTime.Night);
-            if(pages.Count!=2||(string)s["spawnTimeNames"]!="关闭 / 仅夜晚 / 全天"||(float)s["setScale60"]!=60||(string)s["setAlways"]!="Always"||MDSettings.HudScale!=100)
-                throw new Exception("settings: "+string.Join(", ",s.Select(kv=>kv.Key+"="+kv.Value)));
+            s["pages"]=pages.Select(pg=>$"{pg.Id} {pg.Name}: "+string.Join(", ",pg.Items.OfType<ModSettingItem>().Select(i=>$"{i.Id} {i.Type.Name} {i.WidgetType?.Name}"))).ToList();
+            if(pages.Count!=1||pages[0].Items.Count!=1||pages[0].Items.OfType<ModSettingItem>().First().WidgetType!=typeof(MDSettingsEntryWidget))throw new Exception("settings: "+string.Join(" | ",(List<string>)s["pages"]));
+            SettingsManager.ShowGuiInScreenshots=true;
+            IEnumerable<bool> Until(Func<bool> done,double limit){for(double s0=Time.RealTime;!done()&&Time.RealTime-s0<limit;)yield return true;}
+            IEnumerable<bool> Snap(string name){foreach(var x in During(.8,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");yield return true;}
+            string Texts(ContainerWidget w)=>string.Join(" | ",w.AllChildren.Select(c=>c switch{LabelWidget l=>l.Text,BevelledButtonWidget b=>"["+b.Text+"]",CheckboxWidget c2=>(c2.IsChecked?"☑":"☐")+c2.Text,SliderWidget sl=>"<"+sl.Text+">",_=>null}).Where(x=>!string.IsNullOrWhiteSpace(x)).Distinct());
+            // the game's list -> this mod's page -> the entry opens MDSettingsScreen
+            ScreensManager.SwitchScreen("ModSettings");foreach(var x in During(.5,()=>{}))yield return x;
+            var list=ScreensManager.FindScreen<ModSettingsScreen>("ModSettings");var F=BindingFlags.NonPublic|BindingFlags.Instance;
+            var stack=(Stack<(string,string[],string)>)typeof(ModSettingsScreen).GetField("m_pageStack",F).GetValue(list);
+            stack.Clear();stack.Push((pkg,new[]{pages[0].Id},pages[0].Title));typeof(ModSettingsScreen).GetMethod("NavigateCurrent",F).Invoke(list,null);
+            foreach(var x in Until(()=>ScreensManager.CurrentScreen is MDSettingsScreen,5))yield return x;
+            s["entryOpens"]=ScreensManager.CurrentScreen?.GetType().Name;
+            if(ScreensManager.CurrentScreen is not MDSettingsScreen page)throw new Exception("settings: the entry opened "+s["entryOpens"]);
+            foreach(var x in Snap("rs_settings"))yield return x;s["page"]=Texts(page);
+            page.Working.StartDay=0;page.Working.Time=MDSpawnTime.Always;foreach(var x in Snap("rs_settings_day0"))yield return x;s["pageDay0"]=Texts(page);
+            page.SaveNow();foreach(var x in During(.5,()=>{}))yield return x;
+            s["saved"]=$"back on {ScreensManager.CurrentScreen?.GetType().Name}; start day {MDSettings.StartDay}, time {MDSettings.SpawnTime}";
+            string xml;using(var st=Storage.OpenFile(ModsManager.ModsSettingsPath,OpenFileMode.Read))using(var rd=new StreamReader(st))xml=rd.ReadToEnd();
+            int at=xml.IndexOf(MDSettings.Element);s["file"]=at<0?"no element":xml.Substring(at,Math.Min(400,xml.Length-at));
+            MDSettings.StartDay=5;MDSettings.SpawnTime=MDSpawnTime.Night;ModSettingsManager.LoadModSettings();s["reloaded"]=$"start day {MDSettings.StartDay}, time {MDSettings.SpawnTime}";
+            if(MDSettings.StartDay!=0||MDSettings.SpawnTime!=MDSpawnTime.Always||at<0)throw new Exception("settings save/load: "+s["saved"]+"; "+s["reloaded"]+"; "+s["file"]);
+            // the HUD editor from the page
+            MDSettingsScreen.Open();foreach(var x in During(.5,()=>{}))yield return x;((MDSettingsScreen)ScreensManager.CurrentScreen).OpenEditor();
+            foreach(var x in Until(()=>ScreensManager.CurrentScreen is MDHudLayoutScreen,3))yield return x;
+            if(ScreensManager.CurrentScreen is not MDHudLayoutScreen ed)throw new Exception("settings: no editor ("+ScreensManager.CurrentScreen?.GetType().Name+")");
+            foreach(var x in Snap("rs_editor_default"))yield return x;s["editor"]=Texts(ed);
+            bool rightBefore=ed.ControlsOnRight;ed.MoveTo(new Vector2(.3f,.3f));ed.Scale(1.21f);ed.Turn(-MathF.PI/12);foreach(var x in Snap("rs_editor_custom"))yield return x;
+            s["editorWorking"]=$"custom {ed.Working.Custom} at {ed.Working.X:0.00},{ed.Working.Y:0.00} scale {ed.Working.Scale:0.00} turn {ed.Working.Rotation*180/MathF.PI:0}°; controls on the right {rightBefore} -> {ed.ControlsOnRight}; saved before Save: custom {MDSettings.Hud.Custom}";
+            if(rightBefore||!ed.ControlsOnRight)throw new Exception("editor: the controls did not move out of the way: "+s["editorWorking"]);
+            bool untouched=!MDSettings.Hud.Custom;ed.SaveNow();foreach(var x in During(.5,()=>{}))yield return x;
+            s["editorSaved"]=$"back on {ScreensManager.CurrentScreen?.GetType().Name}; custom {MDSettings.Hud.Custom} at {MDSettings.Hud.X:0.00},{MDSettings.Hud.Y:0.00} scale {MDSettings.Hud.Scale:0.00} turn {MDSettings.Hud.Rotation*180/MathF.PI:0}°";
+            foreach(var x in Snap("rs_settings_after_editor"))yield return x;s["pageAfterEditor"]=Texts(ScreensManager.CurrentScreen);
+            if(!untouched||!MDSettings.Hud.Custom||Math.Abs(MDSettings.Hud.X-.3f)>.01f||Math.Abs(MDSettings.Hud.Scale-1.21f)>.01f||ScreensManager.CurrentScreen is not MDSettingsScreen)throw new Exception("editor: "+s["editorWorking"]+"; "+s["editorSaved"]);
+            MDSettings.Defaults();MDSettings.Persist();SettingsManager.ShowGuiInScreenshots=false;
+            ScreensManager.SwitchScreen("Game");foreach(var x in During(1,()=>{}))yield return x;
         }
-        // ---- the mech panel: default place, small at the top left, large at the top centre, without the key line, hidden; the
-        // rifle's status while firing (it flickered 装填中 / 就绪 four times a second)
+        // ---- the mech panel in play: default place, small at the top left, large and turned in the middle, without the key
+        // line, hidden; its box read from the transform the game draws it with. Then the rifle's status while firing.
         if(Part("hud")) {
-            var h=new Dictionary<string,object>();r["hud"]=h;void Set(string id,object v)=>ModSettingsManager.Set([pkg,"Hud",id],v);
+            var h=new Dictionary<string,object>();r["hud"]=h;MDSettings.Defaults();
             var u=Deploy(Home);var m=u.Mech;while(Wait(1))yield return true;
             pl.ComponentBody.Position=u.Body.Position+new Vector3(2.4f,.1f,0);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.3))yield return true;
             MDMechPilot.ExternalControls=true;if(!MDMechPilot.Board(pl,u))throw new Exception("hud: cannot board");
             SettingsManager.ShowGuiInScreenshots=true;
-            string Panel(){var w=m.Hud;return w==null?"none":$"scale {w.PanelScale:0.00}, at {w.MarginLeft:0},{w.MarginTop:0}, size {w.Size.X:0}x{w.Size.Y:0}, area {w.LastArea}";}
-            // the screenshot lays the GUI out at its own size; the place is read after the screen size is back
-            IEnumerable<bool> Snap(string name){foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");h[name+"_capture"]=Panel();foreach(var x in During(.3,()=>{}))yield return x;h[name]=Panel();}
+            // the panel's box and centre in the host (the controls area), from the transforms the game draws it with
+            (Vector2 min,Vector2 max) Box(){var w=m.Hud;var to=w.Panel.GlobalTransform*Matrix.Invert(w.GlobalTransform);var s=w.Panel.Size;
+                var pts=new[]{Vector2.Zero,new Vector2(s.X,0),s,new Vector2(0,s.Y)}.Select(q=>Vector2.Transform(q,to)).ToArray();return(pts.Aggregate(Vector2.Min),pts.Aggregate(Vector2.Max));}
+            string Panel(){var w=m.Hud;if(w==null)return "none";var b=Box();return $"box {b.min.X:0},{b.min.Y:0} - {b.max.X:0},{b.max.Y:0} in {w.LastArea.X:0}x{w.LastArea.Y:0}, size {w.Panel.Size.X:0}x{w.Panel.Size.Y:0}";}
+            IEnumerable<bool> Snap(string name){foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");foreach(var x in During(.3,()=>{}))yield return x;h[name]=Panel();}
+            bool Near(float a,float b,float tol=2)=>Math.Abs(a-b)<tol;
             foreach(var x in Snap("rh_default"))yield return x;
-            var area=m.Hud.LastArea;float fit=Math.Clamp(Math.Min(area.X/700,area.Y/450),.5f,1);
-            bool Near(float a,float b)=>Math.Abs(a-b)<1.5f;
-            if(!Near(m.Hud.MarginLeft,area.X-320*fit-20)||!Near(m.Hud.MarginTop,area.Y-112*fit-85))throw new Exception("hud default place: "+Panel());
-            Set("Scale",60f);Set("X",0f);Set("Y",0f);foreach(var x in Snap("rh_small_top_left"))yield return x;
-            if(!Near(m.Hud.MarginLeft,20)||!Near(m.Hud.MarginTop,20)||Math.Abs(m.Hud.PanelScale-fit*.6f)>.01f)throw new Exception("hud small top left: "+Panel());
-            Set("Scale",150f);Set("X",50f);foreach(var x in Snap("rh_large_top_centre"))yield return x;
-            if(!Near(m.Hud.MarginLeft+160*m.Hud.PanelScale,m.Hud.LastArea.X/2))throw new Exception("hud top centre: "+Panel());
-            Set("Keys",false);foreach(var x in Snap("rh_no_keys"))yield return x;
-            if(m.Hud.Size.Y!=86)throw new Exception("hud without keys: "+Panel());
-            Set("Show",false);foreach(var x in Snap("rh_hidden"))yield return x;
+            var area=m.Hud.LastArea;float fit=MDHudPlacement.Fit(area);var b0=Box();
+            if(!Near(b0.max.X,area.X-20)||!Near(b0.max.Y,area.Y-85)||!Near(b0.max.X-b0.min.X,320*fit))throw new Exception("hud default place: "+Panel());
+            MDSettings.Hud=new MDHudPlacement{Custom=true,X=.2f,Y=.25f,Scale=.6f};foreach(var x in Snap("rh_small_top_left"))yield return x;
+            var b1=Box();if(!Near((b1.min.X+b1.max.X)/2,.2f*area.X)||!Near((b1.min.Y+b1.max.Y)/2,.25f*area.Y)||!Near(b1.max.X-b1.min.X,320*fit*.6f))throw new Exception("hud small: "+Panel());
+            MDSettings.Hud=new MDHudPlacement{Custom=true,X=.5f,Y=.5f,Scale=1.5f,Rotation=MathF.PI/6};foreach(var x in Snap("rh_turned_centre"))yield return x;
+            var b2=Box();var ext=MDHudPlacement.Extent(new Vector2(320,112),fit*1.5f,MathF.PI/6);
+            if(!Near((b2.min.X+b2.max.X)/2,area.X/2)||!Near((b2.min.Y+b2.max.Y)/2,area.Y/2)||!Near(b2.max.X-b2.min.X,ext.X,3)||!Near(b2.max.Y-b2.min.Y,ext.Y,3))throw new Exception("hud turned: "+Panel()+$", want extent {ext}");
+            MDSettings.HudKeys=false;foreach(var x in Snap("rh_no_keys"))yield return x;
+            if(m.Hud.Panel.Size.Y!=86)throw new Exception("hud without keys: "+Panel());
+            MDSettings.HudShow=false;foreach(var x in Snap("rh_hidden"))yield return x;
             if(m.Hud!=null||pl.ComponentGui.ControlsContainerWidget.AllChildren.OfType<MDStatusWidget>().Any())throw new Exception("hud still shown");
-            foreach(var (id,v) in new (string,object)[]{("Show",true),("Keys",true),("Scale",100f),("X",100f),("Y",100f)})Set(id,v);
-            foreach(var x in Snap("rh_back"))yield return x;
+            MDSettings.Defaults();foreach(var x in Snap("rh_back"))yield return x;
             // the rifle held down for 2.5 s, then released: its status and the old rule's on the same frames
             m.Weapon=MDMechWeapon.Rifle;var seen=new List<string>();string last=null,lastOld=null;int oldChanges=0;int shots0=LabSounds.Of(MDMechBrain.Se(8));
             void Sample(){var st=MDMechBrain.Status(u);if(st!=last){seen.Add(st);last=st;}var old=m.Cooldown>.15f?"装填中":"就绪";if(old!=lastOld){oldChanges++;lastOld=old;}}
@@ -333,8 +370,9 @@ public partial class Lab {
             MDSettings.SpawnTime=MDSpawnTime.Always;rules["all day"]=MDWildSpawns.Blocked(proj);
             MDSettings.StartDay=30;rules["from day 30"]=MDWildSpawns.Blocked(proj);
             MDSettings.SpawnTime=MDSpawnTime.Off;rules["off"]=MDWildSpawns.Blocked(proj);
+            MDSettings.SpawnTime=MDSpawnTime.Always;MDSettings.StartDay=0;rules["start day 0"]=MDWildSpawns.Blocked(proj);
             gameInfo.WorldSettings.GameMode=GameMode.Creative;MDSettings.Defaults();s["rules"]=rules;
-            if(s["creative"] is not "game mode"||rules["night only, by day"]!="daytime"||rules["all day"]!=""||rules["from day 30"]!="before day 30"||rules["off"]!="off")throw new Exception("spawn rules: "+string.Join(", ",rules)+" creative "+s["creative"]);
+            if(s["creative"] is not "game mode"||rules["night only, by day"]!="daytime"||rules["all day"]!=""||rules["from day 30"]!="before day 30"||rules["off"]!="off"||rules["start day 0"]!="start day 0")throw new Exception("spawn rules: "+string.Join(", ",rules)+" creative "+s["creative"]);
             var rounds=new List<string>();s["rounds"]=rounds;
             foreach(var dens in new[]{1f,2f}) {
                 MDSettings.SpawnDensity=dens;Kill(MDWildSpawns.Wild(proj));while(Wait(.3))yield return true;var rng=new System.Random(11);
@@ -396,6 +434,36 @@ public partial class Lab {
             g["behind"]=$"first body on the back tower's line (old rule): {(old?.ComponentBody==front.Body?"the front tower":old?.ComponentBody==still.Body?"the robot":"none")}; back tower target {(back.Target==still.Body?"the robot":"none")}, shots {back.ShotCount-b0}; front shots {front.ShotCount-f0}; robot health {h0:0.00} -> {still.Health.Health:0.00}";
             if(back.Target!=still.Body||back.ShotCount<=b0)throw new Exception("targets/behind: "+g["behind"]);
             Kill([still]);Remove([back,front]);ClearPickables();while(Wait(.5))yield return true;
+        }
+        // ---- the devil mech's escorts (user, 2026-10-21: "恶魔机甲召唤的敌兵不会自动找机甲，炮塔，玩家攻击"): summoned from its
+        // item beside three towers and Mercury (A), and 70 m away from them (B); every escort's state every 3 s for 40 s
+        if(Part("escorts")) {
+            var es=new Dictionary<string,object>();r["escorts"]=es;var defs=MDTowerLibrary.All;var inv=pl.ComponentMiner.Inventory;
+            foreach(var (name,summonAt) in new[]{("A",Home+new Vector3(0,0,-16)),("B",Home+new Vector3(0,0,-50))}) {
+                var towers=new[]{Place(defs.First(t=>t.data==0),Home+new Vector3(-7,0,4),0),Place(defs.First(t=>t.data==0),Home+new Vector3(7,0,4),0),Place(defs.First(t=>t.data==4),Home+new Vector3(0,0,10),0)};
+                var mech=Deploy(Home+new Vector3(14,0,14));
+                pl.ComponentBody.Position=summonAt+new Vector3(0,0,6);pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDSummonBlock.Value(MDSummonBlock.Count-1),1);inv.ActiveSlotIndex=0;
+                pl.ComponentMiner.Use(new Ray3(pl.ComponentBody.Position+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
+                var boss=MDBoss.Alive(proj)??throw new Exception("escorts: no boss");pl.ComponentBody.Position=Home+new Vector3(-20,0,24);
+                while(Wait(2))yield return true;
+                boss.Health.Health=.69f;while(Wait(.5))yield return true;
+                var escorts=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x.Boss==null).ToList();
+                var log=new List<string>();es[name]=log;log.Add($"boss at {Vector3.Distance(boss.Body.Position,Home):0} m from Home, escorts sent {boss.Boss.EscortsSent}, here {escorts.Count}");
+                double t0e=Time.RealTime;int step=0;
+                string State(ComponentMDRobot x){
+                    var units=proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Destroyed).ToList();
+                    float near=units.Count==0?-1:units.Min(u=>Vector3.Distance(u.Body.Position,x.Body.Position));
+                    var path=x.Entity.FindComponent<ComponentPathfinding>(true);
+                    return $"{x.Kind.Id} hp {x.Health.Health:0.00} near-unit {near:0} m, target {(x.Target==null?"-":ComponentMDRobot.Rank(x.Target).ToString())}, hunt {(x.Hunt==null?"-":"yes")}, raidGoal {(x.RaidGoal.HasValue?$"{Vector3.Distance(x.RaidGoal.Value,x.Body.Position):0} m":"-")}, active {x.IsActive}, dest {(path.Destination.HasValue?"yes":"-")} stuck {path.IsStuck}, speed {new Vector2(x.Body.Velocity.X,x.Body.Velocity.Z).Length():0.0}, shots {x.ShotsFired}";
+                }
+                foreach(var x in During(40,()=>{if(Time.RealTime-t0e>=step*3){step++;log.Add($"{Time.RealTime-t0e:0}s: "+string.Join(" | ",escorts.Where(q=>q.Entity.IsAddedToProject).Select(State)));}}))yield return x;
+                Cam(Home+new Vector3(30,25,-30),Home);Shot("re_"+name);yield return true;
+                int gone=escorts.Count(q=>!q.Entity.IsAddedToProject&&q.Health.Health>0),idle=escorts.Count(q=>q.ShotsFired==0&&q.Health.Health>0);
+                es[name+"_summary"]=$"{escorts.Count} escorts, {escorts.Count(q=>q.ShotsFired>0)} fired, vanished alive {gone}, alive without a shot {idle}, towers {string.Join(" ",towers.Select(t=>$"{t.Damage.Hitpoints:0.00}"))}, mech {mech.Damage.Hitpoints:0.00}";
+                if(escorts.Count<2||gone>0||idle>0)throw new Exception($"escorts {name}: "+es[name+"_summary"]);
+                Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());Remove(towers);if(mech.Entity.IsAddedToProject)proj.RemoveEntity(mech.Entity,true);ClearPickables();while(Wait(1))yield return true;
+            }
         }
     }
 }

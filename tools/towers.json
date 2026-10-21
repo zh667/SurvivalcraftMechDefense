@@ -694,6 +694,7 @@
    "name": "重锤迫击炮",
    "source": "v5/battle_rocket_1",
    "version": "V5",
+   "poly": "poly_v1/battle_rocket_1",
    "tools": "v5/tools",
    "data": 13,
    "hp": 1400,

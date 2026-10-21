@@ -30,14 +30,23 @@ inventory icons miss chunks). Plans confirmed the same day (balance numbers, her
   (888 -> 848 px), same-part overlaps 14 -> 4; atlas 1024x1024 -> 2048x1024. Cost: thin 3 mm dark lines along the yellow band
   edges gone within 0.6 m. Waiting for the user before the other 18 (docs/TOWERS.md 0.9.0 第五轮). Mech models are already
   2,345-2,481 triangles: no reduction.
+- Polygon towers (user 2026-10-21: the reduced rocket "看起来效果差了很多" -> remodel it as a polygon model, outline like the
+  original, own details, no Endfield marks, <= 6,000 triangles; approved: "我觉得这次建模非常不错！可以放到正式包，并且其他的炮塔都可以
+  按照这个来"): battle_rocket_1 now ships the polygon model `E:/projects/endfield-turret-model/poly_v1/battle_rocket_1` (5,716
+  triangles, one 1024 atlas, outline within 2.6 % of the original, 0 triangles in common with it) through `"poly"` in
+  tools/towers.json: build_tower_assets.py checks its node tree against the cube build and reuses the cached cube metadata
+  (pivots, muzzles, clearance). In-game comparison before it shipped: tools/stage_tower_preview.py + lab `view-<id>` (now with
+  fog and a torch-lit cave), local/claude-work/r5/towers/battle_rocket_1/poly_game/. Regression on the new package: lab all,
+  icons, view-battle_rocket_1, smoke 0.5.0 -> 0.9.0 pass. The other 18 towers are being built the same way by helper agents
+  (record table round 13); they go in after the user has seen them.
 - Final regression on the package (jobs md-r5-final-reg-1, md-r5-smoke-2): full `lab --mode robots` passes (223 shots; all parts
   incl. heroes, balance, settings, hud, escorts, raid, boss, kits); special and mech pass. Smoke 0.5.0 -> 0.9.0 first failed one
   stale check (it expected towers + Mercury in the creative inventory; the hero mechs add two): check updated, passes. The failed
   result had still exited 0: tools/run_isolated.py now exits non-zero unless the result says passed. Perf (9 towers in the
   hotbar / 30 towers + hotbar): 0.8.0 1.18 / 1.27 and 1.22 / 1.19 ms, 0.9.0 0.65 / 1.09 and 0.65 / 1.08 ms (slot pictures instead
   of 1,500-triangle meshes).
-- Package dist/MechDefense-0.9.0.scmod 61,061,299 bytes, 243 entries (19 tower pictures), SHA-256
-  0d38974d117352f8a9ecafcb7461b60e75baed60883400f6d7565cdf682ba50f (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
+- Package dist/MechDefense-0.9.0.scmod 58,615,878 bytes, 242 entries (19 tower pictures; polygon rocket), SHA-256
+  8f3bf9299afc44943888a29214443282a985505dccf4878bca273de153b21598 (before the polygon rocket: 61,061,299 bytes, 0d38974d…682ba50f) (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
 - Not tested: Android (picture loading and mipmaps on phones), real touch, a survival night with raids, long play; the medic
   rate for mechs (50 -> 100 % in 6 s) is untuned and may be strong in real fights.
 

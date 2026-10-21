@@ -28,7 +28,7 @@ public static class MDTowerMaintenance {
     }
     static int Percent(float f)=>(int)MathF.Round(f*100);
     // Mercury (kind Mech) has no tower definition: its name, its armour as the repair scale and a fixed height for effects.
-    static string Name(ComponentMDUnit u)=>u.Tower?.name??"水星机甲";
+    static string Name(ComponentMDUnit u)=>u.Tower?.name??(u.Mech?.Type.Name??"水星")+"机甲";
     static string What(ComponentMDUnit u)=>u.Tower!=null?"炮塔":"机甲";
     static float Points(ComponentMDUnit u)=>u.Tower?.hp??u.Damage.AttackResilience;
     static Vector3 Top(ComponentMDUnit u)=>u.Body.Position+Vector3.UnitY*(u.Tower!=null?Math.Min(1.5f,u.Tower.bounds[1][1]*.5f):1.5f);
@@ -47,7 +47,7 @@ public static class MDTowerMaintenance {
     }
     // Removes the tower (or Mercury) and drops its deploy item (with its health), thrown a little towards the player.
     public static int Dismantle(ComponentMDUnit u,Vector3? towards) {
-        int value=u.Tower!=null?MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints):MDDeploymentBlock.MechValue(u.Damage.Hitpoints,u.Mech?.Kit??0);
+        int value=u.Tower!=null?MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints):MDDeploymentBlock.MechValue(u.Damage.Hitpoints,u.Mech?.Kit??0,u.Mech?.Type);
         var at=Top(u);
         var push=towards.HasValue?Vector3.Normalize(new Vector3(towards.Value.X-at.X,0,towards.Value.Z-at.Z)+new Vector3(.001f,0,0))*2:Vector3.Zero;
         u.Project.FindSubsystem<SubsystemPickables>(true).AddPickable(value,1,at,push+Vector3.UnitY*3,null);

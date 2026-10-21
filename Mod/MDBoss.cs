@@ -142,7 +142,7 @@ public static class MDBoss {
     public const float Countdown=30;
     // armour at arrival: 30000 + 1000 / 2000 / 3000 per tier-1 / 2 / 3 tower and 3000 per Mercury within 48 m, at most 160000
     // (user, 2026-10-21, round 5: early players only have tier-1 towers; was 40000 + 2000 per tower + 4000 per Mercury)
-    public const float BaseArmour=30000;
+    public const float BaseArmour=30000;   // + per mech: Mercury 3000, 复仇女神 4000, 轩辕十四 5000 (MDMechType.BossArmour)
     sealed class Pending { public Vector3 at; public float left=-1,blink; }
     static readonly ConditionalWeakTable<Project,Pending> pending=new();
     public static ComponentMDRobot Alive(Project p)=>p.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).FirstOrDefault(x=>x?.Kind.Boss==true&&x.Health.Health>0);
@@ -175,7 +175,7 @@ public static class MDBoss {
         var r=e.FindComponent<ComponentMDRobot>(true);
         var units=p.Entities.Select(x=>x.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed&&Vector3.Distance(u.Body.Position,at)<48).ToList();
         int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null),tiers=units.Where(u=>u.Tower!=null).Sum(MDRaids.Weight);
-        r.Boss.Armour=Math.Clamp(BaseArmour+1000*tiers+3000*mechs,BaseArmour,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
+        r.Boss.Armour=Math.Clamp(BaseArmour+1000*tiers+units.Where(u=>u.Mech!=null).Sum(u=>u.Mech.Type.BossArmour),BaseArmour,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
         p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
         Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;

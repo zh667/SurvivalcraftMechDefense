@@ -35,6 +35,17 @@ for kind,size,mass,hp in [('Mech','2.4,4.8,2.4',3000,4000),('Enemy','1.6,3.2,1.6
         # no TextureOverride: the texture embedded in the glTF is sampled linearly with mipmaps (an override is point-sampled)
         comp('Model',[('Class','string','Game.ComponentMDMechModel'),('ModelName','string','Imported/Mercury/model'),('TextureOverride','string',''),
                       ('BoundingSphereRadius','float',3.6),('CastsShadow','bool','True')])
+# Hero mechs (0.9.0 round 5, user 2026-10-21: 水星 < 复仇女神 < 轩辕十四, plan confirmed): Mercury's components with their own model
+# (tools/build_hero_assets.py -> Imported/<id>), body box and armour, and the Unit's MechType (ComponentMDUnit -> MDMechType).
+for mech_id,size,mass,hp,radius in [('Nemesis','2.4,4.8,2.4',3400,6000,3.7),('Regulus','2.8,5.6,2.8',3800,8000,4.3)]:
+    comp=entity('Mech'+mech_id,'MDMech'+mech_id)
+    comp('Unit',[('Class','string','Game.ComponentMDUnit'),('LoadOrder','int',100),('Kind','string','Mech'),('TurretVariant','int',1),('TowerId','string',''),('MechType','string',mech_id)])
+    comp('Body',[('BoxSize','Vector3',size),('Mass','float',mass),('Density','float',5),('MaxSmoothRiseHeight','float',.8),('WaterSwayAngle','float',0),('WaterTurnSpeed','float',0)])
+    comp('Damage',[('Class','string','Game.ComponentMDDamage'),('AttackResilience','float',hp),('FallResilience','float',15),('FireResilience','float',100)])
+    comp('Spawn',[('AutoDespawn','bool','False')]);comp('OnFire',[])
+    comp('Mount',[('MountOffset','Vector3','0,2.5,0'),('DismountOffset','Vector3','3,0,0'),('MountAllowToStartRange','float',5)])
+    comp('Model',[('Class','string','Game.ComponentMDMechModel'),('ModelName','string',f'Imported/{mech_id}/model'),('TextureOverride','string',''),
+                  ('BoundingSphereRadius','float',radius),('CastsShadow','bool','True')])
 towers=json.loads((root/'Mod/Assets/Towers/towers.json').read_text(encoding='utf-8'))['towers']
 legacy={'MDTurret':('Turret',1),'MDTurret2':('Turret2',2),'MDTurret3':('Turret3',3)}
 for t in towers:

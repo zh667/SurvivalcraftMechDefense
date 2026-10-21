@@ -50,7 +50,7 @@ public class ComponentMDUnit : Component,IUpdateable {
         Kind=v.GetValue<string>("Kind");Clock=Project.FindSubsystem<SubsystemTime>(true);Body=Entity.FindComponent<ComponentBody>(true);Damage=Entity.FindComponent<ComponentDamage>(true);Mount=Entity.FindComponent<ComponentMount>();
         if(Legacy)return;
         if(Kind=="Mech") {
-            Mech=new MDMechState();Mech.Load(v);Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);lastHitpoints=Damage.Hitpoints;
+            Mech=new MDMechState(MDMechType.ById(v.GetValue("MechType","Mercury")));Mech.Load(v);Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);lastHitpoints=Damage.Hitpoints;
             if(Damage.Hitpoints<=0||v.GetValue("Destroyed",false)){Damage.Hitpoints=0;Destroyed=true;wreck=v.GetValue("WreckTime",0f);}
             return;
         }

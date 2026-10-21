@@ -251,7 +251,7 @@ public static class MDTowerBrain {
     public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null) {
         if(b==null||!MDCombat.IsEnemy(u,b)||power<=0)return;
         power*=World(u).DamageFactor(b);
-        if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit);
+        if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit)*u.Mech.Type.Damage;   // weapon kit x the mech's own factor
         ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power){Channel=channel??Channel(u)});
     }
     public static string Channel(ComponentMDUnit u)=>(u.Tower?.attack.type??(u.Mech?.Weapon==MDMechWeapon.Laser?"beam":"bolt")) switch{"shell" or "flame"=>"explosion","beam" or "chain" or "pulse" or "heal"=>"energy",_=>"kinetic"};

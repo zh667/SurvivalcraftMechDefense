@@ -21,7 +21,7 @@ public class MDModLoader : ModLoader {
     // Creatures that hurt a player, a tower or the player's herd become tower targets (MDFaction).
     // The devil mech's weak channel scales the hit first (MDBoss).
     // A robot remembers a player (or the player's herd) that hits it and fights back (MDRobots.Provoked).
-    public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);}
+    public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDMechArmour.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);}
     // Right-click on a tower with iron or copper repairs it (MDTowerMaintenance); the engine's own use/place is skipped then.
     public override void OnPlayerInputInteract(ComponentPlayer componentPlayer,ref bool playerOperated,ref double timeIntervalLastActionTime,ref int priorityUse,ref int priorityInteract,ref int priorityPlace) {
         if(!playerOperated&&(MDKits.TryInstall(componentPlayer)||MDTowerMaintenance.TryRepair(componentPlayer)))playerOperated=true;
@@ -35,28 +35,32 @@ public class MDDeploymentBlock : Block {
     // of the 0.5.0 sample mech, so such items deploy Mercury). 2 was the Destroy Gunners enemy (removed in 0.6.0): such items
     // stay in old inventories under a placeholder name and cannot be deployed.
     const string RemovedName="已移除的旧单位";public const string RemovedNote="这个单位已在 0.6.0 移除，不能再部署。";
-    const string MechName="水星机甲 · 部署";
+
     // Mercury's weapon kit level (0-3) in bits 15-16 (since 0.9.0; older items have 0).
     public static int Kit(int value)=>(Terrain.ExtractData(value)>>15)&3;
     static string KitText(int v)=>Kit(v)>0?$"（改装 Mk{Kit(v)}）":"";
-    static readonly string MechNote="可驾驶的机甲「水星」。右键地面部署，需要约 3×3 格空地、5 格净高。\n"+
+    // Mercury and, since 0.9.0 round 5, the hero mechs 复仇女神 (data 30) and 轩辕十四 (data 31): MDMechType
+    public static MDMechType MechType(int value)=>MDMechType.ByData(Terrain.ExtractData(value)&0xFF);
+    public static bool IsMech(int value)=>MechType(value)!=null;
+    static string MechName(MDMechType t)=>t.Name+"机甲 · 部署";
+    static string MechNote(MDMechType t)=>$"可驾驶的机甲「{t.Name}」：装甲 {t.Armour}，武器伤害 ×{t.Damage:0.##}，能量 {t.EnergyMax:0}"+
+        (t.BurstRifle?"，步枪三连发，抗爆炸":"")+(t.Speed>1?"，机动最好":"")+$"。右键地面部署，需要约 {MathF.Ceiling(t.Box.X):0}×{MathF.Ceiling(t.Box.Z):0} 格空地、{MathF.Ceiling(t.Box.Y):0} 格净高。\n"+
         "靠近按 R（游戏的骑乘键）上下车：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮（耗能量），空格跳，左键开火，F 近战（有目标时冲过去打），V 切换视角。"+
-        "B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 3 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
-        $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久。";
-    public static bool IsMech(int value)=>(Terrain.ExtractData(value)&0xFF)==1;
+        $"B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 {t.Locks} 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
+        $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久和改装。";
     public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);
     public static int Wear(int value)=>(Terrain.ExtractData(value)>>8)&0x7F;
     public static float Hitpoints(int value)=>1-Wear(value)/100f;
     public static int Value(MDTowerDef d,float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
-    public static int MechValue(float hitpoints,int kit=0)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,1|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8|Math.Clamp(kit,0,3)<<15);
-    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):IsMech(v)?MechName+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
+    public static int MechValue(float hitpoints,int kit=0,MDMechType type=null)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,(type??MDMechType.Mercury).Data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8|Math.Clamp(kit,0,3)<<15);
+    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):MechType(v) is {} mt?MechName(mt)+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
     public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
-        $"维修：手持铁锭、铜锭（或铁块、铜块）右键炮塔。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):IsMech(v)?MechNote:RemovedNote;
+        $"维修：手持铁锭、铜锭（或铁块、铜块）右键炮塔。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):MechType(v) is {} mt?MechNote(mt):RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
     public override IEnumerable<int> GetCreativeValues() {
         foreach(var d in MDTowerLibrary.All)yield return Terrain.MakeBlockValue(BlockIndex,0,d.data);
-        yield return Terrain.MakeBlockValue(BlockIndex,0,1);   // Mercury
+        foreach(var t in MDMechType.All)yield return Terrain.MakeBlockValue(BlockIndex,0,t.Data);   // Mercury, 复仇女神, 轩辕十四
     }
     // Held item. The icon mesh is centred on its bounding box and at most one unit long; without these the engine draws
     // it at scale 1 on the camera itself (first person: nothing visible) or centred on the hand (third person).
@@ -76,7 +80,7 @@ public class MDDeploymentBlock : Block {
         if(e?.DrawBlockMode is DrawBlockMode.FirstPerson or DrawBlockMode.ThirdPerson&&Tower(value) is {} held&&MDHeldModel.Draw(held,color,size,matrix,e))return;
         var d=Tower(value);
         if(d==null&&!IsMech(value)){d=MDTowerLibrary.All[0];color*=.35f;}   // the removed enemy (data 2): the first tower's icon, dimmed
-        var icon=d!=null?MDTowerLibrary.Icon(d):MDMechLibrary.Icon;
+        var icon=d!=null?MDTowerLibrary.Icon(d):(MechType(value)??MDMechType.Mercury).Icon;
         if(e?.DrawBlockMode==DrawBlockMode.UI) {
             size*=icon.fit;var m=Matrix.CreateTranslation(-icon.center*size)*matrix;
             BlocksManager.DrawMeshBlock(r,icon.mesh,icon.texture,color,size,ref m,e);
@@ -143,13 +147,13 @@ public static class MDDeployPatch {
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)state.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // a dismantled tower keeps its health
             entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
         }
-        if(MDDeploymentBlock.IsMech(__instance.ActiveBlockValue)) {   // Mercury stands on the hit point, facing like the player
-            var size=new Vector3(2.4f,4.8f,2.4f);var at=hit.Value.HitPoint()+Vector3.UnitY*.06f;
-            if(!MDMechPilot.Clear(terrain,at,size)){MDPlayer.Message(__instance.ComponentPlayer,"空间不足：机甲需要约 3×3 格空地、5 格净高。");return false;}
+        if(MDDeploymentBlock.MechType(__instance.ActiveBlockValue) is {} mechType) {   // the mech stands on the hit point, facing like the player
+            var size=mechType.Box;var at=hit.Value.HitPoint()+Vector3.UnitY*.06f;
+            if(!MDMechPilot.Clear(terrain,at,size)){MDPlayer.Message(__instance.ComponentPlayer,$"空间不足：{mechType.Name}需要约 {MathF.Ceiling(size.X):0}×{MathF.Ceiling(size.Z):0} 格空地、{MathF.Ceiling(size.Y):0} 格净高。");return false;}
             var bodies=new DynamicArray<ComponentBody>();__instance.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(at.X,at.Z),4,bodies);
             var box=new BoundingBox(at-new Vector3(size.X/2,0,size.Z/2),at+new Vector3(size.X/2,size.Y,size.Z/2));
             if(bodies.Any(b=>box.Intersection(b.BoundingBox))){MDPlayer.Message(__instance.ComponentPlayer,"部署区域有生物，请稍微退后。");return false;}
-            var mech=DatabaseManager.CreateEntity(__instance.Project,"MDMech",true);var body=mech.FindComponent<ComponentBody>(true);body.Position=at;
+            var mech=DatabaseManager.CreateEntity(__instance.Project,mechType.Template,true);var body=mech.FindComponent<ComponentBody>(true);body.Position=at;
             var facing=__instance.ComponentCreature.ComponentBody.Matrix.Forward;float yaw=MathF.Atan2(-facing.X,-facing.Z);body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
             var unit=mech.FindComponent<ComponentMDUnit>(true);unit.Yaw=unit.AimYaw=yaw;
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)unit.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // taken down, it keeps its health

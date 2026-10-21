@@ -75,7 +75,7 @@ public static class MDRobots {
         if(b==null||IsRobot(b.Entity)||!MDCombat.Living(b))return;
         bool structure=b.Entity.FindComponent<ComponentHealth>()==null;
         float power=(structure?k.VsStructure:k.VsCreature)*scale;if(power<=0)return;
-        ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power));
+        ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power){Explosive=k.Splash>0});
     }
     public static void Splash(Entity attacker,MDRobotKind k,Vector3 point,float r,ComponentBody skip) {
         var bodies=new DynamicArray<ComponentBody>();attacker.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1.5f,bodies);
@@ -99,6 +99,7 @@ public static class MDRobots {
 
 // Not a bullet (the ghouls' bullet rules do not apply): robots hit only the player's side and creatures in their blasts.
 public class MDRobotAttackment:Attackment {
+    public bool Explosive;   // a missile, shell or blast (复仇女神 takes less: MDMechArmour)
     public MDRobotAttackment(Entity target,Entity attacker,Vector3 hitPoint,Vector3 hitDirection,float attackPower):base(target,attacker,hitPoint,hitDirection,attackPower) {
         ImpulseFactor=1.5f;StunTimeSet=.15f;AllowImpulseAndStunWhenDamageIsZero=false;
     }
@@ -370,7 +371,7 @@ public static class MDRaids {
     sealed class State { public float lastTime=-1; public readonly List<Wave> waves=[]; }
     static readonly ConditionalWeakTable<Project,State> states=new();
     static readonly HashSet<int> Tier2=[3,6,14,16,18,19],Tier3=[4,7,8,13,15,17];
-    public static int Weight(ComponentMDUnit u)=>u.Mech!=null?4:Tier3.Contains(u.Tower.data)?3:Tier2.Contains(u.Tower.data)?2:1;
+    public static int Weight(ComponentMDUnit u)=>u.Mech!=null?u.Mech.Type.Weight:Tier3.Contains(u.Tower.data)?3:Tier2.Contains(u.Tower.data)?2:1;
     public static int LastRaid,LastPlanned,LastDefence,LastElites,LastSecondWave,SecondWavesSent;   // the last raid (tests; planned = before ground failures)
     public static void Update(Project p,float dt) {
         var st=states.GetOrCreateValue(p);var tod=p.FindSubsystem<SubsystemTimeOfDay>(true);float now=tod.TimeOfDay;

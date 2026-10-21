@@ -117,6 +117,19 @@
     "aba"
     "geg"
   </Recipe>
+  <!-- hero mechs (0.9.0 round 5, user 2026-10-21, plan confirmed): 复仇女神 from an unmodified Mercury + one blueprint + two
+       energy cores + two fire-control chips + three alloy plates, player level 12; 轩辕十四 from 复仇女神 + two blueprints + four
+       energy cores + two chips, level 16. Blueprints are used up. -->
+  <Recipe Result="MDDeploymentBlock:30" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="12" m="mddeploy:1" a="mdpart:1" b="mdpart:2" c="mdpart:3" p="mdpart:4" Description="复仇女神机甲：由水星机甲升级（消耗机甲设计图，需要玩家等级 12）">
+    "cac"
+    "bmb"
+    "apa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:31" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="16" n="mddeploy:30" b="mdpart:2" c="mdpart:3" p="mdpart:4" Description="轩辕十四机甲：由复仇女神机甲升级（消耗两张机甲设计图，需要玩家等级 16）">
+    "cpc"
+    "bnb"
+    "cpc"
+  </Recipe>
   <!-- materials: the robot route (furnace) and the fallbacks at five times the normal price (crafting table) -->
   <Recipe Result="MDPartBlock:1" ResultCount="1" RequiredHeatLevel="2" a="mdpart:0" b="ironingot" Description="合金板：机兵残骸×2 + 铁锭，熔炉炼制">
     "aab"

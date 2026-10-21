@@ -18,7 +18,7 @@ public static class MDMechPilot {
     // lower right (the arms aim it at the crosshair) and the cannon when it is open.
     public static Vector3 FirstPersonEye(ComponentMDUnit u,float dt) {
         var d=MDMechBrain.AimDirection(u);var flat=Vector3.Normalize(new Vector3(d.X,0,d.Z)+new Vector3(1e-4f,0,0));
-        var want=u.Body.Position+Vector3.UnitY*3.6f+flat*.5f;var m=u.Mech;
+        var m=u.Mech;var e=m.Def.cockpit?.firstPersonEye;var want=u.Body.Position+Vector3.UnitY*(e?.Length>2?e[1]:3.6f)+flat*(e?.Length>2?-e[2]:.5f);   // per mech (cockpit.firstPersonEye)
         m.CameraAt=m.CameraAt is {} at&&Vector3.DistanceSquared(at,want)<4?Vector3.Lerp(at,want,1-MathF.Exp(-dt*18)):want;return m.CameraAt.Value;
     }
     public static ComponentMDUnit Mounted(ComponentPlayer p)=>p?.ComponentRider?.Mount?.Entity.FindComponent<ComponentMDUnit>() is {Mech:not null} u?u:null;
@@ -38,7 +38,7 @@ public static class MDMechPilot {
     public static bool Board(ComponentPlayer p,ComponentMDUnit u) {
         if(!CanBoard(p,u))return false;
         u.AimYaw=u.Yaw;u.AimPitch=0;p.ComponentRider.StartMounting(u.Mount);p.GameWidget.ActiveCamera=p.GameWidget.FindCamera<TppCamera>();
-        MDPlayer.Message(p,MDSettings.HudKeys?"已登上水星：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮，空格跳，左键开火，B 换武器，F 近战，V 视角，R 下车":"已登上水星");return true;
+        MDPlayer.Message(p,MDSettings.HudKeys?$"已登上{u.Mech.Type.Name}：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮，空格跳，左键开火，B 换武器，F 近战，V 视角，R 下车":$"已登上{u.Mech.Type.Name}");return true;
     }
     public static bool Exit(ComponentPlayer p,ComponentMDUnit u,bool force=false) {
         var t=u.Project.FindSubsystem<SubsystemTerrain>(true);var bodies=u.Project.FindSubsystem<SubsystemBodies>(true);Vector3? destination=null;
@@ -125,7 +125,7 @@ public class MDStatusWidget:CanvasWidget {
     // the speed is smoothed (about 0.3 s) and shown in whole km/h, so the number does not flicker with the physics steps
     public void Refresh(ComponentMDUnit u) {
         var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
-        Show($"水星  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}",u.Damage.Hitpoints,m.Energy/MDMechBrain.EnergyMax,m.EnergyLock>0);
+        Show($"{m.Type.Name}  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}",u.Damage.Hitpoints,m.Energy/m.Type.EnergyMax,m.EnergyLock>0);
         if(ShowKeys!=MDSettings.HudKeys)ShowKeys=MDSettings.HudKeys;
     }
     // the editor's sample
@@ -161,8 +161,8 @@ public static class MDMechFpp {public static void Postfix(FppCamera __instance){
 public static class MDMechTpp {
     public static void Postfix(TppCamera __instance) {
         if(MDMechPilot.Mounted(__instance.GameWidget?.PlayerData?.ComponentPlayer) is not {} u)return;
-        var d=MDMechBrain.AimDirection(u);var right=Vector3.Normalize(Vector3.Cross(d,Vector3.UnitY));var focus=u.Body.Position+Vector3.UnitY*3.9f;
-        var end=focus-d*10+Vector3.UnitY*1.4f+right*1.6f;
+        var d=MDMechBrain.AimDirection(u);var right=Vector3.Normalize(Vector3.Cross(d,Vector3.UnitY));float k=Math.Max(1,u.Mech.Def.height/4.4f);   // a taller mech: the camera further back
+        var focus=u.Body.Position+Vector3.UnitY*3.9f*k;var end=focus-d*10*k+Vector3.UnitY*1.4f*k+right*1.6f*k;
         var hit=u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(focus,end,false,true,(v,_)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));
         var pos=hit.HasValue?focus+Vector3.Normalize(end-focus)*Math.Max(.3f,hit.Value.Distance-.3f):end;
         __instance.SetupPerspectiveCamera(pos,d,Vector3.UnitY);
@@ -177,6 +177,13 @@ public static class MDMechPilotShield {
     public static bool Prefix(ComponentHealth __instance,Injury injury) {
         if(injury==null||injury.Amount<=0||MDMechPilot.Mounted(__instance.Entity.FindComponent<ComponentPlayer>()) is not {Destroyed:false})return true;
         Blocked++;return false;
+    }
+}
+// 复仇女神's blast protection (the original's "对爆炸防御"; ours 20 %): robot missiles, shells and blasts and explosive tower hits.
+public static class MDMechArmour {
+    public static void Modify(Attackment a) {
+        if(a.Target?.FindComponent<ComponentMDUnit>() is not {Mech:{Type.ExplosionTaken:<1f} m})return;
+        if(a is MDRobotAttackment{Explosive:true}||a is MDTowerAttackment{Channel:"explosion"})a.AttackPower*=m.Type.ExplosionTaken;
     }
 }
 [HarmonyPatch(typeof(ComponentModel),nameof(ComponentModel.CalculateIsVisible))]

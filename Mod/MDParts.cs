@@ -20,7 +20,7 @@ public class MDPartBlock : Block {
         ("合金板","二阶、三阶炮塔和机甲的结构材料。熔炉：机兵残骸×2 + 铁锭。不打机兵也能在工作台用铁块、铁锭、铜锭硬做（贵 5 倍）。",40),
         ("火控芯片","三阶炮塔、机甲和诱敌信标要用的火控电路。精英机兵掉落较多，普通机兵偶尔掉。也能用半导体块、锗和铜锭在工作台做（贵 5 倍）。",40),
         ("能量核心","射线类、电荷类三阶炮塔，机甲和诱敌信标的能源。精英机兵偶尔掉，恶魔机甲必掉。也能用钻石和铜在工作台做（贵 5 倍）。",40),
-        ("机甲设计图","合成水星机甲必需，合成时消耗。只能从恶魔机甲身上得到：用诱敌信标把它引出来。",4),
+        ("机甲设计图","合成机甲必需，合成时消耗：水星和复仇女神各一张，轩辕十四两张。只能从恶魔机甲身上得到：用诱敌信标把它引出来。",4),
         ("诱敌信标","右键放在地面上：信号会在 30 秒后把恶魔机甲引到这里。它很强，先布好炮塔再放。白天、夜里都能用；同一时间只能有一台恶魔机甲。",4),
         ("武器改装件 Mk1","手持对着机甲右键安装：机甲全部武器伤害 ×1.15。改装件按级别依次安装（Mk1 → Mk2 → Mk3），收起机甲后仍保留。",8),
         ("武器改装件 Mk2","在已装 Mk1 的机甲上安装：全部武器伤害 ×1.3。",8),
@@ -95,6 +95,6 @@ public static class MDKits {
         u.Mech.Kit=level;miner?.RemoveActiveTool(1);
         var at=u.Body.Position+Vector3.UnitY*2;MDTowerWorld.For(u.Project).Sparks(at,Vector3.UnitY,16,new Color(255,210,140),5,1,.5f,.05f);
         u.Project.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(25),1,0,at,8,false);
-        return $"水星机甲武器改装 Mk{level}：全部武器伤害 ×{MDMechState.KitFactor(level):0.##}";
+        return $"{u.Mech.Type.Name}机甲武器改装 Mk{level}：全部武器伤害 ×{MDMechState.KitFactor(level):0.##}";
     }
 }

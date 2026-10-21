@@ -81,7 +81,7 @@ public static class MDNeorxnaCompatibility {
     }
     // Mercury (since 0.8.0) lives on the template of the 0.5.0 sample mech (Kind "Mech"); only the removed enemy (Kind "Enemy")
     // is a removed unit. Until 0.9.0 round 4 every unit that was not a tower read 已移除的旧单位 here, Mercury too (user report).
-    public static string Name(ComponentMDUnit unit)=>unit.Kind=="Turret"?unit.Tower.name:unit.Mech!=null?"水星机甲":"已移除的旧单位";
+    public static string Name(ComponentMDUnit unit)=>unit.Kind=="Turret"?unit.Tower.name:unit.Mech!=null?unit.Mech.Type.Name+"机甲":"已移除的旧单位";
     public static void AfterEntityInfo(object __instance,Entity __0) {
         var unit=__0.FindComponent<ComponentMDUnit>();if(unit==null)return;
         var type=__instance.GetType();

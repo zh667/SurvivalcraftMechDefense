@@ -27,6 +27,12 @@ mercury=assets/'Imported/Mercury';mech=json.loads((mercury/'mech.json').read_tex
 assert (mercury/'clips.bin').stat().st_size==4*8*len(mech['joints'])*sum(c['samples'] for c in mech['clips']),'clips.bin does not match mech.json'
 assert max(c['p99_m'] for c in mech['check'])<1e-3,'mech assets failed their re-pose check'
 for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']+[f'Audio/{k}.ogg' for k in mech['sounds']]:files.append((mercury/f,f'Assets/Imported/Mercury/{f}'))
+# hero mechs 复仇女神 / 轩辕十四 (Mod/MDMech.cs MDMechType, tools/build_hero_assets.py): Mercury's format; their sounds are Mercury's
+for hero in ['Nemesis','Regulus']:
+    d=assets/'Imported'/hero;h=json.loads((d/'mech.json').read_text(encoding='utf-8'))
+    assert (d/'clips.bin').stat().st_size==4*8*len(h['joints'])*sum(c['samples'] for c in h['clips']),f'{hero} clips.bin does not match mech.json'
+    assert {'turret','armL','armR','cannon','firstPerson','grenade'}<=set(h['roles']),f'{hero} mech.json roles'
+    for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']:files.append((d/f,f'Assets/Imported/{hero}/{f}'))
 # progression items (Mod/MDParts.cs): texture atlas and 3D models (tools/build_part_models.py, committed)
 parts=assets/'Parts';files.append((parts/'parts.png','Assets/Parts/parts.png'))
 for n in range(9):p=parts/f'part{n}.bin';assert p.exists(),p;files.append((p,f'Assets/Parts/part{n}.bin'))

@@ -1,6 +1,12 @@
 """Authored Endfield cube towers -> Survivalcraft runtime assets.
 
 python tools/build_tower_assets.py [ids...] [--runtime-only]   (default: every tower in tools/towers.json)
+A tower with "poly" in tools/towers.json (a folder under E:/projects/endfield-turret-model, e.g. poly_v1/battle_rocket_1)
+ships that polygon model and atlas instead of the cube build; the cube build still runs and must produce the same node
+tree (names, parents, translations), because pivots, muzzles, links and the pitch clearance come from it.
+A tower with "polyOnly" (a folder with model.glb, atlas.png and parts.json; 0.9.0 round 6, the towers of
+E:/projects/sog-tower-model) has no cube build at all: node tree and pivots come from its model, muzzles and the clash-free
+pitch range from parts.json, the footprint from its base part. It is rebuilt on every run (well under a second).
 Each built tower also leaves local/tower-meta/<id>.json, so towers can be built in subsets or parallel jobs and a
 final --runtime-only run assembles towers.json from them (used when they still match the source geo and atlas).
 
@@ -22,7 +28,7 @@ part in front (moving only the face left a slit around it).
 Units: SC metres, X right, Y up, -Z forward (authoring frame x forward, y left, z up, 16 px = 1 m).
 """
 from __future__ import annotations
-import hashlib, importlib, json, math, re, struct, sys, time
+import hashlib, importlib, json, math, re, shutil, struct, sys, time
 from pathlib import Path
 import numpy as np
 from shapely.geometry import MultiPoint, Polygon
@@ -360,19 +366,61 @@ def write_glb(path, nodes, parts_geo):
 # ------------------------------------------------------------------ inventory icon mesh
 ICON_TRIS = 1500
 
-def write_icon(path, P, U, N):
-    """3D inventory icon: the largest triangles (rest pose) up to ICON_TRIS, centred and scaled into a unit cube.
+def write_icon(path, P, U, N, limit=ICON_TRIS):
+    """3D inventory icon: the largest triangles (rest pose) up to `limit` (None: all), centred and scaled into a unit cube.
     icon.bin = int32 nv, int32 ni, nv x (x y z u v shade) float32, ni int32 (engine winding: clockwise front)."""
     P = P.reshape(-1, 3, 3); U = U.reshape(-1, 3, 2); N = N.reshape(-1, 3, 3)[:, 0]
     area = np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1) / 2
-    keep = np.argsort(-area)[:ICON_TRIS]; P, U, N = P[keep], U[keep], N[keep]
+    keep = np.argsort(-area)[:limit]; P, U, N = P[keep], U[keep], N[keep]
     lo, hi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0); P = (P - (lo + hi) / 2) / max(hi - lo)
     # block-style face shading: top light, sides by facing, underside dark
     shade = np.where(N[:, 1] > .5, 1.0, np.where(N[:, 1] < -.5, .55, .72 + .14 * N[:, 0] - .08 * N[:, 2]))
     V = np.concatenate([P.reshape(-1, 3), U.reshape(-1, 2), np.repeat(shade, 3)[:, None]], 1).astype('<f4')
-    I = np.arange(len(V), dtype='<i4').reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)    # glTF CCW -> engine front (CW)
+    V, I = np.unique(V, axis=0, return_inverse=True)                               # corners shared by triangles stored once
+    I = I.reshape(-1, 3)[:, [0, 2, 1]].reshape(-1).astype('<i4')                   # glTF CCW -> engine front (CW)
     Path(path).write_bytes(struct.pack('<ii', len(V), len(I)) + V.tobytes() + I.tobytes())
     return len(keep)
+
+# ------------------------------------------------------------------ polygon models (replace the cube build's output)
+def read_glb(path):
+    """-> [(name, parent, translation)], {name: (pos, nrm, uv, idx)} as stored (part-local positions)."""
+    b = Path(path).read_bytes(); jl = struct.unpack_from('<I', b, 12)[0]; js = json.loads(b[20:20 + jl]); off = 20 + jl + 8
+    def acc(i):
+        a = js['accessors'][i]; v = js['bufferViews'][a['bufferView']]; n = {'VEC3': 3, 'VEC2': 2, 'SCALAR': 1}[a['type']]
+        dt = {5126: '<f4', 5125: '<u4', 5123: '<u2'}[a['componentType']]
+        arr = np.frombuffer(b, dt, a['count'] * n, off + v.get('byteOffset', 0) + a.get('byteOffset', 0))
+        return arr.reshape(a['count'], n).astype(float) if n > 1 else arr.astype(np.int64)
+    names = [n['name'] for n in js['nodes']]
+    parent = {names[c]: n['name'] for n in js['nodes'] for c in n.get('children', [])}
+    nodes = [(n['name'], parent.get(n['name']), np.asarray(n.get('translation', [0, 0, 0]), float)) for n in js['nodes']]
+    parts = {}
+    for n in js['nodes']:
+        if 'mesh' in n:
+            pr = js['meshes'][n['mesh']]['primitives'][0]; at = pr['attributes']
+            parts[n['name']] = (acc(at['POSITION']), acc(at['NORMAL']), acc(at['TEXCOORD_0']), acc(pr['indices']))
+    return nodes, parts
+
+def use_poly(spec, nodes, d, stats, src=None):
+    """Ship the polygon model of spec['poly'] (or the folder src) in place of the cube build (model.glb, atlas.png, icon.bin; bounds, radius)."""
+    src = Path(src) if src else AUTHOR / spec['poly']; glb = src / 'model.glb'; png = src / 'atlas.png'
+    pnodes, parts = read_glb(glb)
+    want = [(n['name'], n['parent'], np.asarray(n['translation'], float)) for n in nodes]
+    assert [(a, b) for a, b, _ in pnodes] == [(a, b) for a, b, _ in want], (spec['id'], 'poly node tree differs', pnodes, want)
+    for (a, _, t1), (_, _, t2) in zip(pnodes, want): assert np.allclose(t1, t2, atol=1e-5), (spec['id'], a, t1, t2)
+    shutil.copyfile(glb, d / 'model.glb'); Image.open(png).convert('RGBA').save(d / 'atlas.png')
+    world = {}
+    for name, par, t in pnodes: world[name] = t + (world[par] if par else 0)      # the nodes only translate
+    P, U, N = [], [], []
+    for name, (pos, nrm, uv, idx) in parts.items():
+        tri = idx.reshape(-1, 3); q = pos[tri] + world[name]; P.append(q); U.append(uv[tri])
+        n = np.cross(q[:, 1] - q[:, 0], q[:, 2] - q[:, 0]); N.append(np.repeat((n / np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12))[:, None], 3, 1))
+    P, U, N = np.concatenate(P), np.concatenate(U), np.concatenate(N)
+    stats['cube_triangles'] = stats.pop('triangles'); stats['triangles'] = {k: int(len(v[3]) // 3) for k, v in parts.items()}
+    stats['vertices'] = {k: int(len(v[0])) for k, v in parts.items()}
+    stats['icon_triangles'] = write_icon(d / 'icon.bin', P, U, N, limit=None)    # the dropped item: a few thousand triangles, keep all
+    allc = P.reshape(-1, 3)
+    return dict(bounds=[allc.min(0).round(4).tolist(), allc.max(0).round(4).tolist()], radius=round(float(np.linalg.norm(allc, axis=1).max()) + .1, 3),
+                poly=dict(glb=str(glb), glbSha256=sha(glb), atlas=str(png), atlasSha256=sha(png)))
 
 def cross_part_pairs(kept, rank):
     """{id(mover face): (face, metres)} for visible same-facing faces of two parts closer than CROSS_GAP that
@@ -395,10 +443,46 @@ def cross_part_pairs(kept, rank):
             if m > 1e-6: out[id(mover)] = (mover, max(out.get(id(mover), (None, 0.0))[1], m))
     return out
 
+def build_poly_only(spec):
+    """A tower that exists only as a polygon model (spec['polyOnly']): see the module docstring."""
+    t0 = time.time(); tid = spec['id']; src = Path(spec['polyOnly']); d = OUT / tid; d.mkdir(parents=True, exist_ok=True)
+    pnodes, parts = read_glb(src / 'model.glb'); pj = json.loads((src / 'parts.json').read_text(encoding='utf-8'))
+    names = [n for n, _, _ in pnodes]
+    for need in ['Root', 'base', 'yaw', 'pitch'] + list(spec.get('spinParts', [])) + list(spec.get('recoilParts', [])):
+        assert need in names, (tid, 'node missing from the polygon model', need, names)
+    nodes = [dict(name=n, parent=p, translation=[round(float(x), 6) for x in t]) for n, p, t in pnodes]
+    stats = dict(triangles={}); over = use_poly(spec, nodes, d, stats, src); stats.pop('cube_triangles', None)
+    stats.update(faces_hidden=0, faces_clipped=0, cross_part_pairs_nudged=0)
+    world = {}
+    for n, p, t in pnodes: world[n] = t + (world[p] if p else 0)
+    muzzles = [dict(name=m['name'], part=m['part'], local=[float(x) for x in m['local']], rest=[round(float(x), 5) for x in np.asarray(m['local'], float) + world[m['part']]])
+               for m in pj['muzzles']]
+    assert muzzles and all(m['part'] in names for m in muzzles), (tid, 'muzzles', pj.get('muzzles'))
+    base = parts['base'][0] + world['base']; half = np.abs(base[:, [0, 2]]).max(0); top = over['bounds'][1][1]
+    cells = [int(max(spec.get('minCells', [1, 1])[0], math.ceil(2 * half[0] - .05))), int(math.ceil(top - .05)), int(max(spec.get('minCells', [1, 1])[1], math.ceil(2 * half[1] - .05)))]
+    lo, hi = pj['pitch']                          # the model's own clash sweep (every 15 deg of yaw, pitch limits, spin)
+    meta = dict(id=tid, nodes=nodes, pivots={n['name']: [round(float(x), 6) for x in world[n['name']]] for n in nodes}, muzzles=muzzles,
+                bounds=over['bounds'], radius=over['radius'], source=dict(poly=over['poly'], parts=str(src / 'parts.json'), partsSha256=sha(src / 'parts.json')),
+                stats=stats, clearance=dict(pitch=[lo, hi] if hi > lo else [0, 0], from_model=True), cells=cells)
+    print(tid, 'polygon-only', json.dumps(dict(triangles=stats['triangles'], cells=cells, pitch=[lo, hi])), f'{time.time() - t0:.1f}s', flush=True)
+    META.mkdir(parents=True, exist_ok=True); (META / f'{tid}.json').write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding='utf-8')
+    return meta
+
 # ------------------------------------------------------------------ build one tower
 def build(spec):
     t0 = time.time(); tid = spec['id']
+    if spec.get('polyOnly'): return build_poly_only(spec)
     src = AUTHOR / spec['source']; geo_path = src / f"{tid}_{spec['version']}.geo.json"; png_path = src / f"{tid}_{spec['version']}.png"
+    if spec.get('poly'):         # polygon model over an unchanged cube build: reuse the cube build's cached metadata
+        cached = META / f'{tid}.json'
+        if cached.exists():
+            m = json.loads(cached.read_text(encoding='utf-8'))
+            if m['source']['geoSha256'] == sha(geo_path) and m['source']['atlasSha256'] == sha(png_path):
+                d = OUT / tid; d.mkdir(parents=True, exist_ok=True); stats = dict(m['stats'])
+                if 'cube_triangles' in stats: stats['triangles'] = stats.pop('cube_triangles')
+                over = use_poly(spec, m['nodes'], d, stats); m.update(bounds=over['bounds'], radius=over['radius'], stats=stats); m['source']['poly'] = over['poly']
+                print(tid, 'polygon model over the cached cube build', json.dumps(stats['triangles']), f'{time.time() - t0:.1f}s', flush=True)
+                cached.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding='utf-8'); return m
     geo = json.loads(geo_path.read_text(encoding='utf-8'))['minecraft:geometry'][0]
     gb = {b['name']: b for b in geo['bones']}
     tex = (geo['description']['texture_width'], geo['description']['texture_height'])
@@ -488,6 +572,11 @@ def build(spec):
                 bounds=[allc.min(0).round(4).tolist(), allc.max(0).round(4).tolist()],
                 radius=round(float(np.linalg.norm(allc, axis=1).max()) + .1, 3),
                 source=dict(geo=str(geo_path), geoSha256=sha(geo_path), atlas=str(png_path), atlasSha256=sha(png_path)), stats=stats)
+    if spec.get('poly'):
+        cube_bounds = meta['bounds']; over = use_poly(spec, nodes, d, stats); meta['bounds'], meta['radius'] = over['bounds'], over['radius']
+        meta['source']['poly'] = over['poly']
+        grow = max(max(a - b for a, b in zip(cube_bounds[0], meta['bounds'][0])), max(b - a for a, b in zip(cube_bounds[1], meta['bounds'][1])))
+        if grow > .05: print(f"{tid}: WARNING the polygon model reaches {grow:.3f} m beyond the cube build (cells come from the cube build)")
     meta['clearance'] = clearance(spec, boxes, owner, piv, labels)
     base = np.concatenate([b.corners for b, o in zip(boxes, owner) if o == 'base'])
     half = np.abs(base[:, [0, 2]]).max(0)
@@ -583,13 +672,13 @@ def spec_parent(spec, name):
 
 def runtime_entry(spec, meta):
     """Design fields from tools/towers.json + generated geometry -> one Assets/Towers/towers.json record."""
-    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim')}
+    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim', 'poly', 'polyOnly')}
     d.update(nodes=meta['nodes'], muzzles=[{k: m[k] for k in ('name', 'part', 'local')} for m in meta['muzzles']],
              bounds=meta['bounds'], radius=meta['radius'], cells=meta['cells'])
     if 'pitch' in meta['clearance']:
         lo, hi = meta['clearance']['pitch']; d['pitch'] = [max(lo + 2, -35), min(hi - 2, 70)] if hi > lo else [0, 0]
     subs = [x for x in spec.get('subparts', []) if 'recoil' in x]
-    d['recoilParts'] = [x['name'] for x in subs]; d['recoil'] = [x['recoil'] for x in subs]
+    if not spec.get('polyOnly'): d['recoilParts'] = [x['name'] for x in subs]; d['recoil'] = [x['recoil'] for x in subs]   # polygon-only towers name them in tools/towers.json
     # articulated links: turn about X at their hinge to keep pointing at a partner point (on the turret or the cradle)
     d['links'] = [dict(node=x['name'], parent=x['from'], hinge=x['hinge'], at=x['aim']['at'], on=x['aim']['on'], stretch=bool(x.get('stretch')))
                   for x in spec.get('subparts', []) if 'aim' in x]
@@ -602,20 +691,25 @@ def main(ids):
     if old.exists(): metas = {m['id']: m for m in json.loads(old.read_text(encoding='utf-8'))['towers']}
     for spec in SPEC['towers']:                    # per-tower metadata from earlier subset builds, if it matches the source now
         p = META / f"{spec['id']}.json"
-        if not p.exists(): continue
+        if not p.exists() or spec.get('polyOnly'): continue
         m = json.loads(p.read_text(encoding='utf-8')); src = AUTHOR / spec['source']
         geo = src / f"{spec['id']}_{spec['version']}.geo.json"; png = src / f"{spec['id']}_{spec['version']}.png"
-        if geo.exists() and m['source']['geoSha256'] == sha(geo) and m['source']['atlasSha256'] == sha(png): metas[spec['id']] = m
+        poly_ok = not spec.get('poly') and 'poly' not in m['source'] or spec.get('poly') and m['source'].get('poly', {}).get('glbSha256') == sha(AUTHOR / spec['poly'] / 'model.glb') \
+            and m['source']['poly']['atlasSha256'] == sha(AUTHOR / spec['poly'] / 'atlas.png')
+        if geo.exists() and m['source']['geoSha256'] == sha(geo) and m['source']['atlasSha256'] == sha(png) and poly_ok: metas[spec['id']] = m
+    built = set()
     if '--runtime-only' not in sys.argv:          # --runtime-only: regenerate towers.json from tools/towers.json + cached geometry
-        for spec in towers: metas[spec['id']] = build(spec)
+        for spec in towers: metas[spec['id']] = build(spec); built.add(spec['id'])
+    for spec in SPEC['towers']:                    # polygon-only towers are rebuilt every time (no cube build to cache)
+        if spec.get('polyOnly') and spec['id'] not in built: metas[spec['id']] = build_poly_only(spec)
     OUT.mkdir(parents=True, exist_ok=True)
     order = [t['id'] for t in SPEC['towers'] if t['id'] in metas]
     old.write_text(json.dumps(dict(towers=[metas[i] for i in order]), ensure_ascii=False, indent=1), encoding='utf-8')
     runtime = [runtime_entry(t, metas[t['id']]) for t in SPEC['towers'] if t['id'] in metas]
     (OUT / 'towers.json').write_text(json.dumps(dict(towers=runtime), ensure_ascii=False, indent=1), encoding='utf-8')
-    prov = [dict(id=m['id'], source=m['source'], triangles=sum(m['stats']['triangles'].values()), facesHidden=m['stats']['faces_hidden'],
+    prov = [dict(id=m['id'], source=m['source'], model='polygon' if 'poly' in m['source'] else 'cube', triangles=sum(m['stats']['triangles'].values()), facesHidden=m['stats']['faces_hidden'],
                  facesClipped=m['stats']['faces_clipped'], crossPartNudged=m['stats']['cross_part_pairs_nudged'], clearance=m['clearance']) for m in (metas[i] for i in order)]
-    (ROOT / 'docs/tower-provenance.json').write_text(json.dumps(dict(boundary='Authored cube models and atlases from E:/projects/endfield-turret-model; no game model or texture is shipped.', towers=prov), ensure_ascii=False, indent=1), encoding='utf-8')
+    (ROOT / 'docs/tower-provenance.json').write_text(json.dumps(dict(boundary='Authored cube models (v5) and polygon models (poly_v1) with their atlases from E:/projects/endfield-turret-model and E:/projects/sog-tower-model; no game model or texture is shipped.', towers=prov), ensure_ascii=False, indent=1), encoding='utf-8')
     print('runtime towers.json:', len(runtime), {r['id']: r['cells'] for r in runtime})
 
 if __name__ == '__main__':

@@ -86,6 +86,7 @@ public static class MDFaction {
 // gunfire (the ghouls' ComponentBulletDefender cuts body hits to 0.1-0.5) leave it alone; per-hit caps and boss rules that
 // apply to every injury still apply. Impulse and stun as for a projectile.
 public class MDTowerAttackment:Attackment {
+    public string Channel;   // kinetic / explosion / energy (MDTowerBrain.Hit), read by the devil mech's weak channel
     public MDTowerAttackment(Entity target,Entity attacker,Vector3 hitPoint,Vector3 hitDirection,float attackPower):base(target,attacker,hitPoint,hitDirection,attackPower) {
         ImpulseFactor=2;StunTimeSet=.2f;AllowImpulseAndStunWhenDamageIsZero=false;
     }

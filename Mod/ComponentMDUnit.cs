@@ -22,6 +22,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public MDMechState Mech;
     public bool Legacy=>Kind=="Enemy";
     float[] recoilAge=[];
+    public float Spin,SpinRate;   // rotary barrels (Tower.spinParts): angle and 0..1 speed, spun up while a target is held; not saved
     public float TowerPitch=>Tower==null?0:Tower.pitchFixed?Tower.restPitch:Math.Clamp(AimPitch,Tower.PitchMin,Tower.PitchMax);
     public void TickRecoil(float dt){for(int i=0;i<recoilAge.Length;i++)recoilAge[i]+=dt;}
     public void Kick(int muzzle) {
@@ -50,7 +51,7 @@ public class ComponentMDUnit : Component,IUpdateable {
         Kind=v.GetValue<string>("Kind");Clock=Project.FindSubsystem<SubsystemTime>(true);Body=Entity.FindComponent<ComponentBody>(true);Damage=Entity.FindComponent<ComponentDamage>(true);Mount=Entity.FindComponent<ComponentMount>();
         if(Legacy)return;
         if(Kind=="Mech") {
-            Mech=new MDMechState();Mech.Load(v);Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);lastHitpoints=Damage.Hitpoints;
+            Mech=new MDMechState(MDMechType.ById(v.GetValue("MechType","Mercury")));Mech.Load(v);Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);lastHitpoints=Damage.Hitpoints;
             if(Damage.Hitpoints<=0||v.GetValue("Destroyed",false)){Damage.Hitpoints=0;Destroyed=true;wreck=v.GetValue("WreckTime",0f);}
             return;
         }
@@ -121,9 +122,12 @@ public static class MDCombat {
         if(source.Mech!=null)return creature!=null&&!MDFaction.Friendly(b.Entity);
         return creature!=null&&MDFaction.Hostile(creature,source.Clock.GameTime);
     }
+    // The first body or terrain on a segment, for sight checks and shots. Bodies of the player's side (other towers, Mercury,
+    // players, the player's herd and mounts) are passed through: a tower behind another tower used to see only its neighbour
+    // and never fired, and its shots stopped on the neighbour (user, 2026-10-21: towers and robots sometimes miss each other).
     public static ComponentBody Trace(ComponentMDUnit source,Vector3 start,Vector3 end,out Vector3 point) {
         var terrain=source.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(start,end,false,true,(v,d)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));
-        var body=source.Project.FindSubsystem<SubsystemBodies>(true).Raycast(start,end,0,(b,d)=>b!=source.Body&&b.ParentBody!=source.Body);
+        var body=source.Project.FindSubsystem<SubsystemBodies>(true).Raycast(start,end,0,(b,d)=>b!=source.Body&&b.ParentBody!=source.Body&&!MDFaction.Friendly(b.Entity));
         float max=Vector3.Distance(start,end);float t=terrain?.Distance??max;float bdist=body?.Distance??float.PositiveInfinity;
         point=start+Vector3.Normalize(end-start)*Math.Min(t,bdist);return bdist<t?body?.ComponentBody:null;
     }

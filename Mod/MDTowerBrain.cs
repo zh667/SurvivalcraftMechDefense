@@ -17,6 +17,7 @@ public static class MDTowerBrain {
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
+        if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+(u.Target!=null&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
         if(a.type=="heal"){Heal(u,dt);return;}
         u.ScanTimer-=dt;
@@ -148,7 +149,7 @@ public static class MDTowerBrain {
         u.Cooldown=a.interval;
         switch(a.type) {
             case "bolt":
-                u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);Sound(u,d.fireSounds,muzzle);
+                u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);if((shot-1)%Math.Max(1,a.soundEvery)==0)Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1),strong?a.enhancedSplash:0,strong);break;
             case "shell":
                 u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f+tc.Y-MDCombat.Center(target).Y,tc.Z);   // the ground under the lead point
@@ -236,7 +237,7 @@ public static class MDTowerBrain {
             if(Vector3.DistanceSquared(b.Position,p)>a.range*a.range)continue;
             var player=b.Entity.FindComponent<ComponentPlayer>();var unit=b.Entity.FindComponent<ComponentMDUnit>();
             if(player!=null&&player.ComponentHealth.Health<1&&player.ComponentHealth.Health>0){player.ComponentHealth.Heal(a.power);w.Heal(b.Position);any=true;}
-            else if(unit!=null&&unit!=u&&unit.Kind=="Turret"&&!unit.Destroyed&&unit.Damage.Hitpoints<1){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Heal(b.Position);any=true;}
+            else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Heal(b.Position);any=true;}   // towers and, since 0.9.0 round 5, Mercury
         }
         u.Cooldown=any?a.interval:.5f;
         if(any){w.Ring(p,a.range,MDTowerWorldColor(d.fx.color),.8f);w.Flash(Muzzle(u,0),.5f,MDTowerWorldColor(d.fx.color),.2f);Sound(u,d.fireSounds,p,.5f);}
@@ -245,11 +246,16 @@ public static class MDTowerBrain {
     // ---------------------------------------------------------------- damage
     // Gunfire (bolts, sniper rounds) is a ProjectileAttackment; explosions, beams, lightning, flames, jets and poison are
     // MDTowerAttackment, so a mod that cuts bullet damage (the ghouls' body-hit multiplier) does not cut them.
-    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false) {
+    // Since 0.9.0 the non-bullet hits carry a damage channel (the devil mech takes full damage only from its current weak
+    // channel, MDBoss): kinetic (bolts, sniper rounds, water jets, melee), explosion (shells, missiles, grenades, flames,
+    // burning ground) or energy (beams, lightning, sonic pulses, poison and frost fields). Mercury's weapon kits multiply its damage.
+    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null) {
         if(b==null||!MDCombat.IsEnemy(u,b)||power<=0)return;
         power*=World(u).DamageFactor(b);
-        ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power));
+        if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit)*u.Mech.Type.Damage;   // weapon kit x the mech's own factor
+        ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power){Channel=channel??Channel(u)});
     }
+    public static string Channel(ComponentMDUnit u)=>(u.Tower?.attack.type??(u.Mech?.Weapon==MDMechWeapon.Laser?"beam":"bolt")) switch{"shell" or "flame"=>"explosion","beam" or "chain" or "pulse" or "heal"=>"energy",_=>"kinetic"};
     public static void ShellLanded(ComponentMDUnit u,MDTowerDef d,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
         var a=d.attack;var w=World(u);
         Sound(u,d.hitSounds,point,.55f);
@@ -257,7 +263,7 @@ public static class MDTowerBrain {
         string kind=d.fx.kind;float r=Math.Max(splash,.5f);
         if(a.type=="bolt")w.Impact(d,point,dir,true);
         w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2));
-        if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt");   // an enhanced bolt: the round itself, then its blast
+        if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt","explosion");   // an enhanced bolt: the round itself, then its blast
         Splash(u,d,point,r,power*(hit!=null?.6f:1),hit);
         if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
     }
@@ -268,7 +274,7 @@ public static class MDTowerBrain {
             if(!MDCombat.IsEnemy(u,b))continue;var c=MDCombat.Center(b);float dist=Vector3.Distance(c,point);
             if(dist>r+b.BoxSize.X*.5f)continue;
             var start=point+Vector3.UnitY*.3f;if(MDCombat.Trace(u,start,c,out _)!=b&&dist>.8f)continue;
-            if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f));
+            if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f),false,"explosion");
             if(a.slow>0&&fx.kind!="poison")w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(fx.color2));   // poison slows through its cloud
             if(a.freeze>0&&Resilience(b)<a.bossResilience)w.Freeze(b,a.freeze,a.freezeImmune);
             if(a.armorDown>0)w.ArmorDown(b,a.armorDown,a.armorTime,MDTowerWorldColor(fx.color));
@@ -281,7 +287,7 @@ public static class MDTowerBrain {
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||Vector3.DistanceSquared(b.Position,c)>r*r||Math.Abs(b.Position.Y-c.Y)>2.5f)continue;
             if(kind=="poison"&&a.dot>0)w.Poison(u,b,a.dot,a.dotTime);   // damage comes from the poison status, also after leaving
-            else Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY);
+            else Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY,false,kind=="burn"?"explosion":"energy");
             if(slow<1)w.Slow(b,slow,Math.Max(1,a.slowTime),MDTowerWorldColor(fx.color2));
             if(kind=="orb"&&random.Next(2)==0)w.AddBeam(c+Vector3.UnitY*.9f,MDCombat.Center(b),.04f,MDTowerWorldColor(fx.color2),.1f,true);
         }

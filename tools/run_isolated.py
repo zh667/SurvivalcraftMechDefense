@@ -68,6 +68,10 @@ def main():
     print(len(list(shots.glob('*.png'))) if shots.exists() else 0, 'screenshots')
     for l in sorted(glob.glob(str(runtime / '*.log')) + glob.glob(str(runtime / 'Bugs/*')), key=os.path.getmtime)[-2:]:
         print('LOG', l); print(Path(l).read_text(encoding='utf-8', errors='replace')[-3000:])
+    # a failed check is a failed run (the result's "passed"), not only a missing result
+    try: passed = json.loads(res.read_text(encoding='utf-8')).get('passed') is True if res.exists() else False
+    except ValueError: passed = False
+    if not passed: sys.exit(f'{a.test} {a.mode}: FAILED (see {res.name})')
 
 if __name__ == '__main__':
     main()

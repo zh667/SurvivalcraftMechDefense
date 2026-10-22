@@ -10,7 +10,7 @@ namespace TowerLab;
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
 // Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four);
-// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury).
+// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "mech-view" (MechView.cs, before / after shots of Mercury; "mech-view-nemesis" / "mech-view-regulus" for the heroes); "robots" (Robots.cs, 0.9.0).
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -98,6 +98,7 @@ public partial class Lab:ModLoader {
             if(model.Model==null)throw new Exception("model missing "+d.id);
             foreach(var n in d.nodes.Skip(1))if(model.Model.FindBone(n.name,false)==null)throw new Exception($"bone {n.name} missing in {d.id}");
             if(MDTowerLibrary.Icon(d).mesh.Vertices.Count<100)throw new Exception("icon mesh missing "+d.id);
+            if(MDTowerLibrary.Picture(d) is not {Width:256,Height:256})throw new Exception("slot picture missing "+d.id);
             checks.Add($"{d.id}: model {model.Model.Meshes.Count} meshes, {model.Model.Bones.Count} bones, icon ok");
         }
         results["loadChecks"]=checks;
@@ -152,6 +153,8 @@ public partial class Lab:ModLoader {
         }
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
+        if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
+        if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {
             var (pid,pu,pat)=placed[0];var focus=pat+Vector3.UnitY*1.4f;var eye=focus+new Vector3(.75f,.45f,-1f)*3.6f;
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_a_hold");yield return true;
@@ -164,23 +167,8 @@ public partial class Lab:ModLoader {
             foreach(var x in Hold(eye,focus))yield return x;Shot("p_f_one_tower");yield return true;
         }
         if(mode is "recipes" or "special") {
-            // every tower and Mercury has a crafting recipe, and its own ingredient grid resolves to it (no clash with vanilla or each other)
-            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
-            var mine=CraftingRecipesManager.Recipes.Where(r=>Terrain.ExtractContents(r.ResultValue)==block.BlockIndex).ToList();
-            var rec=new Dictionary<string,object>();var bad=new List<string>();
-            void Check(string id,int data) {
-                var r=mine.FirstOrDefault(x=>Terrain.ExtractData(x.ResultValue)==data);
-                if(r==null){bad.Add(id+": no recipe");return;}
-                var grid=r.Ingredients.Select(s=>s==null?null:s.Contains(':')?s:s+":0").ToArray();   // what the crafting table builds from real items
-                var found=CraftingRecipesManager.FindMatchingRecipe(terrain,grid,0,1);
-                bool ok=found!=null&&found.ResultValue==r.ResultValue&&found.ResultCount==1;
-                if(!ok)bad.Add($"{id}: grid resolves to {(found==null?"nothing":found.ResultValue+" "+found.Message)}");
-                rec[id]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),remains=r.RemainsValue,description=r.Description,resolves=ok};
-            }
-            foreach(var d in towers)Check(d.id,d.data);
-            Check("mercury",1);   // Mercury, the mech (survival recipe since 0.8.0)
-            results["recipes"]=new{count=mine.Count,bad,rec};
-            if(bad.Count>0||mine.Count!=towers.Count+1)throw new Exception($"recipes: {mine.Count} for {towers.Count} towers and Mercury; "+string.Join("; ",bad));
+            // every tower, Mercury and progression item recipe resolves from its own grid (no clash with vanilla or each other); tiers (Robots.cs)
+            results["recipes"]=RecipeChecks(towers);
         }
         if(mode is "hand" or "special") {
             // the deploy item held in first person (game camera) and third person (fixed camera in front of the player)
@@ -348,6 +336,104 @@ public partial class Lab:ModLoader {
             }
             SettingsManager.ShowGuiInScreenshots=false;
         }
+        if(mode=="icons") {
+            // slot pictures (0.9.0 round 5): hotbar pages of every tower and mech, then the robot summons, GUI on; each page
+            // also at 2560x1440, where the slots are twice as large
+            var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var summon=BlocksManager.Blocks.First(b=>b is MDSummonBlock);
+            var inv=player.ComponentPlayer.Entity.FindComponent<ComponentCreativeInventory>(true);
+            var pages=block.GetCreativeValues().Chunk(9).Concat(summon.GetCreativeValues().Chunk(9)).ToList();
+            SettingsManager.ShowGuiInScreenshots=true;
+            for(int page=0;page<pages.Count;page++) {
+                for(int i=0;i<9;i++){inv.RemoveSlotItems(i,inv.GetSlotCount(i));if(i<pages[page].Length)inv.AddSlotItems(i,pages[page][i],1);}
+                foreach(var x in Hold(origin+new Vector3(-8,7,-12),origin+new Vector3(25,1,20)))yield return x;
+                Shot($"icons_{page}");ScreenCaptureManager.Capture(2560,1440,$"icons_{page}_big.png");yield return true;
+            }
+            SettingsManager.ShowGuiInScreenshots=false;results["iconPages"]=pages.Count;
+        }
+        if(mode.StartsWith("view-")) {
+            // one tower (mode view-<id>) seen the way a player sees it; the same shots from two packages make a before / after
+            // (0.9.0 round 5: the reduced battle_rocket_1). Aim locked (no targets: a long-range tower turns to whatever wild
+            // creature is around), no clouds, so only the model differs. Around, player height, close-ups from outside its box,
+            // night, in the hand, tiny camera steps near and far (flicker), firing at a wolf, then fog and a torch-lit cave.
+            var d=towers.First(t=>t.id==mode[5..]);var views=new List<string>();
+            // 5 s for the gallery's shells to land and their ground effects to fade: an acid puddle (3.5 s) from the 腐蚀塔
+            // showed up in the first shots of a run
+            Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(5))yield return true;
+            SettingsManager.SkyRenderingMode=SkyRenderingMode.NoClouds;
+            var at=origin+new Vector3(10,0,14);var u=Place(d,at,0);   // faces -Z
+            void Freeze(){u.Target=null;u.ScanTimer=1e6f;u.Cooldown=1e6f;u.Yaw=u.AimYaw=0;}
+            for(double s0=Time.RealTime;Time.RealTime-s0<1.5;){Freeze();yield return true;}
+            float h=d.bounds[1][1],s=Math.Max(h,Math.Max(d.bounds[1][0]-d.bounds[0][0],d.bounds[1][2]-d.bounds[0][2]));var focus=at+Vector3.UnitY*h*.5f;
+            IEnumerable<bool> View(string name,Vector3 eye,Vector3 look,int frames=4){for(int k=0;k<frames;k++){Freeze();Cam(eye,look);yield return true;}Freeze();Shot("v_"+name);views.Add(name);yield return true;}
+            Vector3 P(float x,float y,float z)=>at+new Vector3(x*s,y*h,z*s);   // x, z in tower sizes from its axis, y in heights
+            for(int k=0;k<8;k++){float a=k*MathF.PI/4;foreach(var x in View($"around_{k*45:000}",focus+new Vector3(-MathF.Sin(a),.36f,-MathF.Cos(a))*s*1.6f,focus))yield return x;}
+            foreach(var x in View("top",focus+new Vector3(.02f,s*1.8f,-.3f),focus))yield return x;
+            foreach(var x in View("player_front",at+new Vector3(.8f,1.7f,-5),focus))yield return x;
+            foreach(var x in View("player_back",at+new Vector3(-1.2f,1.7f,4.5f),focus))yield return x;
+            foreach(var x in View("close_upper_front",P(.25f,.95f,-.8f),P(0,.75f,-.15f)))yield return x;
+            foreach(var x in View("close_upper_right",P(.8f,.85f,-.1f),P(0,.7f,0)))yield return x;
+            foreach(var x in View("close_upper_back",P(-.2f,.9f,.8f),P(0,.7f,0)))yield return x;
+            foreach(var x in View("close_mid_right",P(.8f,.45f,-.3f),P(0,.4f,0)))yield return x;
+            foreach(var x in View("close_base_front",P(.35f,.3f,-.8f),P(0,.15f,0)))yield return x;
+            foreach(var x in View("close_base_back",P(-.4f,.3f,.8f),P(0,.15f,0)))yield return x;
+            var pose=MDTowerBrain.Pose(u);var mz=d.muzzles.Length>0?MDTowerLibrary.Muzzle(d,pose,0):P(0,.9f,0);
+            foreach(var x in View("close_muzzle",mz+new Vector3(.45f,.5f,-.7f),mz))yield return x;
+            foreach(var x in View("very_close_muzzle",mz+new Vector3(.22f,.25f,-.35f),mz))yield return x;
+            var gi=GameManager.Project.FindSubsystem<SubsystemGameInfo>(true);gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Night;
+            foreach(var x in View("night_front",at+new Vector3(.8f,1.7f,-5),focus,20))yield return x;
+            gi.WorldSettings.TimeOfDayMode=TimeOfDayMode.Day;foreach(var x in View("day_again",at+new Vector3(.8f,1.7f,-5),focus,20))yield return x;
+            var near=P(0,.7f,0);
+            for(int k=0;k<6;k++)foreach(var x in View($"flicker_near_{k}",near+new Vector3(.9f+k*.004f,.35f,-1.1f)*s*.9f,near,2))yield return x;
+            for(int k=0;k<6;k++)foreach(var x in View($"flicker_far_{k}",focus+new Vector3(.9f+k*.002f,.25f,-1.1f)*22f,focus,2))yield return x;
+            {   // in the hand, first person (the full model is drawn there)
+                var block=BlocksManager.Blocks.First(b=>b is MDDeploymentBlock);var pl=player.ComponentPlayer;var gw=pl.GameWidget;var H=origin+new Vector3(-17,0,40);
+                var inv=pl.Entity.FindComponent<ComponentCreativeInventory>(true);inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,d.data),1);inv.ActiveSlotIndex=0;
+                foreach(var x in During(1.2,()=>{Freeze();pl.ComponentBody.Position=H;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentLocomotion.LookAngles=new(0,-.15f);gw.ActiveCamera=gw.FindCamera<FppCamera>();}))yield return x;
+                ScreenCaptureManager.Capture(1280,720,"v_hand_first.png");views.Add("hand_first");yield return true;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));pl.ComponentBody.Position=Home;
+            }
+            {   // firing at a wolf (aim free again)
+                var a=d.attack;float dist=Math.Max(a.minRange+2,Math.Min(a.range*.6f,9));var target=Dummy(at+new Vector3(0,0,-dist));
+                u.ScanTimer=0;u.Cooldown=1e6f;while(Wait(.6))yield return true;
+                u.Cooldown=0;int shots0=u.ShotCount;var f=at+new Vector3(0,h*.45f,-dist*.5f);Cam(f+new Vector3(1.0f,.55f,-.25f)*Math.Max(9,dist*1.6f),f);
+                double start=Time.RealTime;int k=0;
+                foreach(var dt in new[]{.04,.25,.8,2.0}){while(Time.RealTime-start<dt){Cam(lastEye,lastFocus);yield return true;}Shot($"v_fire_{k}");views.Add($"fire_{k++}");yield return true;}
+                if(d.spinParts.Length>0) {   // rotary barrels (0.9.0 round 6): close to the first muzzle while still firing, two shots two frames apart
+                    var m0=MDTowerBrain.Muzzle(u,0);var ce=m0+new Vector3(1.4f,.5f,-1.1f);var spins=new List<string>();
+                    for(int sp=0;sp<2;sp++){for(int n=0;n<(sp==0?6:2);n++){Cam(ce,m0);yield return true;}spins.Add($"{u.Spin:0.000}");Shot($"v_fire_spin_{sp}");views.Add($"fire_spin_{sp}");yield return true;}
+                    results["spin"]=$"rate {u.SpinRate:0.00}, angle at the two shots {string.Join(" / ",spins)} rad, {d.spinParts.Length} parts, speed {d.spinSpeed} deg/s";
+                }
+                results["fired"]=u.ShotCount-shots0;Remove([target]);
+            }
+            {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start
+                // time, so step the start time back until the layer reaches the ground around the tower.
+                for(double s0=Time.RealTime;Time.RealTime-s0<4;){Freeze();yield return true;}   // the shot's explosion and smoke fade first
+                var wx=GameManager.Project.FindSubsystem<SubsystemWeather>(true);var sky=GameManager.Project.FindSubsystem<SubsystemSky>(true);
+                gi.WorldSettings.AreWeatherEffectsEnabled=true;wx.m_precipitationStartTime=wx.m_precipitationEndTime=double.MaxValue;
+                double fogNow=Math.Floor(gi.TotalElapsedGameTime);string fogInfo="none";
+                for(int k=1;k<=400&&fogInfo=="none";k++) {
+                    for(int n=0;n<2;n++){Freeze();wx.m_fogStartTime=fogNow-k;wx.m_fogEndTime=double.PositiveInfinity;wx.FogIntensity=1;Cam(at+new Vector3(.8f,1.7f,-5),focus);yield return true;}
+                    if(sky.ViewFogBottom<=at.Y+.5f&&sky.ViewFogTop>=at.Y+h+2&&sky.ViewFogDensity>=.05f)fogInfo=$"start -{k} s: bottom {sky.ViewFogBottom:0.0}, top {sky.ViewFogTop:0.0}, density {sky.ViewFogDensity:0.000}";
+                }
+                results["fog"]=fogInfo;
+                foreach(var x in View("fog_front",at+new Vector3(.8f,1.7f,-5),focus,10))yield return x;
+                foreach(var x in View("fog_mid",focus+new Vector3(.9f,.25f,-1.1f)*9f,focus,6))yield return x;
+                foreach(var x in View("fog_far",focus+new Vector3(.9f,.25f,-1.1f)*22f,focus,6))yield return x;
+                wx.FogIntensity=0;gi.WorldSettings.AreWeatherEffectsEnabled=false;for(int n=0;n<3;n++){Freeze();yield return true;}
+            }
+            {   // cave: a closed granite room around the tower, four torches on the floor
+                var ter=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);int ax=(int)MathF.Floor(at.X),ay=(int)MathF.Floor(at.Y),az=(int)MathF.Floor(at.Z);
+                for(int cx=ax-7;cx<=ax+7;cx++)for(int cz=az-9;cz<=az+7;cz++)for(int cy=ay-1;cy<=ay+8;cy++)
+                    if(cx==ax-7||cx==ax+7||cz==az-9||cz==az+7||cy==ay-1||cy==ay+8)ter.ChangeCell(cx,cy,cz,3);
+                foreach(var (cx,cz) in new[]{(ax-3,az-3),(ax+3,az-3),(ax-3,az+3),(ax+3,az+3)})ter.ChangeCell(cx,ay,cz,Terrain.MakeBlockValue(31,0,4));
+                for(double s0=Time.RealTime;Time.RealTime-s0<3;){Freeze();yield return true;}
+                results["caveLight"]=Terrain.ExtractLight(ter.Terrain.GetCellValue(ax,ay+2,az-4));
+                foreach(var x in View("cave_front",at+new Vector3(.8f,1.7f,-5),focus,10))yield return x;
+                foreach(var x in View("cave_right",at+new Vector3(5,1.7f,-2.5f),focus,6))yield return x;
+                foreach(var x in View("cave_back",at+new Vector3(-1.2f,1.7f,4.5f),focus,6))yield return x;
+            }
+            SettingsManager.SkyRenderingMode=SkyRenderingMode.Full;results["views"]=views;results["box"]=$"{s:0.00} x {h:0.00}";
+        }
         if(mode is "fire" or "all") {
             // one tower at a time: a dummy target in range, capture the sequence after its first shot
             var shotsLog=new Dictionary<string,object>();
@@ -415,3 +501,11 @@ public static class DrawProbe {
 }
 [HarmonyPatch(typeof(FileAssociationManager),nameof(FileAssociationManager.Initialize))]
 public static class NoFileAssociation { public static bool Prefix()=>false; }
+// The test game runs while the user keeps working. With no menu open the engine sets the mouse to raw mode in
+// Engine.Input.Mouse.BeforeFrame and again in AfterFrame whenever its window counts as active, which it does even behind other
+// windows; raw mode clips the system cursor to the game window (measured: clipped in 7 of 133 samples over a 27 s run). The
+// tests never read the mouse, so both places see a visible mouse and keep the cursor normal.
+[HarmonyPatch(typeof(Engine.Input.Mouse),"BeforeFrame")]
+public static class KeepCursorFree { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }
+[HarmonyPatch(typeof(Engine.Input.Mouse),"AfterFrame")]
+public static class KeepCursorFreeAfter { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }

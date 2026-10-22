@@ -215,7 +215,7 @@ public partial class Lab {
         // ---- leave, then destroy it
         r["exit"]=MDMechPilot.Exit(pl,u);r["afterExit"]=new{mounted=MDMechPilot.Mounted(pl)!=null,riding=pl.ComponentBody.ParentBody!=null,camera=pl.GameWidget.ActiveCamera.GetType().Name,hud=m.Hud!=null};
         MDMechPilot.ExternalControls=false;
-        // ---- survival upkeep: armour 3000; iron repairs it like a tower; three pickaxe hits (the miner's real hit, through
+        // ---- survival upkeep: armour 4000 (3000 before 0.9.0 round 5); iron repairs it like a tower; three pickaxe hits (the miner's real hit, through
         // MDDismantlePatch) take it down into its item with its health; that item deploys it again with that health
         var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);var pickables=GameManager.Project.FindSubsystem<SubsystemPickables>(true);
         float armour=u.Damage.AttackResilience;u.SetHitpoints(.5f);
@@ -226,7 +226,7 @@ public partial class Lab {
         for(int i=0;i<MDTowerMaintenance.HitsToDismantle;i++){pl.ComponentMiner.Hit(u.Body,hitAt,Vector3.UnitZ);foreach(var x in During(1,()=>{}))yield return x;}
         var drop=pickables.Pickables.FirstOrDefault(pk=>Terrain.ExtractContents(pk.Value)==block.BlockIndex&&MDDeploymentBlock.IsMech(pk.Value));
         r["upkeep"]=new{armour,repaired,afterIron,takenDown=!u.Entity.IsAddedToProject,item=drop==null?null:block.GetDisplayName(terrain,drop.Value),wear=drop==null?-1:MDDeploymentBlock.Wear(drop.Value)};
-        if(armour!=3000||!repaired||MathF.Abs(afterIron-(.5f+200f/3000))>.002f||drop==null||u.Entity.IsAddedToProject)throw new Exception("mech upkeep: "+System.Text.Json.JsonSerializer.Serialize(r["upkeep"]));
+        if(armour!=MDMechType.Mercury.Armour||!repaired||MathF.Abs(afterIron-(.5f+200f/armour))>.002f||drop==null||u.Entity.IsAddedToProject)throw new Exception("mech upkeep: "+System.Text.Json.JsonSerializer.Serialize(r["upkeep"]));
         int back=drop.Value;drop.ToRemove=true;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,back,1);inv.ActiveSlotIndex=0;
         pl.ComponentBody.Position=Home;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
         foot=pl.ComponentBody.Position;pl.ComponentMiner.Use(new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));

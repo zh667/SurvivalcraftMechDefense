@@ -79,14 +79,23 @@ public static class MDNeorxnaCompatibility {
         new Harmony("local.mechdefense.neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
         installed=true;
     }
+    // Mercury (since 0.8.0) lives on the template of the 0.5.0 sample mech (Kind "Mech"); only the removed enemy (Kind "Enemy")
+    // is a removed unit. Until 0.9.0 round 4 every unit that was not a tower read 已移除的旧单位 here, Mercury too (user report).
+    public static string Name(ComponentMDUnit unit)=>unit.Kind=="Turret"?unit.Tower.name:unit.Mech!=null?unit.Mech.Type.Name+"机甲":"已移除的旧单位";
     public static void AfterEntityInfo(object __instance,Entity __0) {
         var unit=__0.FindComponent<ComponentMDUnit>();if(unit==null)return;
         var type=__instance.GetType();
-        if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=unit.Kind=="Turret"?unit.Tower.name:"已移除的旧单位";
-        if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text="机甲防线 · 防御塔";
-        if(unit.Kind!="Turret")return;
+        if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=Name(unit);
+        if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text=unit.Mech!=null?"机甲防线 · 机甲":"机甲防线 · 防御塔";
         var label=type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)]);
-        label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
-        label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
+        if(unit.Kind=="Turret") {
+            label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
+            label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
+        }
+        else if(unit.Mech!=null) {
+            label?.Invoke(__instance,["MDMechArmour",unit.Destroyed?"已损毁":$"装甲 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
+            label?.Invoke(__instance,["MDMechKit",unit.Mech.Kit>0?$"武器改装 Mk{unit.Mech.Kit}":"未改装"]);
+            label?.Invoke(__instance,["MDMechPilot",MDMechPilot.Driver(unit)!=null?"驾驶中":"空闲 · 靠近按 R 上车"]);
+        }
     }
 }

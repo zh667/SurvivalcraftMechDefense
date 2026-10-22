@@ -12,8 +12,17 @@ namespace Game;
 public sealed class MDMechJoint { public string name; public int parent; public float[] pivot; }
 public sealed class MDMechClip { public string name; public int slot,samples,ticks,offset,lastStep; public bool loop,hold,generated; public float? footSpeed; }
 public sealed class MDMechMuzzle { public string joint; public float[] at,dir; public float spread; }
+// Which joints do which job (prefixes of joint names). Mercury's mech.json has none: the defaults are Mercury's. The hero mechs'
+// come from the original's per-joint attribute words (tools/build_hero_assets.py; 复仇女神's 10_ is a shield pile driver, its right
+// arm is 11_).
+public sealed class MDMechRoles { public string turret="02_",armL="05_",armR="10_",grenade="15_"; public string[] cannon=["15_","16_","17_"],firstPerson=["13_","14_","15_","16_","17_"]; }
+public sealed class MDMechCockpit { public float[] firstPersonEye; }
 public sealed class MDMechDef {
     public MDMechJoint[] joints; public MDMechClip[] clips; public int step=2; public Dictionary<string,MDMechMuzzle> muzzles; public float height;
+    public MDMechRoles roles=new(); public MDMechCockpit cockpit;
+    // robot units (tools/build_unit_assets.py, unit.json): suggested body box (m), lowest idle point, skin model names
+    public float scale=1,feet; public float[] box; public string[] skins;
+    public bool Has(string clip)=>clipIndex.ContainsKey(clip);
     [System.Text.Json.Serialization.JsonIgnore] public float[] data;
     [System.Text.Json.Serialization.JsonIgnore] public Vector3[] pivots;
     [System.Text.Json.Serialization.JsonIgnore] public Dictionary<string,int> clipIndex;
@@ -44,19 +53,42 @@ public readonly record struct MDXf(Quaternion q,Vector3 t,float s) {
 }
 
 public static class MDMechLibrary {
-    static MDMechDef def;
+    static readonly Dictionary<string,MDMechDef> defs=[];
     public const string Root="Imported/Mercury/";
-    public static MDMechDef Def{get{
-        if(def!=null)return def;
-        var d=JsonSerializer.Deserialize<MDMechDef>(ContentManager.Get<string>(Root+"mech",".json"),new JsonSerializerOptions{IncludeFields=true});
-        var s=ContentManager.GetStream(Root+"clips.bin");s.Position=0;var bytes=new byte[s.Length];s.ReadExactly(bytes);
+    public static MDMechDef Def=>Load(Root,"mech");
+    // Mercury (mech.json) and the robot enemies (Imported/<unit>/unit.json) share the format of tools/build_mech_assets.py.
+    public static MDMechDef Load(string root,string file) {
+        if(defs.TryGetValue(root,out var d))return d;
+        d=JsonSerializer.Deserialize<MDMechDef>(ContentManager.Get<string>(root+file,".json"),new JsonSerializerOptions{IncludeFields=true});
+        var s=ContentManager.GetStream(root+"clips.bin");s.Position=0;var bytes=new byte[s.Length];s.ReadExactly(bytes);
         d.data=new float[bytes.Length/4];Buffer.BlockCopy(bytes,0,d.data,0,bytes.Length);
-        int need=d.clips.Sum(c=>c.samples)*d.joints.Length*8;if(d.data.Length!=need)throw new InvalidDataException($"clips.bin has {d.data.Length} floats, mech.json needs {need}");
+        int need=d.clips.Sum(c=>c.samples)*d.joints.Length*8;if(d.data.Length!=need)throw new InvalidDataException($"{root}clips.bin has {d.data.Length} floats, {file}.json needs {need}");
         d.pivots=d.joints.Select(j=>new Vector3(j.pivot[0],j.pivot[1],j.pivot[2])).ToArray();
         d.clipIndex=d.clips.Select((c,i)=>(c.name,i)).ToDictionary(x=>x.name,x=>x.i);
-        return def=d;
-    }}
+        return defs[root]=d;
+    }
     public static MDTowerLibrary.IconData Icon=>MDTowerLibrary.IconMesh(Root+"icon.bin",Root+"icon");
+}
+
+// The pilotable mechs (user, 2026-10-21, round 5: "主角机甲可以再加个复仇女神和轩辕十四（实力方面：水星<复仇女神<轩辕十四）"; plan
+// confirmed: the original models like Mercury, armour 4000 / 6000 / 8000 (database templates), damage x1 / x1.25 / x1.5, energy
+// 100000 / 130000 / 160000, 复仇女神 with the original's 3-round burst rifle and better blast protection, 轩辕十四 the most mobile).
+// Same controls for all; the deploy item's low data byte is Data. Original numbers: docs/HEROES_ORIGINAL.md.
+public sealed class MDMechType {
+    public string Id,Name,Root,Template; public int Data,Armour;
+    public float Damage=1,EnergyMax=100000,Speed=1,ExplosionTaken=1,BossArmour=3000; public int Locks=3,Weight=4; public bool BurstRifle;
+    public Vector3 Box=new(2.4f,4.8f,2.4f);
+    public string HoverClip="jump"; public float HoverTime=1;   // the pose held while hovering (轩辕十四: its gliding dash, whose feet stay off the ground)
+    public MDMechDef Def=>MDMechLibrary.Load(Root,"mech");
+    public MDTowerLibrary.IconData Icon=>MDTowerLibrary.IconMesh(Root+"icon.bin",Root+"icon");
+    public static readonly MDMechType Mercury=new(){Id="Mercury",Name="水星",Root="Imported/Mercury/",Template="MDMech",Data=1,Armour=4000};
+    public static readonly MDMechType Nemesis=new(){Id="Nemesis",Name="复仇女神",Root="Imported/Nemesis/",Template="MDMechNemesis",Data=30,Armour=6000,
+        Damage=1.25f,EnergyMax=130000,BurstRifle=true,ExplosionTaken=.8f,Weight=5,BossArmour=4000};
+    public static readonly MDMechType Regulus=new(){Id="Regulus",Name="轩辕十四",Root="Imported/Regulus/",Template="MDMechRegulus",Data=31,Armour=8000,
+        Damage=1.5f,EnergyMax=160000,Speed=1.15f,Locks=2,Weight=6,BossArmour=5000,Box=new(2.8f,5.6f,2.8f),HoverClip="dash_forward",HoverTime=-1};
+    public static readonly MDMechType[] All=[Mercury,Nemesis,Regulus];
+    public static MDMechType ById(string id)=>All.FirstOrDefault(t=>t.Id==id)??Mercury;
+    public static MDMechType ByData(int data)=>All.FirstOrDefault(t=>t.Data==data);
 }
 
 // Three layers, blended per joint: the base clip (idle, walk, dash, jump ...) with a cross-fade, a full-body action on top
@@ -65,7 +97,7 @@ public sealed class MDMechAnimator {
     readonly MDMechDef d; readonly int[] cannonJoints;
     public MDMechClip Base,PrevBase,Action,Cannon; public float BaseTime,PrevTime,Fade=1,FadeLength=.15f,Rate=1,PrevRate=1;
     public float ActionTime,ActionWeight,CannonTime,CannonWeight; public bool CannonOn;
-    public MDMechAnimator(MDMechDef def){d=def;cannonJoints=new[]{"15_","16_","17_"}.Select(d.Joint).ToArray();Base=d.Clip("idle");}
+    public MDMechAnimator(MDMechDef def){d=def;cannonJoints=d.roles.cannon.Select(d.Joint).Where(j=>j>=0).ToArray();Base=d.Clip("idle");}
     public void PlayBase(string name,float rate=1,float fade=.15f) {
         var c=d.Clip(name);if(c==Base){Rate=rate;return;}
         PrevBase=Base;PrevTime=BaseTime;PrevRate=Rate;Base=c;BaseTime=0;Rate=rate;Fade=0;FadeLength=fade;
@@ -113,7 +145,7 @@ public sealed class MDMechPose {
         return MathF.Abs(delta)<1e-4f?first:Build(d,local,turretYaw,delta);
     }
     static MDMechPose Build(MDMechDef d,MDXf[] local,float turretYaw,float armPitch) {
-        int n=d.joints.Length,turret=d.Joint("02_"),armL=d.Joint("05_"),armR=d.Joint("10_");var p=new MDMechPose{Bone=new Matrix[n],Model=new Matrix[n]};
+        int n=d.joints.Length,turret=d.Joint(d.roles.turret),armL=d.Joint(d.roles.armL),armR=d.Joint(d.roles.armR);var p=new MDMechPose{Bone=new Matrix[n],Model=new Matrix[n]};
         for(int j=0;j<n;j++) {
             var L=local[j].Row;var pv=d.pivots[j];int pj=d.joints[j].parent;var parent=pj>=0?p.Model[pj]:Matrix.Identity;var M=L*parent;
             Matrix? rot=null;
@@ -134,17 +166,16 @@ public class ComponentMDMechModel : ComponentModel {
     ComponentMDUnit unit; int root=-1; int[] bones,allMeshes,cockpitMeshes;
     // first person draws the rifle on its forearm and the cannon only: the head, the shoulder units right beside the eye, the
     // arms, the legs and the back units sweep through the view at every step. The instanced data is cached per list.
-    static readonly string[] CockpitParts=["13_","14_","15_","16_","17_"];
     public static string LastError;
     public override void Load(ValuesDictionary values,IdToEntityMap map){base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);RenderingMode=ModelRenderingMode.AlphaThreshold;}
     public override void Animate() {
         try {
-            var d=MDMechLibrary.Def;
+            var d=unit.Mech?.Def??MDMechLibrary.Def;
             if(bones==null){root=Model.RootBone.Index;bones=d.joints.Select(j=>Model.FindBone(j.name,true).Index).ToArray();}
             SetBoneTransform(root,m_componentFrame.Matrix);
             var pose=unit.Mech?.Pose(unit);if(pose==null)return;
             for(int j=0;j<bones.Length;j++)SetBoneTransform(bones[j],pose.Bone[j]);
-            if(allMeshes==null){allMeshes=Enumerable.Range(0,Model.Meshes.Count).ToArray();cockpitMeshes=allMeshes.Where(i=>CockpitParts.Any(p=>Model.Meshes[i].ParentBone.Name.StartsWith(p))).ToArray();}
+            if(allMeshes==null){allMeshes=Enumerable.Range(0,Model.Meshes.Count).ToArray();cockpitMeshes=allMeshes.Where(i=>d.roles.firstPerson.Any(p=>Model.Meshes[i].ParentBone.Name.StartsWith(p))).ToArray();}
             MeshDrawOrders=MDMechPilot.FirstPerson(unit)?cockpitMeshes:allMeshes;
         } catch(Exception e){if(LastError==null){LastError=e.ToString();Log.Error("[MechDefense] mech model: "+e);}SetBoneTransform(Model.RootBone.Index,m_componentFrame.Matrix);}
     }
@@ -154,11 +185,12 @@ public enum MDMechWeapon{Rifle,Missile,Cannon,Laser,Grenade}
 
 // Per-mech state. The pilot (MDMechPilot) writes the controls every frame; without a pilot they are zero.
 public sealed class MDMechState {
-    public MDMechDef Def=MDMechLibrary.Def; public MDMechAnimator Anim;
+    public readonly MDMechType Type; public readonly MDMechDef Def; public MDMechAnimator Anim;
     public Vector2 Move; public bool Hover,Jump,Trigger,Melee,Switch;  // move: x right, y forward; Jump/Melee/Switch are presses
     public Vector3? AimPoint; public Vector3 AimFrom,AimDir;          // the crosshair: its point and the camera ray
     public MDMechWeapon Weapon; public float Cooldown,MeleeCooldown,FiredAgo=99,AirTime,ShownSpeed;public bool MeleeHit,Grounded,PendingShot,WasTrigger,WasHover;
-    public float Energy=MDMechBrain.EnergyMax,EnergyLock;             // EP of the original; at 0 no boost for 3 s
+    public float Energy,EnergyLock;                                    // EP of the original (per mech type); at 0 no boost for 3 s
+    public int BurstShot;                                              // 复仇女神's rifle: shot of the 3-round burst
     public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer;   // missile locks; missiles still to launch
     public float BeamTime=-1,BeamTick,BeamLength;                       // laser: seconds since the beam started (<0 off), next damage tick, length
     public ComponentBody LungeTarget;
@@ -168,9 +200,9 @@ public sealed class MDMechState {
     public enum CannonState{Stowed,Deploying,Ready,Retracting} public CannonState Cannon;
     public bool Hovering; public float JetBurst,JetCarry,CannonKick;   // hovering now; jump burst left (s); flame particles owed; cannon recoil left (s)
     public string ForceClip; public float ForceTime;                   // lab: show one clip at one time
-    public MDStatusWidget Hud; public ComponentPlayer HudOwner;
+    public MDHudHost Hud; public ComponentPlayer HudOwner;
     MDMechPose pose;   // cached until the next update (the renderer may ask several times per frame)
-    public MDMechState(){Anim=new MDMechAnimator(Def);}
+    public MDMechState(MDMechType type){Type=type;Def=type.Def;Anim=new MDMechAnimator(Def);Energy=type.EnergyMax;}
     public MDMechPose Pose(ComponentMDUnit u) {
         if(pose!=null)return pose;
         float yaw=Math.Clamp(MDCombat.AngleDelta(u.Yaw,u.AimYaw),-MDMechBrain.TurretLimit,MDMechBrain.TurretLimit);
@@ -178,8 +210,11 @@ public sealed class MDMechState {
         return pose=MDMechPose.Of(Def,Anim.Evaluate(),yaw,Math.Clamp(u.AimPitch,-.45f,.7f),aim,Recoil);
     }
     public void Invalidate()=>pose=null;
-    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",MDMechBrain.EnergyMax),0,MDMechBrain.EnergyMax);}
-    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);}
+    // Weapon kits Mk1-Mk3 (MDPartBlock, installed one level after the other): every weapon's damage x1.15 / x1.3 / x1.5.
+    public int Kit;
+    public static float KitFactor(int kit)=>kit switch{1=>1.15f,2=>1.3f,3=>1.5f,_=>1};
+    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",Type.EnergyMax),0,Type.EnergyMax);Kit=Math.Clamp(v.GetValue("MechKit",0),0,3);}
+    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);v.SetValue("MechKit",Kit);}
     public static string Name(MDMechWeapon w)=>w switch{MDMechWeapon.Missile=>"导弹",MDMechWeapon.Cannon=>"火炮",MDMechWeapon.Laser=>"激光",MDMechWeapon.Grenade=>"榴弹",_=>"步枪"};
     public string WeaponName=>Name(Weapon);
 }
@@ -241,7 +276,7 @@ public static class MDMechBrain {
         if(m.Hovering)body.Velocity=new(body.Velocity.X,Math.Clamp((HoverHeight-ground.Value)*7,-5,6),body.Velocity.Z);
         else if(hover&&!m.Grounded&&body.Velocity.Y<-2.5f)body.Velocity=new(body.Velocity.X,-2.5f,body.Velocity.Z);
         if(m.Hover&&!m.WasHover&&hover)Sound(u,Se(31),body.Position,.5f);m.WasHover=m.Hover;   // one hum per Shift press (user: not a repeating one)
-        m.Energy=Math.Clamp(m.Energy+(m.Hovering?-BoostCost:EnergyRegen)*dt,0,EnergyMax);if(m.Energy<=0&&m.EnergyLock<=0)m.EnergyLock=3;
+        m.Energy=Math.Clamp(m.Energy+(m.Hovering?-BoostCost:EnergyRegen)*dt,0,m.Type.EnergyMax);if(m.Energy<=0&&m.EnergyLock<=0)m.EnergyLock=3;
         bool footing=m.Grounded||m.Hovering;m.AirTime=footing?0:m.AirTime+dt;
         // turning: the body follows the aim; the turret covers the rest (up to TurretLimit)
         float delta=MDCombat.AngleDelta(u.Yaw,u.AimYaw);bool moving=m.Move.LengthSquared()>.01f;
@@ -259,7 +294,7 @@ public static class MDMechBrain {
             m.MoveVelocity=dist>3?to/dist*Math.Min(22,dist/.3f):Vector3.Zero;body.Velocity=new(m.MoveVelocity.X,body.Velocity.Y,m.MoveVelocity.Z);
         }
         else if(footing||moving) {
-            float sp=m.Hovering?HoverSpeed:dir switch{"forward"=>WalkSpeed,"backward"=>BackSpeed,_=>StrafeSpeed};
+            float sp=(m.Hovering?HoverSpeed:dir switch{"forward"=>WalkSpeed,"backward"=>BackSpeed,_=>StrafeSpeed})*m.Type.Speed;
             var want=(Forward(u.Yaw)*mv.Y+Right(u.Yaw)*mv.X)*sp;var dv=new Vector3(want.X,0,want.Z)-m.MoveVelocity;
             float step=(footing?Accel:AirAccel)*dt;if(dv.Length()>step)dv=Vector3.Normalize(dv)*step;
             m.MoveVelocity+=dv;body.Velocity=new(m.MoveVelocity.X,body.Velocity.Y,m.MoveVelocity.Z);
@@ -270,8 +305,8 @@ public static class MDMechBrain {
         bool jumping=!footing&&a.Base.name=="jump"&&a.BaseTime<1.1f;
         if(jumping){}
         else if(!footing&&m.AirTime>.15f)a.PlayBase("fall",1,.2f);
-        else if(m.Hovering)a.HoldBase("jump",HoverPoseTime,.2f);
-        else if(moving)a.PlayBase("walk_"+dir,1,.18f);
+        else if(m.Hovering)a.HoldBase(m.Type.HoverClip,m.Type.HoverTime>=0?m.Type.HoverTime:m.Def.Seconds(m.Def.Clip(m.Type.HoverClip)),.2f);
+        else if(moving)a.PlayBase("walk_"+dir,m.Type.Speed,.18f);   // a faster mech steps faster (no sliding feet)
         else a.PlayBase(m.FiredAgo<1.5f?"combat_stance":"idle",1,.25f);
         // melee (F): with a locked creature, or one near the crosshair within 20 m, the original's jump attack at it; else the
         // punch combo. Both strike once at their hit frame.
@@ -322,9 +357,10 @@ public static class MDMechBrain {
         var m=u.Mech;
         if(m.EnergyLock>0&&m.Hover)return "能量耗尽";
         switch(m.Weapon) {
-            case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":$"锁定 {m.Locks.Count}/{MaxLocks}";
+            case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":$"锁定 {m.Locks.Count}/{m.Type.Locks}";
             case MDMechWeapon.Cannon:return m.Cannon switch{MDMechState.CannonState.Deploying=>"展开中",MDMechState.CannonState.Ready=>m.Cooldown>.15f?"装填中":"就绪",_=>"收起（开火即展开）"};
             case MDMechWeapon.Laser:return m.BeamTime>=0?"照射中":m.Cooldown>.15f?"冷却中":"就绪";
+            case MDMechWeapon.Rifle:return m.Trigger&&m.FiredAgo<.5f?"射击中":"就绪";   // 4 shots a second: its 0.25 s between shots is no reload (it flickered 装填中 / 就绪, user 2026-10-21)
         }
         return m.Cooldown>.15f?"装填中":"就绪";
     }
@@ -332,7 +368,10 @@ public static class MDMechBrain {
     static bool Covered(ComponentMDUnit u,Vector3 muzzle)=>u.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(Eye(u),muzzle,false,true,Solid).HasValue;   // a muzzle poking through a wall
     static Vector3 Muzzle(ComponentMDUnit u,string key,out Vector3 fwd){var m=u.Mech;var pose=m.Pose(u);var mz=m.Def.muzzles[key];fwd=pose.Dir(m.Def,mz,u.Body.Matrix);return pose.Point(m.Def,mz,u.Body.Matrix);}
     static void FireRifle(ComponentMDUnit u) {
-        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"rifle",out _);m.Cooldown=.25f;if(Covered(u,from))return;
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"rifle",out _);
+        // 复仇女神: the original's 3-round burst, 0.133 / 0.133 / 0.433 s between shots; a new press starts a new burst
+        if(m.Type.BurstRifle){if(!m.WasTrigger)m.BurstShot=0;m.Cooldown=m.BurstShot%3<2?.133f:.433f;m.BurstShot++;}else m.Cooldown=.25f;
+        if(Covered(u,from))return;
         var dir=Vector3.Normalize(Target(u,from)-from);m.FiredAgo=0;w.Muzzle(Rifle,from,dir,false);Sound(u,Se(8),from,.55f);
         w.LaunchShell(u,from,dir*Rifle.attack.speed,0,Rifle.attack.power,0,false,Rifle);
     }
@@ -345,7 +384,7 @@ public static class MDMechBrain {
     // Missiles lock while the trigger is held: a creature the crosshair sweeps over (within 3.5 deg of the camera ray or 1.3 m of
     // it, 0.8-133 m away, in sight beyond 13 m) locks at once, up to MaxLocks; releasing launches one missile per lock.
     static void LockSweep(ComponentMDUnit u) {
-        var m=u.Mech;m.Locks.RemoveAll(b=>!b.Entity.IsAddedToProject||!MDCombat.Living(b));if(m.Locks.Count>=MaxLocks||m.AimDir.LengthSquared()<.5f)return;
+        var m=u.Mech;m.Locks.RemoveAll(b=>!b.Entity.IsAddedToProject||!MDCombat.Living(b));if(m.Locks.Count>=m.Type.Locks||m.AimDir.LengthSquared()<.5f)return;
         var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),50*Unit,bodies);
         ComponentBody best=null;float bestAlong=float.MaxValue;
         foreach(var b in bodies) {
@@ -377,7 +416,7 @@ public static class MDMechBrain {
     }
     // The grenade: thrown from the cannon's base in an arc 4 m high that lands at 75 % of the crosshair's distance (40 m at most).
     static void ThrowGrenade(ComponentMDUnit u) {
-        var m=u.Mech;var d=m.Def;var pose=m.Pose(u);int j=d.Joint("15_");var from=Vector3.Transform(d.pivots[j],pose.Model[j]*u.Body.Matrix)+Vector3.UnitY*.3f;
+        var m=u.Mech;var d=m.Def;var pose=m.Pose(u);int j=Math.Max(0,d.Joint(d.roles.grenade));var from=Vector3.Transform(d.pivots[j],pose.Model[j]*u.Body.Matrix)+Vector3.UnitY*.3f;
         m.Cooldown=1.33f;if(Covered(u,from))return;
         var aim=Target(u,from);var flat=new Vector3(aim.X-from.X,0,aim.Z-from.Z);float dist=Math.Min(flat.Length()*.75f,15*Unit);flat=flat.LengthSquared()>1e-4f?Vector3.Normalize(flat):Forward(u.Yaw);
         float landY=aim.Y,top=Math.Max(from.Y,landY)+1.5f*Unit,vy=MathF.Sqrt(2*Gravity*(top-from.Y)),t=(vy+MathF.Sqrt(2*Gravity*(top-landY)))/Gravity;
@@ -397,7 +436,7 @@ public static class MDMechBrain {
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var to=MDCombat.Center(b)-c;var flat=new Vector3(to.X,0,to.Z);float dist=flat.Length();
             if(dist>5.5f+b.BoxSize.X*.5f||Vector3.Dot(flat/Math.Max(dist,.01f),f)<.5f)continue;
-            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f);w.Impact(CannonDef,at,f,true);any=true;
+            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f,false,"kinetic");w.Impact(CannonDef,at,f,true);any=true;
             if(b.Mass<=800)b.Velocity+=f*7+Vector3.UnitY*3;
         }
         if(any)Sound(u,Se(17),c,.8f);

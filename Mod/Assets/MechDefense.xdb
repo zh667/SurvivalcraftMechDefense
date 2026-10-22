@@ -19,7 +19,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="757a04be-f104-5735-b106-b7d8b829c4c0" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f2650151-206a-557f-8714-793c9d9122dc" />
-        <Parameter Name="AttackResilience" Type="float" Value="3000" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
+        <Parameter Name="AttackResilience" Type="float" Value="4000" Guid="219da04d-9fe1-5f44-a14d-c88721b9d34f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="425581b5-4b15-5fd5-9ae9-3986d1327bab" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="09c0c39b-2b5d-54df-8da3-020b8d86264e" />
       </MemberComponentTemplate>
@@ -64,6 +64,86 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Spawn" Guid="ccc41150-4cc0-5557-b33a-519a47057306" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36" />
       <MemberComponentTemplate Name="OnFire" Guid="397ad4e9-730e-55e3-95a4-2a7007142869" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDMechNemesis" Guid="609db0ff-ede4-559f-96cb-1b0828711b67">
+      <MemberComponentTemplate Name="Unit" Guid="07a9c390-a743-510a-a6e0-9f54bbb86ab7" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="7be044bf-93e1-527f-a254-94a27175ae69" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="1c245128-8dfc-5f5e-8565-29a858b535dd" />
+        <Parameter Name="Kind" Type="string" Value="Mech" Guid="33fdd5ba-6946-5f34-bd26-0093d679b285" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="4cbe5af1-1061-5ed9-8f85-266a43f84a99" />
+        <Parameter Name="TowerId" Type="string" Value="" Guid="6daec6f6-40f9-5f18-a262-9b9358de12cb" />
+        <Parameter Name="MechType" Type="string" Value="Nemesis" Guid="a92506e5-016a-538a-aba7-956cd19df1a2" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="8fe5034b-d3bc-531c-a50c-13a3c7bf38fe" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2.4,4.8,2.4" Guid="e412e5a2-ce40-5478-b717-7728a7472337" />
+        <Parameter Name="Mass" Type="float" Value="3400" Guid="fc7d6336-16a3-57aa-b290-330bf5511143" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="b3b03406-7edb-523b-80c3-77ebe65f338c" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0.8" Guid="43043f7b-be4f-58fd-97c9-85014836b47b" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="08f2fd05-4320-59b9-8d93-0754181693b3" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="74d69c4b-203b-5398-b997-072669558146" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="ffe75378-5fe3-5eb8-8446-845c74a6793e" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="7b24a3c2-7e12-5aa8-b1b8-61da8e66b67b" />
+        <Parameter Name="AttackResilience" Type="float" Value="6000" Guid="dcf340e0-e518-5b89-9ef7-27d97496d664" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="9a469538-95f5-5b51-9c66-345a0d22b5a3" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="0a5b625d-6bc0-5154-b6c4-0e8190477beb" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="74ed0fc0-0567-581a-b6b4-b3800f4d9bae" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="af66d58b-a45d-56b4-94e9-1bbeb62db10d" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="bd2d24b0-441b-580c-8fd6-62584e6eb617" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Mount" Guid="ce3f9ab6-146f-5baf-aa08-c6c116e775f5" InheritanceParent="d0b14127-39ce-4490-af00-fb4111e9c51e">
+        <Parameter Name="MountOffset" Type="Vector3" Value="0,2.5,0" Guid="c9527659-c72e-5298-bd37-41f2659419b7" />
+        <Parameter Name="DismountOffset" Type="Vector3" Value="3,0,0" Guid="f5944c14-7f6b-5fd4-a412-ddfcc580f566" />
+        <Parameter Name="MountAllowToStartRange" Type="float" Value="5" Guid="2c400f1d-66f5-5150-b602-127ad966a71c" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="1894832c-edd9-53bc-af34-d8f04ac2fc33" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDMechModel" Guid="cd99fb38-f4ef-5a85-b215-c9f83cc1dbda" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/Nemesis/model" Guid="b396a9b4-c826-5087-88b9-9dd5b786156d" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="e35ee96c-8c84-5b5a-96c5-03fc1fafb4a4" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.7" Guid="169297bb-3a6f-5716-91ce-ab0601f7769d" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="a3954bf2-60f1-5665-b15c-49bc3a5bc4c4" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDMechRegulus" Guid="fd2c781f-2c6d-5ff4-91b3-09850a9ddda0">
+      <MemberComponentTemplate Name="Unit" Guid="ce526bf0-fb1c-5d48-bf2c-40d70fa7653b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="39d08719-d665-5048-b228-a86298da7200" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="d732c2ce-8f27-5881-8194-7a5076b18dd9" />
+        <Parameter Name="Kind" Type="string" Value="Mech" Guid="8ba5b48a-857c-5d27-8c00-a67aa2db189e" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="47e4aba6-1aee-5ba1-84b4-7b944a48f423" />
+        <Parameter Name="TowerId" Type="string" Value="" Guid="e7445db9-db41-5966-9c90-fa2797bd1bfe" />
+        <Parameter Name="MechType" Type="string" Value="Regulus" Guid="fb3e7357-5e66-5088-8c68-191177ffb3b9" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="89a1f844-998f-51e4-8895-3834147f4b22" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2.8,5.6,2.8" Guid="284ac7ff-75ae-5852-a5a2-797558db6bfc" />
+        <Parameter Name="Mass" Type="float" Value="3800" Guid="21fb9cfe-ce98-57e0-ae0e-c11acbe92d8f" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="85cb0837-6d18-5663-8ace-d50b60b22f14" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0.8" Guid="df6abaa0-5f89-53bc-ad79-6e36d53ba9c1" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="0a4572b4-c33f-5bd7-a875-4fbe9b8faaea" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="dff6e263-4c2f-5155-828e-2db4ac4d9191" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="19ede337-a1c4-5c39-ab7b-248573e85821" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="75b0f6fb-5a3a-5057-b529-fb7a5a2a79d3" />
+        <Parameter Name="AttackResilience" Type="float" Value="8000" Guid="f525292a-6620-5968-9b2d-8601d6e087e8" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="d6f8a8f1-417e-52b2-b90f-0db52b67163b" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="6ce78e31-32d1-5581-bfba-0ce8ee7c7b20" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="0d9bb203-f96c-53ce-a39e-c5621095b459" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="919aaf67-fffd-5251-8dd8-574a7cc84769" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="f63ff661-99ff-544f-90ab-d8fd1022c106" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Mount" Guid="3c7da887-2c24-5aba-adf0-c4839c24e14b" InheritanceParent="d0b14127-39ce-4490-af00-fb4111e9c51e">
+        <Parameter Name="MountOffset" Type="Vector3" Value="0,2.5,0" Guid="adc1bfd7-c7be-577a-8d3a-1f9c07452d8d" />
+        <Parameter Name="DismountOffset" Type="Vector3" Value="3,0,0" Guid="1b9a3457-73b0-5f27-be3b-4a54e7ea633a" />
+        <Parameter Name="MountAllowToStartRange" Type="float" Value="5" Guid="0c208e5e-401d-5a92-b33d-6f7629105d75" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="2c60dc3c-9c60-5062-bb26-a75a6cb2161e" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDMechModel" Guid="234a0a3f-036e-5ae0-86ca-516d0ef78102" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/Regulus/model" Guid="4f93ffb8-665c-5d7d-85ec-fc9fce067e7a" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="84b452d8-ba8e-5cff-9b47-03c1ac641654" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="4.3" Guid="c3ad23ad-7bdb-581d-aaaf-ad23258389f1" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="842e8273-8b7f-5df8-bac1-2e55fe59f088" />
+      </MemberComponentTemplate>
     </EntityTemplate>
     <EntityTemplate Name="MDTurret" Guid="74abebfe-a166-557f-b76f-1fee565e0b54">
       <MemberComponentTemplate Name="Unit" Guid="9d25397a-c76e-54db-8fc9-f12a6a9f06c2" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
@@ -131,7 +211,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="24f72cc7-5fd1-54f5-87a8-6ab914ba80fc" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_turret_2/model" Guid="5fbcc5a6-a8c6-5971-bc99-49b62675cd77" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_turret_2/atlas" Guid="78278782-05bf-54c2-a2de-8296ddb2c8b9" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.26" Guid="038dac04-729c-5edb-bd2b-cbb462352b07" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.24" Guid="038dac04-729c-5edb-bd2b-cbb462352b07" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7c0735ed-452e-54f5-b560-8b6a6c227c0e" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -166,7 +246,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="a11c9930-5dae-53e9-887e-3d6f48d9772b" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_turret_3/model" Guid="29ff9f19-c6f5-5376-abb1-29a63e41855a" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_turret_3/atlas" Guid="57c26fce-d40c-556c-9502-2ca32056988b" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.48" Guid="fc186689-9c82-5ce8-970d-e3d646baaa60" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.46" Guid="fc186689-9c82-5ce8-970d-e3d646baaa60" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="211b59dc-a683-5e51-8e0c-0564931df227" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -201,7 +281,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="c0c7c9fc-4490-5991-8f67-5b0729020f64" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_cannon_1/model" Guid="b5391022-f760-573c-9ca1-73d463b2f85e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_cannon_1/atlas" Guid="9dafeffc-6305-5119-b83e-b2629ffb9ffb" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.98" Guid="4158f691-21bf-57c1-99e1-6ded13c2b2c6" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.97" Guid="4158f691-21bf-57c1-99e1-6ded13c2b2c6" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="45aaffbc-480a-5525-bed6-9b48fb947169" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -236,7 +316,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="20e864d8-3e89-50af-9ffb-7dfe68d739ba" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_cannon_2/model" Guid="7bcf6038-77ad-5b29-a826-188d90c34829" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_cannon_2/atlas" Guid="8cb57d2c-3e54-515e-9152-c2fbbb67e342" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.25" Guid="ce742af8-7eb5-575b-b8fb-32761c575b67" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.24" Guid="ce742af8-7eb5-575b-b8fb-32761c575b67" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="0d08c3d1-b95d-5f00-89d1-816d50c5a638" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -341,7 +421,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="97b579d8-c0a6-5cda-9ded-0f8a113b0b91" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_debuff_1/model" Guid="87337592-ff04-5461-a75b-c49674071d4c" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_debuff_1/atlas" Guid="d0db336d-97ae-56bd-91d7-532036618b24" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.66" Guid="71af3c8b-0886-58ba-bf3b-1a7c87b052e1" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.67" Guid="71af3c8b-0886-58ba-bf3b-1a7c87b052e1" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="c69f3757-dcd0-578c-9aec-e94deae900af" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -376,7 +456,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="430f09ba-5d6f-5c7d-99a6-acf1697d7270" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_fog_1/model" Guid="e0d058c1-2466-542e-a80f-95b1320ce03e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_fog_1/atlas" Guid="227d1151-6fe2-561a-a54c-a938ff4e2faf" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.73" Guid="4dc254e9-1f63-5e5c-9a81-e22ba31f453a" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.74" Guid="4dc254e9-1f63-5e5c-9a81-e22ba31f453a" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="95692e98-e75d-5afd-8baf-ccbdfd4f65c3" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -446,7 +526,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="92493a77-3dd9-5304-b482-301592781bb9" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_jet_1/model" Guid="00445e46-e617-5271-9707-68d081560612" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_jet_1/atlas" Guid="d30cf992-513c-59dc-a7fe-b75e7ff94f1e" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.75" Guid="67af06f8-0f89-5322-9878-1a881f17b29a" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.72" Guid="67af06f8-0f89-5322-9878-1a881f17b29a" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7ba9ae1e-55e5-54bc-81f0-6dfa431b7479" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -481,7 +561,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="1423cb44-816d-573d-a7d8-86e65b76c3a6" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_rocket_1/model" Guid="d04a520d-489c-52a4-8791-02712e0f9f75" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_rocket_1/atlas" Guid="7decf0c2-75b0-53ee-822c-22cf77ba93df" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="4.5" Guid="9c45d983-5d3f-5b46-a5c7-4a9b99bcf77c" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="4.52" Guid="9c45d983-5d3f-5b46-a5c7-4a9b99bcf77c" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="f01ee189-1f3c-5048-afb2-8ffbeac35639" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -656,7 +736,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="1eec6f4e-28a9-5098-90fd-6b0d4256c693" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_shockwave_1/model" Guid="3a047670-54a7-54a0-ae0e-5dcdecfd7ada" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_shockwave_1/atlas" Guid="25fe3797-eddd-5d40-8368-cc439020b2a5" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.2" Guid="af38b344-658d-5d27-851b-ab37f57f74df" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.22" Guid="af38b344-658d-5d27-851b-ab37f57f74df" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="71ece0cc-c6ed-5fb5-b7b3-2d6eb99c428c" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -691,7 +771,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="2011891f-8f96-5c34-8db5-128d551263fd" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_medic_1/model" Guid="b71175ea-3655-5769-9032-867b0b24870e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_medic_1/atlas" Guid="ce447fd5-ca55-585f-b3ea-56e59ce0044c" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.51" Guid="d35017f2-6f82-5d05-8867-06e00fbb3957" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.5" Guid="d35017f2-6f82-5d05-8867-06e00fbb3957" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="b317f23d-76c9-5dca-a543-e29179c49b81" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -728,6 +808,726 @@
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_trap_1/atlas" Guid="ad10ba83-c4ca-5f29-9f2d-62e3bf7ef234" />
         <Parameter Name="BoundingSphereRadius" Type="float" Value="2.85" Guid="95ea23a5-4dfb-5d68-9701-db31a54ecb63" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="086f4ccb-2189-55b5-9f03-84b6f946142b" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_1" Guid="2fcceb05-56dc-5922-a51c-ae1a9c8220b4">
+      <MemberComponentTemplate Name="Unit" Guid="7e96daab-d5de-5545-a4ae-9ab06557202c" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="58303745-facd-56d7-9ef5-508f9b083814" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="f4ea5853-2e5a-5699-9d33-34068e129396" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="1618b2cf-897e-52d4-b688-42e035cb8f06" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="0b7abc99-2f8a-51e1-8a6e-8036ed03e955" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_1" Guid="e49a7c69-8523-5507-b1fb-11418524d08d" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="e6672a34-096d-5e67-a7c8-c44faf0a76ea" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="b39fb63b-3318-5baf-9898-363a673b2cfb" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="870aac57-ac37-5e65-a8d7-3bb4299b1d6b" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="69ba7a39-bfe4-5588-bbf3-ba5a5e0d7375" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="6bc44e75-71bc-5bcb-b773-e0c56d14fb61" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="c36cb535-4e2e-5871-a063-8b455cddcf41" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="b268d8e8-03c5-577e-966e-a7d63b4de32d" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="472d4545-726b-56d3-b5cb-d56649bc9ae3" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="9f7b52bd-7065-51d8-9cbd-2e760a7aa5d9" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f3d9a1d1-e00d-5537-97f9-e2377818ab38" />
+        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="ca47a57c-c28c-5acb-b617-be1f1c38e350" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="d33b1cb9-9adb-59b1-922c-dd87d802d592" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="de066291-33a1-5e9f-970f-d078f56b71a9" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="164832ec-ad0b-5f70-8685-012bf9fc7245" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="f8b0f260-1004-5430-b0c0-d89eac456193" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="1b0f036e-2a98-5a2e-bebf-ab2097ea8c70" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="e13cdd39-b999-5f66-88dd-c6716c510d22" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="24c14342-432c-5549-96c5-401ae95a478c" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_1/model" Guid="dc69c5b2-93f6-59df-909a-734eb3382880" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_1/atlas" Guid="e2e478ca-ee55-5368-82ef-5b3246cf7148" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.94" Guid="f2f171a1-654b-54da-910c-a519d1f20b90" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7f7a2197-ffac-5e31-b40f-fb095c147b70" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_2" Guid="a765096c-1a3a-5d57-85d6-02102ae40dfc">
+      <MemberComponentTemplate Name="Unit" Guid="cc9f6827-555b-5cb1-b43a-218a9dc59ae8" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="d3c9ba94-3779-5d39-b871-83f6fdb6a9af" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="ddfdce87-aba4-5996-aa65-64da3886d771" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="6fbf4b67-13ff-5d25-8484-32d3c0c9cd35" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="f819426f-74fa-5abe-aaa7-6e59c6fe768b" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_2" Guid="17b8bb57-e696-5834-8e75-ee1f2e56659c" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="9461c3f6-0384-529e-8ba1-bc076c46c607" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="25e86505-14cc-58f3-875a-85971d1e5739" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="f3210106-bc76-54f8-9369-0b19cf34c9d5" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="433f5200-19d9-561e-8362-49dfd2313ae9" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="81bf2e3e-3bb1-50d8-a808-eb56cacb065b" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="6d6e2a39-99d0-508f-9392-139d42d31b25" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="d5777442-31a5-53eb-b66b-a038806f66a5" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="d0b822ef-c7f9-5881-9707-5e5872467372" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="5dc35bcb-7d5c-59d9-8d51-77bd0e22b8d3" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ed7db8d3-1f4c-5651-91a0-987da719b822" />
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="386c6753-7d54-559c-91dc-fb844ebc89cf" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="dcd7b358-d41a-5de0-92e3-e21d63ca6d20" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="d6030237-11db-5c30-b81e-8ae19800adb6" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="16af69c3-9192-5dba-a222-e634a17044a8" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="d74497f0-22e9-5123-bcad-4a0aa3dde236" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="724c9dd4-d862-51c5-85ba-3933fd0f4bf7" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="86a7f057-379c-500b-a246-8bbe6a36b8a5" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="5ae2e7fc-e55e-502c-ac40-1f7aaecd30cc" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_2/model" Guid="b843f194-24dc-59a6-9ffb-d9e81cfb79df" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_2/atlas" Guid="a366ddd8-0e61-5cc6-ac91-bda52c2af746" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.08" Guid="80adda2d-09e8-50ce-baa7-1651342b1a71" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="20d4c00e-1574-5de9-847c-3c25bf15959d" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_3" Guid="8de9d551-ea8c-5666-9054-0dde065ec076">
+      <MemberComponentTemplate Name="Unit" Guid="70174c78-19de-56d7-b072-6daada190a0f" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="61eff726-2f11-5b69-899e-8c9cd616e09a" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="758618e5-5419-5c9a-91b3-71ef5be444c5" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="01e83665-ceae-5272-9b93-a9784fe7c96b" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="4a7c38b7-9186-5497-84b0-0a99fb2596dd" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_3" Guid="cd2d7997-af17-5d2b-995c-7bb425a5ca10" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="01a4e7ea-61c5-5ec5-bb8a-1f39c6c2ae1a" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="21c1281b-818d-5ebb-b5e7-ae94fb667d9d" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="dfa20506-d595-5988-b93b-234c568acf67" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="0ccf5428-8137-520d-96b1-f0a75dd05e7d" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="772fc1da-c1c7-539b-be27-cfb55e3b2057" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="b5526813-a1c4-51e3-a78f-e317b38dd163" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="ce45ad46-8647-5f77-9f9c-b8d6415e7e1a" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="252e99d4-3921-5824-bbd7-0b7c3fe64230" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="41f3659c-71a1-5cb3-94c7-5148d0fececd" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="29d3cc4c-4e3e-5111-9e31-e33772402ba6" />
+        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="5bb35f25-b211-5806-8606-f50409af1c4a" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="1b7b2207-2027-5b18-b400-f47b78ff7464" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="fb21997e-cd7b-5486-b18a-28169fb0dbc8" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="f43e4110-e459-5740-9893-f1a8610ad16b" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="b8d5d99a-2d8b-58b9-8386-c397623b3d7f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="0af7f30d-fb49-57bd-a43e-d6cd1f8df353" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="8b01df4d-313a-5549-840b-0ec0e1001afb" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="ac30b29c-874f-5f1a-b34e-763fedbc17d7" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_3/model" Guid="c5a233db-f23e-518e-9c08-3452fe98602a" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_3/atlas" Guid="8bd1d2af-b2f2-5101-92aa-9827ab89f3d6" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.72" Guid="952cdf2c-2ff3-53a8-b049-894cf37c1044" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="020fe038-6168-567e-9109-e442d1fa64d9" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot05" Guid="da1710ac-116b-5f7e-bd47-7a4e51406c0e" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="dc94b900-32fb-5613-818b-7396e938caa7">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.1,2" Guid="4240b6c7-b23d-5580-bf64-1c4d72cf113d" />
+        <Parameter Name="Mass" Type="float" Value="700" Guid="a603f4b0-5421-5d4a-bb7c-c0addb5baed5" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="435c2cd7-ba28-5271-9551-998a46f29a22" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="d61422b0-6027-5ab0-bbce-941c754385cc" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="e00679eb-a6a2-5c97-a003-7e6efbc9b31f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="bfcb4b58-9949-539f-9790-49f3acf3ed0e">
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="82d17cdd-9d59-59af-bd78-0971d912fce1" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="d1ec5311-9860-5339-8ba2-08d5677ec56c" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="f9d4cb09-fc01-5c58-86ff-5eed70960ad5" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="a1027e5d-7bcb-5dc4-967c-3eb4e8783836" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="feea1311-6a5b-5d4d-8d90-d6716ae0165a" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="d8787d64-6da6-5818-80d1-b094aa45f43b">
+        <Parameter Name="DisplayName" Type="string" Value="双管步行机兵" Guid="67665c27-b015-5346-9ef6-9675f641a963" />
+        <Parameter Name="Description" Type="string" Value="双管机炮点射的步行机兵。夜里出没，也会成群来袭击炮塔。击毁后掉落机兵残骸。" Guid="cf630298-a7c0-5138-a7c6-5f895b9a6460" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="75002f51-47d1-59c5-8f2f-f0e63fad74c6" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="b323474e-1c9b-54ad-9393-d6a0ca84c590" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="8d58ed91-8924-5620-9705-45264a17b5ba">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.4" Guid="a551bea3-fee9-5706-9d4c-c11a5e860a56" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="bd7e04f0-802e-5345-84ce-a4dcbc43a750" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="9b0bd75e-b7f4-5d05-ab9c-a3b4156b8628" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="dfac7642-66a3-58ad-95f3-8191b2fc1dc7" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="e33273f1-fc14-5584-b27b-47a170df44eb" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="17843eca-7d7f-5951-a9c5-41168f57fc6e" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="8e88567b-584e-5da4-a9a6-f0840dfac3f5" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="f07e8fb3-a22f-5c41-a50e-573c69849d30" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="0c015dfd-23e0-5d32-aa61-d96bd3cbca74" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="e8247dd6-7d27-5b57-a474-fc5336e40da8">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="03a30543-f7f6-5e86-bbd3-aad49fb95f42" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="5332783a-f226-5578-97de-aa6b1287ecc2">
+        <ParameterSet Name="Loot" Guid="10cf4ed1-7252-5a11-bfb4-a2628d6cb9c7">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="a52786a8-6699-5211-9c18-418d68075619" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="dadc1fa1-8bd4-57d4-ac08-90d9a452bbe8" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="dca68a5b-c32d-5340-aedb-173fec5a9ec3" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="00283357-618b-57c8-abc7-9108040e98da">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="c2347b0b-369f-5756-a5b5-712cf7f1befe" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="45b3b1f8-d205-5d9e-9862-c2446a046f29" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="7a80cb96-caeb-5edb-8b37-4b426a455f21" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="3949e1e1-0808-546c-82ee-56d3023f4330" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="0b5c1f5f-9c1f-5f2a-9428-48bd6b7fc833" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD05/model" Guid="fc463236-fc79-547b-ae4b-a45aca619dbd" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="764d85af-8f0a-5c47-825a-a70f48a45b29" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="86ff9234-49fc-5687-a178-32cfe27eef64" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.48" Guid="5c1c6c78-9584-5e2b-b743-377fdf09c4fc" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="dfce3655-218d-5fb5-8058-fa57b44e6abf" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="c1897bf2-3c97-59fe-9812-d8c935a739cc" />
+        <Parameter Name="Kind" Type="string" Value="RD05" Guid="3968922f-b81f-502d-a0c9-fafe57b6f1b8" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="eb0e2d12-db2d-59f2-a532-6950bd213cfe" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot05B" Guid="e7a8b9dd-46eb-58b8-aa84-4dbb5704babf" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="9106cb5e-d4a5-5195-b3e8-e0162bd74ee7">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.1,2" Guid="3fa18641-f80a-5cc6-b624-28ac59c35e04" />
+        <Parameter Name="Mass" Type="float" Value="700" Guid="8e4f62fb-c265-56d2-878a-649fd72b52e2" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="8d7df785-1078-5bd7-a66f-997a822cf7a2" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="3523e34d-22a7-5e6f-bf50-e859754b6a5f" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="cceea588-4ca0-51c4-b2a2-a3859297889b" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="bc3625be-0cc5-57fe-886e-3556e4efbaed">
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="9afdc170-6eda-57cf-bbcb-a05c3198a077" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="184cd5c4-72b4-53e4-a936-77a8de6b84e7" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="fe42175a-e422-578c-b850-a7f46defe3c8" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="fcbd8071-501a-523c-9705-af1cce93be35" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="7ca8aab4-7c90-5ec8-9e29-9a94abb56c5a" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="dfb45c7c-252b-5735-b423-95d6674ad8fa">
+        <Parameter Name="DisplayName" Type="string" Value="双管步行机兵" Guid="309fb681-9543-5f03-a4a8-3703d068b147" />
+        <Parameter Name="Description" Type="string" Value="双管机炮点射的步行机兵。夜里出没，也会成群来袭击炮塔。击毁后掉落机兵残骸。" Guid="a69297c7-b922-56bf-9c64-279376e36459" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="762df5bd-28d8-5fd3-9d7a-150fae8b7a36" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="fa6f43d7-3f16-52a3-8b2b-a64dba33fa04" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="6dd26af1-4796-58f7-8f75-09d6555ffdaf">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.4" Guid="c5e55e65-8f68-5029-9cf6-02c0d0ff8be1" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="6a628a36-e87c-5555-abce-a24f57bd03bf" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="31f6b5d0-3071-5bee-a9c8-b83c5e5489ea" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="2123a7f4-c454-5748-ba29-d638972f9eb9" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="7cb46901-a465-5a8a-a63a-02417ec31bfa" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="0824596c-18d6-53ee-9158-ea86199e02c7" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="f65d7917-70c8-537a-be61-08d4eb6bd3df" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="af433c24-a937-5f58-bc3a-31ea905173e3" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="05e17f0d-a8ef-5667-b7a6-2efeeddeb872" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="c0c5e846-a9c5-5e01-ad80-74981d6d6fb0">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="c99d311c-cca1-5bba-ae4a-881e5d27124f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="27f682ec-55ec-5027-8a9f-6da56c32fbc4">
+        <ParameterSet Name="Loot" Guid="3820467d-ba48-56f5-afa8-317b80873c2b">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="fda8761e-37c9-5991-8bb3-2219d4c0f1a4" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="8ebdb8ca-bca9-5571-ab91-fdeae379072f" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="0c11e7c5-c2ac-5cdc-9514-34c995e66e72" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="8015da35-fe42-570d-8760-2dce66c72033">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="7242daf7-dc4e-5178-9009-237c1fb6d3d7" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="64cf5c04-d7cc-522c-b1ce-771cdcfeab01" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="1cec340c-20a5-5993-9d5c-7eba7f5fc29d" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="47ff7dee-750e-5805-a565-490ec28afd72" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="b210be3b-e397-5040-b813-e18cb6af9d1c" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD05/model_b" Guid="4cfe763b-913e-5d1f-9fba-7d5ad8c7d6d8" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="5f59e1b8-05de-5f4b-987f-0402be0234f3" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="0428dc98-4765-5d99-a023-07eab1c327ff" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.48" Guid="a5383e3c-9744-5974-ba01-61acb22645da" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="3226491f-db25-5427-8706-e4018a3d376c" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="40bec818-d51b-589b-8a37-1232b1eef750" />
+        <Parameter Name="Kind" Type="string" Value="RD05" Guid="916b019a-bcf3-51be-8eb4-0dde87c60e00" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="97af2f66-4c22-5fd8-b369-9f0f5363fbf0" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot05C" Guid="8de3d3ca-a385-5ad1-8c37-a9a3dc7a97ca" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="6505d394-fef6-5f14-af3a-e64f9201e129">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.1,2" Guid="53f32f0e-6889-584e-aa93-6ba76a8768cf" />
+        <Parameter Name="Mass" Type="float" Value="700" Guid="fec62f3e-1116-5817-a92c-e29563b57a59" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="c4f95def-ac12-5858-aea2-d7465eb193e5" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="f25f70c1-483b-55b7-8ebf-6fcf4974ad92" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="de10f39b-9d7a-5995-9e26-ea91dd3ddb75" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="70ef3802-b904-59b1-91d8-5848272e311d">
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="4504a9fe-68fc-59ac-824c-14bc5b5c9489" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="e1606b4d-3629-5c0e-9bb6-3eef8469e292" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="fc250533-37f9-5d45-8c5f-c7376cc65c66" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="54191da1-51f2-5b1a-bb32-c1db4cf3b040" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="73816a71-a140-5a36-aee9-98c1ad575129" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="6164fcde-6f6e-59ef-87ca-b0390fb2cd74">
+        <Parameter Name="DisplayName" Type="string" Value="双管步行机兵" Guid="a0ee4d84-cdff-5c47-a729-7a5c53a5b05d" />
+        <Parameter Name="Description" Type="string" Value="双管机炮点射的步行机兵。夜里出没，也会成群来袭击炮塔。击毁后掉落机兵残骸。" Guid="dc856537-6f02-5030-938a-05176d2fe4e0" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="5aef44ea-a1b6-5075-aabe-a04f9acd376f" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="281d6082-6634-574b-af10-0f9c15b9e7c3" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="b8526a56-fa13-5e67-b184-d4591d7e07f5">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.4" Guid="2afdf950-533a-5be7-8985-e99a26beca75" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="70b48f0d-dd84-571f-bea5-bc522dce1ee4" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="8ca5880e-845d-5f01-989c-0fbc3e887d92" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="f3774be8-72a0-5d5b-85fc-2d06a74cb49c" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="1812b52d-5963-52d4-ba36-912ece097619" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="dbbeea1d-c0e7-52d9-af06-957d76bf5e13" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="24a1c6df-2a08-5ff8-a6ee-156ed1b592cf" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="4a73b54e-bdc6-529e-9bc1-aa0f3c50d220" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="b4f7a088-24bf-5739-beed-83b0d9ce0f1f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="8aaca675-35e1-5d54-8629-8a65a026e074">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="5b3dcfae-0c05-55cb-b185-d970b5e237e9" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="6a4c0aeb-528a-591e-8cc3-ad3c2c51ad88">
+        <ParameterSet Name="Loot" Guid="aa9c25a2-a464-5c93-b63f-3317955d4c28">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="387894ce-d6b9-5ba2-b7c1-703e60d7e1e1" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="ea6af089-d89d-5f91-b435-3009725ad78b" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="2f67704b-76ff-502e-9911-e925f105040e" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="0352ab4c-422d-58db-a95a-a4f17ca3c90e">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="798f641c-71bf-5248-8276-c42a74369fa1" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="ba11b6b0-c313-556e-aba9-e25b29bcaa54" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="97c3dab8-74cb-52cd-bbf4-79251f29087d" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="0d9e73f6-a240-5844-9741-4f04258c9340" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="96a34a44-323b-510a-9cbb-5829fd3dd7e0" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD05/model_c" Guid="55dd0d2b-43d4-5f4f-bbbe-b3fd7f5653f7" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="32cf74b6-7a77-5e35-9bed-b8dde4d61852" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="4e3b28bf-c1d5-575d-b36e-bc8b5c55e8f5" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.48" Guid="f13edcae-b1b1-5724-8da6-a9fe5c8b8c2b" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="3f2c27ac-1c68-5bd8-a465-250772def1a7" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="39785bb4-8b73-57f1-8742-9cb76b80f31d" />
+        <Parameter Name="Kind" Type="string" Value="RD05" Guid="32cf939f-6e8d-5357-972f-1347a595444b" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="36559ff7-3ad4-5046-9bf8-845018c00fde" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot06" Guid="eb8d0d56-c030-508a-86ed-97b81a56bb40" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="8b5ca3ae-c547-5cde-962c-5f2530a4bb31">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="8e12be70-3401-5926-b6ea-4469d9d929c7" />
+        <Parameter Name="Mass" Type="float" Value="1200" Guid="bf34c237-2328-585c-913e-dc15bd7aa072" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="12823e5a-981e-50b2-956b-6f8904d38567" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="71b184e9-906d-5c1f-a9be-052af98280d6" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="fe2340f0-345d-5c6b-a65f-b1a50449baa0" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="38d5d6cb-dee6-508f-b596-29f67e7e511f">
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="fce1cb8a-2987-55d7-84cd-aca7840ea17c" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="c43de41b-5f04-50b0-b458-312d44ed2500" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="84c55e6b-4117-537f-846f-5d42c0dbd831" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="3cf9b900-6ea0-5d58-92db-0f326fc11e2c" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="4ca93755-b61e-52b9-984b-babad57b9d4f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="dbb05ddb-2080-5eec-8aa4-e262416fbe22">
+        <Parameter Name="DisplayName" Type="string" Value="导弹步行机兵" Guid="cdf54380-4887-5ffe-9003-6135771c31fa" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：锁定后齐射追踪导弹（导弹能被甩开）。常掉火控芯片，偶尔掉能量核心。" Guid="df01e957-b977-56a6-8065-52c14a6ebfa0" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="46731e6b-4e1c-5124-af7d-5bf1b56992c8" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="855347d6-8963-5d64-9ae7-d6c924ed730c" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="933ed6b1-2792-597b-aa0c-246cf8be0793">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.0" Guid="3e0a0a56-ec97-53ba-8ca6-7d7723129763" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="6819b62b-600a-5102-a403-b6f177cf351b" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="c0e6612c-a4a6-5df1-81c7-58fd62f094e6" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="88b1c357-9d33-5395-a511-7d853a8b836e" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="e9815e7c-2869-5c25-a5e5-a7fb9b6c3e66" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="61f728da-f314-5335-9f71-05069165d650" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="cc761f2b-4ef8-59a5-a363-3a844518a1e8" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="1ca13335-4b2a-5581-8e53-f772a87f3038" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="f5803b3a-c06d-539f-820b-28395143ba74" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="9a4fcb98-7efe-555b-b56c-9be1189fe24a">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="5150471e-2634-5251-9cd2-9b79c04dd5ac" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="1763f4b6-f341-57a0-875a-f2d08bef1081">
+        <ParameterSet Name="Loot" Guid="b230bb22-6e9b-5825-8917-7513d0ee9698">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="c7361b85-ac60-54da-a113-09d1fa649a31" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="a3f2e12c-3395-57f0-b93a-ec02b3dc03be" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="8c0bdeb9-788e-5e38-8935-711bcdc21d43" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="31f99643-952a-56ed-a221-311ac3a00cc7" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="1e0a2c2c-a9e5-5489-9e31-0892475992d8">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="b9b983ef-1609-54c5-905d-7cccee2b791e" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="97b7b696-48c8-5c7d-a0da-5d8421031264" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="eb6516b8-6cde-50a9-808d-672cf7aaf82b" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="df7d5352-4e4f-5c3a-8865-ac051b289fa9" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="6d7a1bc2-463e-5a77-a8fd-d899c3f1bd7f" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="b853dd46-cfab-53ed-ad06-fe211dc8941c" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD06/model" Guid="a2be2236-e9b2-5b47-a719-63472b641698" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="422e50b8-ad39-593b-b067-072cedf56bf7" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="de639450-09f5-5842-9e50-a6759da1dd66" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="a77cd1b7-e664-5c92-b0f2-ed349ff04335" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="ee72e4bb-aac7-5100-bcd0-a1d449a8fbe1" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="18fd6054-adc4-5f6c-aa3e-57a23aeae5d3" />
+        <Parameter Name="Kind" Type="string" Value="RD06" Guid="34ae69c6-f99c-5a34-85a7-d74521bb7ded" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="9a83f82b-2672-5d62-9815-7e9d468612fd" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot06B" Guid="92b698c5-8d72-5621-91bd-77a19c1613af" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="5be7ee36-2d97-5fb9-ab62-fbe014081b27">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="e8911640-638e-5651-ae09-1e8a363e4452" />
+        <Parameter Name="Mass" Type="float" Value="1200" Guid="cae2dd10-ecae-5ff6-b77e-c0100340ef70" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="a7cfe706-b947-522f-b003-0a17cb1dcb56" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="2abec30c-304a-5f51-952b-5307bf001379" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="e304d7f2-9bec-5a5a-befa-8e04594f8ce6" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="856e5f2a-e667-5b13-b0c7-d1c9782fa270">
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="381b82ed-8abe-5805-91ef-4cfabaccc024" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="9da5a7a5-6f7c-55fe-bae6-3148780561ec" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="ce0b37ef-e324-57ca-9fec-78fc538d1c03" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="48da2cac-c5c4-5d49-b69d-64410b3b0e56" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="3fadc693-3ff2-597b-8a5c-ff37629f8361" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="651d235a-5edc-5f52-a2a2-b06c00afca21">
+        <Parameter Name="DisplayName" Type="string" Value="导弹步行机兵" Guid="e79aea72-0e33-5dff-b844-419d6407650e" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：锁定后齐射追踪导弹（导弹能被甩开）。常掉火控芯片，偶尔掉能量核心。" Guid="0222f27d-c6ba-5e22-84cc-211d5c4429d0" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="5914c87a-65b4-5afd-a5e1-6653806ebb34" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="49099ff4-5ca7-5eeb-81ce-58e13c1fbccb" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="f3e6ba6c-b818-58bf-84b4-dbb12fd57788">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.0" Guid="f1ea97c6-dd53-5bf0-bbfb-7ed213a93fd8" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="0f1bad47-584b-5b86-aaec-4e31fb07c7fe" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="871d6ae1-75b9-524f-b2ca-0e911a63471f" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="40cf219b-2ef9-541d-92d1-019121dc9442" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="72979e3a-fb7a-5c0c-a1b8-537aae5bc6df" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="d9b024b7-c6fc-5a07-bb42-3e9fc3510ef9" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="75a7f27b-5be4-5d4e-b761-e25afac19c6d" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="08172c9d-3c70-55ef-845a-f39b1f176cef" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="09516cb5-9f2e-5db5-9d83-f65d10f37a26" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="582348a4-c425-5449-b5f9-8a83125fcde7">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="4fe78140-6098-5879-bc13-26a98be9c159" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="585091f8-4225-5fcb-9d62-860128c79145">
+        <ParameterSet Name="Loot" Guid="3bb2ac25-7fdd-5b9b-958f-470572dfe436">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="ef1cbb3b-6cf6-55f4-9a80-784c0ad2af9d" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="5985e74c-2bc5-5e0a-b61d-88949517ca77" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="15d34a5b-7e46-58cd-bb48-278bd126cb0f" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="241799e9-c834-567e-aeff-69829fca9670" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="dcf1baf5-4f31-50ea-9369-0c354db32391">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="7da86ca8-1de9-542a-ac2b-e46adefe72bd" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="11824740-a25a-5536-87fa-32faa8e185fb" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="85e156ae-f60f-5547-9e73-a57d1a36ce3e" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="f3e76ae0-a8fe-547c-a170-4f257088d253" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="cd0535cb-be9c-50da-a954-5d9a82fc1616" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="12153b44-7e74-5439-b60b-9d1fb66eb558" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD06/model_b" Guid="d741404f-b5a0-53fc-9b37-6b89a1c0d4a6" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="6569c40b-0c12-5ed5-9eab-d1fdf37aa5ae" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="84db10d7-8d62-5251-9ffa-7e10de343010" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="bba705ee-73df-57f2-8aa7-ff5c6dffeb92" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="db15c744-0de6-5f87-93a4-ed2267fe68f3" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="225237b4-9da3-5455-9dae-5d6ab5c1e162" />
+        <Parameter Name="Kind" Type="string" Value="RD06" Guid="b0681f55-31e6-5ef7-b9d3-a66a1a12c31e" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="d17375f3-f0c9-5aa0-8aa7-c286b95bd3fc" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot06C" Guid="2f210e4f-9e9a-5731-9f1d-35a4da080579" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="df7bc546-cdd8-5660-a40d-2288d2fa415c">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="969cf87c-7f8a-58cf-b941-6c703ca3a563" />
+        <Parameter Name="Mass" Type="float" Value="1200" Guid="5e939f7e-88b5-52bf-a215-77cff3c87b07" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="64ff9b1b-53de-59ac-81a0-e2b732a00226" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="037db1f2-ed43-57a0-9f13-b15fa12289ca" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="0a092f00-f95c-5ee1-b9a6-32c85eea1c56" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="87973bfb-8473-58d6-89ff-ba5fb9d7cd90">
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="4bd2a001-20ba-5c2c-aaa9-29e679160f96" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="7bee17e8-baec-555b-a3d5-f3071821b231" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="8d8c7b52-8f69-5a1c-9269-cd6e8699fd77" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="0f44f08f-5546-5f20-b9a3-9803e407aa95" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="f83279b4-e019-5404-885d-301516494633" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="26802c8b-56fb-5ec1-af33-0a7103e9efeb">
+        <Parameter Name="DisplayName" Type="string" Value="导弹步行机兵" Guid="82cd8f6d-f807-5a46-aedd-007b69394f05" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：锁定后齐射追踪导弹（导弹能被甩开）。常掉火控芯片，偶尔掉能量核心。" Guid="a7e1a186-396c-57ab-8fef-1ec518c45c96" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="512fd811-8823-5598-bf34-7322f98ba9ca" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="1acfa0e6-3d23-5949-885e-2c7e425a764f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="79a5e5e0-03ed-5be9-81ad-a70762d76413">
+        <Parameter Name="WalkSpeed" Type="float" Value="3.0" Guid="eda2218a-0245-5da6-ab7e-c6a81791fccc" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="bbfd4c08-c884-597a-9af9-952885cf6fa3" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="ec59989f-b8e0-5777-9486-dec91b2fd189" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="b08526bc-c0fc-5699-9d31-8340b200c20c" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="5295ecbf-8554-521d-bf81-5ac998fe51f7" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="7895340e-b342-5b4c-8b82-8c8ed105e6a9" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="9c9a17b3-5288-5817-ad57-487860d4044e" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="b53100f9-dd49-58dd-8069-220cbb8e3704" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="abfd30a5-5dad-526f-99a7-30a1cabd14db" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="bf436167-33ec-5e1c-8abc-575597bae73b">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="5036cc03-4a0d-5d7f-9fa8-f9c3a7950194" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="a7a0c54d-82b0-53ef-9715-a07bd9d22a04">
+        <ParameterSet Name="Loot" Guid="eb7e871a-7222-519a-9ab6-c34f75370a4c">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="918b4686-ee26-58eb-89b5-17d5d3f0432c" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="705d0ce7-b734-5948-a982-1da66811cf5f" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="4766086b-6991-5a04-a63e-ab950ccec4cc" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="ca928118-9955-5aee-921e-c7033521627f" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="e5b94693-ed8f-5d50-9c7d-daaeb0650601">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="86b492ff-9880-5a28-8bb2-4c0fa20a6ad0" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="5eaabb0e-1d42-590e-8647-22778eb35a3e" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="29b9dcbb-eda0-5f8e-9c74-2f46a873dfeb" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="e6976d10-4350-5fad-8e2d-ad24e23401f7" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="3b03a690-0fe1-55be-87e0-efdf0a483594" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="c0e4c52d-418c-5353-ab2c-eef4cbdd8aea" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD06/model_c" Guid="1dfeeb2b-a363-56bf-8aa0-62466f0aed07" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="7fff39af-4a23-55ad-82a3-6c247420bb4b" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="f855327e-bb1e-5737-a0cc-918b2764e62b" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="9cc1f96c-6aff-5055-862f-f5610219e536" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="0c223667-c93e-579b-b5c9-a826e3daf77e" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="38d56bcd-c375-5dc2-9505-6481d185980a" />
+        <Parameter Name="Kind" Type="string" Value="RD06" Guid="c4f763d0-6567-55b4-a9ff-85b6bda4fd72" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="78e51a07-f742-50f5-8fcc-96ab8c929804" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot07" Guid="9448c2b6-6df7-55b3-bc1c-36d255ddd40d" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="4b5ea423-de41-593a-bc69-406017e53710">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="6256ee62-7ab1-56e1-85f9-f2e07f4cf3ac" />
+        <Parameter Name="Mass" Type="float" Value="1400" Guid="2e19a8d0-63aa-5dfd-bde3-198103b12033" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="8bfdf97e-28b2-58d3-8d32-e64b7766c11c" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="ee43f444-9474-5e61-9ef7-60a9997aa0cc" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="5cf7c5a1-93e3-527d-8d0f-f4fd5f370703" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="c206d79e-acba-5b95-82cf-4549cd5ab108">
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="e5ddab86-f481-5b2d-96f7-09d8dacb9f8d" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="0032cd4c-845f-5166-af48-e2fa1baf6899" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="201163cd-da27-5650-ad4a-dab7508288e1" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="4efbcf3d-a6ff-527a-8b40-b7f71d12c043" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="951b4f7d-ed29-51f9-a6ad-d6d86118911e" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="4636a357-643f-5905-9e33-a08f7d607dfb">
+        <Parameter Name="DisplayName" Type="string" Value="炮击步行机兵" Guid="183fc108-19d2-5c61-bdc1-e2485bb8c282" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。" Guid="8de95287-3548-59fa-aebb-cd57fcc99782" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="dc736f92-2ac6-5b66-8bac-b219f2024ee3" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="3bba669d-67c7-58c2-bd87-fa741b9ec7fd" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="382ae0ff-9d4d-5460-ad74-423fff4aa63b">
+        <Parameter Name="WalkSpeed" Type="float" Value="2.8" Guid="6b690399-23ed-507c-80d0-8412b2bceafd" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="f48a9ebc-9d4b-57e1-9765-98377bb0c2de" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="c5f662f8-6051-5677-bf8e-05b479419cd3" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="8788d953-d124-56e8-b5b6-4e1742239176" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="bd420b5b-bc93-5f4f-9b70-3d78af429e21" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="3d1d3067-6697-59c8-8508-4ac4919e74bf" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="7bd4c683-3433-5968-b6ef-ceb2f562ab73" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="ae911dc4-62b7-59d9-b6bf-9b081c08e8d4" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="65981d5a-b8e9-555e-8fbe-484cf3b78bac" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="883da98b-6f68-569c-9c4c-39e8337aa201">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="75b92d24-c6fc-5067-943c-c702a77570e6" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="363618bb-360d-542f-bbeb-0a02acfd47dd">
+        <ParameterSet Name="Loot" Guid="c4f3d2eb-9ff5-508f-82d0-8cdc48e51adf">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="ecb1fe39-6557-5caf-8847-3427f0f39e2e" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="9a88d2a6-ac3f-54b8-a0c6-2c610b57b189" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="b3c2989d-c432-5f83-bc57-7a6c04fe919a" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="79626a9d-0804-5e27-a2b0-6be3f695a07c" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="adb7759c-9680-55c9-8ad7-4b8cbe053d08">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="ae6b3f9e-87a1-5409-904b-4005f379a23d" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="44ffea91-c676-55e9-9dcb-2dc5a7ffeff0" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="908a87c9-6a5f-58eb-b03c-62de99ec5a2e" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="be0d09eb-e470-57b4-b33e-6f8b7a76ac55" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="33c61101-6669-5160-a90e-d8974ffda331" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="8460a49e-d141-57d9-8dd9-c3c62807cdbd" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD07/model" Guid="ca50da37-811d-5831-80c3-c364b8f8aec9" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="8bb6fc17-a75c-5315-991d-025b3fee46f0" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="40db8a07-bc8d-5a5d-b752-6ac8559245f7" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="b8ab56ee-8f5e-5e3c-b20d-1441cce364ec" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="bdd3e032-88dc-5caa-b750-16932427842b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="4219a4fa-0c16-5b21-aa0d-d7fff9169133" />
+        <Parameter Name="Kind" Type="string" Value="RD07" Guid="2fb1a869-846c-5b97-b1b9-7faab7deff32" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="123bd5a7-316c-5c8f-aeab-ebe9ef91b318" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot07B" Guid="b36c4abf-f262-5200-8425-2a8199629650" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="ac2e2348-6458-5abe-a9db-219d559cbaae">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="f67709e0-72b2-53ce-9b17-4a830ab260db" />
+        <Parameter Name="Mass" Type="float" Value="1400" Guid="8a6923cc-dec6-54d5-8add-f9d1d0ec3614" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="b32d9845-22d1-5bae-ace1-ce62327acfeb" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="45a83606-f885-57ff-b01a-122003f6eb9b" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="1232b28e-13a5-5901-b0c1-b09c06cb9134" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="a3d5f79b-1dc5-5f72-a8fe-f4663c565a53">
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="2a3cccbc-340b-54dc-bd12-7e12395c0e41" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="1ee1370b-8247-5751-9c91-20838ebaef71" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="9f59de17-f537-5943-83f3-75a21d3466bf" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="b61f9d33-3a95-58f5-865a-3e42a6dd7d7f" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="29d93e3e-ee21-5374-baea-3c089c009c46" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="d7d55c83-d6ba-5bde-9b98-9f480d186a85">
+        <Parameter Name="DisplayName" Type="string" Value="炮击步行机兵" Guid="2994c9a3-369e-510b-8422-f98edcbce9c7" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。" Guid="4ef44231-f868-507e-a986-3913a41df17c" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="f4eae9c2-02b6-592d-9a10-42771df3e042" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="9db21764-5c75-5353-b217-03fd4296d460" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="5b1dc438-fd31-574c-b3a3-03cb490b3d57">
+        <Parameter Name="WalkSpeed" Type="float" Value="2.8" Guid="c7498db7-32ec-5099-8409-65e600e1f0dc" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="4a88ce3f-f340-5ae6-a528-d41168909015" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="903fa0cd-e545-5ab4-846e-b18e2a655f2c" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="84c68f8d-7fa5-566e-a111-fabaf14a6ac6" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="960f506b-ab8a-522b-876e-ab862ba66cbc" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="4261f908-d092-56b9-bee4-e6b7edde386d" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="5d5e16a2-c4bc-5591-920b-f58e15b92999" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="0f15bf39-8c7e-57cd-96e6-268934c07c4c" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="aaf0bd8a-de8a-55fb-b307-aeae4ea8c63a" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="14a3165c-7818-5b05-a411-6b7b3898e9ae">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="c15d8fc2-3a32-59b0-9f73-c75a0874520b" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="62b8baea-2e39-5a99-8044-067b285e4dc9">
+        <ParameterSet Name="Loot" Guid="3ea0e1a5-d1e7-54fa-9a2c-81c6f6b19e93">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="af2638af-06ae-5797-ad56-c714a3ca9dcb" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="f6bd55c9-26d1-58cb-9ec1-d618cfe35d79" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="929eddb9-209b-5a01-9fc3-7576431328c0" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="3e71e879-f5f3-51a4-9b09-864337c353c7" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="f2a07f14-0b22-5906-8080-39e06dce3a9d">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="1a548000-fbb8-53f4-be9d-7408a9c66178" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="10179d35-7360-512d-8f60-339940068096" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="a3932290-5c0f-59d7-bc0a-f550c8369759" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="bc762c71-e194-5913-87cd-7a8358bea210" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="7aa6fd64-5917-581e-a6d3-830282d840cb" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="b4703690-8a7a-57d5-81cd-15bf53e7774f" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD07/model_b" Guid="60a73fd8-9c92-568a-8dbc-fd29c51412f3" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="2e5ed198-619c-55fd-aa12-8f6c8325a6cc" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="5d66f5ad-bcbc-5292-8fc1-2cbc51a90193" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="c9c2eaf4-9a82-5751-ba76-a491519d2440" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="f5a336a5-4534-52b6-b144-a2103e374097" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="37d737c7-e56a-5af9-b4e1-a04f2929badb" />
+        <Parameter Name="Kind" Type="string" Value="RD07" Guid="48da8387-e589-5180-a0dd-e4ae107d6b98" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="0cffc231-8890-580a-b5d6-7a35eb97af4f" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDRobot07C" Guid="a0cb00eb-bfe5-50db-9b44-a1f27668a880" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="229b1add-6654-5dd9-b726-d2e578cbe384">
+        <Parameter Name="BoxSize" Type="Vector3" Value="2,3.4,2" Guid="08a83953-9adc-5490-bba8-6743ba246c01" />
+        <Parameter Name="Mass" Type="float" Value="1400" Guid="1fb73da4-e09f-508d-8fe7-392e200b4e2f" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="3d5dea17-7b5f-5907-81df-70d23839e2d6" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="052c52bd-cc2c-5528-af96-518fdaebe1bb" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.25,0.25" Guid="4f036e1f-8344-5cdc-8486-b107a6e05435" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="bcfd11a7-f049-5adc-a68a-03ce57735534">
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="11286b56-dc2a-5531-9738-44f5feab19e4" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="7905052f-b738-5d8f-8d20-a75ac68015e6" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="632489fa-14ee-5859-be40-161c62d8d17c" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="14881336-fc5f-5b0d-a963-1a4af713a655" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="eee94b8f-d13e-5502-8ea3-d2f11f55148e" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="a4af1764-a081-5f7c-aa48-3601ac4c4ef9">
+        <Parameter Name="DisplayName" Type="string" Value="炮击步行机兵" Guid="a1b8abe7-5035-507b-b0da-ae614ebf8b47" />
+        <Parameter Name="Description" Type="string" Value="精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。" Guid="844354e7-5557-51a5-8a57-6ab5531caee9" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="ee701a79-7623-5cbc-8c9c-f7bc80f400e5" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="46a650f3-e0df-5c1d-90d4-df11c9b273a2" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="3e0f0b41-b291-5e37-b323-ec5458017dc5">
+        <Parameter Name="WalkSpeed" Type="float" Value="2.8" Guid="d0125cbd-8746-5f67-87b2-c988def266dc" />
+        <Parameter Name="FlySpeed" Type="float" Value="0" Guid="38600f47-bb40-50e4-8b25-16284facc452" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="75a74a9f-d8d4-544b-a5fe-aa5a3b8e9bc2" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="79c18037-f40d-5193-a5aa-7097f987120a" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="6251398a-9f90-5a5d-bb96-33fdec272d77" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="89bcce9c-b3c6-5e0f-a472-df989d83f92c" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="57dfc5bd-4f39-5884-8611-a9a138fdb0cc" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="0.6" Guid="96a99ee1-a5fb-5874-ba4d-ec0e1e5bf015" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="1ae24ed4-c36f-5e5f-91b5-631c72da60d5" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="9c94688a-f569-5549-92f3-ca7a68a3e02b">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="160f0f12-792e-57df-9235-9d281cb722bd" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="c7f9ef53-eb4d-52b2-8b1c-b4b15449936e">
+        <ParameterSet Name="Loot" Guid="c045b2f0-e391-551f-b71d-755544c70dab">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="14152ebd-30b5-5b2b-a00f-a441579253c8" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="32887ceb-e2fe-53ff-98d5-c0ec12a0605b" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="281fcc7e-2fc0-5ea2-a323-57fbbf7fa337" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="1a1539de-7317-5c4d-9acb-7f6752ca68f0" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="40c719ea-3b79-51f4-942c-2722a73a5441">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="ba826b65-e6d5-5f04-91e1-bca4ac7d8267" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.6" Guid="b997fc4e-0337-54d3-9027-750e581811d1" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.15" Guid="0891394e-b5dc-5ee4-b547-ee313d415f57" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;5;8;1" Guid="8cf6f344-55de-5a2d-bc6d-d5995c521ec3" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="2726228d-d893-51a2-ac5f-2433a105a093" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="17869ca5-0204-5a76-abff-e545bdf6e7e3" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD07/model_c" Guid="4decda44-b1a9-51ae-96a1-1019bbcec312" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="59999cea-ef03-5a89-8b59-c782dbc142bd" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="797a18a2-dbbe-5371-b261-64c898d6cd38" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.72" Guid="afaac8c9-4dc5-54bf-a776-c6a495dbc9f5" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="2ca228c8-c704-566f-96d3-da87ead1c4a4" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="9d0725fe-1e3a-5168-b42b-a3e9cc6b68b0" />
+        <Parameter Name="Kind" Type="string" Value="RD07" Guid="df28b3f8-6a54-5b83-b462-c5296df71c08" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="WalkAroundBehavior" Guid="715ef85f-1d1d-52ef-b1f7-91376ac00faa" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+    </EntityTemplate>
+    <EntityTemplate Name="MDDevilMech" Guid="93d6cd3f-359c-5f94-a208-39c34e212c3f" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="9f86b0d8-406c-52fd-9478-f9394054c560">
+        <Parameter Name="BoxSize" Type="Vector3" Value="4.6,9.6,4.6" Guid="327864f9-1e2b-5411-85bb-b7bb889fc9d3" />
+        <Parameter Name="Mass" Type="float" Value="4000" Guid="b88c1118-9ae7-56bd-adde-bf5e8a57a050" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="049f272d-a37e-5355-9a9b-9d455fe88cd3" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="c7c9d01b-7bf5-58e0-9fa7-3053741b284a" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.1,0.1" Guid="71069b60-0a06-5392-87c1-c0b4c8f9e682" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="14ae3892-0f9b-5827-b7e5-83ba96cbb2b8">
+        <Parameter Name="AttackResilience" Type="float" Value="40000" Guid="cc8f5f7e-8b8b-5a0a-9ed2-90f7be8db732" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="3e707fea-9c3e-538a-96da-34a665f2d6b7" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="4e467389-ccfb-55d1-a266-e13f15a472e7" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="a9f5701f-a499-5918-ae8d-95b72cc1572d" />
+        <Parameter Name="CorpseDuration" Type="float" Value="4" Guid="79ac28c4-da33-51eb-8802-da08f9e6b98e" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="df9d293b-64ab-53e7-8963-1a74ffa16c98">
+        <Parameter Name="DisplayName" Type="string" Value="恶魔机甲" Guid="c66c8c75-39cf-55b6-806f-80d22fce0a3e" />
+        <Parameter Name="Description" Type="string" Value="用诱敌信标引来的首领，按附近炮塔数量强化耐久。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。" Guid="a5fbceed-b65b-5957-a955-c3a34498e452" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="f63f64c0-8f72-52ca-8e15-5c95e20b26e7" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="e99d15e2-d10e-5548-b625-6b4865cf722f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="92b7fcac-285c-5822-8e27-4138732c3936">
+        <Parameter Name="WalkSpeed" Type="float" Value="0" Guid="e9a206da-9359-524c-b973-ff64061e31f5" />
+        <Parameter Name="FlySpeed" Type="float" Value="16" Guid="07df48e0-a23f-557f-b0d5-828071f31011" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="dd4bb797-d3bf-501b-8668-210c303e01a2" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="605f5801-c658-5a8c-b01b-6416e97f9fd5" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="bdda5d93-354d-57b6-9dd2-197d7a153a2b" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="3937dc2a-607e-5b11-ad50-fc1fb336a937" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="eae5e389-df8a-5fef-a28e-018fe4eb1ead" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="1.2" Guid="a219281a-aa92-5158-88e3-ed2add5869dd" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="ea8b6b81-a146-5458-bbe1-5b287e1fd1c9" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="27ac536f-02f3-5aba-9745-269ec5c2786c">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="3fe35e27-c71f-5e23-8e25-34203e540b37" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="b98948d7-b664-56c5-9c52-a0f5b80b56ed">
+        <ParameterSet Name="Loot" Guid="070a2532-ac55-598b-9961-82d6d3e9ef4c">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="8af3df93-1f8e-5451-b093-d4acfac3c238" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:3;3;5;1" Guid="ac2e5e87-4c90-5619-a9fc-fda0ad607a40" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="744471b4-fdf7-537c-b2c9-9e42b78636f1" />
+          <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="32357ec2-3199-5b86-950b-6a1036be9532" />
+          <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="ab5f7f3f-e52c-555a-9a51-5edfd93de54a" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="b48be94e-0a84-57eb-87d3-2f30cb110d71">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="cdeb9c25-ca18-5ff9-8d80-cccb90458d9a" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:3;3;5;1" Guid="2d574467-cfa4-5ff7-9b5e-fb3fe58dd212" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="7f0313c1-eb47-5336-95b9-d710cb804248" />
+          <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="21ce78c8-c008-52d2-a358-3951f5eeae24" />
+          <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="3750d396-5c66-540b-9117-4a4756ba684a" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="fe9235e5-5b9c-5d9b-9fc6-9c9f9f74fe99" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="210591af-d56e-5008-a9fe-82491cd8e541" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD17/model" Guid="9bdce71d-2872-5349-bae2-a527857b571f" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="b4a85dc5-6fd2-53f5-9243-ef98093aa859" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="d5963377-a2ec-56db-b8de-a1e81f71f818" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="15.36" Guid="6602b0d1-a3a9-56d7-86b4-8a906ce5fbcc" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="a294ded0-6224-5d53-a99b-fccd2c2cc1c9" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="50c77fa4-d0d2-5dc3-84fb-eb76d5acdd26" />
+        <Parameter Name="Kind" Type="string" Value="RD17" Guid="5a761783-6699-5c6e-b566-32bcafbb37cb" />
       </MemberComponentTemplate>
     </EntityTemplate>
   </Folder>

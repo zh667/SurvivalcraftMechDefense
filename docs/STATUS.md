@@ -1,6 +1,228 @@
-# Status — 2026-10-17
+# Status — 2026-10-23
 
-## Current delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
+## Delivered: 0.9.0 (PR #7 into feat/progression-robots, PR #5 into main; merged 2026-10-23 on the user's approval, tag v0.9.0)
+
+User 2026-10-23: "现在已有的pr你可以在合适的时机合并了" — merged after 转轮机枪塔 Ⅰ was re-centred ("1级的转轮机枪塔，机枪位置并不是在正中位置")
+and the package passed view-gatling_1 (spin 1.0, 17 shots), all, icons, robots-items, special and old save 0.5.0 -> 0.9.0.
+Next (same message): the other 8 tower types and our own models of the walkers and the devil mech, on new branches from main.
+
+### New towers (feat/new-towers)
+
+User 2026-10-22: rebuild every tower (and level) of a 2D tower-defence game ourselves, numbers from our towers and the mods'
+creatures; extract its special weapons; then "可以直接放到游戏里面，打一个包，和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
+Plan confirmed the same day (9 types x 3 levels, polygon style of the 19 towers, sprite-camera outline overlap >= 0.85, <= 6,000
+triangles + one 1024 atlas, crafting upgrades, the original sounds, 转轮机枪塔 first); base changed to 2x2 blocks after the sprite
+proportions ruled out a 1-block base. Details: docs/TOWERS.md "新防御塔".
+- 转轮机枪塔 Ⅰ-Ⅲ (data 32-34, commit fb732d7): models from E:/projects/sog-tower-model/poly_v1 (3,748 / 4,232 / 5,704 triangles,
+  2.37 / 2.57 / 2.79 m, overlap with the sprites >= 0.868), "polyOnly" tower build, spinning barrel clusters, original fire / hit
+  sounds (mono), recipes in the gun towers' tier chain, 32 / 54 / 96 damage per second, range 28 / 32 / 36, health 800 / 1000 / 1300.
+- Reference pack (sprites per level, stats, the three special weapons: space laser, EMP bomb, carpet bombing):
+  E:/projects/sog-tower-model/reference/ (not shipped). The special weapons are only extracted, not in the mod.
+- The polygon 复仇女神 (c098e73) and 轩辕十四 (08068a5) are on feat/progression-robots, merged in here.
+- Package (built from this branch, everything above + 0.9.0; 转轮机枪塔 Ⅰ re-centred): dist/MechDefense-0.9.0.scmod, 18,749,134 bytes, 260 files,
+  SHA-256 8195000e...7efb54a0; no 终末地 / 毁灭枪手 / 原作 or the source game's name in shipped text.
+- Verification (isolated runtime, PC): view-gatling_1/2/3 (spin rate 1.0 while firing, the barrels turn ~2.7 rad between two
+  close shots), all (22 towers load), robots-items (33 recipes), icons; mech-view-nemesis / -regulus before / after,
+  robots-heroes; final regression on the package: mech, robots-heroes, robots-gallery, robots-summons, robots-items, all, icons,
+  special, combat, view-gatling_3, old save 0.5.0 -> 0.9.0, all passed. Not verified: Android, a real survival world.
+
+## Previous: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
+
+Round 5 (user 2026-10-21: enemies a bit too strong early, Mercury too fragile but "不要提升太多"; no damage to the pilot in the
+mech; medic tower heals players and mechs; new hero mechs 复仇女神 / 轩辕十四 (水星 < 复仇女神 < 轩辕十四); fewer tower triangles;
+inventory icons miss chunks). Plans confirmed the same day (balance numbers, hero mech plan, one reduced tower first):
+- Done (commits 190c993, 843c636, f7d3d6a): pilot shield (MDMechPilotShield), robots skip a seated pilot and their shots at it hit
+  the mech; the medic tower now also heals the mechs (players and towers already); Mercury armour 4000; devil mech armour 30000 + 1000 / 2000 / 3000 per tier-1/2/3
+  tower + 3000 per Mercury. Lab part `robots-balance`: shield blocks even invulnerability-ignoring injuries; medic: Mercury
+  50 -> 100 % and player 60 -> 100 % in 6 s; boss vs 3 tier-1 towers + Mercury 36000 armour, after 30 s boss 70 %, Mercury 68 %.
+- Hero mechs (commits dcb55f9, d08abe7; plan confirmed: original NEMESIS model 208 / REGULUS model 216 like Mercury, x4,
+  same controls): MDMechType (Mercury / 复仇女神 / 轩辕十四: armour 4000 / 6000 / 8000, damage x1 / 1.25 / 1.5, energy 100000 /
+  130000 / 160000). 复仇女神: the original's 3-round rifle burst (0.133 / 0.133 / 0.433 s) and explosions -20 %; 轩辕十四: 15 %
+  faster walking and hover, its own glide pose, 2 missile locks (original). Recipes: 水星 + blueprint + 2 cores + 2 chips + 3 alloy,
+  level 12; 复仇女神 + 2 blueprints + 4 cores + 2 chips, level 16; both in the creative inventory; kits shared. Assets by
+  tools/build_hero_assets.py (helper agent, E:/projects/dguns-mech-model/v9_heroes; 2,481 / 2,345 triangles, 2048 texture).
+  Devil mech armour per hero +4000 / +5000 and raid weight 5 / 6 (my extension of the confirmed +3000 per Mercury).
+  Lab part `robots-heroes` (55 shots): armour, no missing bones, rifle gaps 0.14 / 0.14 / 0.44 s, damage 1000 / 1250 / 1500,
+  复仇女神 takes 48 of a 60 missile, 轩辕十四 walks 12.2 m vs 10.8 m and hovers in dash_forward, cannons fire, dismantle keeps
+  type and kit, Neorxna names, 30 recipes resolve (levels 12 / 16). Shots: local/claude-work/r5/sheet_heroes.jpg.
+- Inventory icons missing chunks (commits 57fc378, ea9a45a): the tower icon mesh kept only the 1,500 largest triangles, so
+  7.5-26.7 % of each tower was missing in a slot (the medic tower's whole dome). tools/render_tower_icons.py (helper agent)
+  renders each full model from the slot's view into Towers/<id>/icon.png; the slot draws it as one quad facing the slot camera
+  (premultiplied, mipmapped). 0.4.0's "像张纸" picture was a DrawFlatBlock card lying in the block's plane, seen at a slant and
+  also held in the hand; the hand keeps the full model. Mech and robot icon meshes keep every triangle: unchanged. Lab mode
+  `icons`: 19 pictures load at 256x256, hotbar pages at 1280x720 and 2560x1440 (local/claude-work/r5/icons/hotbar_big.jpg).
+- Tower reduction prototype (commit b754763, tools/reduce_tower.py, not in the package): battle_rocket_1 142,608 -> 23,702
+  triangles, largest part 141,020 -> 23,765 vertices (16-bit), 12 views 0.77 % different on average, worst 1.37 %; gaps 124 -> 132
+  (888 -> 848 px), same-part overlaps 14 -> 4; atlas 1024x1024 -> 2048x1024. Cost: thin 3 mm dark lines along the yellow band
+  edges gone within 0.6 m. Waiting for the user before the other 18 (docs/TOWERS.md 0.9.0 第五轮). Mech models are already
+  2,345-2,481 triangles: no reduction.
+- Polygon towers (user 2026-10-21: the reduced rocket "看起来效果差了很多" -> remodel it as a polygon model, outline like the
+  original, own details, no Endfield marks, <= 6,000 triangles; approved: "我觉得这次建模非常不错！可以放到正式包，并且其他的炮塔都可以
+  按照这个来"): battle_rocket_1 now ships the polygon model `E:/projects/endfield-turret-model/poly_v1/battle_rocket_1` (5,716
+  triangles, one 1024 atlas, outline within 2.6 % of the original, 0 triangles in common with it) through `"poly"` in
+  tools/towers.json: build_tower_assets.py checks its node tree against the cube build and reuses the cached cube metadata
+  (pivots, muzzles, clearance). In-game comparison before it shipped: tools/stage_tower_preview.py + lab `view-<id>` (now with
+  fog and a torch-lit cave), local/claude-work/r5/towers/battle_rocket_1/poly_game/. Regression on the new package: lab all,
+  icons, view-battle_rocket_1, smoke 0.5.0 -> 0.9.0 pass. The other 18 towers (record table round 13, six helper agents in
+  parallel): 3,076-5,724 triangles (battle_cannon_1_dg002 10,946 with a 2048 atlas), outline within 2.9 % of the original,
+  0 triangles in common with it, 0 interpenetration in the motion sweeps; each group compared in game against the cube V5
+  (local/claude-work/r13/<group>/<id>/, overview r13/overview_19.jpg). User 2026-10-22: "换进正式包吧" -> all 19 towers ship
+  polygon models ("poly" in tools/towers.json); package 29.9 -> 17.2 MB.
+  Regression on that package (job pz2-official-poly18-check-20261022-a): every tower's model, atlas (pixel-identical), slot
+  picture and towers.json entry equal those of the preview package checked in game; lab all / icons / mech / robots-gallery /
+  robots-summons / robots-items / special / combat and smoke 0.5.0 -> 0.9.0 pass.
+- Polygon Mercury (user 2026-10-22: "可以把现在三台机甲，我们也自己建模一下", Mercury first): v10 by a helper agent
+  (E:/projects/dguns-mech-model/v10_poly/mercury, 5,270 triangles, node tree identical, per-clip interpenetration no deeper than
+  the original, 0 triangles in common with it). In game first through tools/stage_mech_preview.py and the new lab mode mech-view
+  (same cameras before / after, local/claude-work/r13/mercury/): lab mech passes on both, flicker equal; visibly lighter and bluer,
+  the bayonet became a long barrel. User: "这一轮炮塔和水星都可以" -> shipped as it is: tools/build_mech_assets.py swaps it in
+  (POLY; --poly-only). Package 17,247,141 bytes; its Mercury files equal the preview's; lab mech / robots-heroes /
+  robots-gallery / robots-summons / robots-items / all / icons / special / combat and smoke 0.5.0 -> 0.9.0 pass (job
+  mz1-mercury-official-20261022-a). 复仇女神 and 轩辕十四 are being remodelled the same way (dguns round 14, helper agents).
+  PR #5: the user said not to merge yet (2026-10-22).
+- Final regression on the package (jobs md-r5-final-reg-1, md-r5-smoke-2): full `lab --mode robots` passes (223 shots; all parts
+  incl. heroes, balance, settings, hud, escorts, raid, boss, kits); special and mech pass. Smoke 0.5.0 -> 0.9.0 first failed one
+  stale check (it expected towers + Mercury in the creative inventory; the hero mechs add two): check updated, passes. The failed
+  result had still exited 0: tools/run_isolated.py now exits non-zero unless the result says passed. Perf (9 towers in the
+  hotbar / 30 towers + hotbar): 0.8.0 1.18 / 1.27 and 1.22 / 1.19 ms, 0.9.0 0.65 / 1.09 and 0.65 / 1.08 ms (slot pictures instead
+  of 1,500-triangle meshes).
+- Package size (user 2026-10-21 asked how to shrink it; chose lossy WebP quality 90 for the mech and robot textures): package.py
+  re-encodes the PNG textures embedded in Assets/Imported/*/*.glb as WebP (tools/webp_glb.py, glTF EXT_texture_webp, which the
+  1.9.3.1 engine lists; sources stay PNG). 28.6 MB of textures -> about 3.8 MB, PSNR 36.8-42.8 dB, mean difference 1-1.7 levels.
+  Lab mech, robots-gallery, robots-heroes pass on both packages with the textures drawn (local/claude-work/r5/webp/), smoke
+  0.5.0 -> 0.9.0 passes. Not changed: sounds (already OGG, 2.3 MB), tower atlases and icons (to do with the polygon towers).
+- Lossless size steps (2026-10-22): textures the mod loads by name without an extension ship as lossless WebP (tower atlases,
+  Towers/fx, Parts/parts; tools/package_formats.py, exact=True keeps the colour under transparent pixels; every one checked
+  pixel-identical), the mech/robot icon textures as WebP quality 90 (PSNR 34-40 dB), tower slot pictures stay PNG (opened by file
+  name). icon.bin stores shared corners once (rocket 480 -> 317 KB, same 5,716 triangles). Lab all / icons / mech /
+  robots-gallery / robots-summons / robots-items / special and smoke 0.5.0 -> 0.9.0 pass.
+- Test games no longer trap the user's cursor: with no menu open the engine set raw mouse mode in Mouse.BeforeFrame and
+  AfterFrame whenever its window counted as active, even behind other windows, which clipped the system cursor to the game
+  window. TowerLab, RuntimeSmoke and PerfCompare patch both to a visible mouse (clipped 7 of 133 samples before, 0 of 149 after).
+- Package dist/MechDefense-0.9.0.scmod 29,900,478 bytes, 242 entries, SHA-256
+  10913e8d495ff6109b7abbf25f6b1e8676ac0fe4119515a343fa7442bcd6cb56 (before the lossless steps 32,700,124 bytes, 693db794…3cdd15) (polygon rocket with PNG textures: 58,615,878 bytes;
+  before the polygon rocket: 61,061,299 bytes) (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
+- Not tested: Android (picture loading and mipmaps on phones), real touch, a survival night with raids, long play; the medic
+  rate for mechs (50 -> 100 % in 6 s) is untuned and may be strong in real fights.
+
+Round 4 (user 2026-10-21: adjust the panel on a game page like the CS weapons mod, fingers and mouse/keys to scale and turn; the
+devil mech's escorts never attack mech, towers or player; all settings on one page like the CS weapons mod, start day 0 = no
+spawns; what if a tower is blocked by its own side):
+- Settings: the game's 模组设置 has one entry (MDSettingsEntryWidget) that opens the mod's page MDSettingsScreen (Mod/MDSettingsScreen.cs):
+  mech panel button + summary, start day 0-30 (0: no wild spawns and no raids; beacon still works), spawn time, interval, density
+  (with its group size and limit spelled out), raid chance and size; 恢复默认 / 取消 / 保存 on a copy. Saved by
+  MDModLoader.SaveSettings / LoadSettings into ModSettings.xml (round 3's data-driven items and Assets/Lang removed).
+- HUD editor MDHudLayoutScreen over a frozen game picture (MDWorldBackground): the real panel where it will be; drag, two fingers
+  move / pinch / twist (MDHudGesture), wheel scales, Shift + wheel or Q / E turns, buttons 放大 / 缩小 / 左转 / 右转 / 恢复默认,
+  show and key-hint switches, controls collapse, swap sides and move away by themselves when they cover the panel. In play
+  MDHudHost places the panel from MDHudPlacement (centre, scale x screen fit, turn) while measuring.
+- Escorts (and raids) vanished: SubsystemSpawn packs away every AutoDespawn creature over 60 m from all players every 2 s and
+  recreates it later from its template without its orders; escorts appear 40-50 m beyond the beacon, raids 48-64 m beyond the
+  towers. Diagnostic lab part `robots-escorts`: 2 of 3 escorts gone within 3 s at full health, back later as plain robots.
+  Raiders now keep AutoDespawn off while busy (target, tower to go to, goal) and go for the nearest tower or Mercury first.
+- Tower blocked by its own side: already handled in round 3 (MDCombat.Trace passes the player's side); answered, no change.
+- Lab parts (first runs after the changes): settings, hud, escorts (A 3/3 and B 2/2 escorts fired, none vanished), spawns
+  (start day 0 blocks), raid (0 vanished) pass. Shots: local/claude-work/r4 (sheet_r4.jpg).
+- Mercury in Neorxna's info panel read 已移除的旧单位 (user): the mod's own hook named every non-tower unit so since 0.6.0, and
+  Mercury uses the old mech template. Now 水星机甲 with armour, kit and pilot state (lab: real Neorxna panel, after a tower).
+- Full `lab --mode robots` passes (job md-r4-reg1, 172 shots); special, mech, smoke 0.5.0 -> 0.9.0 pass; kits with the Neorxna
+  check (md-r4-fin1). Perf on the final package: 0.8.0 1.08/1.14 and 1.08/1.12 ms vs 1.06/1.14 and 1.17/1.22 ms (an earlier
+  pair in this round spread 1.04-1.55 in both builds: machine noise).
+- Package dist/MechDefense-0.9.0.scmod 50,788,769 bytes, 214 entries, SHA-256 87612cdd5b55195d9cc1aae9a564f227aa06bb81a426cd3e91ea9b013ed78917
+  (no 终末地 / 毁灭枪手 / 原作; MechDefense.xdb unchanged).
+- Not tested: touch gestures on a real phone (the editor's pinch / twist are only exercised through the same code path the
+  buttons use; the drag and wheel paths were not driven by real input in the lab), Android, the nightly raid trigger, long play.
+
+Round 3 (user 2026-10-21: mod settings for the mech panel (place, size, off: a phone screen is full) and the robot spawns (time,
+density); the rifle flips between 装填中 and 就绪; robots and towers sometimes miss each other; robots should go for the nearest
+tower at once, leave players alone without towers, priority mech > tower > player):
+- Mod settings in the game's 模组设置 (modinfo.json `Settings`, Mod/MDSettings.cs, option names in Mod/Assets/Lang): page 机甲面板
+  (show, size 50-150 %, position 0-100 % across / down, key hints) and page 敌方机兵 (wild spawn time off / night / all day,
+  interval 15-600 s, density 0.25-4x, first day 1-30, raid chance 0-100 %, raid size 0.5-3x). Changes apply at once.
+- Panel (MDStatusWidget) placed while the layout is measured: placed from the previous frame's size it was cut off when the
+  screen size changed (seen in the lab's 1280x720 capture). Rifle status 射击中 while firing (its 0.25 s between shots showed as
+  装填中: 21 flips in 3.5 s in the lab, now 就绪 -> 射击中 -> 就绪).
+- Towers: sight lines and shots pass through the player's own side (MDCombat.Trace): a tower behind another tower used to see only
+  the front tower and never fired (lab: the old rule's first body was the front tower; now the back tower fires).
+- Robots (ComponentMDRobot): order Mercury in sight > tower in sight > either out of sight > players / the player's herd; walk to
+  the nearest tower or Mercury within 96 m at once (Hunt); players only for 30 s after they hit the robot, or in weapon range when
+  the robot is at the defences. Wild spawns: own spawner MDWildSpawns (the vanilla night spawner shared a limit of 6 with wolves
+  and bears and had no knobs): every interval, 32-56 m from each player, 1-2.5 x density per group, at most 4 x density within
+  80 m; raids take the chance, size and first day from the settings; spawn points never on tree tops.
+- Lab parts `robots-settings|hud|spawns|targets` (Tests/TowerLab/Robots.cs), first runs: settings, spawns, targets passed;
+  hud failed on the panel place (the bug above), passed after the fix. Results and shots: local/claude-work/r3.
+  - settings: 2 pages / 11 items registered, page widgets built with the Chinese names, 关闭 / 仅夜晚 / 全天, Set -> OnModSettingChanged.
+  - spawns: rules (creative: game mode; by day: daytime; all day: spawns; day 30: blocked; off), limit 4 at 1x and 8 at 2x,
+    33-59 m away; 40 s of survival every 15 s: robots after 15 s, none went for the player; a hit robot fired back 8 times.
+  - targets: a robot 50 m from the only tower targeted it after 8 s and fired after 11 s; Mercury before a nearer tower; the back
+    tower of two in a line fired 6 times.
+- Full `lab --mode robots` passes (job md-r3-full2, 165 shots; boss 46000 armour, hovers 3.0 m, glide clips only, three attacks,
+  escorts at 69 %, blueprint; raid 14 + 7; raid size x2 plans 12 for 6). Regression (job md-r3-reg1): special and mech pass, smoke
+  0.5.0 -> 0.9.0 passes, perf 0.8.0 1.02/1.08 and 1.01/1.09 ms vs 1.02/1.09 and 1.04/1.09 ms.
+- Package dist/MechDefense-0.9.0.scmod 50,780,004 bytes, 216 entries, SHA-256 956129bfa6e6179f4939bf13e8e976c92af7247cbe4e6721eebf8bc8f9a1c4ce
+  (no 终末地 / 毁灭枪手 / 原作; MechDefense.xdb unchanged this round).
+- Not tested: the nightly raid trigger itself, a whole survival night of wild spawns, Android (the settings page and the panel on
+  a phone), long play in a real save, multiplayer.
+
+Round 2 (user 2026-10-21: the devil mech "一直蹬脚"; enemy robots placeable -> chose creative summons; difficulty up because players
+place many towers; the item models were only pictures -> 3D model plan confirmed the same day):
+- Devil mech flight: holds the end pose of the one-shot dash clips (10-13) by movement direction, idle hover when slow; the
+  pedalling fly_forward / strafe loops are never played (lab: base clips idle, dash_forward/backward/right only). Its fly order is
+  re-set right before locomotion (Harmony prefix MDBossFlyOrder): the vanilla pilot adds (0,-0.5,0) to idle flyers and, depending
+  on component update order, pulled it onto the ground in the full lab run. It also keeps 1 m above the towers under it.
+- Difficulty: robots 1000 / 2400 / 2800 armour, per shot vs structures 14 / 60 / 140; raids sized by the cluster's defence
+  (tier 1/2/3 = 1/2/3, Mercury 4): 3 + defence/2 + day/8 (max 20), elites up to half, a second wave at defence >= 20; 75 % of
+  nights. Boss armour 40000 + 2000 per tower (+4000 per Mercury) within 48 m (max 160000), escorts at 70 % and 35 %, 10-missile
+  volleys, stronger beam and slashes. Lab: one robot beats one tier-1 tower, two towers kill it; 9 towers (defence 21) drew 14 +
+  7 robots and lost 3 towers in 28 s; the boss (46000 vs 3 tier-3 towers) left them at 24 / 33 / 64 % after 30 s.
+- Creative summons (Mod/MDSummon.cs): one per robot template + the devil mech, the unit's icon mesh in slots, right-click the ground.
+- Item 3D models: helper agent, `E:/projects/md-item-models` V1 (README, 反馈记录表.md), tools/build_part_models.py replaces
+  build_part_icons.py (deleted); 52-214 triangles each, drawn x8/3 so the alloy plate matches the vanilla iron ingot; emissive
+  core band, beacon lamp, Mk3 connector. In game: ground by day and night (glow shows), hotbar, first person (same crop and size
+  as vanilla ingot / battery / diamond in the same view), third person. Sheets: local/claude-work/progression/items_a|b|c.jpg.
+- Lab now runs parts: `lab --mode robots-<items|gallery|fight|raid|boss|summons|kits>`; full `robots` passes (job md-prog2-robots-5).
+  Regression on the final package: special and mech pass (Mercury damage unchanged), smoke 0.5.0 -> 0.9.0 3/3 + 20/20, perf
+  0.8.0 1.05/1.08 and 1.03/1.09 ms vs 0.9.0 1.02/1.08 and 1.03/1.09 ms.
+- Package dist/MechDefense-0.9.0.scmod 50,776,034 bytes, 214 entries, SHA-256 475b550f635a9967f86b3d118b122f6a679042ac7f1047f332cd347d3f33db82
+  (no 终末地 / 毁灭枪手 / 原作 in data or the dll; the drifted turret_1 radius restored again).
+
+Round 1 (2026-10-20):
+
+- User (2026-10-20): asked how towers and mechs should be crafted and grow from low to high tier, with three player
+  suggestions (Industrial Era's T-100, the devil mech dropping blueprints, hostile robots dropping materials). Accepted plan with
+  decisions: 4 materials + 1 blueprint, fallback recipes without fighting cost 5x, the blueprint is used up; robots both spawn
+  in the wild and raid the towers at night; only the mech needs a player level; modelling by the modeling-workflow skill.
+  Brief: docs/tasks/2026-10-20-progression-robots.md; design and numbers: docs/PROGRESSION.md.
+- Enemy assets: `E:/projects/dguns-enemy-models` (V1, helper agent; README, 反馈记录表.md, HANDOFF.md with job ids) and
+  `tools/build_unit_assets.py` -> `Mod/Assets/Imported/RD05|RD06|RD07|RD17` (ignored). Walkers x4 like Mercury (3.1-3.4 m),
+  three skins each; the devil mech x3 as recommended (9.6 m tall, 15.4 m wings; x4 would be 12.8 m / 20.5 m). Re-pose
+  p99 <= 0.005 mm, glb readback 0.0005 mm, 16-bit indices (<= 794 vertices per part).
+- In game (isolated runtime of the user's build 1.9.3.1 with Neorxna, creative flat world, daytime; `lab --mode robots`, job
+  md-prog-t_robots-8): 28 recipes resolve from their own grids (19 towers, Mercury, 8 items; tier rules; Mercury blocked at
+  level 7); 9 items with names, stacks, flat icons and hand-held extrusions; 9 robot templates load (16 meshes, 19 bones, no
+  missing joint, loot lists); every walker clip rendered; one normal robot against a tier-1 gun tower: walks to 21 m,
+  fires 8 bolts, the tower loses 9 %, the robot dies and drops scrap x3-4 + experience; a raid (day 12) sends 4 incl. an
+  elite, natural spawn rules spawn 1-2 normal + 1 elite when forced and nothing in Creative / by day; the beacon counts down
+  30 s, the devil mech flies in and hovers at 3.00 m, weak channel 900 vs 360 of 900, in 30 s against three tier-3 towers:
+  3 volleys, 2 beam sweeps, 2 sabre charges, 2 weak-channel changes, then destroyed it drops the blueprint (+ cores, chips,
+  scrap, experience); kits: Mk2 refused before Mk1, Mk1 then Mk2, a 1000 hit deals 1300, kept through take-down and redeploy.
+  Screenshots: `local/claude-work/progression/lab-screenshots` (ri_* items, rb_* robots and every walker clip, rf_* fight,
+  rr_* raid, rx_* boss), contact sheets one folder up (sheet3.jpg is the final run).
+- Found and fixed in the lab: a stunned creature's locomotion turns gravity back on, so every tower hit (0.2 s stun) made the
+  boss sink to the ground; the boss now takes no stun or knockback. The lab's first fight placed the tower on the player
+  (crushed, orange death screen in the screenshots): test bug, fixed.
+- Regression on the final package: `lab --mode special` (recipes, hand, effects, artillery) and `lab --mode mech` pass, Mercury's
+  weapon damage as in 0.8.0 (rifle 571, missiles 3 x 100, laser 855, grenade 167, cannon 200, melee 1000); old saves
+  (`smoke`, a 0.5.0 world -> 0.9.0) 3/3 and 20/20. Frame time (`perf`, alternating, no robots in that scene): 0.8.0 1.08 / 1.15
+  and 1.15 / 1.25 ms, 0.9.0 1.35 / 1.22 and 1.17 / 1.15 ms: within the spread. Tower models unchanged (no gap/overlap rerun).
+- Package `dist/MechDefense-0.9.0.scmod`: 49,104,914 bytes, 206 entries, SHA-256 682281de8f2fea96f467603f16fc5397ba1615e1212a41e6f7d20f5ca5a450cb;
+  no 终末地 / 毁灭枪手 / 原作 in names or data. Against 0.8.0: new Assets/Imported/RD05, RD06, RD07, RD17 (models, unit.json,
+  clips.bin) and Assets/Parts; changed MechDefense.dll, MechDefense.xdb (10 robot templates added; regenerating drifted
+  turret_1's radius 2.98 -> 2.97 again, restored), MechDefense.cr, modinfo.json. 0.8.0 stays the rollback.
+- Not verified: the nightly raid trigger itself (Raid() is tested), natural spawn rates in a survival world at night,
+  Android phones, a long session in a real world, robots against other mods' creatures, multiplayer.
+
+## Previous delivery: 0.8.0 (PR #4, merged 2026-10-17 on the user's approval, tag v0.8.0)
 
 - User (2026-10-17): after accepting the Mercury asset (`E:/projects/dguns-mech-model/v8_assets`, side-step clipping kept as in
   the original): “进模组现在就可以了”; chose mouse-turn + WASD (Shift dash, Space jump), Mercury's own weapons (rifle, missiles,

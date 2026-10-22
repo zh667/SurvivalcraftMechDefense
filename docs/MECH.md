@@ -18,6 +18,11 @@ the user's installed mods (below). Facts about the original game, with their sou
   Skinning in the original is rigid (one joint per vertex), so this is lossless except 3 triangles at the head-sensor seam
   (joints 03/04) that the skinned original stretches by up to 5 cm. The texture is embedded as lossless PNG: the engine builds
   its mipmaps and samples it linearly. A `TextureOverride` would be point-sampled (SubsystemModelsRenderer), so there is none.
+- Since 0.9.0 (round 13 of dguns-mech-model; user 2026-10-22: "这一轮炮塔和水星都可以", then chose to ship it as it is) the
+  shipped `model.glb`, `icon.bin` and `icon.png` are our own polygon Mercury from `E:/projects/dguns-mech-model/v10_poly/mercury/`
+  (5,270 triangles, one 2048 texture painted from colours measured on the original, outline within 2.3 % of it, 0 triangles in
+  common). The V8 export above still makes mech.json, clips.bin and the sounds; `use_poly` checks that the polygon model's node
+  tree is the V8 export's and copies the three files over (`--poly-only` does just that, `--no-poly` ships V8).
 - `clips.bin` + `mech.json`: per clip, per sample (every 2 ticks = 1/30 s, the last one at the clip's end), per joint the
   local deformation relative to the parent's (quaternion, translation, uniform scale). Game frame: Y up, faces −Z, right +X.
   `mech.json` also has the muzzles the tool finds on the model: the rifle tip (14), the missile box front next to the
@@ -34,7 +39,8 @@ the user's installed mods (below). Facts about the original game, with their sou
 
 ## Runtime (`Mod/MDMech.cs`, `Mod/MDMechPilot.cs`)
 
-- Entity: the `MDMech` template of the 0.5.0 sample mech (body 2.4 × 4.8 × 2.4, mass 3000, armour (AttackResilience) 3000, mount), with
+- Entity: the `MDMech` template of the 0.5.0 sample mech (body 2.4 × 4.8 × 2.4, mass 3000, armour (AttackResilience) 3000, since
+  0.9.0 round 5 4000 (user: too fragile against the devil mech, "不要提升太多"), mount), with
   `ComponentMDMechModel` (the engine's model renderer like the towers: world light, fog, shadow; two-sided because the
   original shell is open). `ComponentMDUnit` with kind `Mech` holds an `MDMechState`.
 - Bone transforms: the engine's for joint j is T(p) L T(−p) (row form), p its rest pivot, L its local deformation from the
@@ -88,6 +94,16 @@ the user's installed mods (below). Facts about the original game, with their sou
   crouch, fly, camera mode) is taken out of the player's input before the GUI or the locomotion see it. HUD bottom right:
   armour, speed (smoothed over ~0.3 s, whole km/h), weapon and its state (ready / reloading / locks n/3 / firing / beam /
   unfolding / folded / out of energy), armour and energy bars. The rider is hidden.
+  Since 0.9.0 round 3 (user 2026-10-21: a phone screen is already full) it can be hidden and lose its key-hint line (with the
+  key hints of the boarding and weapon messages); since round 4 it is placed on a game page like the CS weapons mod's HUD
+  editor (MDHudLayoutScreen, from the mod's settings page): drag, two fingers to move / pinch / twist, mouse wheel to scale,
+  Shift + wheel or Q / E to turn, buttons for both; in play MDHudHost places it from MDSettings.Hud while the layout is measured. The rifle shows 射击中 while it fires: its
+  0.25 s between shots used to read as 装填中 and flip with 就绪 four times a second (user report).
+- Neorxna's info panel (optional mod) names it 水星机甲 with armour, kit level and pilot state (MDNeorxnaCompatibility; until
+  0.9.0 round 4 it read 已移除的旧单位, the name meant for the removed 0.5.0 enemy, because Mercury uses the old mech template).
+- The pilot takes no damage while seated in a working mech (0.9.0 round 5; Harmony prefix on ComponentHealth.Injure(Injury),
+  MDMechPilotShield): robots never target a seated pilot and a robot shot that hits the pilot's body lands on the mech. The medic
+  tower heals Mercury like a tower.
 - Damage taken plays player_damage; destroyed (armour 0): the rider is set down, explosion and player_destruction, death clip
   held, smoke, removed after 10 s.
 - Deploy item data 1 (“水星机甲 · 部署”, crafting table or creative inventory): stands on the clicked ground facing like the player;
@@ -127,6 +143,37 @@ research notes are outside the repository). Damage is power against AttackResili
   the whole merged `.cr` list in one try/catch, so one ingredient of a missing mod would drop every later recipe of every
   mod. Industrial Era items cannot be named in a `.cr` at all; an optional Industrial Era recipe would go in its own
   `.ier` file (read only when Industrial Era is installed; not done, not tested).
+
+## Since 0.9.0: blueprint, player level, weapon kits
+
+- Recipe: the same towers, two alloy plates around the devil mech's blueprint (used up), an energy core between the two HE
+  grenade towers; player level 8 (user, 2026-10-20: only the mech has a level requirement). The blueprint only drops from the
+  devil mech (decoy beacon). Details and numbers: `docs/PROGRESSION.md`.
+- Weapon kits Mk1-Mk3 (right-click Mercury, in order): every weapon's damage x1.15 / x1.3 / x1.5, applied in
+  `MDTowerBrain.Hit`; kept in the deploy item when it is taken down (data bits 15-16, name “（改装 MkN）”).
+- Mercury's hits carry a damage channel for the devil mech's weak channel: rifle bolts and melee kinetic, missiles,
+  cannon and grenades explosion, the laser energy.
+
+## Since 0.9.0 round 5: hero mechs 复仇女神 (NEMESIS) and 轩辕十四 (REGULUS)
+
+User 2026-10-21: "主角机甲可以再加个复仇女神和轩辕十四（实力方面：水星<复仇女神<轩辕十四）"; plan confirmed the same day. `MDMechType`
+(Mod/MDMech.cs) holds each mech's name, asset folder, template (MDMech / MDMechNemesis / MDMechRegulus), item data (1 / 30 / 31),
+damage factor (1 / 1.25 / 1.5), energy (100000 / 130000 / 160000), speed (轩辕十四 1.15, its walk clip played faster to match),
+missile locks (3 / 3 / 2, the original's), the burst rifle (复仇女神), blast protection (复仇女神 0.8, MDMechArmour on robot missiles /
+shells / blasts and explosive tower hits), the hover pose (轩辕十四 holds its gliding dash_forward), raid weight and boss armour.
+Armour 4000 / 6000 / 8000 is in the templates. Joint roles come from each mech.json's `roles` (defaults = Mercury's):
+turret, armL / armR (pitch to the aim), cannon joints (the cannon layer), grenade, firstPerson parts; the first-person eye from
+`cockpit.firstPersonEye`; the third-person camera scales with the mech's height. Assets: tools/build_hero_assets.py (helper agent,
+E:/projects/dguns-mech-model/v9_heroes); original data: docs/HEROES_ORIGINAL.md.
+
+Round 14 (2026-10-22/23): both heroes ship our own polygon models from `E:/projects/dguns-mech-model/v10_poly/nemesis|regulus/`,
+made like the polygon Mercury (outline within 3 % of the original, own details, no markings or text, colours measured from the
+original texture per part, node tree / clips / muzzles unchanged): 复仇女神 5,748 triangles, 轩辕十四 5,926, one 2048 texture each.
+轩辕十四's first texture read as one flat light grey; it was repainted with the original's dark-frame / white-plate layout (per joint
+group, mean brightness within 12 % and white-plate share within 10 points of the original). `build_hero_assets.py` puts their
+model.glb and icon over the V9 export for the heroes in `POLY_HEROES` (node tree checked; `--poly-only`, `--no-poly`).
+In game (isolated runtime, before / after the same cameras: `lab mech-view-nemesis|regulus`, `robots-heroes`, `icons`): all passed,
+flicker unchanged; shots in `local/claude-work/r14/nemesis|regulus/`. The user, 2026-10-22: "和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
 
 ## Not done
 

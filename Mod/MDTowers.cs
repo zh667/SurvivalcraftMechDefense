@@ -22,6 +22,7 @@ public sealed class MDTowerAttack {
     public float bossResilience = 1e9f;      // stun and freeze skip targets whose AttackResilience is at least this (bosses)
     public float pushMaxMass = 1e9f;         // knockback moves only bodies up to this mass (small and medium enemies)
     public bool needsSight = true, threatFirst, directional, highArc;   // highArc: mortar lob instead of the flat solution
+    public int soundEvery = 1;      // fast guns: the fire sound plays on every n-th shot only
     public float width;              // directional rectangle width (flame/jet)
 }
 // A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
@@ -39,6 +40,7 @@ public sealed class MDTowerDef {
     public int[] cells = [2, 4, 2]; public float hp = 800;
     public float yawSpeed = 150, pitchSpeed = 90, restPitch;
     public string[] recoilParts = []; public float[] recoil = [];
+    public string[] spinParts = []; public float spinSpeed = 1440;   // rotary barrel clusters turning about their own Z while a target is held (deg/s at full spin)
     public MDTowerAttack attack; public MDTowerFx fx = new(); public MDTowerLink[] links = [];
     public string[] fireSounds = [], hitSounds = [], chargeSounds = [];
     // resolved at load
@@ -93,6 +95,26 @@ public static class MDTowerLibrary {
         icon=new IconData(mesh,ContentManager.Get<Texture2D>(texturePath),IconExtent/MathF.Max(x1-x0,y1-y0),sx*(x0+x1)/2+sy*(y0+y1)/2);
         icons[meshPath]=icon;return icon;
     }
+    // Slot picture (0.9.0 round 5): the whole tower pre-rendered from the slot's view by tools/render_tower_icons.py, framed
+    // like the icon mesh (IconExtent). The icon mesh keeps only the largest triangles, so in a slot whole pieces were
+    // missing (the medic tower's dome). Premultiplied and mipmapped on load: the 256 px picture shrinks to a ~60 px slot.
+    static readonly Dictionary<string,Texture2D> pictures=[];
+    public static Texture2D Picture(MDTowerDef d) {
+        if(pictures.TryGetValue(d.id,out var t))return t;
+        try{var s=ContentManager.GetStream("Towers/"+d.id+"/icon.png");s.Position=0;t=Texture2D.Load(s,true,5);}
+        catch(Exception x){Log.Warning($"[MechDefense] slot picture of {d.id}: {x.Message}");t=null;}   // falls back to the icon mesh
+        pictures[d.id]=t;return t;
+    }
+    // One quad facing the slot camera (BlockIconWidget looks from (1,1,1); screen axes as in IconMesh) that fills the slot
+    // view: CreateOrthographic(3.6) is 1.8 units across at size 1.
+    public static void DrawPicture(PrimitivesRenderer3D r,Texture2D picture,Color color,float size,Matrix matrix,DrawBlockEnvironmentData e) {
+        var m=e?.ViewProjectionMatrix is {} vp?matrix*vp:matrix;float h=.9f*size;
+        var sx=Vector3.Normalize(new Vector3(1,0,-1))*h;var sy=Vector3.Normalize(new Vector3(-1,2,-1))*h;
+        Vector3 P(Vector3 p){var v=new Vector4(p,1);Vector4.Transform(ref v,ref m,out v);return new Vector3(v.X,v.Y,v.Z)/v.W;}
+        var c=Color.MultiplyColorOnly(color,LightingManager.LightIntensityByLightValue[Math.Clamp(e?.Light??15,0,15)]);
+        r.TexturedBatch(picture,false,0,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp)
+            .QueueQuad(P(-sx-sy),P(-sx+sy),P(sx+sy),P(sx-sy),new Vector2(0,1),new Vector2(0,0),new Vector2(1,0),new Vector2(1,1),c);
+    }
     static Vector3 V(float[] a)=>new(a[0],a[1],a[2]);
     // Local transform of link k at cradle pitch: it turns about X at its hinge to keep pointing at its partner point,
     // so a piston's cylinder and rod stay on one axis (the rod slides in the cylinder); a stretching strut also
@@ -131,7 +153,7 @@ public static class MDTowerLibrary {
 
 // Rigid-part tower model drawn by SubsystemModelsRenderer; bones follow the unit's aim and recoil.
 public class ComponentMDTowerModel : ComponentModel {
-    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil,links;
+    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil,links,spin;
     public override void Load(ValuesDictionary values,IdToEntityMap map) {
         base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);
         // Two-sided like the authoring view: tube interiors and slab seams were only ever seen from both sides.
@@ -148,6 +170,7 @@ public class ComponentMDTowerModel : ComponentModel {
             root=Model.RootBone.Index;yaw=Model.FindBone("yaw",false)?.Index??-1;pitch=Model.FindBone("pitch",false)?.Index??-1;
             recoil=(unit.Tower?.recoilParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
             links=(unit.Tower?.links??[]).Select(l=>Model.FindBone(l.node,false)?.Index??-1).ToArray();
+            spin=(unit.Tower?.spinParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
         }
         SetBoneTransform(root,m_componentFrame.Matrix);
         if(unit.Tower==null)return;
@@ -155,5 +178,6 @@ public class ComponentMDTowerModel : ComponentModel {
         if(pitch>=0)SetBoneTransform(pitch,Matrix.CreateRotationX(unit.TowerPitch));
         for(int k=0;k<recoil.Length;k++)if(recoil[k]>=0)SetBoneTransform(recoil[k],Matrix.CreateTranslation(0,0,unit.RecoilOffset(k)));
         for(int k=0;k<links.Length;k++)if(links[k]>=0)SetBoneTransform(links[k],MDTowerLibrary.LinkLocal(unit.Tower,k,unit.TowerPitch));
+        for(int k=0;k<spin.Length;k++)if(spin[k]>=0)SetBoneTransform(spin[k],Matrix.CreateRotationZ(k%2==0?unit.Spin:-unit.Spin));   // pairs turn opposite ways
     }
 }

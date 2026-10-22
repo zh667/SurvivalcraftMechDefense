@@ -2,6 +2,7 @@ using Engine;
 using Game;
 using GameEntitySystem;
 using System.Text.Json;
+using HarmonyLib;
 
 namespace MechDefenseVerification;
 
@@ -20,7 +21,7 @@ public class Smoke : ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData data;static string mode="new";
     static Vector3 origin;static ComponentCreature wolf;static float wolfMin=1;static int towerShots;
     static readonly List<string> checks=[];
-    public override void __ModInitialize(){SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
+    public override void __ModInitialize(){new Harmony("local.smoke").PatchAll(typeof(Smoke).Assembly);SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
     static string Output=>Path.Combine(AppContext.BaseDirectory,"smoke-result.json");
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
     static void Check(bool ok,string description){if(!ok)throw new Exception("FAILED: "+description);checks.Add(description);}
@@ -108,7 +109,7 @@ public class Smoke : ModLoader {
         var t=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);
         Check(block.GetDisplayName(t,Deploy(1))=="水星机甲 · 部署"&&block.GetDisplayName(t,Deploy(2))=="已移除的旧单位",$"{when}: the old mech item reads as Mercury, the enemy item as removed");
         var creative=block.GetCreativeValues().ToArray();
-        Check(creative.Length==MDTowerLibrary.All.Count+1&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&creative.Contains(Deploy(1)),"creative inventory lists the towers and Mercury");
+        Check(creative.Length==MDTowerLibrary.All.Count+MDMechType.All.Length&&creative.Count(v=>MDDeploymentBlock.Tower(v)!=null)==MDTowerLibrary.All.Count&&MDMechType.All.All(m=>creative.Contains(Deploy(m.Data))),"creative inventory lists the towers and the three mechs");
         var names=creative.Select(v=>block.GetDisplayName(t,v)).Append(block.DefaultDisplayName).Append(block.GetDescription(Deploy(1))).Append(block.GetDescription(Deploy(2))).ToArray();
         Check(names.All(n=>!n.Contains("终末地")&&!n.Contains("毁灭枪手")&&!n.Contains("机兵")&&!n.Contains("原作")),"no Endfield / Destroy Gunners names, no 原作: "+string.Join(" ",names.Take(4)));   // AGENTS.md product rule
         // Use the removed enemy item, then the frost tower item, on the platform in front of the player
@@ -129,3 +130,12 @@ public class Smoke : ModLoader {
         Check(MDCombat.IsEnemy(gun,wolf.ComponentBody)&&!MDCombat.IsEnemy(gun,p.ComponentBody),"towers treat the wolf as hostile and the player as friendly");
     }
 }
+
+// The test game runs while the user keeps working. With no menu open the engine sets the mouse to raw mode in
+// Engine.Input.Mouse.BeforeFrame and again in AfterFrame whenever its window counts as active, which it does even behind other
+// windows; raw mode clips the system cursor to the game window (measured: clipped in 7 of 133 samples over a 27 s run). The
+// tests never read the mouse, so both places see a visible mouse and keep the cursor normal.
+[HarmonyPatch(typeof(Engine.Input.Mouse),"BeforeFrame")]
+public static class KeepCursorFree { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }
+[HarmonyPatch(typeof(Engine.Input.Mouse),"AfterFrame")]
+public static class KeepCursorFreeAfter { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }

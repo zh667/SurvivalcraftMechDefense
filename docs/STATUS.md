@@ -1,6 +1,12 @@
 # Status — 2026-10-23
 
-## Current work: new towers (branch feat/new-towers on top of feat/progression-robots, PR #7 open, not merged)
+## Delivered: 0.9.0 (PR #7 into feat/progression-robots, PR #5 into main; merged 2026-10-23 on the user's approval, tag v0.9.0)
+
+User 2026-10-23: "现在已有的pr你可以在合适的时机合并了" — merged after 转轮机枪塔 Ⅰ was re-centred ("1级的转轮机枪塔，机枪位置并不是在正中位置")
+and the package passed view-gatling_1 (spin 1.0, 17 shots), all, icons, robots-items, special and old save 0.5.0 -> 0.9.0.
+Next (same message): the other 8 tower types and our own models of the walkers and the devil mech, on new branches from main.
+
+### New towers (feat/new-towers)
 
 User 2026-10-22: rebuild every tower (and level) of a 2D tower-defence game ourselves, numbers from our towers and the mods'
 creatures; extract its special weapons; then "可以直接放到游戏里面，打一个包，和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
@@ -13,8 +19,8 @@ proportions ruled out a 1-block base. Details: docs/TOWERS.md "新防御塔".
 - Reference pack (sprites per level, stats, the three special weapons: space laser, EMP bomb, carpet bombing):
   E:/projects/sog-tower-model/reference/ (not shipped). The special weapons are only extracted, not in the mod.
 - The polygon 复仇女神 (c098e73) and 轩辕十四 (08068a5) are on feat/progression-robots, merged in here.
-- Package (built from this branch, everything above + 0.9.0): dist/MechDefense-0.9.0.scmod, 18,751,012 bytes, 260 files,
-  SHA-256 3b949e9a...0d6224e; no 终末地 / 毁灭枪手 / 原作 or the source game's name in shipped text.
+- Package (built from this branch, everything above + 0.9.0; 转轮机枪塔 Ⅰ re-centred): dist/MechDefense-0.9.0.scmod, 18,749,134 bytes, 260 files,
+  SHA-256 8195000e...7efb54a0; no 终末地 / 毁灭枪手 / 原作 or the source game's name in shipped text.
 - Verification (isolated runtime, PC): view-gatling_1/2/3 (spin rate 1.0 while firing, the barrels turn ~2.7 rad between two
   close shots), all (22 towers load), robots-items (33 recipes), icons; mech-view-nemesis / -regulus before / after,
   robots-heroes; final regression on the package: mech, robots-heroes, robots-gallery, robots-summons, robots-items, all, icons,

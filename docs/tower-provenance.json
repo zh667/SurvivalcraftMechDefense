@@ -525,12 +525,12 @@
    "source": {
     "poly": {
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\model.glb",
-     "glbSha256": "faee49478fc62e6c0a4e23ea1c9507d2d7ca5375cec1931af84129ff712c34a2",
+     "glbSha256": "5b2ccbdb3b57ccc0526e552254f3be991f9d8b641ec5cfd1c88e36c38b8f2751",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\atlas.png",
-     "atlasSha256": "8c3a429d7b9ee52bf4407745ec0812742a4a67487bf4ae5defc12c9be20156f6"
+     "atlasSha256": "24ebf5cfe6535820ec9cd2193585b5c221e514d4a78fdc56850fe722758cfaf6"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\parts.json",
-    "partsSha256": "2d87f877d18f54fb929848ff7aec9e664804b2252049bb47be2df85cf598d994"
+    "partsSha256": "1c144bb22badbbfac0a3170331ca321c7e98b872d3772f81793de8da6ccb092c"
    },
    "model": "polygon",
    "triangles": 3748,

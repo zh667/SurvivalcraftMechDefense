@@ -1,7 +1,12 @@
 """Build the NEMESIS and REGULUS mech assets from the V9 assets of E:/projects/dguns-mech-model/v9_heroes (Destroy Gunners
 player bodies 1 and 2, the original models x4 like Mercury). Mercury itself stays with tools/build_mech_assets.py (untouched).
 
-python tools/build_hero_assets.py [nemesis regulus] [--v9 <v9_heroes dir>] [--blender <blender.exe>]
+python tools/build_hero_assets.py [nemesis regulus] [--v9 <v9_heroes dir>] [--blender <blender.exe>] [--no-poly]
+python tools/build_hero_assets.py --poly-only [nemesis regulus]
+
+Our own polygon models (0.9.0 round 14, E:/projects/dguns-mech-model/v10_poly/<hero>/): for the heroes in POLY_HEROES the build
+then puts that folder's model.glb and game/icon.bin, game/icon.png over the V9 export (same node tree, checked; mech.json and
+clips.bin stay from the V9 export, so clips, muzzles and the cockpit keep working). --poly-only does just that swap.
 
 Output per hero: Mod/Assets/Imported/Nemesis/ and Mod/Assets/Imported/Regulus/ (ignored: extracted game data, rebuilt by
 this tool, packaged by package.py), in Mercury's format (tools/build_mech_assets.py, read by MDMechLibrary.Load):
@@ -30,6 +35,8 @@ ROOT = Path(__file__).resolve().parents[1]
 V9 = Path(r'E:\projects\dguns-mech-model\v9_heroes')
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 STEP = 2
+POLY = Path(r'E:\projects\dguns-mech-model\v10_poly')
+POLY_HEROES = ('nemesis',)   # shipped polygon models (the user, 2026-10-22: put them in the package with the others)
 # Joint prefixes per job. Mercury for comparison: turret 02_, arms 05_/10_, rifle 14_, cannon 15_-17_, missile 18_ (box on 02_),
 # grenade 15_, jets 33_/35_, eye 04_, fist 09_, first person 13_-17_.
 HEROES = {
@@ -336,14 +343,38 @@ def build(hero, a, np):
     return max(c['p99_m'] for c in report)
 
 
+def glb_nodes(b):
+    jl, = struct.unpack_from('<I', b, 12); js = json.loads(b[20:20 + jl])
+    r = lambda v: None if v is None else tuple(round(float(x), 5) for x in v)
+    return [(n['name'], tuple(n.get('children', [])), r(n.get('translation')), r(n.get('rotation')), r(n.get('scale'))) for n in js['nodes']]
+
+
+def use_poly(hero):
+    """Ship our polygon model of a hero over the V9 export (model.glb, icon.bin, icon.png)."""
+    import hashlib, shutil
+    src = POLY / hero; out = ROOT / 'Mod/Assets/Imported' / HEROES[hero]['folder']
+    new = (src / 'model.glb').read_bytes(); a, b = glb_nodes((out / 'model.glb').read_bytes()), glb_nodes(new)
+    if a != b: sys.exit(f'{hero}: the polygon model\'s node tree differs from the V9 export: {[(x, y) for x, y in zip(a, b) if x != y][:3]} ({len(a)} vs {len(b)} nodes)')
+    for s, d in [('model.glb', 'model.glb'), ('game/icon.bin', 'icon.bin'), ('game/icon.png', 'icon.png')]:
+        shutil.copyfile(src / s, out / d); print(f'  poly {hero} {d:10} {(out / d).stat().st_size:>10,} B  sha256 {hashlib.sha256((out / d).read_bytes()).hexdigest()[:16]}')
+
+
 def main():
     import argparse
     import numpy as np
     ap = argparse.ArgumentParser(); ap.add_argument('heroes', nargs='*', default=list(HEROES)); ap.add_argument('--v9', default=str(V9)); ap.add_argument('--blender', default=str(BLENDER))
+    ap.add_argument('--no-poly', action='store_true'); ap.add_argument('--poly-only', action='store_true')
     a = ap.parse_args()
+    if a.poly_only:
+        for h in a.heroes:
+            if h in POLY_HEROES: use_poly(h)
+        return
     worst = {h: build(h, a, np) for h in a.heroes}
     bad = [h for h, w in worst.items() if w > 1e-3]
     if bad: sys.exit(f're-posed model does not match Blender (p99 > 1 mm): {bad}')
+    if not a.no_poly:
+        for h in a.heroes:
+            if h in POLY_HEROES: use_poly(h)
     print('HERO_ASSETS_DONE', worst)
 
 

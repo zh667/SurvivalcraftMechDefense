@@ -1,6 +1,6 @@
 # Status — 2026-10-23
 
-## Current work: new towers (branch feat/new-towers on top of feat/progression-robots, PR #6 open, not merged)
+## Current work: new towers (branch feat/new-towers on top of feat/progression-robots, PR #7 open, not merged)
 
 User 2026-10-22: rebuild every tower (and level) of a 2D tower-defence game ourselves, numbers from our towers and the mods'
 creatures; extract its special weapons; then "可以直接放到游戏里面，打一个包，和复仇女神，轩辕十四的我们自建模一起放到同一个包里".

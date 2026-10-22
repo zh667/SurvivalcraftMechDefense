@@ -6,7 +6,8 @@ ships that polygon model and atlas instead of the cube build; the cube build sti
 tree (names, parents, translations), because pivots, muzzles, links and the pitch clearance come from it.
 A tower with "polyOnly" (a folder with model.glb, atlas.png and parts.json; 0.9.0 round 6, the towers of
 E:/projects/sog-tower-model) has no cube build at all: node tree and pivots come from its model, muzzles and the clash-free
-pitch range from parts.json, the footprint from its base part. It is rebuilt on every run (well under a second).
+pitch range from parts.json, the footprint from its base part. It is rebuilt on every run (well under a second). Towers that
+don't aim ("pitchFixed") need only Root and base (radar, Tesla coil, EMP; a "spin" node may turn about Y, spinAxis).
 Each built tower also leaves local/tower-meta/<id>.json, so towers can be built in subsets or parallel jobs and a
 final --runtime-only run assembles towers.json from them (used when they still match the source geo and atlas).
 
@@ -448,7 +449,7 @@ def build_poly_only(spec):
     t0 = time.time(); tid = spec['id']; src = Path(spec['polyOnly']); d = OUT / tid; d.mkdir(parents=True, exist_ok=True)
     pnodes, parts = read_glb(src / 'model.glb'); pj = json.loads((src / 'parts.json').read_text(encoding='utf-8'))
     names = [n for n, _, _ in pnodes]
-    for need in ['Root', 'base', 'yaw', 'pitch'] + list(spec.get('spinParts', [])) + list(spec.get('recoilParts', [])):
+    for need in ['Root', 'base'] + (['yaw', 'pitch'] if not spec.get('pitchFixed') else []) + list(spec.get('spinParts', [])) + list(spec.get('recoilParts', [])):
         assert need in names, (tid, 'node missing from the polygon model', need, names)
     nodes = [dict(name=n, parent=p, translation=[round(float(x), 6) for x in t]) for n, p, t in pnodes]
     stats = dict(triangles={}); over = use_poly(spec, nodes, d, stats, src); stats.pop('cube_triangles', None)
@@ -460,7 +461,7 @@ def build_poly_only(spec):
     assert muzzles and all(m['part'] in names for m in muzzles), (tid, 'muzzles', pj.get('muzzles'))
     base = parts['base'][0] + world['base']; half = np.abs(base[:, [0, 2]]).max(0); top = over['bounds'][1][1]
     cells = [int(max(spec.get('minCells', [1, 1])[0], math.ceil(2 * half[0] - .05))), int(math.ceil(top - .05)), int(max(spec.get('minCells', [1, 1])[1], math.ceil(2 * half[1] - .05)))]
-    lo, hi = pj['pitch']                          # the model's own clash sweep (every 15 deg of yaw, pitch limits, spin)
+    lo, hi = pj.get('pitch') or (0, 0)            # the model's own clash sweep (every 15 deg of yaw, pitch limits, spin); none for towers that don't aim
     meta = dict(id=tid, nodes=nodes, pivots={n['name']: [round(float(x), 6) for x in world[n['name']]] for n in nodes}, muzzles=muzzles,
                 bounds=over['bounds'], radius=over['radius'], source=dict(poly=over['poly'], parts=str(src / 'parts.json'), partsSha256=sha(src / 'parts.json')),
                 stats=stats, clearance=dict(pitch=[lo, hi] if hi > lo else [0, 0], from_model=True), cells=cells)

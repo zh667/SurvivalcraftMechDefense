@@ -23,6 +23,8 @@ public class ComponentMDUnit : Component,IUpdateable {
     public bool Legacy=>Kind=="Enemy";
     float[] recoilAge=[];
     public float Spin,SpinRate;   // rotary barrels (Tower.spinParts): angle and 0..1 speed, spun up while a target is held; not saved
+    public float RangeBoost=1; public double RangeBoostUntil;   // a radar tower in reach lends its boost (MDTowerBrain.Radar); not saved
+    public float Range=>Tower==null?0:Tower.attack.range*(Clock!=null&&Clock.GameTime<RangeBoostUntil?RangeBoost:1);
     public float TowerPitch=>Tower==null?0:Tower.pitchFixed?Tower.restPitch:Math.Clamp(AimPitch,Tower.PitchMin,Tower.PitchMax);
     public void TickRecoil(float dt){for(int i=0;i<recoilAge.Length;i++)recoilAge[i]+=dt;}
     public void Kick(int muzzle) {

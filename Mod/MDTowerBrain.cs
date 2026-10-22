@@ -17,9 +17,10 @@ public static class MDTowerBrain {
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
-        if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+(u.Target!=null&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
+        if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
         if(a.type=="heal"){Heal(u,dt);return;}
+        if(a.type=="radar"){Radar(u);return;}
         u.ScanTimer-=dt;
         if(u.ScanTimer<=0){u.ScanTimer=.25f;u.Target=FindTarget(u);}
         var target=u.Target;
@@ -39,8 +40,8 @@ public static class MDTowerBrain {
 
     // ---------------------------------------------------------------- targets
     static bool InArea(ComponentMDUnit u,Vector3 p) {
-        var a=u.Tower.attack;var d=p-u.Body.Position;float h=new Vector2(d.X,d.Z).Length();
-        if(h>a.range||h<a.minRange||Math.Abs(d.Y)>Math.Max(6,a.range*.6f))return false;
+        var a=u.Tower.attack;var d=p-u.Body.Position;float h=new Vector2(d.X,d.Z).Length();float range=u.Range;
+        if(h>range||h<a.minRange||Math.Abs(d.Y)>Math.Max(6,range*.6f))return false;
         if(!a.directional)return true;
         var f=u.Body.Matrix.Forward;f.Y=0;f=Vector3.Normalize(f);var r=new Vector3(-f.Z,0,f.X);
         float along=Vector3.Dot(d,f),side=Vector3.Dot(d,r);return along>0&&along<=a.range&&Math.Abs(side)<=a.width*.5f;
@@ -50,10 +51,10 @@ public static class MDTowerBrain {
     // traced in that order, so the longer ranges do not cost a line-of-sight trace per creature in the area.
     static ComponentBody FindTarget(ComponentMDUnit u) {
         var a=u.Tower.attack;var bodies=new DynamicArray<ComponentBody>();
-        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),a.range+2,bodies);
+        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),u.Range+2,bodies);
         var found=new List<(float score,ComponentBody body)>();
         foreach(var b in bodies)
-            if(MDCombat.IsEnemy(u,b)&&InArea(u,MDCombat.Center(b)))found.Add((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position),b));
+            if(MDCombat.IsEnemy(u,b)&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
         found.Sort((x,y)=>x.score.CompareTo(y.score));
         var from=Aim(u);
         foreach(var (_,b) in found)if(!a.needsSight||Sight(u,from,b))return b;
@@ -150,7 +151,7 @@ public static class MDTowerBrain {
         switch(a.type) {
             case "bolt":
                 u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);if((shot-1)%Math.Max(1,a.soundEvery)==0)Sound(u,d.fireSounds,muzzle);
-                w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1),strong?a.enhancedSplash:0,strong);break;
+                w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1)*(a.groundFactor<1&&!Airborne(target)?a.groundFactor:1),strong?a.enhancedSplash:a.splash,strong);break;
             case "shell":
                 u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f+tc.Y-MDCombat.Center(target).Y,tc.Z);   // the ground under the lead point
                 var vel=LaidGun(d)?BarrelLaunch(u,muzzle,MDTowerLibrary.MuzzleForward(d,pose,mi),aimAt):LaunchVelocity(u,muzzle,aimAt);
@@ -193,6 +194,24 @@ public static class MDTowerBrain {
             if(u.ChannelTick<=0){u.ChannelTick=a.type=="flame"?.25f:.2f;AreaTick(u);}
         } else if(a.type=="chain"&&u.Channel<=0)u.ChannelTarget=null;
         if(u.Channel<=0)u.ChannelTarget=null;
+    }
+    // A creature in the air: one that can fly and is not standing on anything (birds, flying mod creatures). Anti-air towers
+    // (attack.airFirst) pick these first and do attack.groundFactor of their damage to anything else.
+    public static bool Airborne(ComponentBody b){var loc=b.Entity.FindComponent<ComponentLocomotion>();return loc!=null&&loc.FlySpeed>0&&!b.StandingOnValue.HasValue&&b.ImmersionFactor<=0;}
+    // Radar (0.10.0): every interval, up to attack.links of the nearest working towers within range get range x attack.boost
+    // until a little after the next pulse (several radars: the strongest boost); a thin line shows each link.
+    static void Radar(ComponentMDUnit u) {
+        var d=u.Tower;var a=d.attack;var w=World(u);if(u.Cooldown>0)return;u.Cooldown=a.interval;
+        var p=u.Body.Position;var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
+        var towers=bodies.Select(b=>b.Entity.FindComponent<ComponentMDUnit>()).Where(t=>t!=null&&t!=u&&t.Kind=="Turret"&&!t.Destroyed&&t.Tower!=null&&t.Tower.attack.type is not ("radar" or "heal")
+            &&Vector3.DistanceSquared(t.Body.Position,p)<=a.range*a.range).OrderBy(t=>Vector3.DistanceSquared(t.Body.Position,p)).Take(Math.Max(1,a.links)).ToList();
+        double now=u.Clock.GameTime;var from=d.muzzles.Length>0?Muzzle(u,0):p+Vector3.UnitY*2;var c=MDTowerWorldColor(d.fx.color);
+        foreach(var t in towers) {
+            if(t.RangeBoostUntil<now||a.boost>=t.RangeBoost)t.RangeBoost=a.boost;
+            t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+.5);
+            w.AddBeam(from,t.Body.Position+Vector3.UnitY*(t.Tower.bounds[1][1]*.6f),.03f*d.fx.scale,c,.5f,false);
+        }
+        if(towers.Count>0&&++u.ShotCount%4==1)Sound(u,d.fireSounds,from,.35f);
     }
     static void AreaTick(ComponentMDUnit u) {
         var a=u.Tower.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();

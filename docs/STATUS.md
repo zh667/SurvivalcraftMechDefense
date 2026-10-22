@@ -1,4 +1,4 @@
-# Status — 2026-10-21
+# Status — 2026-10-22
 
 ## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
 
@@ -37,8 +37,14 @@ inventory icons miss chunks). Plans confirmed the same day (balance numbers, her
   tools/towers.json: build_tower_assets.py checks its node tree against the cube build and reuses the cached cube metadata
   (pivots, muzzles, clearance). In-game comparison before it shipped: tools/stage_tower_preview.py + lab `view-<id>` (now with
   fog and a torch-lit cave), local/claude-work/r5/towers/battle_rocket_1/poly_game/. Regression on the new package: lab all,
-  icons, view-battle_rocket_1, smoke 0.5.0 -> 0.9.0 pass. The other 18 towers are being built the same way by helper agents
-  (record table round 13); they go in after the user has seen them.
+  icons, view-battle_rocket_1, smoke 0.5.0 -> 0.9.0 pass. The other 18 towers (record table round 13, six helper agents in
+  parallel): 3,076-5,724 triangles (battle_cannon_1_dg002 10,946 with a 2048 atlas), outline within 2.9 % of the original,
+  0 triangles in common with it, 0 interpenetration in the motion sweeps; each group compared in game against the cube V5
+  (local/claude-work/r13/<group>/<id>/, overview r13/overview_19.jpg). User 2026-10-22: "换进正式包吧" -> all 19 towers ship
+  polygon models ("poly" in tools/towers.json); package 29.9 -> 17.2 MB.
+  Regression on that package (job pz2-official-poly18-check-20261022-a): every tower's model, atlas (pixel-identical), slot
+  picture and towers.json entry equal those of the preview package checked in game; lab all / icons / mech / robots-gallery /
+  robots-summons / robots-items / special / combat and smoke 0.5.0 -> 0.9.0 pass.
 - Final regression on the package (jobs md-r5-final-reg-1, md-r5-smoke-2): full `lab --mode robots` passes (223 shots; all parts
   incl. heroes, balance, settings, hud, escorts, raid, boss, kits); special and mech pass. Smoke 0.5.0 -> 0.9.0 first failed one
   stale check (it expected towers + Mercury in the creative inventory; the hero mechs add two): check updated, passes. The failed

@@ -7,10 +7,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_1\\battle_turret_1_V5.geo.json",
     "geoSha256": "4a75a562015e520c0c0f8cfb662b6f71846a2ba133e904cf02107ceb80bf63f4",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_1\\battle_turret_1_V5.png",
-    "atlasSha256": "0a58e83af4545c31d73b0fb0539496811fc68232dac76456128eb63a843b92b0"
+    "atlasSha256": "0a58e83af4545c31d73b0fb0539496811fc68232dac76456128eb63a843b92b0",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_1\\model.glb",
+     "glbSha256": "f1e9d87e4a89d8c7b1155b594b66ba0fa67abe35a1253c70ccea07b66e030eda",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_1\\atlas.png",
+     "atlasSha256": "511cf314f853cd6ff93e5c732ef764bbd8bc31fbbb11ba018dede6924651938b"
+    }
    },
-   "model": "cube",
-   "triangles": 38840,
+   "model": "polygon",
+   "triangles": 3848,
    "facesHidden": 11873,
    "facesClipped": 6323,
    "crossPartNudged": 32,
@@ -33,10 +39,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_2\\battle_turret_2_V5.geo.json",
     "geoSha256": "bb8d61a60b8bf2709b77e43959a5abf01b1344b4135a677a812ddbdef7de1e64",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_2\\battle_turret_2_V5.png",
-    "atlasSha256": "fd67af7b5f83a039dcd8cb6d5757a9ad29605f5eae546b91c21ac709a9a891c6"
+    "atlasSha256": "fd67af7b5f83a039dcd8cb6d5757a9ad29605f5eae546b91c21ac709a9a891c6",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_2\\model.glb",
+     "glbSha256": "0d48989e738344cb71feaec62b19e275ca25ebc6caab45e619724369a4dba8dc",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_2\\atlas.png",
+     "atlasSha256": "c2dcde00c764858ceb4da4dbf378f694311a9861b553dc3f1a9ee4de6ce0576a"
+    }
    },
-   "model": "cube",
-   "triangles": 48664,
+   "model": "polygon",
+   "triangles": 5096,
    "facesHidden": 18617,
    "facesClipped": 7882,
    "crossPartNudged": 36,
@@ -59,10 +71,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_3\\battle_turret_3_V5.geo.json",
     "geoSha256": "e6d2f83a33799c2ef889c2c0890629b7818b07502fb402e9a72145007ab8d082",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_turret_3\\battle_turret_3_V5.png",
-    "atlasSha256": "4f2ab70152cef9288dba0c887ecad04e85f173e2051785ae264da398347c2a6a"
+    "atlasSha256": "4f2ab70152cef9288dba0c887ecad04e85f173e2051785ae264da398347c2a6a",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_3\\model.glb",
+     "glbSha256": "f3d760b52f563ebde67f3f9d520deaf608a58bb4190ae36819fb7438a9f86339",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_turret_3\\atlas.png",
+     "atlasSha256": "51c946ed3ea1e6b81e8155f1952346aa0becf1a8706a047cec3d1a797c8f735d"
+    }
    },
-   "model": "cube",
-   "triangles": 47062,
+   "model": "polygon",
+   "triangles": 5200,
    "facesHidden": 18327,
    "facesClipped": 7541,
    "crossPartNudged": 32,
@@ -85,10 +103,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1\\battle_cannon_1_V5.geo.json",
     "geoSha256": "4d3ce57aaf9c5a401ac143e1f1037f28ff90470055d911ccad175142e6ca134f",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1\\battle_cannon_1_V5.png",
-    "atlasSha256": "7e19dbcaf7dba9e58a95d0732fa41d92815a1f3e6c017d05a7b64e9b6b339ce2"
+    "atlasSha256": "7e19dbcaf7dba9e58a95d0732fa41d92815a1f3e6c017d05a7b64e9b6b339ce2",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_1\\model.glb",
+     "glbSha256": "76b5b19a047b8605b87c18e088acd570e0304f9b5e7d46c1b7f677ec50788894",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_1\\atlas.png",
+     "atlasSha256": "15d0ffdeb68e503be0693a3aa20c2d9f8f122a6824f3f94af4600e4c37570c4b"
+    }
    },
-   "model": "cube",
-   "triangles": 41994,
+   "model": "polygon",
+   "triangles": 5564,
    "facesHidden": 16169,
    "facesClipped": 6120,
    "crossPartNudged": 29,
@@ -110,10 +134,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_2\\battle_cannon_2_V5.geo.json",
     "geoSha256": "5c8f497c4c4ee2aa1a0be3e3b3bdd65252decea382e067998f401ce6bd6712b7",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_2\\battle_cannon_2_V5.png",
-    "atlasSha256": "a19752b717bda8d156cc54893d3aece2c12ffd11c45f1a13a3b6de5cdc5be955"
+    "atlasSha256": "a19752b717bda8d156cc54893d3aece2c12ffd11c45f1a13a3b6de5cdc5be955",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_2\\model.glb",
+     "glbSha256": "134ba792565484bd2810ec2dcdff6b3364064d0b23e754fd11919163953366d7",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_2\\atlas.png",
+     "atlasSha256": "7fd9eda38a4dcef36a38a077b241ddaf07864344c5e7655dcf34ae8decb499c1"
+    }
    },
-   "model": "cube",
-   "triangles": 57436,
+   "model": "polygon",
+   "triangles": 5724,
    "facesHidden": 18543,
    "facesClipped": 8699,
    "crossPartNudged": 39,
@@ -135,10 +165,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_sniper_1\\battle_sniper_1_V5.geo.json",
     "geoSha256": "20980d588b9627fff6d372b0a97c5ebcca38518a7a882a67ea103e8289c2607b",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_sniper_1\\battle_sniper_1_V5.png",
-    "atlasSha256": "efbe702dbd11185fed4029e1020d8e5a41472a62434223cf858af1b82c84dfb6"
+    "atlasSha256": "efbe702dbd11185fed4029e1020d8e5a41472a62434223cf858af1b82c84dfb6",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_sniper_1\\model.glb",
+     "glbSha256": "6cd60c9c215d93a7a562d61d666e834662501608cbf9c930b273fde3b1de71ff",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_sniper_1\\atlas.png",
+     "atlasSha256": "8dee200b3d6aeb4dd1e10dacd537007edaff81c5cd904ff953bfde27d04082e4"
+    }
    },
-   "model": "cube",
-   "triangles": 44783,
+   "model": "polygon",
+   "triangles": 5320,
    "facesHidden": 11992,
    "facesClipped": 6946,
    "crossPartNudged": 58,
@@ -160,10 +196,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V5.geo.json",
     "geoSha256": "bc2791825b23a7e4f53e43f485f7e06c0d590322d490c1f5eadcb7d526a7e38e",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_cannon_1_dg002\\battle_cannon_1_dg002_V5.png",
-    "atlasSha256": "f801f7f28e5edce874cbe4778fa19800177e4273ddc5f21f977eee8bc547def5"
+    "atlasSha256": "f801f7f28e5edce874cbe4778fa19800177e4273ddc5f21f977eee8bc547def5",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_1_dg002\\model.glb",
+     "glbSha256": "aff03b74539f8904f6b6b49134f5e9043c600aae187fac2498b3acef0fc0c2bf",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_cannon_1_dg002\\atlas.png",
+     "atlasSha256": "d205adc7459c88b4b6e31b4c1df4811aa188550f0e25b5cedc23dc1d566e220f"
+    }
    },
-   "model": "cube",
-   "triangles": 70716,
+   "model": "polygon",
+   "triangles": 10946,
    "facesHidden": 15111,
    "facesClipped": 10391,
    "crossPartNudged": 12,
@@ -189,10 +231,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_debuff_1\\battle_debuff_1_V5.geo.json",
     "geoSha256": "bbc9017768feabc79a8ccb1a8871f11b21e07cd124ddd9492384cb67305cffb0",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_debuff_1\\battle_debuff_1_V5.png",
-    "atlasSha256": "3d8edab99fc61b72b7f44467da9156feec765376fb821ad93e682426c6b095af"
+    "atlasSha256": "3d8edab99fc61b72b7f44467da9156feec765376fb821ad93e682426c6b095af",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_debuff_1\\model.glb",
+     "glbSha256": "5fc1648ae132ae16fc12ef7139f068723284112d3028ceec97d6b85545ae58a9",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_debuff_1\\atlas.png",
+     "atlasSha256": "c17a1f55184fc352cfa9f090a15da92b6f7216c88f8afb22373b2654c0787e51"
+    }
    },
-   "model": "cube",
-   "triangles": 55650,
+   "model": "polygon",
+   "triangles": 5332,
    "facesHidden": 18393,
    "facesClipped": 8957,
    "crossPartNudged": 29,
@@ -215,10 +263,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_fog_1\\battle_fog_1_V5.geo.json",
     "geoSha256": "ea21a8270feaa930aa2bb8496c54b16492946e707dbc59fb2e6ed3f38108ffe4",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_fog_1\\battle_fog_1_V5.png",
-    "atlasSha256": "9a1c254e4e12186840c2b6f13f4317ac94b637ffbe709aed2ca6697ea0cb2d88"
+    "atlasSha256": "9a1c254e4e12186840c2b6f13f4317ac94b637ffbe709aed2ca6697ea0cb2d88",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_fog_1\\model.glb",
+     "glbSha256": "5767d4c29b08cae6476d7c7df988eeaa0b44eab288fea62ea26e5e402f475b73",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_fog_1\\atlas.png",
+     "atlasSha256": "1540135225802841df0d70d6c101e63ef593a80aba7ed60736242a2e8cffde82"
+    }
    },
-   "model": "cube",
-   "triangles": 57689,
+   "model": "polygon",
+   "triangles": 5508,
    "facesHidden": 18157,
    "facesClipped": 9199,
    "crossPartNudged": 29,
@@ -243,10 +297,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_frost_1\\battle_frost_1_V5.geo.json",
     "geoSha256": "471363544d8a3541cc22e22569791c431d4e51c73e16b9c3fba79deac5f8bc56",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_frost_1\\battle_frost_1_V5.png",
-    "atlasSha256": "fccd7f9a2fb389531863d47e68c08be79473827820de233194c7c9df0d9e1b30"
+    "atlasSha256": "fccd7f9a2fb389531863d47e68c08be79473827820de233194c7c9df0d9e1b30",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_frost_1\\model.glb",
+     "glbSha256": "a40800526540f7bbc6bea0ef71ddcc32edb5113a62843cf418cc949ef3da70c7",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_frost_1\\atlas.png",
+     "atlasSha256": "865b1bdb889b8d303e7a36067f45f58f94fc5e737e4ca1d3dac85d9cdd4c9966"
+    }
    },
-   "model": "cube",
-   "triangles": 41800,
+   "model": "polygon",
+   "triangles": 4112,
    "facesHidden": 13901,
    "facesClipped": 6859,
    "crossPartNudged": 6,
@@ -267,10 +327,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_jet_1\\battle_jet_1_V5.geo.json",
     "geoSha256": "1de532e1ed36360247505bd75c8e289eaf17b70228e35efd3cc70fcd7d003988",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_jet_1\\battle_jet_1_V5.png",
-    "atlasSha256": "927b54a548e4c066cb587b4a9b856941d8fd84bc1f82ca03380f0cdeac31a2cc"
+    "atlasSha256": "927b54a548e4c066cb587b4a9b856941d8fd84bc1f82ca03380f0cdeac31a2cc",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_jet_1\\model.glb",
+     "glbSha256": "b2cf99ad40f803651b221fc80d8a0d9a2fefb7b62db7310ed74aec05908018b4",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_jet_1\\atlas.png",
+     "atlasSha256": "ccc1a3ed88c1a8419d6afb8cd6bbd55b83d774089117e4d0bed979534839f395"
+    }
    },
-   "model": "cube",
-   "triangles": 29579,
+   "model": "polygon",
+   "triangles": 5256,
    "facesHidden": 9997,
    "facesClipped": 4610,
    "crossPartNudged": 0,
@@ -313,10 +379,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_1\\battle_laser_1_V5.geo.json",
     "geoSha256": "81ffc988541b612495334d969801abad927757989beeaa79fd7fccea2ae92ab0",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_1\\battle_laser_1_V5.png",
-    "atlasSha256": "28595a33cd25274fc56e5e70714f4b6a048d1b4a2cea75b63a95b0abf0894259"
+    "atlasSha256": "28595a33cd25274fc56e5e70714f4b6a048d1b4a2cea75b63a95b0abf0894259",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_laser_1\\model.glb",
+     "glbSha256": "da68411a93d76f834c830c142c6960577820954ac3e5e5e932ee752454ab0b63",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_laser_1\\atlas.png",
+     "atlasSha256": "cfd9bd3ab80d9539f7033c5fc28bd3488f5fb3999fc48a267fa9847f7ec8d472"
+    }
    },
-   "model": "cube",
-   "triangles": 70162,
+   "model": "polygon",
+   "triangles": 3472,
    "facesHidden": 20024,
    "facesClipped": 10672,
    "crossPartNudged": 0,
@@ -328,10 +400,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_2\\battle_laser_2_V5.geo.json",
     "geoSha256": "7d6a247d7f1025c2daade299db7e032fe10e772ab5382b5e93ec13984fba445a",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_laser_2\\battle_laser_2_V5.png",
-    "atlasSha256": "60252a8b8d7ddee60afe7c2078d40165633b59afd63b5702a7dd8226e7dd2ac3"
+    "atlasSha256": "60252a8b8d7ddee60afe7c2078d40165633b59afd63b5702a7dd8226e7dd2ac3",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_laser_2\\model.glb",
+     "glbSha256": "f9ad324b8c8039fe18da208982614fdb74bc175cb8e7da61025151e41115d786",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_laser_2\\atlas.png",
+     "atlasSha256": "7609169b2825a611e2ef97871d261e62964eaf27e4d5e9bd57cfe2c8ae90a70e"
+    }
    },
-   "model": "cube",
-   "triangles": 80111,
+   "model": "polygon",
+   "triangles": 4340,
    "facesHidden": 23292,
    "facesClipped": 11891,
    "crossPartNudged": 0,
@@ -343,10 +421,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_1\\battle_lightning_1_V5.geo.json",
     "geoSha256": "44bcfb32106131e6a4de11b1fb33588e18f6c90130e2fbeb9c64d2543660e304",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_1\\battle_lightning_1_V5.png",
-    "atlasSha256": "12af9a55d81bb666c2c64fba2ca9fcf1a9ad2d032030c8ae8823c8e31d940b82"
+    "atlasSha256": "12af9a55d81bb666c2c64fba2ca9fcf1a9ad2d032030c8ae8823c8e31d940b82",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_lightning_1\\model.glb",
+     "glbSha256": "1f88f04767dcc487447005a8852fc907446de4bf79a120af9e8dfa1a65a7aea4",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_lightning_1\\atlas.png",
+     "atlasSha256": "b0c229efcd7fb99df90c8d7331678d6ae5c2abe332ae96adb6248cf1f50ffe76"
+    }
    },
-   "model": "cube",
-   "triangles": 67959,
+   "model": "polygon",
+   "triangles": 3076,
    "facesHidden": 16698,
    "facesClipped": 11139,
    "crossPartNudged": 0,
@@ -358,10 +442,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_2\\battle_lightning_2_V5.geo.json",
     "geoSha256": "15f0c3b0792b5a2c43aedb4673a07a8868566ad0b96995fa8da8c794b919cb72",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_lightning_2\\battle_lightning_2_V5.png",
-    "atlasSha256": "aadf849fac23bf3f2f8bfb56534572c8c7983c54a7e14191ae5ffe2598fdb909"
+    "atlasSha256": "aadf849fac23bf3f2f8bfb56534572c8c7983c54a7e14191ae5ffe2598fdb909",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_lightning_2\\model.glb",
+     "glbSha256": "312079d7ef2bb2bf39c698f402271538ac2d7f46582d5a760d3886f4fc1e6718",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_lightning_2\\atlas.png",
+     "atlasSha256": "962f1f5427fee80558442e5d0dfe30ecdc3410883f7ecae41d0424920617c27c"
+    }
    },
-   "model": "cube",
-   "triangles": 95715,
+   "model": "polygon",
+   "triangles": 5300,
    "facesHidden": 24742,
    "facesClipped": 15371,
    "crossPartNudged": 0,
@@ -373,10 +463,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_shockwave_1\\battle_shockwave_1_V5.geo.json",
     "geoSha256": "8eb7bca8cda1ee35667cd4275a797c9778d8130acb24866afc762eabdb724136",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_shockwave_1\\battle_shockwave_1_V5.png",
-    "atlasSha256": "6ed6b7cba34edb39e65a3ab5160a214cc762002550e9c746e87dd58991d7a8af"
+    "atlasSha256": "6ed6b7cba34edb39e65a3ab5160a214cc762002550e9c746e87dd58991d7a8af",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_shockwave_1\\model.glb",
+     "glbSha256": "ca8cfe6893016bc7b41230de0f2b9da59a87a7f5eb2a35c7b4ed31c7feb698d3",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_shockwave_1\\atlas.png",
+     "atlasSha256": "b37cdb9ef11a4cc25368a3fa1e31027048f214208653453c2ee8e0e0d71cd300"
+    }
    },
-   "model": "cube",
-   "triangles": 55088,
+   "model": "polygon",
+   "triangles": 5428,
    "facesHidden": 10180,
    "facesClipped": 9014,
    "crossPartNudged": 0,
@@ -388,10 +484,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_medic_1\\battle_medic_1_V5.geo.json",
     "geoSha256": "2e862a5793d6042e41adb1ae7634e67f80b9ea2dc1ca7a2fbf2b10fa072f2ee6",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_medic_1\\battle_medic_1_V5.png",
-    "atlasSha256": "36827bb9aa918986dc8a88afec51b9a1e8948a0f507218ed15a0509e9739f848"
+    "atlasSha256": "36827bb9aa918986dc8a88afec51b9a1e8948a0f507218ed15a0509e9739f848",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_medic_1\\model.glb",
+     "glbSha256": "e646da6ba10c8575f17b0c389bd939a29e97e0fa9103fccf7a2826d06ea025a6",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_medic_1\\atlas.png",
+     "atlasSha256": "6c4f70ce6f3a36d8818f5278aca312fc5bbd69fe2ee7ccf485da4e5f8b8c3b15"
+    }
    },
-   "model": "cube",
-   "triangles": 61594,
+   "model": "polygon",
+   "triangles": 5228,
    "facesHidden": 11163,
    "facesClipped": 10581,
    "crossPartNudged": 0,
@@ -403,10 +505,16 @@
     "geo": "E:\\projects\\endfield-turret-model\\v5\\battle_trap_1\\battle_trap_1_V5.geo.json",
     "geoSha256": "ddb2aa5288485fea855591f4e084e04beca143e7734a428bfdc16326fd67f13c",
     "atlas": "E:\\projects\\endfield-turret-model\\v5\\battle_trap_1\\battle_trap_1_V5.png",
-    "atlasSha256": "14e6264fda22ea79c2c45aaccbecb693d9726939d9183af48a3560550fb12bd6"
+    "atlasSha256": "14e6264fda22ea79c2c45aaccbecb693d9726939d9183af48a3560550fb12bd6",
+    "poly": {
+     "glb": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_trap_1\\model.glb",
+     "glbSha256": "b4eab473108a2e4d7162135644396a7de27c25e99a346b68734b2001d2982cf6",
+     "atlas": "E:\\projects\\endfield-turret-model\\poly_v1\\battle_trap_1\\atlas.png",
+     "atlasSha256": "d8675b2e8d9813cdade645e5b4e0de2014f6d335bb8548bb7174dce5db9275f1"
+    }
    },
-   "model": "cube",
-   "triangles": 54835,
+   "model": "polygon",
+   "triangles": 3356,
    "facesHidden": 13485,
    "facesClipped": 8948,
    "crossPartNudged": 0,

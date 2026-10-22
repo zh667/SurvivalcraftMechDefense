@@ -5,6 +5,7 @@
    "name": "铳械塔",
    "source": "v5/battle_turret_1",
    "version": "V5",
+   "poly": "poly_v1/battle_turret_1",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -64,6 +65,7 @@
    "name": "扩装铳械塔",
    "source": "v5/battle_turret_2",
    "version": "V5",
+   "poly": "poly_v1/battle_turret_2",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -125,6 +127,7 @@
    "name": "“暴雨”铳械塔",
    "source": "v5/battle_turret_3",
    "version": "V5",
+   "poly": "poly_v1/battle_turret_3",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -187,6 +190,7 @@
    "name": "榴弹塔",
    "source": "v5/battle_cannon_1",
    "version": "V5",
+   "poly": "poly_v1/battle_cannon_1",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -241,6 +245,7 @@
    "name": "高爆榴弹塔",
    "source": "v5/battle_cannon_2",
    "version": "V5",
+   "poly": "poly_v1/battle_cannon_2",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -298,6 +303,7 @@
    "name": "哨戒塔",
    "source": "v5/battle_sniper_1",
    "version": "V5",
+   "poly": "poly_v1/battle_sniper_1",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -348,6 +354,7 @@
    "name": "序章炮塔",
    "source": "v5/battle_cannon_1_dg002",
    "version": "V5",
+   "poly": "poly_v1/battle_cannon_1_dg002",
    "tools": "v5/tools",
    "subparts": [
     {
@@ -489,6 +496,7 @@
    "name": "“酸洗”MK-Ⅰ",
    "source": "v5/battle_debuff_1",
    "version": "V5",
+   "poly": "poly_v1/battle_debuff_1",
    "tools": "v5/tools",
    "data": 9,
    "hp": 900,
@@ -540,6 +548,7 @@
    "name": "“毒沼”MK-Ⅰ",
    "source": "v5/battle_fog_1",
    "version": "V5",
+   "poly": "poly_v1/battle_fog_1",
    "tools": "v5/tools",
    "data": 10,
    "hp": 900,
@@ -595,6 +604,7 @@
    "name": "液氮塔",
    "source": "v5/battle_frost_1",
    "version": "V5",
+   "poly": "poly_v1/battle_frost_1",
    "tools": "v5/tools",
    "data": 11,
    "hp": 850,
@@ -647,6 +657,7 @@
    "name": "激流塔",
    "source": "v5/battle_jet_1",
    "version": "V5",
+   "poly": "poly_v1/battle_jet_1",
    "tools": "v5/tools",
    "data": 12,
    "hp": 900,
@@ -749,6 +760,7 @@
    "name": "射线塔",
    "source": "v5/battle_laser_1",
    "version": "V5",
+   "poly": "poly_v1/battle_laser_1",
    "tools": "v5/tools",
    "data": 14,
    "hp": 1000,
@@ -792,6 +804,7 @@
    "name": "高能射线塔",
    "source": "v5/battle_laser_2",
    "version": "V5",
+   "poly": "poly_v1/battle_laser_2",
    "tools": "v5/tools",
    "data": 15,
    "hp": 1200,
@@ -836,6 +849,7 @@
    "name": "电涌塔",
    "source": "v5/battle_lightning_1",
    "version": "V5",
+   "poly": "poly_v1/battle_lightning_1",
    "tools": "v5/tools",
    "data": 16,
    "hp": 900,
@@ -884,6 +898,7 @@
    "name": "甲二型“电荷”",
    "source": "v5/battle_lightning_2",
    "version": "V5",
+   "poly": "poly_v1/battle_lightning_2",
    "tools": "v5/tools",
    "data": 17,
    "hp": 1100,
@@ -935,6 +950,7 @@
    "name": "全向声波塔",
    "source": "v5/battle_shockwave_1",
    "version": "V5",
+   "poly": "poly_v1/battle_shockwave_1",
    "tools": "v5/tools",
    "data": 18,
    "hp": 900,
@@ -973,6 +989,7 @@
    "name": "医疗塔",
    "source": "v5/battle_medic_1",
    "version": "V5",
+   "poly": "poly_v1/battle_medic_1",
    "tools": "v5/tools",
    "data": 19,
    "hp": 900,
@@ -1009,6 +1026,7 @@
    "name": "AF1“熔甲者”",
    "source": "v5/battle_trap_1",
    "version": "V5",
+   "poly": "poly_v1/battle_trap_1",
    "tools": "v5/tools",
    "data": 20,
    "hp": 1000,

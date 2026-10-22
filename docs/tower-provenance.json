@@ -1,5 +1,5 @@
 {
- "boundary": "Authored cube models (v5) and polygon models (poly_v1) with their atlases from E:/projects/endfield-turret-model; no game model or texture is shipped.",
+ "boundary": "Authored cube models (v5) and polygon models (poly_v1) with their atlases from E:/projects/endfield-turret-model and E:/projects/sog-tower-model; no game model or texture is shipped.",
  "towers": [
   {
    "id": "battle_turret_1",
@@ -519,6 +519,81 @@
    "facesClipped": 8948,
    "crossPartNudged": 0,
    "clearance": {}
+  },
+  {
+   "id": "gatling_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\model.glb",
+     "glbSha256": "faee49478fc62e6c0a4e23ea1c9507d2d7ca5375cec1931af84129ff712c34a2",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\atlas.png",
+     "atlasSha256": "8c3a429d7b9ee52bf4407745ec0812742a4a67487bf4ae5defc12c9be20156f6"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\parts.json",
+    "partsSha256": "2d87f877d18f54fb929848ff7aec9e664804b2252049bb47be2df85cf598d994"
+   },
+   "model": "polygon",
+   "triangles": 3748,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -15,
+     70
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "gatling_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\model.glb",
+     "glbSha256": "d90edd95a4ef8aec24cfd765f3f57fa003875b1fad4e0802b19ee3bd29da1a0a",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\atlas.png",
+     "atlasSha256": "ff4e2cec6b36a0379ed7ad6bbed164c0c7488e3a0d6efb4bceb5657bfb1e8f51"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\parts.json",
+    "partsSha256": "7acb03a5805206319abea59b9add51acb3722c8f71dceffa1b01c4737bc888d4"
+   },
+   "model": "polygon",
+   "triangles": 4232,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -15,
+     70
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "gatling_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\model.glb",
+     "glbSha256": "88c38c4daa0a216f816016e080907de22d0a082dd17cbdcebc8e20f0f23093da",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\atlas.png",
+     "atlasSha256": "d92c3871b09b94551763884f5301583827997c7e5626d2a47d7967f699f70a2d"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\parts.json",
+    "partsSha256": "7c6bde15b0c35666306ec16aefb43980fdc00bf24f82814c74eaee136dac6a55"
+   },
+   "model": "polygon",
+   "triangles": 5704,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -15,
+     70
+    ],
+    "from_model": true
+   }
   }
  ]
 }

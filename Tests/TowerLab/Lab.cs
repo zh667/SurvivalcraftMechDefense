@@ -398,6 +398,11 @@ public partial class Lab:ModLoader {
                 u.Cooldown=0;int shots0=u.ShotCount;var f=at+new Vector3(0,h*.45f,-dist*.5f);Cam(f+new Vector3(1.0f,.55f,-.25f)*Math.Max(9,dist*1.6f),f);
                 double start=Time.RealTime;int k=0;
                 foreach(var dt in new[]{.04,.25,.8,2.0}){while(Time.RealTime-start<dt){Cam(lastEye,lastFocus);yield return true;}Shot($"v_fire_{k}");views.Add($"fire_{k++}");yield return true;}
+                if(d.spinParts.Length>0) {   // rotary barrels (0.9.0 round 6): close to the first muzzle while still firing, two shots two frames apart
+                    var m0=MDTowerBrain.Muzzle(u,0);var ce=m0+new Vector3(1.4f,.5f,-1.1f);var spins=new List<string>();
+                    for(int sp=0;sp<2;sp++){for(int n=0;n<(sp==0?6:2);n++){Cam(ce,m0);yield return true;}spins.Add($"{u.Spin:0.000}");Shot($"v_fire_spin_{sp}");views.Add($"fire_spin_{sp}");yield return true;}
+                    results["spin"]=$"rate {u.SpinRate:0.00}, angle at the two shots {string.Join(" / ",spins)} rad, {d.spinParts.Length} parts, speed {d.spinSpeed} deg/s";
+                }
                 results["fired"]=u.ShotCount-shots0;Remove([target]);
             }
             {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start

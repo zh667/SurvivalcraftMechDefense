@@ -17,6 +17,7 @@ public static class MDTowerBrain {
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
+        if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+(u.Target!=null&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
         if(a.type=="heal"){Heal(u,dt);return;}
         u.ScanTimer-=dt;
@@ -148,7 +149,7 @@ public static class MDTowerBrain {
         u.Cooldown=a.interval;
         switch(a.type) {
             case "bolt":
-                u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);Sound(u,d.fireSounds,muzzle);
+                u.Kick(mi);w.Muzzle(d,muzzle,dir,strong);if((shot-1)%Math.Max(1,a.soundEvery)==0)Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,dir*a.speed,0,a.power*(strong?a.enhancedPower:1),strong?a.enhancedSplash:0,strong);break;
             case "shell":
                 u.Kick(mi);var aimAt=new Vector3(tc.X,target.Position.Y+.1f+tc.Y-MDCombat.Center(target).Y,tc.Z);   // the ground under the lead point

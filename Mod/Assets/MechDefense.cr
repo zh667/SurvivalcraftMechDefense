@@ -109,6 +109,24 @@
     "mkm"
     "aaa"
   </Recipe>
+  <!-- 转轮机枪塔 Ⅰ-Ⅲ (data 32-34; 0.9.0 round 6, the towers rebuilt from a 2D tower-defence game, E:/projects/sog-tower-model):
+       the same tier chain as the gun towers above (user, 2026-10-22: 合成升级) - tier 1 vanilla, tier 2 = tier 1 + three alloy
+       plates, tier 3 = tier 2 + alloy plates and two fire-control chips. -->
+  <Recipe Result="MDDeploymentBlock:32" ResultCount="1" RequiredHeatLevel="0" r="rod" g="gunpowder" c="copperingot" i="ironingot" Description="转轮机枪塔 Ⅰ：一阶，高速连射，对地对空">
+    "rrr"
+    "gcg"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:33" ResultCount="1" RequiredHeatLevel="0" r="rod" g="gunpowder" t="mddeploy:32" a="mdpart:1" Description="转轮机枪塔 Ⅱ：二阶，由转轮机枪塔 Ⅰ 升级">
+    "rrr"
+    "gtg"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:34" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" g="gunpowder" t="mddeploy:33" a="mdpart:1" Description="转轮机枪塔 Ⅲ：三阶，由转轮机枪塔 Ⅱ 升级">
+    "xdx"
+    "gtg"
+    "aaa"
+  </Recipe>
   <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
        (cannon), two 高爆榴弹塔 (missiles, grenades), with two alloy plates, the boss's blueprint (used up) and an energy
        core; player level 8 (user, 2026-10-20: only the mech has a level requirement; Wonderful Era's vehicle keys ask 4-10). -->

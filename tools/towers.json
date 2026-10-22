@@ -1062,6 +1062,136 @@
    ],
    "hitSounds": [],
    "template": "MDTower_battle_trap_1"
+  },
+  {
+   "id": "gatling_1",
+   "name": "转轮机枪塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_1",
+   "data": 32,
+   "template": "MDTower_gatling_1",
+   "hp": 800,
+   "summary": "转管机枪高速连射，地面和空中的敌人都能打，射程一般。",
+   "attack": {
+    "type": "bolt",
+    "range": 28,
+    "interval": 0.25,
+    "power": 8,
+    "speed": 140,
+    "soundEvery": 1
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.45
+    ],
+    "color2": [
+     1,
+     0.6,
+     0.2
+    ],
+    "scale": 0.55
+   },
+   "spinParts": [
+    "spin"
+   ],
+   "spinSpeed": 1440,
+   "fireSounds": [
+    "Imported/SoG/Audio/mgun0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/ricochet_0",
+    "Imported/SoG/Audio/ricochet_1",
+    "Imported/SoG/Audio/ricochet_2"
+   ]
+  },
+  {
+   "id": "gatling_2",
+   "name": "转轮机枪塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_2",
+   "data": 33,
+   "template": "MDTower_gatling_2",
+   "hp": 1000,
+   "summary": "两挺转管机枪交替连射，地面和空中都能打。由转轮机枪塔 Ⅰ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 32,
+    "interval": 0.25,
+    "power": 13.6,
+    "speed": 140,
+    "soundEvery": 2
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.45
+    ],
+    "color2": [
+     1,
+     0.6,
+     0.2
+    ],
+    "scale": 0.65
+   },
+   "spinParts": [
+    "spin_l",
+    "spin_r"
+   ],
+   "spinSpeed": 1440,
+   "fireSounds": [
+    "Imported/SoG/Audio/mgun1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/ricochet_0",
+    "Imported/SoG/Audio/ricochet_1",
+    "Imported/SoG/Audio/ricochet_2"
+   ]
+  },
+  {
+   "id": "gatling_3",
+   "name": "转轮机枪塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_3",
+   "data": 34,
+   "template": "MDTower_gatling_3",
+   "hp": 1300,
+   "summary": "四组转管枪管的重型机枪塔，弹幕密集，地面和空中都能打。由转轮机枪塔 Ⅱ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 36,
+    "interval": 0.25,
+    "power": 24,
+    "speed": 140,
+    "soundEvery": 2
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.45
+    ],
+    "color2": [
+     1,
+     0.6,
+     0.2
+    ],
+    "scale": 0.75
+   },
+   "spinParts": [
+    "spin_1",
+    "spin_2",
+    "spin_3",
+    "spin_4"
+   ],
+   "spinSpeed": 1440,
+   "fireSounds": [
+    "Imported/SoG/Audio/mgun2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/ricochet_0",
+    "Imported/SoG/Audio/ricochet_1",
+    "Imported/SoG/Audio/ricochet_2"
+   ]
   }
  ]
 }

@@ -28,7 +28,7 @@ public partial class Lab {
             rec[id+(rec.ContainsKey(id)?"_2":"")]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),heat=r.RequiredHeatLevel,level=r.RequiredPlayerLevel,count=r.ResultCount,description=r.Description,resolves=ok};
         }
         foreach(var t in towers)if(mine.Count(r=>Terrain.ExtractContents(r.ResultValue)==deploy&&Terrain.ExtractData(r.ResultValue)==t.data)!=1)bad.Add(t.id+": not exactly one recipe");
-        var tier2=new[]{3,6,14,16,18,19};var tier3=new[]{4,7,8,13,15,17};
+        var tier2=new[]{3,6,14,16,18,19,33};var tier3=new[]{4,7,8,13,15,17,34};   // 33, 34: 转轮机枪塔 Ⅱ, Ⅲ
         foreach(var r in mine.Where(r=>Terrain.ExtractContents(r.ResultValue)==deploy)) {
             int d=Terrain.ExtractData(r.ResultValue);
             if(tier2.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:1")!=3)bad.Add($"tier 2 tower {d}: not 3 alloy plates");

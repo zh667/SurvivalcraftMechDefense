@@ -22,6 +22,7 @@ public sealed class MDTowerAttack {
     public float bossResilience = 1e9f;      // stun and freeze skip targets whose AttackResilience is at least this (bosses)
     public float pushMaxMass = 1e9f;         // knockback moves only bodies up to this mass (small and medium enemies)
     public bool needsSight = true, threatFirst, directional, highArc;   // highArc: mortar lob instead of the flat solution
+    public int soundEvery = 1;      // fast guns: the fire sound plays on every n-th shot only
     public float width;              // directional rectangle width (flame/jet)
 }
 // A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
@@ -39,6 +40,7 @@ public sealed class MDTowerDef {
     public int[] cells = [2, 4, 2]; public float hp = 800;
     public float yawSpeed = 150, pitchSpeed = 90, restPitch;
     public string[] recoilParts = []; public float[] recoil = [];
+    public string[] spinParts = []; public float spinSpeed = 1440;   // rotary barrel clusters turning about their own Z while a target is held (deg/s at full spin)
     public MDTowerAttack attack; public MDTowerFx fx = new(); public MDTowerLink[] links = [];
     public string[] fireSounds = [], hitSounds = [], chargeSounds = [];
     // resolved at load
@@ -151,7 +153,7 @@ public static class MDTowerLibrary {
 
 // Rigid-part tower model drawn by SubsystemModelsRenderer; bones follow the unit's aim and recoil.
 public class ComponentMDTowerModel : ComponentModel {
-    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil,links;
+    ComponentMDUnit unit; int root=-1,yaw=-1,pitch=-1; int[] recoil,links,spin;
     public override void Load(ValuesDictionary values,IdToEntityMap map) {
         base.Load(values,map);unit=Entity.FindComponent<ComponentMDUnit>(true);
         // Two-sided like the authoring view: tube interiors and slab seams were only ever seen from both sides.
@@ -168,6 +170,7 @@ public class ComponentMDTowerModel : ComponentModel {
             root=Model.RootBone.Index;yaw=Model.FindBone("yaw",false)?.Index??-1;pitch=Model.FindBone("pitch",false)?.Index??-1;
             recoil=(unit.Tower?.recoilParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
             links=(unit.Tower?.links??[]).Select(l=>Model.FindBone(l.node,false)?.Index??-1).ToArray();
+            spin=(unit.Tower?.spinParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
         }
         SetBoneTransform(root,m_componentFrame.Matrix);
         if(unit.Tower==null)return;
@@ -175,5 +178,6 @@ public class ComponentMDTowerModel : ComponentModel {
         if(pitch>=0)SetBoneTransform(pitch,Matrix.CreateRotationX(unit.TowerPitch));
         for(int k=0;k<recoil.Length;k++)if(recoil[k]>=0)SetBoneTransform(recoil[k],Matrix.CreateTranslation(0,0,unit.RecoilOffset(k)));
         for(int k=0;k<links.Length;k++)if(links[k]>=0)SetBoneTransform(links[k],MDTowerLibrary.LinkLocal(unit.Tower,k,unit.TowerPitch));
+        for(int k=0;k<spin.Length;k++)if(spin[k]>=0)SetBoneTransform(spin[k],Matrix.CreateRotationZ(k%2==0?unit.Spin:-unit.Spin));   // pairs turn opposite ways
     }
 }

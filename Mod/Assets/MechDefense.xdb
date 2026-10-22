@@ -211,7 +211,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="24f72cc7-5fd1-54f5-87a8-6ab914ba80fc" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_turret_2/model" Guid="5fbcc5a6-a8c6-5971-bc99-49b62675cd77" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_turret_2/atlas" Guid="78278782-05bf-54c2-a2de-8296ddb2c8b9" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.26" Guid="038dac04-729c-5edb-bd2b-cbb462352b07" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.24" Guid="038dac04-729c-5edb-bd2b-cbb462352b07" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7c0735ed-452e-54f5-b560-8b6a6c227c0e" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -246,7 +246,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="a11c9930-5dae-53e9-887e-3d6f48d9772b" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_turret_3/model" Guid="29ff9f19-c6f5-5376-abb1-29a63e41855a" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_turret_3/atlas" Guid="57c26fce-d40c-556c-9502-2ca32056988b" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.48" Guid="fc186689-9c82-5ce8-970d-e3d646baaa60" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.46" Guid="fc186689-9c82-5ce8-970d-e3d646baaa60" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="211b59dc-a683-5e51-8e0c-0564931df227" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -281,7 +281,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="c0c7c9fc-4490-5991-8f67-5b0729020f64" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_cannon_1/model" Guid="b5391022-f760-573c-9ca1-73d463b2f85e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_cannon_1/atlas" Guid="9dafeffc-6305-5119-b83e-b2629ffb9ffb" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.98" Guid="4158f691-21bf-57c1-99e1-6ded13c2b2c6" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.97" Guid="4158f691-21bf-57c1-99e1-6ded13c2b2c6" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="45aaffbc-480a-5525-bed6-9b48fb947169" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -316,7 +316,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="20e864d8-3e89-50af-9ffb-7dfe68d739ba" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_cannon_2/model" Guid="7bcf6038-77ad-5b29-a826-188d90c34829" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_cannon_2/atlas" Guid="8cb57d2c-3e54-515e-9152-c2fbbb67e342" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.25" Guid="ce742af8-7eb5-575b-b8fb-32761c575b67" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.24" Guid="ce742af8-7eb5-575b-b8fb-32761c575b67" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="0d08c3d1-b95d-5f00-89d1-816d50c5a638" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -421,7 +421,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="97b579d8-c0a6-5cda-9ded-0f8a113b0b91" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_debuff_1/model" Guid="87337592-ff04-5461-a75b-c49674071d4c" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_debuff_1/atlas" Guid="d0db336d-97ae-56bd-91d7-532036618b24" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.66" Guid="71af3c8b-0886-58ba-bf3b-1a7c87b052e1" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.67" Guid="71af3c8b-0886-58ba-bf3b-1a7c87b052e1" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="c69f3757-dcd0-578c-9aec-e94deae900af" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -456,7 +456,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="430f09ba-5d6f-5c7d-99a6-acf1697d7270" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_fog_1/model" Guid="e0d058c1-2466-542e-a80f-95b1320ce03e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_fog_1/atlas" Guid="227d1151-6fe2-561a-a54c-a938ff4e2faf" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.73" Guid="4dc254e9-1f63-5e5c-9a81-e22ba31f453a" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.74" Guid="4dc254e9-1f63-5e5c-9a81-e22ba31f453a" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="95692e98-e75d-5afd-8baf-ccbdfd4f65c3" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -526,7 +526,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="92493a77-3dd9-5304-b482-301592781bb9" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_jet_1/model" Guid="00445e46-e617-5271-9707-68d081560612" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_jet_1/atlas" Guid="d30cf992-513c-59dc-a7fe-b75e7ff94f1e" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.75" Guid="67af06f8-0f89-5322-9878-1a881f17b29a" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.72" Guid="67af06f8-0f89-5322-9878-1a881f17b29a" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7ba9ae1e-55e5-54bc-81f0-6dfa431b7479" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -561,7 +561,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="1423cb44-816d-573d-a7d8-86e65b76c3a6" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_rocket_1/model" Guid="d04a520d-489c-52a4-8791-02712e0f9f75" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_rocket_1/atlas" Guid="7decf0c2-75b0-53ee-822c-22cf77ba93df" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="4.5" Guid="9c45d983-5d3f-5b46-a5c7-4a9b99bcf77c" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="4.52" Guid="9c45d983-5d3f-5b46-a5c7-4a9b99bcf77c" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="f01ee189-1f3c-5048-afb2-8ffbeac35639" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -736,7 +736,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="1eec6f4e-28a9-5098-90fd-6b0d4256c693" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_shockwave_1/model" Guid="3a047670-54a7-54a0-ae0e-5dcdecfd7ada" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_shockwave_1/atlas" Guid="25fe3797-eddd-5d40-8368-cc439020b2a5" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.2" Guid="af38b344-658d-5d27-851b-ab37f57f74df" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.22" Guid="af38b344-658d-5d27-851b-ab37f57f74df" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="71ece0cc-c6ed-5fb5-b7b3-2d6eb99c428c" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -771,7 +771,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="2011891f-8f96-5c34-8db5-128d551263fd" />
         <Parameter Name="ModelName" Type="string" Value="Towers/battle_medic_1/model" Guid="b71175ea-3655-5769-9032-867b0b24870e" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_medic_1/atlas" Guid="ce447fd5-ca55-585f-b3ea-56e59ce0044c" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.51" Guid="d35017f2-6f82-5d05-8867-06e00fbb3957" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.5" Guid="d35017f2-6f82-5d05-8867-06e00fbb3957" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="b317f23d-76c9-5dca-a543-e29179c49b81" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -808,6 +808,111 @@
         <Parameter Name="TextureOverride" Type="string" Value="Towers/battle_trap_1/atlas" Guid="ad10ba83-c4ca-5f29-9f2d-62e3bf7ef234" />
         <Parameter Name="BoundingSphereRadius" Type="float" Value="2.85" Guid="95ea23a5-4dfb-5d68-9701-db31a54ecb63" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="086f4ccb-2189-55b5-9f03-84b6f946142b" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_1" Guid="2fcceb05-56dc-5922-a51c-ae1a9c8220b4">
+      <MemberComponentTemplate Name="Unit" Guid="7e96daab-d5de-5545-a4ae-9ab06557202c" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="58303745-facd-56d7-9ef5-508f9b083814" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="f4ea5853-2e5a-5699-9d33-34068e129396" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="1618b2cf-897e-52d4-b688-42e035cb8f06" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="0b7abc99-2f8a-51e1-8a6e-8036ed03e955" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_1" Guid="e49a7c69-8523-5507-b1fb-11418524d08d" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="e6672a34-096d-5e67-a7c8-c44faf0a76ea" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="b39fb63b-3318-5baf-9898-363a673b2cfb" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="870aac57-ac37-5e65-a8d7-3bb4299b1d6b" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="69ba7a39-bfe4-5588-bbf3-ba5a5e0d7375" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="6bc44e75-71bc-5bcb-b773-e0c56d14fb61" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="c36cb535-4e2e-5871-a063-8b455cddcf41" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="b268d8e8-03c5-577e-966e-a7d63b4de32d" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="472d4545-726b-56d3-b5cb-d56649bc9ae3" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="9f7b52bd-7065-51d8-9cbd-2e760a7aa5d9" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f3d9a1d1-e00d-5537-97f9-e2377818ab38" />
+        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="ca47a57c-c28c-5acb-b617-be1f1c38e350" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="d33b1cb9-9adb-59b1-922c-dd87d802d592" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="de066291-33a1-5e9f-970f-d078f56b71a9" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="164832ec-ad0b-5f70-8685-012bf9fc7245" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="f8b0f260-1004-5430-b0c0-d89eac456193" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="1b0f036e-2a98-5a2e-bebf-ab2097ea8c70" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="e13cdd39-b999-5f66-88dd-c6716c510d22" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="24c14342-432c-5549-96c5-401ae95a478c" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_1/model" Guid="dc69c5b2-93f6-59df-909a-734eb3382880" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_1/atlas" Guid="e2e478ca-ee55-5368-82ef-5b3246cf7148" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.94" Guid="f2f171a1-654b-54da-910c-a519d1f20b90" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7f7a2197-ffac-5e31-b40f-fb095c147b70" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_2" Guid="a765096c-1a3a-5d57-85d6-02102ae40dfc">
+      <MemberComponentTemplate Name="Unit" Guid="cc9f6827-555b-5cb1-b43a-218a9dc59ae8" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="d3c9ba94-3779-5d39-b871-83f6fdb6a9af" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="ddfdce87-aba4-5996-aa65-64da3886d771" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="6fbf4b67-13ff-5d25-8484-32d3c0c9cd35" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="f819426f-74fa-5abe-aaa7-6e59c6fe768b" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_2" Guid="17b8bb57-e696-5834-8e75-ee1f2e56659c" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="9461c3f6-0384-529e-8ba1-bc076c46c607" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="25e86505-14cc-58f3-875a-85971d1e5739" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="f3210106-bc76-54f8-9369-0b19cf34c9d5" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="433f5200-19d9-561e-8362-49dfd2313ae9" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="81bf2e3e-3bb1-50d8-a808-eb56cacb065b" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="6d6e2a39-99d0-508f-9392-139d42d31b25" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="d5777442-31a5-53eb-b66b-a038806f66a5" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="d0b822ef-c7f9-5881-9707-5e5872467372" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="5dc35bcb-7d5c-59d9-8d51-77bd0e22b8d3" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ed7db8d3-1f4c-5651-91a0-987da719b822" />
+        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="386c6753-7d54-559c-91dc-fb844ebc89cf" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="dcd7b358-d41a-5de0-92e3-e21d63ca6d20" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="d6030237-11db-5c30-b81e-8ae19800adb6" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="16af69c3-9192-5dba-a222-e634a17044a8" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="d74497f0-22e9-5123-bcad-4a0aa3dde236" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="724c9dd4-d862-51c5-85ba-3933fd0f4bf7" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="86a7f057-379c-500b-a246-8bbe6a36b8a5" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="5ae2e7fc-e55e-502c-ac40-1f7aaecd30cc" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_2/model" Guid="b843f194-24dc-59a6-9ffb-d9e81cfb79df" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_2/atlas" Guid="a366ddd8-0e61-5cc6-ac91-bda52c2af746" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.08" Guid="80adda2d-09e8-50ce-baa7-1651342b1a71" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="20d4c00e-1574-5de9-847c-3c25bf15959d" />
+      </MemberComponentTemplate>
+    </EntityTemplate>
+    <EntityTemplate Name="MDTower_gatling_3" Guid="8de9d551-ea8c-5666-9054-0dde065ec076">
+      <MemberComponentTemplate Name="Unit" Guid="70174c78-19de-56d7-b072-6daada190a0f" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDUnit" Guid="61eff726-2f11-5b69-899e-8c9cd616e09a" />
+        <Parameter Name="LoadOrder" Type="int" Value="100" Guid="758618e5-5419-5c9a-91b3-71ef5be444c5" />
+        <Parameter Name="Kind" Type="string" Value="Turret" Guid="01e83665-ceae-5272-9b93-a9784fe7c96b" />
+        <Parameter Name="TurretVariant" Type="int" Value="1" Guid="4a7c38b7-9186-5497-84b0-0a99fb2596dd" />
+        <Parameter Name="TowerId" Type="string" Value="gatling_3" Guid="cd2d7997-af17-5d2b-995c-7bb425a5ca10" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Body" Guid="01a4e7ea-61c5-5ec5-bb8a-1f39c6c2ae1a" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="21c1281b-818d-5ebb-b5e7-ae94fb667d9d" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="dfa20506-d595-5988-b93b-234c568acf67" />
+        <Parameter Name="Mass" Type="float" Value="1500" Guid="0ccf5428-8137-520d-96b1-f0a75dd05e7d" />
+        <Parameter Name="Density" Type="float" Value="5" Guid="772fc1da-c1c7-539b-be27-cfb55e3b2057" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="b5526813-a1c4-51e3-a78f-e317b38dd163" />
+        <Parameter Name="WaterSwayAngle" Type="float" Value="0" Guid="ce45ad46-8647-5f77-9f9c-b8d6415e7e1a" />
+        <Parameter Name="WaterTurnSpeed" Type="float" Value="0" Guid="252e99d4-3921-5824-bbd7-0b7c3fe64230" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Damage" Guid="41f3659c-71a1-5cb3-94c7-5148d0fececd" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="29d3cc4c-4e3e-5111-9e31-e33772402ba6" />
+        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="5bb35f25-b211-5806-8606-f50409af1c4a" />
+        <Parameter Name="FallResilience" Type="float" Value="15" Guid="1b7b2207-2027-5b18-b400-f47b78ff7464" />
+        <Parameter Name="FireResilience" Type="float" Value="100" Guid="fb21997e-cd7b-5486-b18a-28169fb0dbc8" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="f43e4110-e459-5740-9893-f1a8610ad16b" InheritanceParent="65268743-4076-4ee3-aefe-f02a54d16b36">
+        <Parameter Name="AutoDespawn" Type="bool" Value="False" Guid="b8d5d99a-2d8b-58b9-8386-c397623b3d7f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="OnFire" Guid="0af7f30d-fb49-57bd-a43e-d6cd1f8df353" InheritanceParent="93590d78-63b9-4cd6-bc41-e66864cbb050" />
+      <MemberComponentTemplate Name="Model" Guid="8b01df4d-313a-5549-840b-0ec0e1001afb" InheritanceParent="cc5a4e72-0df9-4acf-a42e-ecb5a2a7baf4">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="ac30b29c-874f-5f1a-b34e-763fedbc17d7" />
+        <Parameter Name="ModelName" Type="string" Value="Towers/gatling_3/model" Guid="c5a233db-f23e-518e-9c08-3452fe98602a" />
+        <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_3/atlas" Guid="8bd1d2af-b2f2-5101-92aa-9827ab89f3d6" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.72" Guid="952cdf2c-2ff3-53a8-b049-894cf37c1044" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="020fe038-6168-567e-9109-e442d1fa64d9" />
       </MemberComponentTemplate>
     </EntityTemplate>
     <EntityTemplate Name="MDRobot05" Guid="da1710ac-116b-5f7e-bd47-7a4e51406c0e" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">

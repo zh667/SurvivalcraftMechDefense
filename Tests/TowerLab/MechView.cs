@@ -3,8 +3,9 @@ using Game;
 
 namespace TowerLab;
 
-// lab --mode mech-view: Mercury seen the way view-<id> sees a tower, so the same shots from two packages make a before /
-// after with identical cameras (0.9.0 round 13: our polygon Mercury against the shipped model). Deployed from its item,
+// lab --mode mech-view[-nemesis|-regulus]: a mech (Mercury by default) seen the way view-<id> sees a tower, so the same shots
+// from two packages make a before / after with identical cameras (0.9.0 round 13: our polygon Mercury against the shipped
+// model; round 14: the polygon 复仇女神 and 轩辕十四, plus 轩辕十四's glide poses). Deployed from its item,
 // then held at one spot facing -Z (its right is +X) in a forced pose, no clouds, the player moved out of the picture:
 // around at mech height, top, player height, close-ups of the head, joints and guns, key frames of the clips that move the
 // most (front and back), night, tiny camera steps near and far (flicker), fog and a torch-lit cave. Screenshots v_*.
@@ -13,13 +14,13 @@ public partial class Lab {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(5))yield return true;   // the gallery's shells land first
         SettingsManager.SkyRenderingMode=SkyRenderingMode.NoClouds;
         var r=new Dictionary<string,object>();results["mechView"]=r;var views=new List<string>();
-        var pl=player.ComponentPlayer;var inv=pl.ComponentMiner.Inventory;var d=MDMechLibrary.Def;
+        var type=mode.StartsWith("mech-view-")?MDMechType.All.FirstOrDefault(t=>t.Id.ToLowerInvariant()==mode[10..])??throw new Exception("no mech "+mode[10..]):MDMechType.Mercury;
+        var pl=player.ComponentPlayer;var inv=pl.ComponentMiner.Inventory;var d=type.Def;r["type"]=type.Id;
         pl.ComponentBody.Position=Home;pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
-        var block=(MDDeploymentBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()];
-        int item=Terrain.MakeBlockValue(block.BlockIndex,0,1);inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,item,1);inv.ActiveSlotIndex=0;
+        inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(1,0,type),1);inv.ActiveSlotIndex=0;
         var foot=pl.ComponentBody.Position;pl.ComponentMiner.Use(new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
         var u=GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null);
-        if(u==null)throw new Exception("Mercury did not deploy");
+        if(u==null||u.Mech.Type!=type)throw new Exception(type.Name+" did not deploy");
         var m=u.Mech;var mm=u.Entity.FindComponent<ComponentMDMechModel>(true);
         while(Wait(1.5))yield return true;
         var at=u.Body.Position;pl.ComponentBody.Position=Home+new Vector3(0,0,40);pl.ComponentBody.Velocity=Vector3.Zero;
@@ -41,8 +42,8 @@ public partial class Lab {
         foreach(var x in View("close_back",P(-.9f,3.8f,3),P(0,3.2f,.4f)))yield return x;
         foreach(var x in View("close_hip_knee_left",P(-2.6f,1.7f,-1.9f),P(-.6f,1.4f,0)))yield return x;
         foreach(var x in View("close_feet_front",P(.9f,.8f,-2.8f),P(0,.3f,0)))yield return x;
-        foreach(var (name,f) in new[]{("walk_forward",.25f),("walk_forward",.75f),("dash_forward",.5f),("jump",.5f),("hit",.5f),("melee",.5f),("death",1f),("cannon_deploy_fire",1f),("cannon_fire_loop",.5f),("cannon_retract",.5f)}) {
-            if(d.Clip(name)==null)continue;clip=name;frac=f;
+        foreach(var (name,f) in new[]{("walk_forward",.25f),("walk_forward",.75f),("dash_forward",.5f),("jump",.5f),("hit",.5f),("melee",.5f),("death",1f),("cannon_deploy_fire",1f),("cannon_fire_loop",.5f),("cannon_retract",.5f),("extra_62_forward",.5f),("extra_66_forward",.5f)}) {   // extra_*: 轩辕十四's glide / hover
+            if(!d.clips.Any(c=>c.name==name))continue;clip=name;frac=f;   // Clip() throws on a name the mech lacks
             foreach(var x in View($"clip_{name}_{(int)(f*100):000}_front",focus+new Vector3(.7f,.15f,-1)*4.6f,focus))yield return x;
             foreach(var x in View($"clip_{name}_{(int)(f*100):000}_back",focus+new Vector3(.8f,.35f,1)*4.6f,focus))yield return x;
         }

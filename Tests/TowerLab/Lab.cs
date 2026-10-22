@@ -10,7 +10,7 @@ namespace TowerLab;
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
 // Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four);
-// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "robots" (Robots.cs, 0.9.0).
+// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "mech-view" (MechView.cs, before / after shots of Mercury); "robots" (Robots.cs, 0.9.0).
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -153,6 +153,7 @@ public partial class Lab:ModLoader {
         }
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
+        if(mode=="mech-view")foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
         if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {
             var (pid,pu,pat)=placed[0];var focus=pat+Vector3.UnitY*1.4f;var eye=focus+new Vector3(.75f,.45f,-1f)*3.6f;

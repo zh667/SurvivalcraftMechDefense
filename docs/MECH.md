@@ -166,6 +166,15 @@ turret, armL / armR (pitch to the aim), cannon joints (the cannon layer), grenad
 `cockpit.firstPersonEye`; the third-person camera scales with the mech's height. Assets: tools/build_hero_assets.py (helper agent,
 E:/projects/dguns-mech-model/v9_heroes); original data: docs/HEROES_ORIGINAL.md.
 
+Round 14 (2026-10-22/23): both heroes ship our own polygon models from `E:/projects/dguns-mech-model/v10_poly/nemesis|regulus/`,
+made like the polygon Mercury (outline within 3 % of the original, own details, no markings or text, colours measured from the
+original texture per part, node tree / clips / muzzles unchanged): 复仇女神 5,748 triangles, 轩辕十四 5,926, one 2048 texture each.
+轩辕十四's first texture read as one flat light grey; it was repainted with the original's dark-frame / white-plate layout (per joint
+group, mean brightness within 12 % and white-plate share within 10 points of the original). `build_hero_assets.py` puts their
+model.glb and icon over the V9 export for the heroes in `POLY_HEROES` (node tree checked; `--poly-only`, `--no-poly`).
+In game (isolated runtime, before / after the same cameras: `lab mech-view-nemesis|regulus`, `robots-heroes`, `icons`): all passed,
+flicker unchanged; shots in `local/claude-work/r14/nemesis|regulus/`. The user, 2026-10-22: "和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
+
 ## Not done
 
 - The original's projectile and effect models (KN_BULET, KN_MISSILE, KN_BOMB, KN_JET0 in `local/dguns/unit-library`):

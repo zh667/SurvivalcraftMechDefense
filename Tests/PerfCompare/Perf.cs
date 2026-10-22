@@ -80,3 +80,11 @@ public class Perf:ModLoader {
 }
 [HarmonyPatch(typeof(FileAssociationManager),nameof(FileAssociationManager.Initialize))]
 public static class NoFileAssociation { public static bool Prefix()=>false; }
+// The test game runs while the user keeps working. With no menu open the engine sets the mouse to raw mode in
+// Engine.Input.Mouse.BeforeFrame and again in AfterFrame whenever its window counts as active, which it does even behind other
+// windows; raw mode clips the system cursor to the game window (measured: clipped in 7 of 133 samples over a 27 s run). The
+// tests never read the mouse, so both places see a visible mouse and keep the cursor normal.
+[HarmonyPatch(typeof(Engine.Input.Mouse),"BeforeFrame")]
+public static class KeepCursorFree { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }
+[HarmonyPatch(typeof(Engine.Input.Mouse),"AfterFrame")]
+public static class KeepCursorFreeAfter { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }

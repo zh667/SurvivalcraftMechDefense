@@ -2,6 +2,7 @@ using Engine;
 using Game;
 using GameEntitySystem;
 using System.Text.Json;
+using HarmonyLib;
 
 namespace MechDefenseVerification;
 
@@ -20,7 +21,7 @@ public class Smoke : ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData data;static string mode="new";
     static Vector3 origin;static ComponentCreature wolf;static float wolfMin=1;static int towerShots;
     static readonly List<string> checks=[];
-    public override void __ModInitialize(){SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
+    public override void __ModInitialize(){new Harmony("local.smoke").PatchAll(typeof(Smoke).Assembly);SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
     static string Output=>Path.Combine(AppContext.BaseDirectory,"smoke-result.json");
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
     static void Check(bool ok,string description){if(!ok)throw new Exception("FAILED: "+description);checks.Add(description);}
@@ -129,3 +130,12 @@ public class Smoke : ModLoader {
         Check(MDCombat.IsEnemy(gun,wolf.ComponentBody)&&!MDCombat.IsEnemy(gun,p.ComponentBody),"towers treat the wolf as hostile and the player as friendly");
     }
 }
+
+// The test game runs while the user keeps working. With no menu open the engine sets the mouse to raw mode in
+// Engine.Input.Mouse.BeforeFrame and again in AfterFrame whenever its window counts as active, which it does even behind other
+// windows; raw mode clips the system cursor to the game window (measured: clipped in 7 of 133 samples over a 27 s run). The
+// tests never read the mouse, so both places see a visible mouse and keep the cursor normal.
+[HarmonyPatch(typeof(Engine.Input.Mouse),"BeforeFrame")]
+public static class KeepCursorFree { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }
+[HarmonyPatch(typeof(Engine.Input.Mouse),"AfterFrame")]
+public static class KeepCursorFreeAfter { public static void Prefix()=>Engine.Input.Mouse.IsMouseVisible=true; }

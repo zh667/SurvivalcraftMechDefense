@@ -45,6 +45,15 @@ inventory icons miss chunks). Plans confirmed the same day (balance numbers, her
   Regression on that package (job pz2-official-poly18-check-20261022-a): every tower's model, atlas (pixel-identical), slot
   picture and towers.json entry equal those of the preview package checked in game; lab all / icons / mech / robots-gallery /
   robots-summons / robots-items / special / combat and smoke 0.5.0 -> 0.9.0 pass.
+- Polygon Mercury (user 2026-10-22: "可以把现在三台机甲，我们也自己建模一下", Mercury first): v10 by a helper agent
+  (E:/projects/dguns-mech-model/v10_poly/mercury, 5,270 triangles, node tree identical, per-clip interpenetration no deeper than
+  the original, 0 triangles in common with it). In game first through tools/stage_mech_preview.py and the new lab mode mech-view
+  (same cameras before / after, local/claude-work/r13/mercury/): lab mech passes on both, flicker equal; visibly lighter and bluer,
+  the bayonet became a long barrel. User: "这一轮炮塔和水星都可以" -> shipped as it is: tools/build_mech_assets.py swaps it in
+  (POLY; --poly-only). Package 17,247,141 bytes; its Mercury files equal the preview's; lab mech / robots-heroes /
+  robots-gallery / robots-summons / robots-items / all / icons / special / combat and smoke 0.5.0 -> 0.9.0 pass (job
+  mz1-mercury-official-20261022-a). 复仇女神 and 轩辕十四 are being remodelled the same way (dguns round 14, helper agents).
+  PR #5: the user said not to merge yet (2026-10-22).
 - Final regression on the package (jobs md-r5-final-reg-1, md-r5-smoke-2): full `lab --mode robots` passes (223 shots; all parts
   incl. heroes, balance, settings, hud, escorts, raid, boss, kits); special and mech pass. Smoke 0.5.0 -> 0.9.0 first failed one
   stale check (it expected towers + Mercury in the creative inventory; the hero mechs add two): check updated, passes. The failed

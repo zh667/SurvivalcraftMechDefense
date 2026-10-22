@@ -18,6 +18,11 @@ the user's installed mods (below). Facts about the original game, with their sou
   Skinning in the original is rigid (one joint per vertex), so this is lossless except 3 triangles at the head-sensor seam
   (joints 03/04) that the skinned original stretches by up to 5 cm. The texture is embedded as lossless PNG: the engine builds
   its mipmaps and samples it linearly. A `TextureOverride` would be point-sampled (SubsystemModelsRenderer), so there is none.
+- Since 0.9.0 (round 13 of dguns-mech-model; user 2026-10-22: "这一轮炮塔和水星都可以", then chose to ship it as it is) the
+  shipped `model.glb`, `icon.bin` and `icon.png` are our own polygon Mercury from `E:/projects/dguns-mech-model/v10_poly/mercury/`
+  (5,270 triangles, one 2048 texture painted from colours measured on the original, outline within 2.3 % of it, 0 triangles in
+  common). The V8 export above still makes mech.json, clips.bin and the sounds; `use_poly` checks that the polygon model's node
+  tree is the V8 export's and copies the three files over (`--poly-only` does just that, `--no-poly` ships V8).
 - `clips.bin` + `mech.json`: per clip, per sample (every 2 ticks = 1/30 s, the last one at the clip's end), per joint the
   local deformation relative to the parent's (quaternion, translation, uniform scale). Game frame: Y up, faces −Z, right +X.
   `mech.json` also has the muzzles the tool finds on the model: the rifle tip (14), the missile box front next to the

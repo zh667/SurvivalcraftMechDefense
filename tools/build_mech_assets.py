@@ -1,6 +1,12 @@
 """Build the Mercury mech assets from the V8 asset of E:/projects/dguns-mech-model (Destroy Gunners Mercury, x4 scale).
 
-python tools/build_mech_assets.py [--source <mercury_V8.blend>] [--blender <blender.exe>]
+python tools/build_mech_assets.py [--source <mercury_V8.blend>] [--blender <blender.exe>] [--no-poly]
+python tools/build_mech_assets.py --poly-only      (only swap our polygon model into an existing output)
+
+Since 0.9.0 (user, 2026-10-22: "照现在换进正式包") the shipped model is our own polygon Mercury (POLY, round 13 of
+E:/projects/dguns-mech-model, 5,270 triangles): the V8 export still makes mech.json, clips.bin and the sounds, then
+model.glb, icon.bin and icon.png are replaced by POLY's after checking that its node tree is the V8 export's (names,
+children, translations, rotations, scales), so every clip, muzzle and the cockpit keep working. --no-poly ships V8.
 
 Output: Mod/Assets/Imported/Mercury/ (ignored: extracted game data, rebuilt by this tool, packaged by package.py)
   model.glb   rigid parts, one node per joint at its rest pivot, the part's mesh in node space; the texture is embedded
@@ -23,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'Mod/Assets/Imported/Mercury'
 SOURCE = Path(r'E:\projects\dguns-mech-model\v8_assets\mercury_V8.blend')
 TEXTURE = Path(r'E:\projects\dguns-mech-model\v8_assets\textures\mercury_clean_2048_sharp.png')
+POLY = Path(r'E:\projects\dguns-mech-model\v10_poly\mercury')   # model.glb + game/icon.bin + game/icon.png
 CONTRACT = 'mercury_V8_contract.json'           # next to the .blend: measured planted-foot speeds
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 STEP = 2                                        # ticks between samples
@@ -216,10 +223,25 @@ def write_icon(np, path, ex):
     path.write_bytes(struct.pack('<ii', len(Vv), len(I)) + Vv.tobytes() + I.tobytes()); return len(P)
 
 
+def glb_nodes(b):
+    jl, = struct.unpack_from('<I', b, 12); js = json.loads(b[20:20 + jl])
+    r = lambda v: None if v is None else tuple(round(float(x), 5) for x in v)
+    return [(n['name'], tuple(n.get('children', [])), r(n.get('translation')), r(n.get('rotation')), r(n.get('scale'))) for n in js['nodes']]
+
+
+def use_poly(poly=POLY):
+    """Ship our polygon model over the V8 export in OUT (model.glb, icon.bin, icon.png)."""
+    import hashlib, shutil
+    new = (poly / 'model.glb').read_bytes(); a, b = glb_nodes((OUT / 'model.glb').read_bytes()), glb_nodes(new)
+    if a != b: sys.exit(f'polygon model: node tree differs from the V8 export {[(x, y) for x, y in zip(a, b) if x != y][:3]} ({len(a)} vs {len(b)})')
+    for src, dst in [('model.glb', 'model.glb'), ('game/icon.bin', 'icon.bin'), ('game/icon.png', 'icon.png')]:
+        shutil.copyfile(poly / src, OUT / dst); print(f'polygon {dst:10} {(OUT / dst).stat().st_size:>9,} B  sha256 {hashlib.sha256((OUT / dst).read_bytes()).hexdigest()[:16]}  <- {poly / src}')
+
+
 def main():
     import argparse, hashlib, io, shutil, tempfile
     import numpy as np
-    ap = argparse.ArgumentParser(); ap.add_argument('--source', default=str(SOURCE)); ap.add_argument('--texture', default=str(TEXTURE)); ap.add_argument('--blender', default=str(BLENDER)); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument('--source', default=str(SOURCE)); ap.add_argument('--texture', default=str(TEXTURE)); ap.add_argument('--blender', default=str(BLENDER)); ap.add_argument('--no-poly', action='store_true'); a = ap.parse_args()
     work = Path(tempfile.mkdtemp(prefix='mech_assets_'))
     r = subprocess.run([a.blender, '-b', a.source, '--python', __file__, '--', '--export', str(work)], capture_output=True, text=True, encoding='utf-8', errors='replace')
     if 'EXPORT_DONE' not in r.stdout: print(r.stdout[-3000:], r.stderr[-3000:]); sys.exit('Blender export failed')
@@ -252,8 +274,10 @@ def main():
     for c in report: print(f"check {c['clip']:20} frame {c['frame']:4}  max {c['max_error_m'] * 1000:7.3f} mm  p99 {c['p99_m'] * 1000:6.3f} mm")
     worst = max(c['p99_m'] for c in report); shutil.rmtree(work, ignore_errors=True)
     if worst > 1e-3: sys.exit('re-posed model does not match Blender (p99 > 1 mm)')
+    if not a.no_poly: use_poly()
 
 
 if __name__ == '__main__':
     if '--export' in sys.argv: blender_export(sys.argv[sys.argv.index('--export') + 1])
+    elif '--poly-only' in sys.argv: use_poly()
     else: main()

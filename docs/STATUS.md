@@ -1,6 +1,26 @@
-# Status — 2026-10-22
+# Status — 2026-10-23
 
-## Current work: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
+## Current work: new towers (branch feat/new-towers on top of feat/progression-robots, PR #6 open, not merged)
+
+User 2026-10-22: rebuild every tower (and level) of a 2D tower-defence game ourselves, numbers from our towers and the mods'
+creatures; extract its special weapons; then "可以直接放到游戏里面，打一个包，和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
+Plan confirmed the same day (9 types x 3 levels, polygon style of the 19 towers, sprite-camera outline overlap >= 0.85, <= 6,000
+triangles + one 1024 atlas, crafting upgrades, the original sounds, 转轮机枪塔 first); base changed to 2x2 blocks after the sprite
+proportions ruled out a 1-block base. Details: docs/TOWERS.md "新防御塔".
+- 转轮机枪塔 Ⅰ-Ⅲ (data 32-34, commit fb732d7): models from E:/projects/sog-tower-model/poly_v1 (3,748 / 4,232 / 5,704 triangles,
+  2.37 / 2.57 / 2.79 m, overlap with the sprites >= 0.868), "polyOnly" tower build, spinning barrel clusters, original fire / hit
+  sounds (mono), recipes in the gun towers' tier chain, 32 / 54 / 96 damage per second, range 28 / 32 / 36, health 800 / 1000 / 1300.
+- Reference pack (sprites per level, stats, the three special weapons: space laser, EMP bomb, carpet bombing):
+  E:/projects/sog-tower-model/reference/ (not shipped). The special weapons are only extracted, not in the mod.
+- The polygon 复仇女神 (c098e73) and 轩辕十四 (08068a5) are on feat/progression-robots, merged in here.
+- Package (built from this branch, everything above + 0.9.0): dist/MechDefense-0.9.0.scmod, 18,751,012 bytes, 260 files,
+  SHA-256 3b949e9a...0d6224e; no 终末地 / 毁灭枪手 / 原作 or the source game's name in shipped text.
+- Verification (isolated runtime, PC): view-gatling_1/2/3 (spin rate 1.0 while firing, the barrels turn ~2.7 rad between two
+  close shots), all (22 towers load), robots-items (33 recipes), icons; mech-view-nemesis / -regulus before / after,
+  robots-heroes; final regression on the package: mech, robots-heroes, robots-gallery, robots-summons, robots-items, all, icons,
+  special, combat, view-gatling_3, old save 0.5.0 -> 0.9.0, all passed. Not verified: Android, a real survival world.
+
+## Previous: 0.9.0 progression (branch feat/progression-robots, PR #5 open, not merged)
 
 Round 5 (user 2026-10-21: enemies a bit too strong early, Mercury too fragile but "不要提升太多"; no damage to the pilot in the
 mech; medic tower heals players and mechs; new hero mechs 复仇女神 / 轩辕十四 (水星 < 复仇女神 < 轩辕十四); fewer tower triangles;

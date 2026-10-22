@@ -1,18 +1,21 @@
-"""Preview package for one tower model built outside the block pipeline (0.9.0 round 5: the polygon 重锤迫击炮).
+"""Preview package for tower models built outside the cube pipeline (the polygon towers, 0.9.0).
 
-python tools/stage_tower_preview.py <id> <model.glb> <atlas.png> [--base dist/MechDefense-0.9.0.scmod] [--out PATH]
-  -> local/claude-work/preview/<id>/ (staged Towers folder) and dist/MechDefense-<version>-preview-<id>.scmod
+python tools/stage_tower_preview.py <id> <model.glb> <atlas.png> [<id> <model.glb> <atlas.png> ...] [--base PKG] [--out PATH]
+python tools/stage_tower_preview.py --poly <id>[,<id>...] [--base PKG] [--out PATH]
+    (--poly takes E:/projects/endfield-turret-model/poly_v1/<id>/model.glb and atlas.png)
+  -> local/claude-work/preview/<id>/ (staged Towers folder per tower) and dist/MechDefense-<version>-preview-<id or poly>.scmod
 
-Never touches Mod/Assets. Stages towers.json (this tower's bounds and radius from the new model; cells unchanged), the model,
+Never touches Mod/Assets. Per tower it stages towers.json (bounds and radius from the new model; cells unchanged), the model,
 the atlas, icon.bin (the dropped item: every triangle, unit size, the old icon's face shade) and icon.png (the slot picture,
 tools/render_tower_icons.py --towers), then copies the base package with those entries replaced and asset-manifest.json
-updated. The model must keep the tower's node names, parents and translations (checked against the base package).
+updated. Each model must keep the tower's node names, parents and translations (checked against the base package).
 """
 from pathlib import Path
 import hashlib, json, shutil, struct, subprocess, sys, zipfile
 import numpy as np
 
 root = Path(__file__).resolve().parents[1]
+POLY = Path('E:/projects/endfield-turret-model/poly_v1')
 sys.path.insert(0, str(root / 'tools'))
 from render_tower_icons import load_glb, shade_of   # noqa: E402  (plain numpy helpers)
 
@@ -31,22 +34,14 @@ def write_icon(path, P, N, U):
     Path(path).write_bytes(struct.pack('<ii', len(V), len(I)) + V.tobytes() + I.tobytes())
 
 
-def main():
-    args = sys.argv[1:]; opts = {}
-    while '--base' in args or '--out' in args:
-        k = next(a for a in args if a in ('--base', '--out')); i = args.index(k); opts[k] = args[i + 1]; del args[i:i + 2]
-    tid, glb, atlas = args[0], Path(args[1]), Path(args[2])
-    version = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
-    base = root / opts.get('--base', f'dist/MechDefense-{version}.scmod')
-    out = root / opts.get('--out', f'dist/MechDefense-{version}-preview-{tid}.scmod')
-    stage = root / 'local/claude-work/preview' / tid; towers = stage / 'Towers'
-    if stage.exists(): shutil.rmtree(stage)
+def stage(zi, runtime, tid, glb, atlas):
+    """Stage one tower; returns its new runtime entry and {package path: bytes}."""
+    st = root / 'local/claude-work/preview' / tid; towers = st / 'Towers'
+    if st.exists(): shutil.rmtree(st)
     (towers / tid).mkdir(parents=True)
-    zi = zipfile.ZipFile(base)
-    runtime = json.loads(zi.read('Assets/Towers/towers.json'))
-    entry = next(t for t in runtime['towers'] if t['id'] == tid)
-    new_glb = glb.read_bytes(); old_nodes = nodes_of(zi.read(f'Assets/Towers/{tid}/model.glb'))
-    assert nodes_of(new_glb) == old_nodes, f'node names / translations / children differ: {nodes_of(new_glb)} vs {old_nodes}'
+    entry = dict(next(t for t in runtime['towers'] if t['id'] == tid))
+    new_glb = Path(glb).read_bytes(); old_nodes = nodes_of(zi.read(f'Assets/Towers/{tid}/model.glb'))
+    assert nodes_of(new_glb) == old_nodes, f'{tid}: node names / translations / children differ: {nodes_of(new_glb)} vs {old_nodes}'
     shutil.copy2(glb, towers / tid / 'model.glb'); shutil.copy2(atlas, towers / tid / 'atlas.png')
     P, N, U = load_glb(towers / tid / 'model.glb')
     q = P.reshape(-1, 3); lo, hi = q.min(0), q.max(0)
@@ -54,15 +49,31 @@ def main():
     entry['radius'] = round(float(np.linalg.norm(q, axis=1).max()) + .1, 3)
     grow = max(max(o - n for o, n in zip(old[0], entry['bounds'][0])), max(n - o for o, n in zip(old[1], entry['bounds'][1])))
     print(f'{tid}: {len(P)} triangles, bounds {old} -> {entry["bounds"]} (grows {grow:.3f} m), radius {entry["radius"]}')
-    if grow > .05: print('WARNING: the model is more than 5 cm outside the old bounds; cells', entry['cells'], 'were kept')
+    if grow > .05: print(f'WARNING {tid}: the model is more than 5 cm outside the old bounds; cells', entry['cells'], 'were kept')
     (towers / 'towers.json').write_text(json.dumps({**runtime, 'towers': [entry]}, ensure_ascii=False, indent=1), encoding='utf-8')
     write_icon(towers / tid / 'icon.bin', P, N, U)
     r = subprocess.run([sys.executable, str(root / 'tools/render_tower_icons.py'), '--towers', str(towers), tid],
                        capture_output=True, text=True, encoding='utf-8', errors='replace', creationflags=0x08000000)
-    print(r.stdout[-600:]); assert r.returncode == 0 and (towers / tid / 'icon.png').exists(), r.stderr[-1500:]
-    full = json.loads(zi.read('Assets/Towers/towers.json'))
-    full['towers'] = [entry if t['id'] == tid else t for t in full['towers']]
-    new = {f'Assets/Towers/{tid}/{f}': (towers / tid / f).read_bytes() for f in ('model.glb', 'atlas.png', 'icon.bin', 'icon.png')}
+    assert r.returncode == 0 and (towers / tid / 'icon.png').exists(), r.stderr[-1500:]
+    return entry, {f'Assets/Towers/{tid}/{f}': (towers / tid / f).read_bytes() for f in ('model.glb', 'atlas.png', 'icon.bin', 'icon.png')}
+
+
+def main():
+    args = sys.argv[1:]; opts = {}
+    for k in ('--base', '--out', '--poly'):
+        if k in args: i = args.index(k); opts[k] = args[i + 1]; del args[i:i + 2]
+    jobs = [(tid, POLY / tid / 'model.glb', POLY / tid / 'atlas.png') for tid in opts['--poly'].split(',')] if '--poly' in opts else \
+        [(args[i], Path(args[i + 1]), Path(args[i + 2])) for i in range(0, len(args), 3)]
+    assert jobs and all(len(j) == 3 for j in jobs), __doc__
+    version = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
+    base = root / opts.get('--base', f'dist/MechDefense-{version}.scmod')
+    name = jobs[0][0] if len(jobs) == 1 else 'poly'
+    out = root / opts.get('--out', f'dist/MechDefense-{version}-preview-{name}.scmod')
+    zi = zipfile.ZipFile(base); runtime = json.loads(zi.read('Assets/Towers/towers.json'))
+    new = {}; entries = {}
+    for tid, glb, atlas in jobs:
+        entries[tid], files = stage(zi, runtime, tid, glb, atlas); new.update(files)
+    full = dict(runtime); full['towers'] = [entries.get(t['id'], t) for t in runtime['towers']]
     new['Assets/Towers/towers.json'] = json.dumps(full, ensure_ascii=False, indent=1).encode('utf-8')
     man = json.loads(zi.read('asset-manifest.json'))
     for m in man:
@@ -73,7 +84,7 @@ def main():
             if info.filename in new: zo.writestr(info.filename, new[info.filename])
             elif info.filename == 'asset-manifest.json': zo.writestr(info.filename, json.dumps(man, indent=2))
             else: zo.writestr(info, zi.read(info.filename))
-    print('preview', out, out.stat().st_size, hashlib.sha256(out.read_bytes()).hexdigest())
+    print('preview', out, out.stat().st_size, hashlib.sha256(out.read_bytes()).hexdigest(), 'towers', [j[0] for j in jobs])
 
 
 if __name__ == '__main__':

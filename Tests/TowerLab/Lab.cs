@@ -401,6 +401,7 @@ public partial class Lab:ModLoader {
             }
             {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start
                 // time, so step the start time back until the layer reaches the ground around the tower.
+                for(double s0=Time.RealTime;Time.RealTime-s0<4;){Freeze();yield return true;}   // the shot's explosion and smoke fade first
                 var wx=GameManager.Project.FindSubsystem<SubsystemWeather>(true);var sky=GameManager.Project.FindSubsystem<SubsystemSky>(true);
                 gi.WorldSettings.AreWeatherEffectsEnabled=true;wx.m_precipitationStartTime=wx.m_precipitationEndTime=double.MaxValue;
                 double fogNow=Math.Floor(gi.TotalElapsedGameTime);string fogInfo="none";

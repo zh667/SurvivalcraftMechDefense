@@ -36,7 +36,7 @@ V9 = Path(r'E:\projects\dguns-mech-model\v9_heroes')
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 STEP = 2
 POLY = Path(r'E:\projects\dguns-mech-model\v10_poly')
-POLY_HEROES = ('nemesis',)   # shipped polygon models (the user, 2026-10-22: put them in the package with the others)
+POLY_HEROES = ('nemesis', 'regulus')   # shipped polygon models (the user, 2026-10-22: put them in the package with the others)
 # Joint prefixes per job. Mercury for comparison: turret 02_, arms 05_/10_, rifle 14_, cannon 15_-17_, missile 18_ (box on 02_),
 # grenade 15_, jets 33_/35_, eye 04_, fist 09_, first person 13_-17_.
 HEROES = {

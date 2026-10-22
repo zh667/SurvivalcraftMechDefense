@@ -373,7 +373,8 @@ def write_icon(path, P, U, N, limit=ICON_TRIS):
     # block-style face shading: top light, sides by facing, underside dark
     shade = np.where(N[:, 1] > .5, 1.0, np.where(N[:, 1] < -.5, .55, .72 + .14 * N[:, 0] - .08 * N[:, 2]))
     V = np.concatenate([P.reshape(-1, 3), U.reshape(-1, 2), np.repeat(shade, 3)[:, None]], 1).astype('<f4')
-    I = np.arange(len(V), dtype='<i4').reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)    # glTF CCW -> engine front (CW)
+    V, I = np.unique(V, axis=0, return_inverse=True)                               # corners shared by triangles stored once
+    I = I.reshape(-1, 3)[:, [0, 2, 1]].reshape(-1).astype('<i4')                   # glTF CCW -> engine front (CW)
     Path(path).write_bytes(struct.pack('<ii', len(V), len(I)) + V.tobytes() + I.tobytes())
     return len(keep)
 

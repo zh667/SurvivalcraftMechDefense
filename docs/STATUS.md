@@ -50,8 +50,16 @@ inventory icons miss chunks). Plans confirmed the same day (balance numbers, her
   1.9.3.1 engine lists; sources stay PNG). 28.6 MB of textures -> about 3.8 MB, PSNR 36.8-42.8 dB, mean difference 1-1.7 levels.
   Lab mech, robots-gallery, robots-heroes pass on both packages with the textures drawn (local/claude-work/r5/webp/), smoke
   0.5.0 -> 0.9.0 passes. Not changed: sounds (already OGG, 2.3 MB), tower atlases and icons (to do with the polygon towers).
-- Package dist/MechDefense-0.9.0.scmod 32,700,124 bytes, 242 entries (19 tower pictures; polygon rocket; WebP mech/robot textures),
-  SHA-256 693db7945f2a6491f3b58301b6d6c7d27ab67b2091541e66b641a20e1b3cdd15 (polygon rocket with PNG textures: 58,615,878 bytes;
+- Lossless size steps (2026-10-22): textures the mod loads by name without an extension ship as lossless WebP (tower atlases,
+  Towers/fx, Parts/parts; tools/package_formats.py, exact=True keeps the colour under transparent pixels; every one checked
+  pixel-identical), the mech/robot icon textures as WebP quality 90 (PSNR 34-40 dB), tower slot pictures stay PNG (opened by file
+  name). icon.bin stores shared corners once (rocket 480 -> 317 KB, same 5,716 triangles). Lab all / icons / mech /
+  robots-gallery / robots-summons / robots-items / special and smoke 0.5.0 -> 0.9.0 pass.
+- Test games no longer trap the user's cursor: with no menu open the engine set raw mouse mode in Mouse.BeforeFrame and
+  AfterFrame whenever its window counted as active, even behind other windows, which clipped the system cursor to the game
+  window. TowerLab, RuntimeSmoke and PerfCompare patch both to a visible mouse (clipped 7 of 133 samples before, 0 of 149 after).
+- Package dist/MechDefense-0.9.0.scmod 29,900,478 bytes, 242 entries, SHA-256
+  10913e8d495ff6109b7abbf25f6b1e8676ac0fe4119515a343fa7442bcd6cb56 (before the lossless steps 32,700,124 bytes, 693db794…3cdd15) (polygon rocket with PNG textures: 58,615,878 bytes;
   before the polygon rocket: 61,061,299 bytes) (no 终末地 / 毁灭枪手 / 原作 in data files or the dll).
 - Not tested: Android (picture loading and mipmaps on phones), real touch, a survival night with raids, long play; the medic
   rate for mechs (50 -> 100 % in 6 s) is untuned and may be strong in real fights.

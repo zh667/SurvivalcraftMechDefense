@@ -7,13 +7,16 @@ the package (checked below). Since 0.9.0: the robot enemies (Assets/Imported/RD0
 tools/build_unit_assets.py, checked like Mercury's) and the progression item models (Assets/Parts, tools/build_part_models.py).
 Mod settings: one entry in modinfo.json "Settings" opens the mod's own page (Mod/MDSettingsScreen.cs).
 The mech and robot models (Assets/Imported/*/*.glb) get their embedded PNG textures re-encoded as WebP quality 90
-(tools/webp_glb.py, EXT_texture_webp); the source files stay PNG.
+(tools/webp_glb.py, EXT_texture_webp), and so do their icon textures (Imported/*/icon.png -> icon.webp). Textures the mod
+loads by name without an extension ship as lossless WebP: tower atlases, Towers/fx, Parts/parts (tools/package_formats.py).
+Tower slot pictures (icon.png, opened by file name) stay PNG. The source files stay PNG.
 """
 from pathlib import Path
 import hashlib,json,zipfile,subprocess,sys
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'tools'))
 from webp_glb import webp_glb   # noqa: E402
+from package_formats import webp   # noqa: E402
 subprocess.run(['dotnet','build',str(root/'Mod/MechDefense.csproj'),'-c','Release','--nologo'],check=True)
 assets=root/'Mod/Assets'
 files=[(root/'Mod/bin/Release/net10.0/MechDefense.dll','MechDefense.dll'),(root/'Mod/modinfo.json','modinfo.json'),(assets/'MechDefense.xdb','Assets/MechDefense.xdb')]
@@ -56,7 +59,14 @@ for unit in ['RD05','RD06','RD07','RD17']:
 assert {f'se{i:02d}' for i in (7,8,9,10,11,13,14,20,24,25,31)}<=set(mech['sounds']),'a robot sound is missing from Mercury\'s audio'
 removed=('Assets/Imported/Mech/','Assets/Imported/Enemy/','Assets/Imported/Audio/Fire','Assets/Animations/','Assets/Towers/_legacy/')
 assert not [n for _,n in files if n.startswith(removed)],'Destroy Gunners assets in the package'
-def content(p,n):return webp_glb(p.read_bytes(),90) if n.startswith('Assets/Imported/') and n.endswith('.glb') else p.read_bytes()
+# by name: tower atlases, the effect sprites and the item atlas lossless; the mech and robot icon textures quality 90
+WEBP_LOSSLESS=lambda n:n.startswith('Assets/Towers/') and n.endswith('/atlas.png') or n in ('Assets/Towers/fx.png','Assets/Parts/parts.png')
+WEBP_LOSSY=lambda n:n.startswith('Assets/Imported/') and n.endswith('/icon.png')
+files=[(p,n[:-4]+'.webp' if WEBP_LOSSLESS(n) or WEBP_LOSSY(n) else n) for p,n in files]
+def content(p,n):
+    if n.startswith('Assets/Imported/') and n.endswith('.glb'):return webp_glb(p.read_bytes(),90)
+    if n.endswith('.webp'):return webp(p,lossless=not (n.startswith('Assets/Imported/') and n.endswith('/icon.webp')))
+    return p.read_bytes()
 data={n:content(p,n) for p,n in files}
 manifest=[dict(path=n,bytes=len(data[n]),sha256=hashlib.sha256(data[n]).hexdigest()) for p,n in files]
 out=root/'dist';out.mkdir(exist_ok=True)

@@ -18,6 +18,7 @@ root = Path(__file__).resolve().parents[1]
 POLY = Path('E:/projects/endfield-turret-model/poly_v1')
 sys.path.insert(0, str(root / 'tools'))
 from render_tower_icons import load_glb, shade_of   # noqa: E402  (plain numpy helpers)
+from package_formats import webp                     # noqa: E402  (lossless WebP, as package.py writes tower atlases)
 
 
 def nodes_of(glb_bytes):
@@ -30,7 +31,8 @@ def write_icon(path, P, N, U):
     lo, hi = P.reshape(-1, 3).min(0), P.reshape(-1, 3).max(0); P = (P - (lo + hi) / 2) / max(hi - lo)
     n = N / np.linalg.norm(N, axis=1, keepdims=True); shade = shade_of(n)
     V = np.concatenate([P.reshape(-1, 3), U.reshape(-1, 2), np.repeat(shade, 3)[:, None]], 1).astype('<f4')
-    I = np.arange(len(V), dtype='<i4').reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)    # glTF CCW -> engine front (CW)
+    V, I = np.unique(V, axis=0, return_inverse=True)                               # corners shared by triangles stored once
+    I = I.reshape(-1, 3)[:, [0, 2, 1]].reshape(-1).astype('<i4')                   # glTF CCW -> engine front (CW)
     Path(path).write_bytes(struct.pack('<ii', len(V), len(I)) + V.tobytes() + I.tobytes())
 
 
@@ -55,7 +57,10 @@ def stage(zi, runtime, tid, glb, atlas):
     r = subprocess.run([sys.executable, str(root / 'tools/render_tower_icons.py'), '--towers', str(towers), tid],
                        capture_output=True, text=True, encoding='utf-8', errors='replace', creationflags=0x08000000)
     assert r.returncode == 0 and (towers / tid / 'icon.png').exists(), r.stderr[-1500:]
-    return entry, {f'Assets/Towers/{tid}/{f}': (towers / tid / f).read_bytes() for f in ('model.glb', 'atlas.png', 'icon.bin', 'icon.png')}
+    files = {f'Assets/Towers/{tid}/{f}': (towers / tid / f).read_bytes() for f in ('model.glb', 'icon.bin', 'icon.png')}
+    if f'Assets/Towers/{tid}/atlas.webp' in zi.namelist(): files[f'Assets/Towers/{tid}/atlas.webp'] = webp(towers / tid / 'atlas.png')
+    else: files[f'Assets/Towers/{tid}/atlas.png'] = (towers / tid / 'atlas.png').read_bytes()
+    return entry, files
 
 
 def main():

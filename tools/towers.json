@@ -1547,7 +1547,7 @@
   {
    "id": "cannon_1",
    "name": "加农炮 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_1",
    "data": 47,
    "template": "MDTower_cannon_1",
    "hp": 800,
@@ -1594,7 +1594,7 @@
   {
    "id": "cannon_2",
    "name": "加农炮 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_2",
    "data": 48,
    "template": "MDTower_cannon_2",
    "hp": 1000,
@@ -1643,7 +1643,7 @@
   {
    "id": "cannon_3",
    "name": "加农炮 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_3",
    "data": 49,
    "template": "MDTower_cannon_3",
    "hp": 1300,
@@ -1696,7 +1696,7 @@
   {
    "id": "aa_1",
    "name": "防空炮 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_1",
    "data": 50,
    "template": "MDTower_aa_1",
    "hp": 800,
@@ -1744,7 +1744,7 @@
   {
    "id": "aa_2",
    "name": "防空炮 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_2",
    "data": 51,
    "template": "MDTower_aa_2",
    "hp": 1000,
@@ -1794,7 +1794,7 @@
   {
    "id": "aa_3",
    "name": "防空炮 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_3",
    "data": 52,
    "template": "MDTower_aa_3",
    "hp": 1300,

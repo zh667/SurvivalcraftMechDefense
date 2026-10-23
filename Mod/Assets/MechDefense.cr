@@ -127,6 +127,37 @@
     "gtg"
     "aaa"
   </Recipe>
+  <!-- 冰冻塔 Ⅰ-Ⅲ (data 35-37) and 火焰塔 Ⅰ-Ⅲ (data 38-40), 0.10.0: the same tier chain. -->
+  <Recipe Result="MDDeploymentBlock:35" ResultCount="1" RequiredHeatLevel="0" e="ice" r="rod" c="copperingot" i="ironingot" Description="冰冻塔 Ⅰ：一阶，低温喷射，减速">
+    "eee"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:36" ResultCount="1" RequiredHeatLevel="0" e="ice" r="rod" t="mddeploy:35" a="mdpart:1" Description="冰冻塔 Ⅱ：二阶，由冰冻塔 Ⅰ 升级">
+    "eee"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:37" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" e="ice" t="mddeploy:36" a="mdpart:1" Description="冰冻塔 Ⅲ：三阶，由冰冻塔 Ⅱ 升级">
+    "xdx"
+    "ete"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:38" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" i="ironingot" m="magmabucket" r="rod" c="copperingot" Description="火焰塔 Ⅰ：一阶，转向喷火，返还空桶">
+    "imi"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:39" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" r="rod" m="magmabucket" t="mddeploy:38" a="mdpart:1" Description="火焰塔 Ⅱ：二阶，由火焰塔 Ⅰ 升级，返还空桶">
+    "rmr"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:40" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" x="mdpart:2" m="magmabucket" d="diamond" t="mddeploy:39" a="mdpart:1" Description="火焰塔 Ⅲ：三阶，由火焰塔 Ⅱ 升级，返还空桶">
+    "xmx"
+    "dtd"
+    "aaa"
+  </Recipe>
   <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
        (cannon), two 高爆榴弹塔 (missiles, grenades), with two alloy plates, the boss's blueprint (used up) and an energy
        core; player level 8 (user, 2026-10-20: only the mech has a level requirement; Wonderful Era's vehicle keys ask 4-10). -->

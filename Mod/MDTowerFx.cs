@@ -130,6 +130,9 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         } else if(kind=="jet") {
             for(int i=0;i<4;i++){var d=Vector3.Normalize(dir+RDir()*.05f);float sp=R(14,18);Emit(S.Drop,p+d*.1f,d*sp,length/sp*R(.85f,1.05f),R(.07f,.12f),R(.14f,.22f),c,c2*.4f,false,3,.1f,.02f);}
             Emit(S.Streak,p+dir*.4f,dir*16,length/16,.16f,.24f,new Color(220,245,255,150),new Color(220,245,255,0),true,2,0,.08f);
+        } else if(kind=="frost") {   // cold gas (冰冻塔): pale mist that widens along the jet, and a few ice glints
+            for(int i=0;i<3;i++){var d=Vector3.Normalize(dir+RDir()*.1f);float sp=R(9,12);Emit(i==2?S.Smoke2:S.Smoke,p+d*.15f,d*sp,length/sp*R(.85f,1.1f),R(.12f,.2f),R(.8f,1.3f),PM(new Color(190,228,255,105)),Color.Transparent,false,.3f,.4f,0,R(-2,2));}   // mist colours premultiplied, like the ice mist
+            if(random.Next(2)==0){var d=Vector3.Normalize(dir+RDir()*.15f);float sp=R(8,11);Emit(S.Crystal,p+d*.3f,d*sp,length/sp*R(.5f,.9f),.07f,.03f,new Color(225,245,255),new Color(225,245,255,0),true,0,.3f,0,R(-4,4));}
         }
     }
     // A mech thruster: a blue-white core and a short orange flame along dir (strength 1 = hovering, about 2 = a jump's burst).

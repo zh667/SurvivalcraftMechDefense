@@ -25,14 +25,9 @@ public static class MDTowerBrain {
         if(u.ScanTimer<=0){u.ScanTimer=.25f;u.Target=FindTarget(u);}
         var target=u.Target;
         if(target!=null&&!MDCombat.Living(target))target=u.Target=null;
-        if(u.Channel>0){Channel(u,dt);return;}
+        if(u.Channel>0){if(TurningSprayer(d)&&target!=null)Steer(u,target,dt,out _);Channel(u,dt);return;}   // a turning sprayer keeps following while it sprays
         if(target==null){if(d.HasYaw)u.AimPitch=MathUtils.Lerp(u.AimPitch,d.restPitch,dt*1.5f);return;}
-        Track(u,target,dt);var tc=AimPoint(u,target);
-        if(d.HasYaw) {
-            var dd=tc-u.Body.Position;
-            float want=MathF.Atan2(-dd.X,-dd.Z);u.AimYaw=MDCombat.AngleTowards(u.AimYaw,want,MathUtils.DegToRad(d.yawSpeed)*dt);
-        }
-        float wantPitch=DesiredPitch(u,tc);u.AimPitch=MDCombat.AngleTowards(u.AimPitch,wantPitch,MathUtils.DegToRad(d.pitchSpeed)*dt);
+        var tc=Steer(u,target,dt,out float wantPitch);
         bool aligned=!d.HasYaw||Math.Abs(MDCombat.AngleDelta(u.AimYaw,MathF.Atan2(-(tc-u.Body.Position).X,-(tc-u.Body.Position).Z)))<.12f;
         if(a.type=="shell"&&LaidGun(d))aligned&=Math.Abs(u.AimPitch-wantPitch)<.04f;   // a laid gun fires along its barrel: wait until it is elevated
         if(u.Cooldown<=0&&aligned)Fire(u,target,tc);
@@ -68,6 +63,19 @@ public static class MDTowerBrain {
     public static bool LeadEnabled=true;   // lab switch: hits on a running target with and without lead
     // The target's velocity from its own movement, smoothed over about 0.1 s. ComponentBody.Velocity is not enough: a mod
     // creature moved by setting its position has none, and a walking creature's includes its bobbing.
+    // Turn and elevate towards the target's lead point; returns that point.
+    static Vector3 Steer(ComponentMDUnit u,ComponentBody target,float dt,out float wantPitch) {
+        var d=u.Tower;Track(u,target,dt);var tc=AimPoint(u,target);
+        if(d.HasYaw) {
+            var dd=tc-u.Body.Position;
+            float want=MathF.Atan2(-dd.X,-dd.Z);u.AimYaw=MDCombat.AngleTowards(u.AimYaw,want,MathUtils.DegToRad(d.yawSpeed)*dt);
+        }
+        wantPitch=DesiredPitch(u,tc);u.AimPitch=MDCombat.AngleTowards(u.AimPitch,wantPitch,MathUtils.DegToRad(d.pitchSpeed)*dt);
+        return tc;
+    }
+    // A flamethrower or frost sprayer on a turret (0.10.0: 冰冻塔, 火焰塔): it hits a band of attack.width along where its
+    // nozzles point, not a fixed rectangle in front of the block like the fixed sprayers.
+    static bool TurningSprayer(MDTowerDef d)=>d.HasYaw&&!d.attack.directional&&d.attack.type is "flame" or "jet";
     static void Track(ComponentMDUnit u,ComponentBody target,float dt) {
         if(u.Tracked!=target){u.Tracked=target;u.TrackedAt=target.Position;u.TrackedVelocity=target.Velocity;return;}
         if(dt<=0)return;
@@ -188,7 +196,7 @@ public static class MDTowerBrain {
         } else if(a.type=="flame"||a.type=="jet") {
             for(int i=0;i<d.muzzles.Length;i++) {
                 var m=MDTowerLibrary.Muzzle(d,pose,i);var f=MDTowerLibrary.MuzzleForward(d,pose,i);
-                w.Spray(a.type,m,f,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2),a.range);
+                w.Spray(d.fx.kind=="frost"?"frost":a.type,m,f,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2),a.range);
             }
             u.ChannelTick-=dt;
             if(u.ChannelTick<=0){u.ChannelTick=a.type=="flame"?.25f:.2f;AreaTick(u);}
@@ -214,13 +222,17 @@ public static class MDTowerBrain {
         if(towers.Count>0&&++u.ShotCount%4==1)Sound(u,d.fireSounds,from,.35f);
     }
     static void AreaTick(ComponentMDUnit u) {
-        var a=u.Tower.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
-        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),a.range+2,bodies);
-        var f=u.Body.Matrix.Forward;f.Y=0;f=Vector3.Normalize(f);
+        var d=u.Tower;var a=d.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();var p=u.Body.Position;
+        u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+2,bodies);
+        var f=u.Body.Matrix.Forward;bool turning=TurningSprayer(d);
+        if(turning&&d.muzzles.Length>0)f=MDTowerLibrary.MuzzleForward(d,Pose(u),0);
+        f.Y=0;f=Vector3.Normalize(f);var side=new Vector3(-f.Z,0,f.X);
         foreach(var b in bodies) {
-            if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
-            if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),MDCombat.Center(b),f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
-            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),MDCombat.Center(b),f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime);}
+            var c=MDCombat.Center(b);
+            if(!MDCombat.IsEnemy(u,b)||!InArea(u,c))continue;
+            if(turning){var dd=c-p;float along=Vector3.Dot(dd,f);if(along<0||Math.Abs(Vector3.Dot(dd,side))>a.width*.5f+along*.15f)continue;}   // the band widens a little with distance
+            if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),c,f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
+            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
         }
     }
     static void ChainStrike(ComponentMDUnit u,Vector3 from,ComponentBody first) {

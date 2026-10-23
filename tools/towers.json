@@ -1192,6 +1192,246 @@
     "Imported/SoG/Audio/ricochet_1",
     "Imported/SoG/Audio/ricochet_2"
    ]
+  },
+  {
+   "id": "frost_1",
+   "name": "冰冻塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_1",
+   "data": 35,
+   "template": "MDTower_frost_1",
+   "hp": 800,
+   "summary": "喷射低温气体，喷射带上的地面敌人大幅减速（速度 ×0.7），不造成伤害。",
+   "attack": {
+    "type": "jet",
+    "range": 12,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 0,
+    "knockback": 0,
+    "slow": 0.7,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 0.8,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "frost_2",
+   "name": "冰冻塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_2",
+   "data": 36,
+   "template": "MDTower_frost_2",
+   "hp": 1000,
+   "summary": "两支喷枪喷射低温气体，减速更强（速度 ×0.6），并造成少量冻伤。由冰冻塔 Ⅰ 升级。",
+   "attack": {
+    "type": "jet",
+    "range": 13.8,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 30,
+    "knockback": 0,
+    "slow": 0.6,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 0.9,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "frost_3",
+   "name": "冰冻塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_3",
+   "data": 37,
+   "template": "MDTower_frost_3",
+   "hp": 1300,
+   "summary": "重型低温喷射塔，减速最强（速度 ×0.5），冻伤更重，射程更远。由冰冻塔 Ⅱ 升级。",
+   "attack": {
+    "type": "jet",
+    "range": 15.6,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 60,
+    "knockback": 0,
+    "slow": 0.5,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 1,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_1",
+   "name": "火焰塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_1",
+   "data": 38,
+   "template": "MDTower_flame_1",
+   "hp": 800,
+   "summary": "朝目标方向喷射火焰，烧伤喷射带上的所有敌人并让其着火，射程短。",
+   "attack": {
+    "type": "flame",
+    "range": 10,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 174,
+    "burn": 3
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 0.8,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_2",
+   "name": "火焰塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_2",
+   "data": 39,
+   "template": "MDTower_flame_2",
+   "hp": 1000,
+   "summary": "两支火焰喷枪，火力更猛，射程更远。由火焰塔 Ⅰ 升级。",
+   "attack": {
+    "type": "flame",
+    "range": 11.5,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 294,
+    "burn": 3
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 0.9,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_3",
+   "name": "火焰塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_3",
+   "data": 40,
+   "template": "MDTower_flame_3",
+   "hp": 1300,
+   "summary": "重型双管火焰喷射塔，火力最强。由火焰塔 Ⅱ 升级。",
+   "attack": {
+    "type": "flame",
+    "range": 13,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 520,
+    "burn": 4
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 1,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
   }
  ]
 }

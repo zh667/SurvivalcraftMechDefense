@@ -969,6 +969,81 @@
     ],
     "from_model": true
    }
+  },
+  {
+   "id": "radar_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\radar_1\\model.glb",
+     "glbSha256": "42e5c4adf4d36aad60c420c6bbb226d030f6e6e899998afe0068fbe23e024397",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\radar_1\\atlas.png",
+     "atlasSha256": "8149d694507ee334df2e6cadc4605ebf9f7e05331255585a137718d9f2c9e604"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\radar_1\\parts.json",
+    "partsSha256": "1b921d160dfddc7476106a388167d857a9da90739378087388826a70fc9f0796"
+   },
+   "model": "polygon",
+   "triangles": 3016,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "radar_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\radar_2\\model.glb",
+     "glbSha256": "f555594ea03ab37a29c9cf75822f799929f134cca179b14eb3796397797c3f79",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\radar_2\\atlas.png",
+     "atlasSha256": "df3d676eb5bd20ae9f9c85c1de5ef92f8998b7b570aab468400c9c3f1462d81a"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\radar_2\\parts.json",
+    "partsSha256": "e348f7fb0cbf30f46a23d0335fc10aa77ec1c4077103d1d8eb12faacb0e23b11"
+   },
+   "model": "polygon",
+   "triangles": 4280,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "radar_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\radar_3\\model.glb",
+     "glbSha256": "a3da6d735e8fa6e1a7b7ae4d700dc0ac8b1de7fa1c5b70ae8a25f03dae8e65be",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\radar_3\\atlas.png",
+     "atlasSha256": "1e6099169ad046df94c48a0e86551bb073c79f168f6736e5ca6583680dfd7ba9"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\radar_3\\parts.json",
+    "partsSha256": "fa6460fe357d1392497ab56e025775d27ae7bd7f80c7112ed192da7dc74db2e8"
+   },
+   "model": "polygon",
+   "triangles": 4832,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
   }
  ]
 }

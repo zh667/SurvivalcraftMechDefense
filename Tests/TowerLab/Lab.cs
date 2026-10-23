@@ -405,6 +405,15 @@ public partial class Lab:ModLoader {
                 }
                 results["fired"]=u.ShotCount-shots0;Remove([target]);
             }
+            if(d.attack.type=="radar") {   // 雷达 (0.10.0): a gun tower 6 m away gets range x boost within a pulse; one shot shows the link line
+                var g=Place(towers.First(t=>t.id=="gatling_1"),at+new Vector3(-6,0,0),0);g.Cooldown=1e6f;float r0=g.Range;
+                u.Cooldown=0;var ce=at+new Vector3(-3,h*.55f,0);
+                for(double st=Time.RealTime;Time.RealTime-st<1.4;){g.Cooldown=1e6f;Cam(ce+new Vector3(2,h*.6f,-9),ce);yield return true;}
+                Shot("v_radar_link");views.Add("radar_link");yield return true;
+                results["radar"]=$"gun range {r0:0.0} -> {g.Range:0.0} (boost {g.RangeBoost:0.00}, expected {d.attack.boost:0.00}), spin {u.Spin:0.00} rad at rate {u.SpinRate:0.00}";
+                bool ok=Math.Abs(g.Range-r0*d.attack.boost)<.05f&&u.SpinRate>.5f;Remove([g]);
+                if(!ok)throw new Exception("radar: "+results["radar"]);   // the runner saves passed=false with this message
+            }
             {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start
                 // time, so step the start time back until the layer reaches the ground around the tower.
                 for(double s0=Time.RealTime;Time.RealTime-s0<4;){Freeze();yield return true;}   // the shot's explosion and smoke fade first

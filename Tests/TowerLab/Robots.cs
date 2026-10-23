@@ -28,7 +28,7 @@ public partial class Lab {
             rec[id+(rec.ContainsKey(id)?"_2":"")]=new{grid=string.Join(" | ",Enumerable.Range(0,3).Select(y=>string.Join(",",Enumerable.Range(0,3).Select(x=>r.Ingredients[x+y*3]??"-")))),heat=r.RequiredHeatLevel,level=r.RequiredPlayerLevel,count=r.ResultCount,description=r.Description,resolves=ok};
         }
         foreach(var t in towers)if(mine.Count(r=>Terrain.ExtractContents(r.ResultValue)==deploy&&Terrain.ExtractData(r.ResultValue)==t.data)!=1)bad.Add(t.id+": not exactly one recipe");
-        var tier2=new[]{3,6,14,16,18,19,33,36,39,42,48,51};var tier3=new[]{4,7,8,13,15,17,34,37,40,43,49,52};   // 2D tower family Ⅱ, Ⅲ: 转轮机枪塔 33/34, 冰冻塔 36/37, 火焰塔 39/40, 导弹塔 42/43, 加农炮 48/49, 防空炮 51/52
+        var tier2=new[]{3,6,14,16,18,19,33,36,39,42,45,48,51};var tier3=new[]{4,7,8,13,15,17,34,37,40,43,46,49,52};   // 2D tower family Ⅱ, Ⅲ: 转轮机枪塔 33/34, 冰冻塔 36/37, 火焰塔 39/40, 导弹塔 42/43, 雷达 45/46, 加农炮 48/49, 防空炮 51/52
         foreach(var r in mine.Where(r=>Terrain.ExtractContents(r.ResultValue)==deploy)) {
             int d=Terrain.ExtractData(r.ResultValue);
             if(tier2.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:1")!=3)bad.Add($"tier 2 tower {d}: not 3 alloy plates");

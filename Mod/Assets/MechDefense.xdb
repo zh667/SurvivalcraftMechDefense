@@ -841,7 +841,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="24c14342-432c-5549-96c5-401ae95a478c" />
         <Parameter Name="ModelName" Type="string" Value="Towers/gatling_1/model" Guid="dc69c5b2-93f6-59df-909a-734eb3382880" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_1/atlas" Guid="e2e478ca-ee55-5368-82ef-5b3246cf7148" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.94" Guid="f2f171a1-654b-54da-910c-a519d1f20b90" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.93" Guid="f2f171a1-654b-54da-910c-a519d1f20b90" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="7f7a2197-ffac-5e31-b40f-fb095c147b70" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -876,7 +876,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="5ae2e7fc-e55e-502c-ac40-1f7aaecd30cc" />
         <Parameter Name="ModelName" Type="string" Value="Towers/gatling_2/model" Guid="b843f194-24dc-59a6-9ffb-d9e81cfb79df" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_2/atlas" Guid="a366ddd8-0e61-5cc6-ac91-bda52c2af746" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.08" Guid="80adda2d-09e8-50ce-baa7-1651342b1a71" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.07" Guid="80adda2d-09e8-50ce-baa7-1651342b1a71" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="20d4c00e-1574-5de9-847c-3c25bf15959d" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -911,7 +911,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="ac30b29c-874f-5f1a-b34e-763fedbc17d7" />
         <Parameter Name="ModelName" Type="string" Value="Towers/gatling_3/model" Guid="c5a233db-f23e-518e-9c08-3452fe98602a" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/gatling_3/atlas" Guid="8bd1d2af-b2f2-5101-92aa-9827ab89f3d6" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.72" Guid="952cdf2c-2ff3-53a8-b049-894cf37c1044" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.7" Guid="952cdf2c-2ff3-53a8-b049-894cf37c1044" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="020fe038-6168-567e-9109-e442d1fa64d9" />
       </MemberComponentTemplate>
     </EntityTemplate>

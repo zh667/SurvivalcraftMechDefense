@@ -1066,7 +1066,7 @@
   {
    "id": "gatling_1",
    "name": "转轮机枪塔 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_1",
    "data": 32,
    "template": "MDTower_gatling_1",
    "hp": 800,
@@ -1108,7 +1108,7 @@
   {
    "id": "gatling_2",
    "name": "转轮机枪塔 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_2",
    "data": 33,
    "template": "MDTower_gatling_2",
    "hp": 1000,
@@ -1151,7 +1151,7 @@
   {
    "id": "gatling_3",
    "name": "转轮机枪塔 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_3",
    "data": 34,
    "template": "MDTower_gatling_3",
    "hp": 1300,

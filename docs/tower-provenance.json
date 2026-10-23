@@ -524,16 +524,16 @@
    "id": "gatling_1",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\model.glb",
-     "glbSha256": "5b2ccbdb3b57ccc0526e552254f3be991f9d8b641ec5cfd1c88e36c38b8f2751",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\atlas.png",
-     "atlasSha256": "24ebf5cfe6535820ec9cd2193585b5c221e514d4a78fdc56850fe722758cfaf6"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\model.glb",
+     "glbSha256": "874924ec286d06f3fe607896c66798a2476247b33fde19e50e568c744c45cfe5",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\atlas.png",
+     "atlasSha256": "3e115d34e4d4303ab5db885d92617f9dadb3956df7b6d5480025065d45ce5448"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\parts.json",
-    "partsSha256": "1c144bb22badbbfac0a3170331ca321c7e98b872d3772f81793de8da6ccb092c"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\parts.json",
+    "partsSha256": "c7c621da2f14c591753e0e02cb366414ee7327b3002d764bb0cdd9ae5fb97bfb"
    },
    "model": "polygon",
-   "triangles": 3748,
+   "triangles": 4316,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -549,16 +549,16 @@
    "id": "gatling_2",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\model.glb",
-     "glbSha256": "d90edd95a4ef8aec24cfd765f3f57fa003875b1fad4e0802b19ee3bd29da1a0a",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\atlas.png",
-     "atlasSha256": "ff4e2cec6b36a0379ed7ad6bbed164c0c7488e3a0d6efb4bceb5657bfb1e8f51"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\model.glb",
+     "glbSha256": "79fbd653d77d57d2662547a9672a93d93fea41b8bc682ca11414f93465a0d92b",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\atlas.png",
+     "atlasSha256": "a3815845b4ace61e5c8aba80e4b61736c65544ceff460806690fce5cc99d7874"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\parts.json",
-    "partsSha256": "7acb03a5805206319abea59b9add51acb3722c8f71dceffa1b01c4737bc888d4"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\parts.json",
+    "partsSha256": "f8b8850f68105fcc2d71857be10bfdeac2e364fbaed767100991a5a3ec148b64"
    },
    "model": "polygon",
-   "triangles": 4232,
+   "triangles": 5752,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -574,16 +574,16 @@
    "id": "gatling_3",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\model.glb",
-     "glbSha256": "88c38c4daa0a216f816016e080907de22d0a082dd17cbdcebc8e20f0f23093da",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\atlas.png",
-     "atlasSha256": "d92c3871b09b94551763884f5301583827997c7e5626d2a47d7967f699f70a2d"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\model.glb",
+     "glbSha256": "1a35ae3ed2d8b34b5819a823153a4078914b0c967ad7cc30314acae65f9663bb",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\atlas.png",
+     "atlasSha256": "35bbdaf9bf940840f3ff8e1b8d3a2f6ba39bda69a695eb9b41f976433689fc31"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\parts.json",
-    "partsSha256": "7c6bde15b0c35666306ec16aefb43980fdc00bf24f82814c74eaee136dac6a55"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\parts.json",
+    "partsSha256": "435e9a1c6245aba52e1fc7f7c0586076bd4a77d5ab803b7b27c15065e0aeecef"
    },
    "model": "polygon",
-   "triangles": 5704,
+   "triangles": 7420,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,

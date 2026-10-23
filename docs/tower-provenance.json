@@ -602,7 +602,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\model.glb",
      "glbSha256": "ef3d28842755ccb4c6972de326f4383f266235da390a4ce04ee3e5aee8fa6536",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\atlas.png",
-     "atlasSha256": "15925e494675c8ea7adc5f3e2dc09eeab1f4e8ed8ee4c5a6b2d863df2d7ea12d"
+     "atlasSha256": "f45445f1030a3f470b31c44ce489caab5bd8f4ad700cf4a45cf1157a51c9a897"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\parts.json",
     "partsSha256": "5dc1af957e87fdd20304a0816f17a85f26a10ef0ffbccf5740104272b00a6434"
@@ -627,7 +627,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\model.glb",
      "glbSha256": "b61584fc7dcab8f97b30bb60a369953d9348fa5ad2e98e33682779169c97d022",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\atlas.png",
-     "atlasSha256": "b3bb096aa6e4aee0693186a08ba89e907f37066540855e8dab4ff92450ee7c85"
+     "atlasSha256": "13c6751945c51831479d286b8c5ea85f0a3125702c2e37b2d61fbfb5a83c75ae"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\parts.json",
     "partsSha256": "69d1103604fee6333f8f58cb5ccd8adea2d290b14bcc6346fef4bece158cc178"
@@ -652,7 +652,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\model.glb",
      "glbSha256": "0dd5571e9567d96d931c606b2880b913731e0499bb69890b8c969d4c1c51e0d9",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\atlas.png",
-     "atlasSha256": "f8203c0f1547982a40ab820e228997bd1cb0ce60a22b893e2e444d77d40cb943"
+     "atlasSha256": "706592fbc04bf2541151cb12adafd9521fb2d430e0d98afb34fa1f4e9253d0d0"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\parts.json",
     "partsSha256": "6d742e778839951c23be8dca72d95d78add26d897e796198cf1b019e85e2c86c"
@@ -677,7 +677,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\model.glb",
      "glbSha256": "a591815b220f66c6c4422053990b83581feb3f349454005a7651a294d8fddc7b",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\atlas.png",
-     "atlasSha256": "e3411adb2f006456a49bf779fd2d177d4dd1b4d0f128e2c66e23ad21c4d795d0"
+     "atlasSha256": "f24fe349ef8fdf85a314a8092c4a4f9e2341413f5a954c99d970451121067153"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\parts.json",
     "partsSha256": "b064f5bfac16af3712161317db0bd03ed86d95d48752befaa04ea62fcc7a400c"
@@ -702,7 +702,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\model.glb",
      "glbSha256": "41bb1c9d6dc86d87efcf1dae87aa42c47ab9307946e96b0c83fb69b21f98f703",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\atlas.png",
-     "atlasSha256": "2a7cae4e20514b39d32d5d9aa05219ef5e3646013de18a993ab06786e65f68af"
+     "atlasSha256": "5b41b6d57ca0902421b8802a1414370fe29a54180874c1845c9d1a56c759920d"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\parts.json",
     "partsSha256": "0e9554d49e2a730b230f1bea9bce2489b4ac983381c7050eac841a4351f5645f"
@@ -727,7 +727,7 @@
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\model.glb",
      "glbSha256": "76ed2286e88a37b8720813bf043e8ab1e516908126e6a7370180d98a0a4318c9",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\atlas.png",
-     "atlasSha256": "10dbb896708447178e6b162769639b3e63206274b77fa28cc4b6235797cd41c9"
+     "atlasSha256": "d53b0b2c12552db46182f04d044f88e40cd95d71b9019a5858725a1698cd20a6"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\parts.json",
     "partsSha256": "11d91daafc0a354ec1ac894a6e3bb3bb7e42ebe3ae9185691e102b879b6d0fd1"
@@ -750,15 +750,15 @@
    "source": {
     "poly": {
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\model.glb",
-     "glbSha256": "f111ec8880ea9f2e1eba4d362b84af3c937a2630884780a70035370d84ecf4e1",
+     "glbSha256": "192d9e8c97fb4c831eaddad798de2e7ec6bd883a2c1f8f4e2434b57eccc88ec7",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\atlas.png",
-     "atlasSha256": "7f8626aedcbdc53ef910d42bc1e6c03589b2bc704007d7555a02e1d8b3b59645"
+     "atlasSha256": "b1abba2b21d9ec0a25d875a8efef33fab0a3745b7ff8c1259dcca7316b19395e"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\parts.json",
-    "partsSha256": "0f84ae7660611a237e3663257406dabd101602d2251f411d52067e73ef90e94f"
+    "partsSha256": "158381ae9ceb7d2fe5a470150c2900bb09a7e6c09f73bb197daca772c47dec56"
    },
    "model": "polygon",
-   "triangles": 3568,
+   "triangles": 3000,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -775,15 +775,15 @@
    "source": {
     "poly": {
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\model.glb",
-     "glbSha256": "f4714b6241376d2ec245f702b6843a7b70206fc41b21d1d5c81e9f3dda10b810",
+     "glbSha256": "3df4d2c8e87c12067c85b3f495cbb53d823fb0426b6a8e9c205d9acb2bf00fd0",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\atlas.png",
-     "atlasSha256": "924d2631ff7ae4c072bd4a7c795ac5d4cb33b6645c97ca76d1b7c44185f10103"
+     "atlasSha256": "7dceccf802b1b1f19b25bfde8b4e73066cd2849710e56990f1904e993dcfbaa3"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\parts.json",
-    "partsSha256": "df009ff1563495d5765e6a49f098f88e735b9d79b1d0af033431b63ef1096eee"
+    "partsSha256": "e9c83db563bd2df991d3283c64ec9d583e53a1d5aa9a8949e82375c182d255dd"
    },
    "model": "polygon",
-   "triangles": 4932,
+   "triangles": 3636,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -800,15 +800,15 @@
    "source": {
     "poly": {
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\model.glb",
-     "glbSha256": "3d3d9b648d16d8222cdeb29ea3a73c913cb667b441d894ced5e74abd64a91848",
+     "glbSha256": "5e52cf87961c8a7225e53477db9378c38b56420197d3ddfa8e0bf2faa7872334",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\atlas.png",
-     "atlasSha256": "1cee6213e21b27bd9eeea571156aaa90cad1e2152ad03c437b274f63c350d86d"
+     "atlasSha256": "e1e413eba1f9f86ab5442a53526260e073601e9e52868093e71ef6c29f5c8996"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\parts.json",
-    "partsSha256": "6314b309bd63181e7069b5b89d5f8c3e6c5fb5ea29a15e0746db590453e77d26"
+    "partsSha256": "711b985f414a69c9610ec03f74ce18e4f5b2bfdff04953afb0a08f81456227bc"
    },
    "model": "polygon",
-   "triangles": 5788,
+   "triangles": 4060,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -816,6 +816,156 @@
     "pitch": [
      -10,
      60
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_1\\model.glb",
+     "glbSha256": "aae5a56f35f203edda3448b05c4ce0550ba8bdf8aeb1726b7d5cb966ab54678c",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_1\\atlas.png",
+     "atlasSha256": "e06a1b8c2a5c452e650297cb9242d119de8d80554b4c1f6d662490ef3b163d5b"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_1\\parts.json",
+    "partsSha256": "6ffa744498b2d84a71d4d4faf55cc457fc92c8bb6b06201ba7f209b15a66a3a4"
+   },
+   "model": "polygon",
+   "triangles": 3760,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_2\\model.glb",
+     "glbSha256": "89dee198e166c23cc7876ddcf2b5b15a3aaf382b3ffbc350a46f6e042a33ec70",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_2\\atlas.png",
+     "atlasSha256": "f73e25e7938f07603a55ccac83b32b72b664f4708aead8a8ae05b998ce67abfd"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_2\\parts.json",
+    "partsSha256": "324b649df36905839acacb03861199aaa5760fca3a8c225301bb88a72c99a7f5"
+   },
+   "model": "polygon",
+   "triangles": 4388,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_3\\model.glb",
+     "glbSha256": "43a58b6dc26a1d4bd0b8ec77cec506aa57c1ea86d0bba9c176547a39f38be122",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_3\\atlas.png",
+     "atlasSha256": "07620a1bd5533ff59862f61c2db7521e2fde41af1e221d811190a24108814765"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\cannon_3\\parts.json",
+    "partsSha256": "58ca3ad5875227acc89fc8a4acd1ec1a2aec1916c996dfa517877587053f91f8"
+   },
+   "model": "polygon",
+   "triangles": 5568,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\aa_1\\model.glb",
+     "glbSha256": "5cf5b7b0bf47f86bf4fe25612c7fdbd171badbe1acd75726b48bcfb981577ba7",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\aa_1\\atlas.png",
+     "atlasSha256": "77c44f068589f95b3556e08204ce91fcadeccf243837c66d7dc978ed1a44fa20"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\aa_1\\parts.json",
+    "partsSha256": "fd979daa219a020303b028395655f91b7677874e5ac95bfdbf767ac78e04641a"
+   },
+   "model": "polygon",
+   "triangles": 3512,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\aa_2\\model.glb",
+     "glbSha256": "aed216f1c1e96e9aff09d9ac67546d6fd3a2119238f75c4d2cf108b7712bb97e",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\aa_2\\atlas.png",
+     "atlasSha256": "03926208999206db07ff09e9dd4140d24a439833226b98fc0ddaca0ea914fd68"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\aa_2\\parts.json",
+    "partsSha256": "23fbdf5ecffd7326986c27ed7e119eea8e72b157c05d1a303641643299f42f3c"
+   },
+   "model": "polygon",
+   "triangles": 4716,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\aa_3\\model.glb",
+     "glbSha256": "51cd7a6551d61ffb69ee81bfa88a89e483a248e4719626157dd3f57a5330f412",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\aa_3\\atlas.png",
+     "atlasSha256": "01179675bb3a7949b9bb66563b2a6fb6bc9e3a66e8a0041b93a07dbe3282f20c"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\aa_3\\parts.json",
+    "partsSha256": "d06fd188599b0cafcfe04e3581adf023077f2c01c1bfa92ef0e72fe8e6899400"
+   },
+   "model": "polygon",
+   "triangles": 5584,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
     ],
     "from_model": true
    }

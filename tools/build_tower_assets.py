@@ -673,11 +673,11 @@ def spec_parent(spec, name):
 
 def runtime_entry(spec, meta):
     """Design fields from tools/towers.json + generated geometry -> one Assets/Towers/towers.json record."""
-    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim', 'poly', 'polyOnly')}
+    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim', 'poly', 'polyOnly', 'pitchCap')}
     d.update(nodes=meta['nodes'], muzzles=[{k: m[k] for k in ('name', 'part', 'local')} for m in meta['muzzles']],
              bounds=meta['bounds'], radius=meta['radius'], cells=meta['cells'])
     if 'pitch' in meta['clearance']:
-        lo, hi = meta['clearance']['pitch']; d['pitch'] = [max(lo + 2, -35), min(hi - 2, 70)] if hi > lo else [0, 0]
+        lo, hi = meta['clearance']['pitch']; d['pitch'] = [max(lo + 2, -35), min(hi - 2, spec.get('pitchCap', 70))] if hi > lo else [0, 0]   # pitchCap: anti-air guns
     subs = [x for x in spec.get('subparts', []) if 'recoil' in x]
     if not spec.get('polyOnly'): d['recoilParts'] = [x['name'] for x in subs]; d['recoil'] = [x['recoil'] for x in subs]   # polygon-only towers name them in tools/towers.json
     # articulated links: turn about X at their hinge to keep pointing at a partner point (on the turret or the cradle)

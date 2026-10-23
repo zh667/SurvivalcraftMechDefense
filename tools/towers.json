@@ -1543,6 +1543,304 @@
    "hitSounds": [
     "Imported/SoG/Audio/explo"
    ]
+  },
+  {
+   "id": "cannon_1",
+   "name": "加农炮 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_1",
+   "data": 47,
+   "template": "MDTower_cannon_1",
+   "hp": 800,
+   "summary": "单管加农炮，炮弹落地爆炸，炸伤一片地面敌人。射速慢、射程远。",
+   "attack": {
+    "type": "shell",
+    "range": 30,
+    "interval": 4,
+    "power": 147,
+    "speed": 28,
+    "splash": 3,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.1,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1"
+   ],
+   "recoil": [
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "cannon_2",
+   "name": "加农炮 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_2",
+   "data": 48,
+   "template": "MDTower_cannon_2",
+   "hp": 1000,
+   "summary": "双管加农炮，两根炮管轮流开炮，威力更大。由加农炮 Ⅰ 升级。",
+   "attack": {
+    "type": "shell",
+    "range": 34.5,
+    "interval": 4,
+    "power": 250,
+    "speed": 30,
+    "splash": 3,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.25,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2"
+   ],
+   "recoil": [
+    0.3,
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo1"
+   ]
+  },
+  {
+   "id": "cannon_3",
+   "name": "加农炮 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/cannon_3",
+   "data": 49,
+   "template": "MDTower_cannon_3",
+   "hp": 1300,
+   "summary": "四管重型加农炮，威力最大、射程最远。由加农炮 Ⅱ 升级。",
+   "attack": {
+    "type": "shell",
+    "range": 39,
+    "interval": 4,
+    "power": 440,
+    "speed": 32,
+    "splash": 3,
+    "needsSight": false
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.4,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2",
+    "barrel_3",
+    "barrel_4"
+   ],
+   "recoil": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo2"
+   ]
+  },
+  {
+   "id": "aa_1",
+   "name": "防空炮 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_1",
+   "data": 50,
+   "template": "MDTower_aa_1",
+   "hp": 800,
+   "summary": "高射炮，优先打空中目标，射速快；也能打地面，但伤害减半，离得太近打不到。",
+   "attack": {
+    "type": "bolt",
+    "range": 32,
+    "minRange": 4,
+    "interval": 0.6,
+    "power": 19.2,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.6,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1"
+   ],
+   "recoil": [
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 0.9425,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "aa_2",
+   "name": "防空炮 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_2",
+   "data": 51,
+   "template": "MDTower_aa_2",
+   "hp": 1000,
+   "summary": "双管高射炮，火力更密。由防空炮 Ⅰ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 37,
+    "minRange": 4,
+    "interval": 0.45,
+    "power": 24.3,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.7,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2"
+   ],
+   "recoil": [
+    0.2,
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 1.021,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "aa_3",
+   "name": "防空炮 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/aa_3",
+   "data": 52,
+   "template": "MDTower_aa_3",
+   "hp": 1300,
+   "summary": "四管重型高射炮，弹幕最密、射程最远。由防空炮 Ⅱ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 42,
+    "minRange": 4,
+    "interval": 0.35,
+    "power": 33.6,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.8,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2",
+    "barrel_3",
+    "barrel_4"
+   ],
+   "recoil": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 1.0472,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
   }
  ]
 }

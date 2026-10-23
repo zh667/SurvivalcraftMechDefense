@@ -174,6 +174,37 @@
     "dtd"
     "aaa"
   </Recipe>
+  <!-- 加农炮 Ⅰ-Ⅲ (data 47-49) and 防空炮 Ⅰ-Ⅲ (data 50-52), 0.10.0. -->
+  <Recipe Result="MDDeploymentBlock:47" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" i="ironingot" c="copperingot" Description="加农炮 Ⅰ：一阶，炮弹溅射，只打地面">
+    "ggg"
+    "ici"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:48" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" i="ironingot" t="mddeploy:47" a="mdpart:1" Description="加农炮 Ⅱ：二阶，由加农炮 Ⅰ 升级">
+    "ggg"
+    "iti"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:49" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" k="largegunpowderkeg" d="diamond" t="mddeploy:48" a="mdpart:1" Description="加农炮 Ⅲ：三阶，由加农炮 Ⅱ 升级">
+    "xkx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:50" ResultCount="1" RequiredHeatLevel="0" r="rod" c="copperingot" i="ironingot" g="gunpowder" Description="防空炮 Ⅰ：一阶，优先打空中">
+    "rcr"
+    "igi"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:51" ResultCount="1" RequiredHeatLevel="0" r="rod" c="copperingot" t="mddeploy:50" a="mdpart:1" Description="防空炮 Ⅱ：二阶，由防空炮 Ⅰ 升级">
+    "rcr"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:52" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" c="copperingot" d="diamond" t="mddeploy:51" a="mdpart:1" Description="防空炮 Ⅲ：三阶，由防空炮 Ⅱ 升级">
+    "xcx"
+    "dtd"
+    "aaa"
+  </Recipe>
   <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
        (cannon), two 高爆榴弹塔 (missiles, grenades), with two alloy plates, the boss's blueprint (used up) and an energy
        core; player level 8 (user, 2026-10-20: only the mech has a level requirement; Wonderful Era's vehicle keys ask 4-10). -->

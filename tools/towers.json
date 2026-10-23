@@ -1432,6 +1432,117 @@
     "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
    ],
    "hitSounds": []
+  },
+  {
+   "id": "missile_1",
+   "name": "导弹塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_1",
+   "data": 41,
+   "template": "MDTower_missile_1",
+   "hp": 800,
+   "summary": "导弹发射架，轮流发射追踪导弹，必定命中，命中时小范围爆炸，地面和空中的敌人都能打。",
+   "attack": {
+    "type": "missile",
+    "range": 26,
+    "interval": 0.6,
+    "power": 22,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.7,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
+  },
+  {
+   "id": "missile_2",
+   "name": "导弹塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_2",
+   "data": 42,
+   "template": "MDTower_missile_2",
+   "hp": 1000,
+   "summary": "六联装导弹发射架，火力更猛，射程更远。由导弹塔 Ⅰ 升级。",
+   "attack": {
+    "type": "missile",
+    "range": 30,
+    "interval": 0.6,
+    "power": 37,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.8,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
+  },
+  {
+   "id": "missile_3",
+   "name": "导弹塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_3",
+   "data": 43,
+   "template": "MDTower_missile_3",
+   "hp": 1300,
+   "summary": "八联装重型导弹发射架，火力最强。由导弹塔 Ⅱ 升级。",
+   "attack": {
+    "type": "missile",
+    "range": 34,
+    "interval": 0.6,
+    "power": 66,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.9,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
   }
  ]
 }

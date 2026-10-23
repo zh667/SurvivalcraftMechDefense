@@ -12,7 +12,7 @@ namespace Game;
 public sealed class MDTowerNode { public string name; public string parent; public float[] translation; }
 public sealed class MDTowerMuzzle { public string name; public string part; public float[] local; }
 public sealed class MDTowerAttack {
-    public string type;              // bolt shell snipe beam chain flame jet pulse heal
+    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile
     public float range, minRange, interval, power, splash, speed = 40, charge, duration;
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;

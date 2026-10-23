@@ -152,8 +152,9 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     // turns towards where the target will be: 60 deg/s at first, faster the longer it homes, 600 deg/s within 13 m, straight at
     // it within 5 m. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts
     // when it reaches the target. Without a target, or once the target is dead, it flies on and hits like a shell.
-    public void LaunchMissile(ComponentMDUnit owner,MDTowerDef def,Vector3 from,Vector3 velocity,ComponentBody target,float homeAfter,float accel,float maxSpeed,float life,float power) {
-        shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life});
+    // The 导弹塔 (0.10.0) launches the same missile, with a little splash.
+    public void LaunchMissile(ComponentMDUnit owner,MDTowerDef def,Vector3 from,Vector3 velocity,ComponentBody target,float homeAfter,float accel,float maxSpeed,float life,float power,float splash=0) {
+        shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,splash=splash,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life});
     }
     // a lock-on marker: a red ring around the locked creature, renewed every frame while it is locked
     public void LockMark(Vector3 p,float size){Emit(S.ThinRing,p,Vector3.Zero,.05f,size,size,new Color(255,60,50,230),new Color(255,60,50,200),true);Emit(S.Plus,p,Vector3.Zero,.05f,size*.25f,size*.25f,new Color(255,90,70,230),new Color(255,90,70,200),true);}
@@ -309,7 +310,10 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         var c=C(s.def.fx.color);var c2=C(s.def.fx.color2);var dir=s.vel.LengthSquared()>.01f?Vector3.Normalize(s.vel):Vector3.UnitY;
         if(s.def.attack.type=="bolt"){Emit(S.Glow,s.pos-dir*.3f,Vector3.Zero,.15f,.16f*s.def.fx.scale,.05f,c2*.7f,c2*0f,true);return;}
         Emit(S.Glow,s.pos,Vector3.Zero,.12f,.16f,.05f,c*.8f,c*0f,true);
-        if(s.missile){Emit(S.Fire,s.pos-dir*.3f,-dir*2,.12f,.12f,.04f,new Color(255,220,160),new Color(255,120,40,0),true);Emit(S.Smoke,s.pos-dir*.4f,RDir()*.15f,R(.7f,1.2f),.1f,.45f,new Color(200,200,200,140),new Color(200,200,200,0),false,0,.8f);return;}
+        if(s.missile) {
+            if(s.def.attack.type=="missile"){var body=PM(new Color(214,208,196,255));Emit(S.Streak,s.pos-dir*.2f,dir,Math.Max(dt,.02f)*1.5f,.06f*s.def.fx.scale+.03f,.06f*s.def.fx.scale+.03f,body,body,false,0,0,.25f);}   // the missile itself: a short pale body along its flight
+            Emit(S.Fire,s.pos-dir*.3f,-dir*2,.12f,.12f,.04f,new Color(255,220,160),new Color(255,120,40,0),true);Emit(S.Smoke,s.pos-dir*.4f,RDir()*.15f,R(.7f,1.2f),.1f,.45f,new Color(200,200,200,140),new Color(200,200,200,0),false,0,.8f);return;
+        }
         if(random.Next(2)==0)Emit(S.Smoke,s.pos,RDir()*.2f,R(.5f,.9f),.08f,.3f,new Color(c2.R,c2.G,c2.B,(byte)120),new Color(c2.R,c2.G,c2.B,(byte)0),false,0,1);
     }
     void ZoneVisual(Zone z) {

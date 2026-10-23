@@ -165,6 +165,9 @@ public static class MDTowerBrain {
                 var vel=LaidGun(d)?BarrelLaunch(u,muzzle,MDTowerLibrary.MuzzleForward(d,pose,mi),aimAt):LaunchVelocity(u,muzzle,aimAt);
                 w.Muzzle(d,muzzle,Vector3.Normalize(vel),true);Sound(u,d.fireSounds,muzzle);
                 w.LaunchShell(u,muzzle,vel,Gravity,a.power,a.splash,false);break;
+            case "missile":   // 导弹塔 (0.10.0), after the original: one missile per shot from the next tube; it leaves slowly along the tube, speeds up, homes in and always hits
+                u.Kick(mi);var fwd=MDTowerLibrary.MuzzleForward(d,pose,mi);w.Muzzle(d,muzzle,fwd,false);Sound(u,d.fireSounds,muzzle);
+                w.LaunchMissile(u,d,muzzle,fwd*6,target,.12f,70,a.speed,5,a.power,a.splash);break;
             case "snipe":
                 u.Kick(mi);w.Muzzle(d,muzzle,dir,true);Sound(u,d.fireSounds,muzzle,.8f);
                 var hb=MDCombat.Trace(u,muzzle,muzzle+dir*(a.range+4),out var hp);

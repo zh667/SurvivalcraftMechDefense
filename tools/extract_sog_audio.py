@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 APK = Path(r'E:/projects/apk-game-workbench/local/packages/soldiers-of-glory/original/12c77f9c83fb-com.catstudio.sogmw.apk')
 APK_SHA256 = '12c77f9c83fb7ed5439a131e74fcd1ab829cfa530ace5042ad38d631c6ae1fad'
 OUT = ROOT / 'Mod/Assets/Imported/SoG/Audio'
-NAMES = ['mgun0', 'mgun1', 'mgun2', 'ricochet_0', 'ricochet_1', 'ricochet_2']   # 转轮机枪塔 Ⅰ–Ⅲ: fire (one per level), bullet hits
+NAMES = ['mgun0', 'mgun1', 'mgun2', 'ricochet_0', 'ricochet_1', 'ricochet_2',   # 转轮机枪塔 Ⅰ–Ⅲ: fire (one per level), bullet hits
+         'missile0', 'missile1', 'missile2', 'explo',                           # 导弹塔: launch (one per level), hit
+         'cannon0', 'cannon1', 'cannon2', 'cannon_explo0', 'cannon_explo1', 'cannon_explo2',   # 加农炮, 防空炮: fire, burst
+         'tesla', 'radar', 'sonar']                                             # 磁暴线圈; 雷达 and 电磁脉冲 (files the original never plays)
 
 
 def main():

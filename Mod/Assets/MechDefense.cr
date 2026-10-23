@@ -221,6 +221,37 @@
     "dtd"
     "aaa"
   </Recipe>
+  <!-- 磁暴线圈 Ⅰ-Ⅲ (data 53-55) and 电磁脉冲 Ⅰ-Ⅲ (data 56-58), 0.10.0. -->
+  <Recipe Result="MDDeploymentBlock:53" ResultCount="1" RequiredHeatLevel="0" c="copperingot" w="wire" i="ironingot" Description="磁暴线圈 Ⅰ：一阶，闪电">
+    "ccc"
+    "wiw"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:54" ResultCount="1" RequiredHeatLevel="0" c="copperingot" w="wire" t="mddeploy:53" a="mdpart:1" Description="磁暴线圈 Ⅱ：二阶，由磁暴线圈 Ⅰ 升级">
+    "ccc"
+    "wtw"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:55" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" l="lightbulb" d="diamond" t="mddeploy:54" a="mdpart:1" Description="磁暴线圈 Ⅲ：三阶，由磁暴线圈 Ⅱ 升级">
+    "xlx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:56" ResultCount="1" RequiredHeatLevel="0" n="magnet" r="rod" c="copperingot" i="ironingot" Description="电磁脉冲 Ⅰ：一阶，范围瘫痪">
+    "nnn"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:57" ResultCount="1" RequiredHeatLevel="0" n="magnet" r="rod" t="mddeploy:56" a="mdpart:1" Description="电磁脉冲 Ⅱ：二阶，由电磁脉冲 Ⅰ 升级">
+    "nnn"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:58" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" n="magnet" d="diamond" t="mddeploy:57" a="mdpart:1" Description="电磁脉冲 Ⅲ：三阶，由电磁脉冲 Ⅱ 升级">
+    "xnx"
+    "dtd"
+    "aaa"
+  </Recipe>
   <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
        (cannon), two 高爆榴弹塔 (missiles, grenades), with two alloy plates, the boss's blueprint (used up) and an energy
        core; player level 8 (user, 2026-10-20: only the mech has a level requirement; Wonderful Era's vehicle keys ask 4-10). -->

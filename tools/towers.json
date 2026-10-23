@@ -1848,7 +1848,7 @@
   {
    "id": "radar_1",
    "name": "雷达 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/radar_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_1",
    "data": 44,
    "template": "MDTower_radar_1",
    "hp": 800,
@@ -1886,7 +1886,7 @@
   {
    "id": "radar_2",
    "name": "雷达 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/radar_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_2",
    "data": 45,
    "template": "MDTower_radar_2",
    "hp": 1000,
@@ -1924,7 +1924,7 @@
   {
    "id": "radar_3",
    "name": "雷达 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/radar_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_3",
    "data": 46,
    "template": "MDTower_radar_3",
    "hp": 1300,
@@ -1957,6 +1957,240 @@
    "spinIdle": true,
    "spinSpeed": 120,
    "fireSounds": [],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_1",
+   "name": "磁暴线圈 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_1",
+   "data": 53,
+   "template": "MDTower_tesla_1",
+   "hp": 800,
+   "summary": "磁暴线圈放出闪电击中一个敌人，造成电击伤害。",
+   "attack": {
+    "type": "chain",
+    "range": 21,
+    "interval": 3,
+    "power": 150,
+    "bounces": 0,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 0.9
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_2",
+   "name": "磁暴线圈 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_2",
+   "data": 54,
+   "template": "MDTower_tesla_2",
+   "hp": 1000,
+   "summary": "更强的闪电，击中后再弹射到附近 1 个敌人。由磁暴线圈 Ⅰ 升级。",
+   "attack": {
+    "type": "chain",
+    "range": 24,
+    "interval": 3,
+    "power": 255,
+    "bounces": 1,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 1.0
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_3",
+   "name": "磁暴线圈 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_3",
+   "data": 55,
+   "template": "MDTower_tesla_3",
+   "hp": 1300,
+   "summary": "大型磁暴线圈，闪电弹射到附近 2 个敌人，射程更远。由磁暴线圈 Ⅱ 升级。",
+   "attack": {
+    "type": "chain",
+    "range": 27,
+    "interval": 3,
+    "power": 450,
+    "bounces": 2,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 1.15
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_1",
+   "name": "电磁脉冲 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_1",
+   "data": 56,
+   "template": "MDTower_emp_1",
+   "hp": 800,
+   "summary": "每 5 秒放出一圈电磁脉冲，让范围内的普通和进阶敌人瘫痪 1.5 秒（首领不受影响），不造成伤害。",
+   "attack": {
+    "type": "pulse",
+    "range": 10,
+    "interval": 5,
+    "power": 0,
+    "stun": 1.5,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 0.9
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_2",
+   "name": "电磁脉冲 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_2",
+   "data": 57,
+   "template": "MDTower_emp_2",
+   "hp": 1000,
+   "summary": "范围更大，瘫痪 2 秒。由电磁脉冲 Ⅰ 升级。",
+   "attack": {
+    "type": "pulse",
+    "range": 11.5,
+    "interval": 5,
+    "power": 0,
+    "stun": 2,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 1.0
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_3",
+   "name": "电磁脉冲 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_3",
+   "data": 58,
+   "template": "MDTower_emp_3",
+   "hp": 1300,
+   "summary": "范围最大，瘫痪 2.5 秒。由电磁脉冲 Ⅱ 升级。",
+   "attack": {
+    "type": "pulse",
+    "range": 13,
+    "interval": 5,
+    "power": 0,
+    "stun": 2.5,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 1.15
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
    "hitSounds": []
   }
  ]

@@ -1551,7 +1551,7 @@
    "data": 47,
    "template": "MDTower_cannon_1",
    "hp": 800,
-   "summary": "单管加农炮，炮弹落地爆炸，炸伤一片地面敌人。射速慢、射程远。",
+   "summary": "单管加农炮，炮弹落地爆炸，炸伤一片地面敌人，不打空中目标。射速慢、射程远。",
    "attack": {
     "type": "shell",
     "range": 30,
@@ -1559,7 +1559,8 @@
     "power": 147,
     "speed": 28,
     "splash": 3,
-    "needsSight": false
+    "needsSight": false,
+    "groundOnly": true
    },
    "fx": {
     "color": [
@@ -1605,7 +1606,8 @@
     "power": 250,
     "speed": 30,
     "splash": 3,
-    "needsSight": false
+    "needsSight": false,
+    "groundOnly": true
    },
    "fx": {
     "color": [
@@ -1653,7 +1655,8 @@
     "power": 440,
     "speed": 32,
     "splash": 3,
-    "needsSight": false
+    "needsSight": false,
+    "groundOnly": true
    },
    "fx": {
     "color": [
@@ -1849,13 +1852,13 @@
    "data": 44,
    "template": "MDTower_radar_1",
    "hp": 800,
-   "summary": "雷达天线不停旋转，把附近最多 3 座防御塔的射程提高 15 %。本身不攻击。",
+   "summary": "雷达天线不停旋转，范围内所有防御塔射程提高 15 %。本身不攻击。",
    "attack": {
     "type": "radar",
-    "range": 16,
+    "range": 24,
     "interval": 1,
     "boost": 1.15,
-    "links": 3
+    "links": 0
    },
    "fx": {
     "color": [
@@ -1877,9 +1880,7 @@
    "spinAxis": "y",
    "spinIdle": true,
    "spinSpeed": 120,
-   "fireSounds": [
-    "Imported/SoG/Audio/radar"
-   ],
+   "fireSounds": [],
    "hitSounds": []
   },
   {
@@ -1889,13 +1890,13 @@
    "data": 45,
    "template": "MDTower_radar_2",
    "hp": 1000,
-   "summary": "更大的雷达，附近最多 3 座防御塔射程提高 20 %，覆盖更远。由雷达 Ⅰ 升级。",
+   "summary": "更大的雷达，范围更大，范围内所有防御塔射程提高 20 %。由雷达 Ⅰ 升级。",
    "attack": {
     "type": "radar",
-    "range": 18,
+    "range": 30,
     "interval": 1,
     "boost": 1.2,
-    "links": 3
+    "links": 0
    },
    "fx": {
     "color": [
@@ -1917,9 +1918,7 @@
    "spinAxis": "y",
    "spinIdle": true,
    "spinSpeed": 120,
-   "fireSounds": [
-    "Imported/SoG/Audio/radar"
-   ],
+   "fireSounds": [],
    "hitSounds": []
   },
   {
@@ -1929,13 +1928,13 @@
    "data": 46,
    "template": "MDTower_radar_3",
    "hp": 1300,
-   "summary": "大型雷达，附近最多 3 座防御塔射程提高 25 %，覆盖最远。由雷达 Ⅱ 升级。",
+   "summary": "大型雷达，范围最大，范围内所有防御塔射程提高 25 %。由雷达 Ⅱ 升级。",
    "attack": {
     "type": "radar",
-    "range": 21,
+    "range": 36,
     "interval": 1,
     "boost": 1.25,
-    "links": 3
+    "links": 0
    },
    "fx": {
     "color": [
@@ -1957,9 +1956,7 @@
    "spinAxis": "y",
    "spinIdle": true,
    "spinSpeed": 120,
-   "fireSounds": [
-    "Imported/SoG/Audio/radar"
-   ],
+   "fireSounds": [],
    "hitSounds": []
   }
  ]

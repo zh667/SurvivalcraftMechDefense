@@ -49,7 +49,7 @@ public static class MDTowerBrain {
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),u.Range+2,bodies);
         var found=new List<(float score,ComponentBody body)>();
         foreach(var b in bodies)
-            if(MDCombat.IsEnemy(u,b)&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
+            if(MDCombat.IsEnemy(u,b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
         found.Sort((x,y)=>x.score.CompareTo(y.score));
         var from=Aim(u);
         foreach(var (_,b) in found)if(!a.needsSight||Sight(u,from,b))return b;
@@ -209,20 +209,20 @@ public static class MDTowerBrain {
     // A creature in the air: one that can fly and is not standing on anything (birds, flying mod creatures). Anti-air towers
     // (attack.airFirst) pick these first and do attack.groundFactor of their damage to anything else.
     public static bool Airborne(ComponentBody b){var loc=b.Entity.FindComponent<ComponentLocomotion>();return loc!=null&&loc.FlySpeed>0&&!b.StandingOnValue.HasValue&&b.ImmersionFactor<=0;}
-    // Radar (0.10.0): every interval, up to attack.links of the nearest working towers within range get range x attack.boost
-    // until a little after the next pulse (several radars: the strongest boost); a thin line shows each link.
+    // Radar (0.10.0): every interval, every working tower within range (attack.links > 0: only that many, nearest first) gets
+    // range x attack.boost until a little after the next pulse (several radars: the strongest boost). Silent and without link
+    // lines (user, 10-23: with many radars the lines and pings were too busy).
     static void Radar(ComponentMDUnit u) {
-        var d=u.Tower;var a=d.attack;var w=World(u);if(u.Cooldown>0)return;u.Cooldown=a.interval;
+        var d=u.Tower;var a=d.attack;if(u.Cooldown>0)return;u.Cooldown=a.interval;
         var p=u.Body.Position;var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
         var towers=bodies.Select(b=>b.Entity.FindComponent<ComponentMDUnit>()).Where(t=>t!=null&&t!=u&&t.Kind=="Turret"&&!t.Destroyed&&t.Tower!=null&&t.Tower.attack.type is not ("radar" or "heal")
-            &&Vector3.DistanceSquared(t.Body.Position,p)<=a.range*a.range).OrderBy(t=>Vector3.DistanceSquared(t.Body.Position,p)).Take(Math.Max(1,a.links)).ToList();
-        double now=u.Clock.GameTime;var from=d.muzzles.Length>0?Muzzle(u,0):p+Vector3.UnitY*2;var c=MDTowerWorldColor(d.fx.color);
+            &&Vector3.DistanceSquared(t.Body.Position,p)<=a.range*a.range).OrderBy(t=>Vector3.DistanceSquared(t.Body.Position,p)).Take(a.links>0?a.links:int.MaxValue).ToList();
+        double now=u.Clock.GameTime;
         foreach(var t in towers) {
             if(t.RangeBoostUntil<now||a.boost>=t.RangeBoost)t.RangeBoost=a.boost;
             t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+.5);
-            w.AddBeam(from,t.Body.Position+Vector3.UnitY*(t.Tower.bounds[1][1]*.6f),.03f*d.fx.scale,c,.5f,false);
         }
-        if(towers.Count>0&&++u.ShotCount%4==1)Sound(u,d.fireSounds,from,.35f);
+        u.ShotCount+=towers.Count>0?1:0;
     }
     static void AreaTick(ComponentMDUnit u) {
         var d=u.Tower;var a=d.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();var p=u.Body.Position;

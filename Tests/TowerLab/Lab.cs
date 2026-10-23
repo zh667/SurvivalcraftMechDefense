@@ -405,13 +405,15 @@ public partial class Lab:ModLoader {
                 }
                 results["fired"]=u.ShotCount-shots0;Remove([target]);
             }
-            if(d.attack.type=="radar") {   // 雷达 (0.10.0): a gun tower 6 m away gets range x boost within a pulse; one shot shows the link line
-                var g=Place(towers.First(t=>t.id=="gatling_1"),at+new Vector3(-6,0,0),0);g.Cooldown=1e6f;float r0=g.Range;
-                u.Cooldown=0;var ce=at+new Vector3(-3,h*.55f,0);
-                for(double st=Time.RealTime;Time.RealTime-st<1.4;){g.Cooldown=1e6f;Cam(ce+new Vector3(2,h*.6f,-9),ce);yield return true;}
+            if(d.attack.type=="radar") {   // 雷达 (0.10.0): every tower in range gets range x boost within a pulse (four guns, more than the old limit of 3), one beyond it doesn't
+                var gun=towers.First(t=>t.id=="gatling_1");var gs=new List<ComponentMDUnit>();
+                foreach(var off in new[]{6f,9f,12f,15f})gs.Add(Place(gun,at+new Vector3(-off,0,off%2==0?0:5),0));
+                var far=Place(gun,at+new Vector3(d.attack.range+4,0,0),0);float r0=far.Range;
+                u.Cooldown=0;var ce=at+new Vector3(-6,h*.55f,2);
+                for(double st=Time.RealTime;Time.RealTime-st<1.4;){foreach(var g in gs)g.Cooldown=1e6f;far.Cooldown=1e6f;Cam(ce+new Vector3(3,h*.8f,-14),ce);yield return true;}
                 Shot("v_radar_link");views.Add("radar_link");yield return true;
-                results["radar"]=$"gun range {r0:0.0} -> {g.Range:0.0} (boost {g.RangeBoost:0.00}, expected {d.attack.boost:0.00}), spin {u.Spin:0.00} rad at rate {u.SpinRate:0.00}";
-                bool ok=Math.Abs(g.Range-r0*d.attack.boost)<.05f&&u.SpinRate>.5f;Remove([g]);
+                results["radar"]=$"guns in range {string.Join(" / ",gs.Select(g=>$"{g.Range:0.0}"))} (from {r0:0.0}, expected x{d.attack.boost:0.00}), gun beyond range {far.Range:0.0}, spin {u.Spin:0.00} rad at rate {u.SpinRate:0.00}";
+                bool ok=gs.All(g=>Math.Abs(g.Range-r0*d.attack.boost)<.05f)&&Math.Abs(far.Range-r0)<.01f&&u.SpinRate>.5f;Remove(gs);Remove([far]);
                 if(!ok)throw new Exception("radar: "+results["radar"]);   // the runner saves passed=false with this message
             }
             {   // fog: weather on, rain kept away, full fog. The fog layer's height comes from a seed taken from the fog start

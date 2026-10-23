@@ -24,6 +24,7 @@ public sealed class MDTowerAttack {
     public bool needsSight = true, threatFirst, directional, highArc;   // highArc: mortar lob instead of the flat solution
     public int soundEvery = 1;      // fast guns: the fire sound plays on every n-th shot only
     public bool airFirst; public float groundFactor = 1;   // anti-air: flying targets first, ground targets take groundFactor of the damage
+    public bool groundOnly;          // never targets flying creatures (加农炮, user 10-23)
     public float boost = 1; public int links = 3;          // radar: range x boost for up to `links` towers within range
     public float width;              // directional rectangle width (flame/jet)
 }

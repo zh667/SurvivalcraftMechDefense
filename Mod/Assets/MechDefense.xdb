@@ -1156,7 +1156,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="ac5939ea-34fa-56f0-b4c7-dea7c84aca8e" />
         <Parameter Name="ModelName" Type="string" Value="Towers/missile_1/model" Guid="7080762f-d95c-5b7b-9295-8026a045bd40" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/missile_1/atlas" Guid="fc06c892-718e-5c3a-90f7-489a54b4ce18" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.09" Guid="590010e9-6d37-5b0c-9749-2073dd142c7b" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.21" Guid="590010e9-6d37-5b0c-9749-2073dd142c7b" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="f0b5f854-495f-5281-ab77-e5c685fa6042" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -1170,7 +1170,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Body" Guid="24564a34-1d63-52bb-9482-8b95c3c7d392" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="02952c02-507a-560f-83ba-a305bb6d75aa" />
-        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,2,1.9" Guid="aa824365-3cb8-5769-9605-47724fb0aa86" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="aa824365-3cb8-5769-9605-47724fb0aa86" />
         <Parameter Name="Mass" Type="float" Value="1500" Guid="5b5433f2-a220-57c5-92c5-a519d116df1d" />
         <Parameter Name="Density" Type="float" Value="5" Guid="3dab9197-9099-5c00-bd0e-d1afbbcd32d7" />
         <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="a0b99071-369e-5f42-bb6c-83b2aff6fee2" />
@@ -1191,7 +1191,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="94548264-64bb-56cc-8fbe-3adb7370e881" />
         <Parameter Name="ModelName" Type="string" Value="Towers/missile_2/model" Guid="28e87cac-267f-5a59-83bc-259e504cba92" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/missile_2/atlas" Guid="fe46f8c4-c709-51b5-bf54-aef35f4e1b8a" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.48" Guid="07083394-c81c-55dd-bc5b-05f06844cd75" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.58" Guid="07083394-c81c-55dd-bc5b-05f06844cd75" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="6f91ffd3-2e08-5d4b-8254-f6512d2dee43" />
       </MemberComponentTemplate>
     </EntityTemplate>
@@ -1205,7 +1205,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Body" Guid="de2d3cf7-84ba-558a-9d9b-5ef1082244f5" InheritanceParent="8edd1986-0dcc-424f-893a-491c089b821e">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerBody" Guid="92be64b5-3bd4-569b-930a-679a12b27056" />
-        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,2,1.9" Guid="d5e4f0bd-d1a3-5de9-8dba-8d94d9df9b04" />
+        <Parameter Name="BoxSize" Type="Vector3" Value="1.9,3,1.9" Guid="d5e4f0bd-d1a3-5de9-8dba-8d94d9df9b04" />
         <Parameter Name="Mass" Type="float" Value="1500" Guid="2f6dc3c2-2993-59ac-8624-c3a32f9a1089" />
         <Parameter Name="Density" Type="float" Value="5" Guid="884b3f5f-fa2a-51b8-b934-75a59cc6fd71" />
         <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="0" Guid="35188673-51e6-5b85-8770-62ad960fa5f9" />
@@ -1226,7 +1226,7 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDTowerModel" Guid="ac43430f-ec76-5217-adf5-1131ad1321e4" />
         <Parameter Name="ModelName" Type="string" Value="Towers/missile_3/model" Guid="518a6b34-1c43-5bfd-bd60-88c8ac7465a0" />
         <Parameter Name="TextureOverride" Type="string" Value="Towers/missile_3/atlas" Guid="63030baa-82db-596a-82b4-9b1ac6b2585d" />
-        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.56" Guid="1f7ac41e-a882-5f5b-8fa7-432f45b5c4a4" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="2.65" Guid="1f7ac41e-a882-5f5b-8fa7-432f45b5c4a4" />
         <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="92ba3fe6-b2f6-503a-bbd4-470e9eea239a" />
       </MemberComponentTemplate>
     </EntityTemplate>

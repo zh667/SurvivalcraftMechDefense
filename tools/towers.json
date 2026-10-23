@@ -1196,7 +1196,7 @@
   {
    "id": "frost_1",
    "name": "冰冻塔 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_1",
    "data": 35,
    "template": "MDTower_frost_1",
    "hp": 800,
@@ -1237,7 +1237,7 @@
   {
    "id": "frost_2",
    "name": "冰冻塔 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_2",
    "data": 36,
    "template": "MDTower_frost_2",
    "hp": 1000,
@@ -1278,7 +1278,7 @@
   {
    "id": "frost_3",
    "name": "冰冻塔 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/frost_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_3",
    "data": 37,
    "template": "MDTower_frost_3",
    "hp": 1300,
@@ -1319,7 +1319,7 @@
   {
    "id": "flame_1",
    "name": "火焰塔 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_1",
    "data": 38,
    "template": "MDTower_flame_1",
    "hp": 800,
@@ -1358,7 +1358,7 @@
   {
    "id": "flame_2",
    "name": "火焰塔 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_2",
    "data": 39,
    "template": "MDTower_flame_2",
    "hp": 1000,
@@ -1397,7 +1397,7 @@
   {
    "id": "flame_3",
    "name": "火焰塔 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/flame_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_3",
    "data": 40,
    "template": "MDTower_flame_3",
    "hp": 1300,

@@ -599,16 +599,16 @@
    "id": "frost_1",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\model.glb",
-     "glbSha256": "ef3d28842755ccb4c6972de326f4383f266235da390a4ce04ee3e5aee8fa6536",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\atlas.png",
-     "atlasSha256": "f45445f1030a3f470b31c44ce489caab5bd8f4ad700cf4a45cf1157a51c9a897"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\model.glb",
+     "glbSha256": "5aea599de6d36310249785fce6255a93b9c80c1085cbb9d2f81b851e058ec3ff",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\atlas.png",
+     "atlasSha256": "83b3ad6f7e46b77624bde6c42ea26d5249df21d5f2a3ac1dbec43212b7e9683f"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_1\\parts.json",
-    "partsSha256": "5dc1af957e87fdd20304a0816f17a85f26a10ef0ffbccf5740104272b00a6434"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\parts.json",
+    "partsSha256": "a990a51fabf8776620fdb15a8f3a327e5ec87f9996914e5fa2b70a291175976b"
    },
    "model": "polygon",
-   "triangles": 3676,
+   "triangles": 3572,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -624,16 +624,16 @@
    "id": "frost_2",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\model.glb",
-     "glbSha256": "b61584fc7dcab8f97b30bb60a369953d9348fa5ad2e98e33682779169c97d022",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\atlas.png",
-     "atlasSha256": "13c6751945c51831479d286b8c5ea85f0a3125702c2e37b2d61fbfb5a83c75ae"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\model.glb",
+     "glbSha256": "f0f77b2208455ffffa3dd66466cace226469b6080041df17c0f0e302cc2aa50b",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\atlas.png",
+     "atlasSha256": "2b95005af0a6c240106ecf376b94b0bec11ed19e285da7841f06139acbebe04f"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_2\\parts.json",
-    "partsSha256": "69d1103604fee6333f8f58cb5ccd8adea2d290b14bcc6346fef4bece158cc178"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\parts.json",
+    "partsSha256": "392131d647e4a2b53b743a51850046719cfa72d10402e2e652987dc33f75ede4"
    },
    "model": "polygon",
-   "triangles": 4896,
+   "triangles": 5084,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -649,16 +649,16 @@
    "id": "frost_3",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\model.glb",
-     "glbSha256": "0dd5571e9567d96d931c606b2880b913731e0499bb69890b8c969d4c1c51e0d9",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\atlas.png",
-     "atlasSha256": "706592fbc04bf2541151cb12adafd9521fb2d430e0d98afb34fa1f4e9253d0d0"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\model.glb",
+     "glbSha256": "9ebaee0b6a749c2f2acbd1adeace632055d6f206019df15833c585f3437f95a2",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\atlas.png",
+     "atlasSha256": "716b3d8c27d67c2e98fe58d51972d420d649f8ea156094481fa2ffa1a4ebd2df"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\frost_3\\parts.json",
-    "partsSha256": "6d742e778839951c23be8dca72d95d78add26d897e796198cf1b019e85e2c86c"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\parts.json",
+    "partsSha256": "27ca9514b4ad9ef0e34fca1cfdcc2efcc8a8b12a73876abdc9abf2204756d6f6"
    },
    "model": "polygon",
-   "triangles": 5120,
+   "triangles": 5224,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -674,16 +674,16 @@
    "id": "flame_1",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\model.glb",
-     "glbSha256": "a591815b220f66c6c4422053990b83581feb3f349454005a7651a294d8fddc7b",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\atlas.png",
-     "atlasSha256": "f24fe349ef8fdf85a314a8092c4a4f9e2341413f5a954c99d970451121067153"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\model.glb",
+     "glbSha256": "da17922dbb262aaf95ec85753c6bad65312337c3c171a269c7b378e0bfbfc4c8",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\atlas.png",
+     "atlasSha256": "d1c44614bc06168d9337e5dd7abe3526aca04219db3d61a8229ef4c6f831134d"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_1\\parts.json",
-    "partsSha256": "b064f5bfac16af3712161317db0bd03ed86d95d48752befaa04ea62fcc7a400c"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\parts.json",
+    "partsSha256": "1307dceae9d81b810be9125c075002567685e5a87602f28a2df39fda5b218996"
    },
    "model": "polygon",
-   "triangles": 3700,
+   "triangles": 3936,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -699,16 +699,16 @@
    "id": "flame_2",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\model.glb",
-     "glbSha256": "41bb1c9d6dc86d87efcf1dae87aa42c47ab9307946e96b0c83fb69b21f98f703",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\atlas.png",
-     "atlasSha256": "5b41b6d57ca0902421b8802a1414370fe29a54180874c1845c9d1a56c759920d"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\model.glb",
+     "glbSha256": "4c7c7c1a00f2d7883ffec67d2c0957cc8f762f4f8e4a633739ee186bd329c6c1",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\atlas.png",
+     "atlasSha256": "f2643d6448ff5f5ae58075fc39ea2c2ad2386db9451b854d915900226c4b5b2b"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_2\\parts.json",
-    "partsSha256": "0e9554d49e2a730b230f1bea9bce2489b4ac983381c7050eac841a4351f5645f"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\parts.json",
+    "partsSha256": "c032d45294ec66d0bbd056163a9d457206b0dddc9ce537c43be01f7f04417434"
    },
    "model": "polygon",
-   "triangles": 5120,
+   "triangles": 5056,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -724,16 +724,16 @@
    "id": "flame_3",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\model.glb",
-     "glbSha256": "76ed2286e88a37b8720813bf043e8ab1e516908126e6a7370180d98a0a4318c9",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\atlas.png",
-     "atlasSha256": "d53b0b2c12552db46182f04d044f88e40cd95d71b9019a5858725a1698cd20a6"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\model.glb",
+     "glbSha256": "8b98acd920fd803116a858e378cf5b4fe63aedafc628f385d2d4d360f9f5ee30",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\atlas.png",
+     "atlasSha256": "a59dd0f3b2f53b3ad390ee6078d47d5cbe9f625a27166e6b962d66b64b8e2cfa"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\flame_3\\parts.json",
-    "partsSha256": "11d91daafc0a354ec1ac894a6e3bb3bb7e42ebe3ae9185691e102b879b6d0fd1"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\parts.json",
+    "partsSha256": "2358e32e55e7be13b7af8f745ba69b75174a7126d10381587ffa60b7a4b43fb4"
    },
    "model": "polygon",
-   "triangles": 5444,
+   "triangles": 5440,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,

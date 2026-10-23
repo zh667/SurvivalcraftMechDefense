@@ -749,16 +749,16 @@
    "id": "missile_1",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\model.glb",
-     "glbSha256": "b4cfa6ab36871c81cddbd2fde879140dab9f441ecef472f0c0a86307f4eb41d3",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\atlas.png",
-     "atlasSha256": "076d114b46540ec935a77e1ab98eb30b318730e069b644412a0d4f5d736237b4"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\model.glb",
+     "glbSha256": "02fbca2cd6216e7faec2f70410102758dd789ef4a6928875e9aa4c6df756e050",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\atlas.png",
+     "atlasSha256": "cd1a211e28a2a17a3d38ca4be2b090ac1e5647cfbf63ce65c5e6a4bcdf27ceb6"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\parts.json",
-    "partsSha256": "064754b6f471be96eaf4c6d18e95baec89ed44eb1c9626f9132a77d262f59dc0"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\parts.json",
+    "partsSha256": "43a5206eb7b8f0c4ccfa285afb3bf0b55ae6dd2250b659f0245a2f83c082fc40"
    },
    "model": "polygon",
-   "triangles": 3000,
+   "triangles": 4260,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -774,16 +774,16 @@
    "id": "missile_2",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\model.glb",
-     "glbSha256": "3df4d2c8e87c12067c85b3f495cbb53d823fb0426b6a8e9c205d9acb2bf00fd0",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\atlas.png",
-     "atlasSha256": "7dceccf802b1b1f19b25bfde8b4e73066cd2849710e56990f1904e993dcfbaa3"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\model.glb",
+     "glbSha256": "a29326598cd4e8fe13248b726838444f15603324a247fbe9105c026daf08bd5e",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\atlas.png",
+     "atlasSha256": "0f7fb967a1754cbdbeab43cb4b886587c7591457b838b87df6e649b53186b6f7"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_2\\parts.json",
-    "partsSha256": "e9c83db563bd2df991d3283c64ec9d583e53a1d5aa9a8949e82375c182d255dd"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\parts.json",
+    "partsSha256": "5143f2f2237637a1748b99e02d9e03d3fa5fe2cefb0c530eda7759810d1204fc"
    },
    "model": "polygon",
-   "triangles": 3636,
+   "triangles": 4984,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -799,16 +799,16 @@
    "id": "missile_3",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\model.glb",
-     "glbSha256": "5e52cf87961c8a7225e53477db9378c38b56420197d3ddfa8e0bf2faa7872334",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\atlas.png",
-     "atlasSha256": "e1e413eba1f9f86ab5442a53526260e073601e9e52868093e71ef6c29f5c8996"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\model.glb",
+     "glbSha256": "9a44469c5859f68f3ceff5ccf625af98c0b3b26dfd535c7838aefd20970f9ee1",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\atlas.png",
+     "atlasSha256": "a27b1e55844ea4c3efaef06c0116606963a2f9ebe5993c26dbbf283f0895ba28"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_3\\parts.json",
-    "partsSha256": "711b985f414a69c9610ec03f74ce18e4f5b2bfdff04953afb0a08f81456227bc"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\parts.json",
+    "partsSha256": "8ce3fd378df46bc555948b4d2cf2e11ff6ffb7c6ba2ee4f8694c44fcf452e0c5"
    },
    "model": "polygon",
-   "triangles": 4060,
+   "triangles": 5328,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,

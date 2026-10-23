@@ -1436,7 +1436,7 @@
   {
    "id": "missile_1",
    "name": "导弹塔 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_1",
    "data": 41,
    "template": "MDTower_missile_1",
    "hp": 800,
@@ -1473,7 +1473,7 @@
   {
    "id": "missile_2",
    "name": "导弹塔 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_2",
    "data": 42,
    "template": "MDTower_missile_2",
    "hp": 1000,
@@ -1510,7 +1510,7 @@
   {
    "id": "missile_3",
    "name": "导弹塔 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/missile_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_3",
    "data": 43,
    "template": "MDTower_missile_3",
    "hp": 1300,

@@ -1,4 +1,5 @@
 using Engine;
+using Engine.Input;
 using Game;
 using GameEntitySystem;
 using System.Reflection;
@@ -316,6 +317,26 @@ public partial class Lab {
             int at=xml.IndexOf(MDSettings.Element);s["file"]=at<0?"no element":xml.Substring(at,Math.Min(400,xml.Length-at));
             MDSettings.StartDay=5;MDSettings.SpawnTime=MDSpawnTime.Night;ModSettingsManager.LoadModSettings();s["reloaded"]=$"start day {MDSettings.StartDay}, time {MDSettings.SpawnTime}";
             if(MDSettings.StartDay!=0||MDSettings.SpawnTime!=MDSpawnTime.Always||at<0)throw new Exception("settings save/load: "+s["saved"]+"; "+s["reloaded"]+"; "+s["file"]);
+            {   // 0.11.0 the mech's keys on the page: a key per action, a key another action has is refused, Save applies them, the file keeps them
+                MDSettingsScreen.Open();foreach(var x in During(.5,()=>{}))yield return x;
+                if(ScreensManager.CurrentScreen is not MDSettingsScreen kp)throw new Exception("settings: the page did not reopen");
+                kp.Capturing=MDMechAction.Melee;foreach(var x in Snap("rs_keys_capture"))yield return x;
+                bool setG=kp.SetKey(MDMechAction.Melee,Key.G),taken=kp.SetKey(MDMechAction.Switch,Key.G),setFire=kp.SetKey(MDMechAction.Fire,Key.K);
+                string fireNote=Texts(kp);bool mountRefused=!kp.SetKey(MDMechAction.Jump,MDMechKeys.GameKey("ToggleMount"));   // K is the game's 降水; R its mount key
+                s["keysShared"]=$"K noted as the game's: {fireNote.Contains("也是「降水」")}; mount key {MDMechKeys.GameKey("ToggleMount")} refused {mountRefused}";
+                if(!fireNote.Contains("也是「降水」")||!mountRefused)throw new Exception("mech keys shared with the game: "+s["keysShared"]);
+                foreach(var x in Snap("rs_keys_edited"))yield return x;s["keysPage"]=Texts(kp);
+                bool beforeSave=MDMechKeys.Get(MDMechAction.Melee)==Key.F;kp.SaveNow();foreach(var x in During(.5,()=>{}))yield return x;
+                string kx;using(var st=Storage.OpenFile(ModsManager.ModsSettingsPath,OpenFileMode.Read))using(var rd=new StreamReader(st))kx=rd.ReadToEnd();
+                MDMechKeys.Apply(MDMechKeys.Defaults());ModSettingsManager.LoadModSettings();
+                s["keys"]=$"G for melee {setG}, G for switch refused {!taken}, K for fire {setFire}, unchanged before Save {beforeSave}; after a reload: melee {MDMechKeys.Get(MDMechAction.Melee)}, switch {MDMechKeys.Get(MDMechAction.Switch)}, fire {MDMechKeys.Get(MDMechAction.Fire)}; in the file {kx.Contains("Melee=G")}";
+                if(!setG||taken||!setFire||!beforeSave||MDMechKeys.Get(MDMechAction.Melee)!=Key.G||MDMechKeys.Get(MDMechAction.Switch)!=Key.B||MDMechKeys.Get(MDMechAction.Fire)!=Key.K||!kx.Contains("Melee=G"))
+                    throw new Exception("mech keys: "+s["keys"]);
+                var bad=MDMechKeys.Normalize(new Dictionary<MDMechAction,Key>{[MDMechAction.Hover]=Key.Escape,[MDMechAction.Melee]=Key.B,[MDMechAction.Switch]=Key.B});   // unusable and repeated keys
+                s["keysNormalize"]=string.Join(" ",bad.Select(kv=>$"{kv.Key}={kv.Value}"));
+                if(bad[MDMechAction.Hover]!=Key.Shift||bad[MDMechAction.Melee]!=Key.B||bad[MDMechAction.Switch]!=Key.Null)throw new Exception("mech keys normalize: "+s["keysNormalize"]);
+                MDMechKeys.Apply(MDMechKeys.Defaults());MDSettings.Persist();
+            }
             // the HUD editor from the page
             MDSettingsScreen.Open();foreach(var x in During(.5,()=>{}))yield return x;((MDSettingsScreen)ScreensManager.CurrentScreen).OpenEditor();
             foreach(var x in Until(()=>ScreensManager.CurrentScreen is MDHudLayoutScreen,3))yield return x;
@@ -330,6 +351,71 @@ public partial class Lab {
             if(!untouched||!MDSettings.Hud.Custom||Math.Abs(MDSettings.Hud.X-.3f)>.01f||Math.Abs(MDSettings.Hud.Scale-1.21f)>.01f||ScreensManager.CurrentScreen is not MDSettingsScreen)throw new Exception("editor: "+s["editorWorking"]+"; "+s["editorSaved"]);
             MDSettings.Defaults();MDSettings.Persist();SettingsManager.ShowGuiInScreenshots=false;
             ScreensManager.SwitchScreen("Game");foreach(var x in During(1,()=>{}))yield return x;
+        }
+        if(Part("encyclopedia")) {   // 0.11.0: towers and mechs in Help, the enemies in the game's bestiary (MDEncyclopedia)
+            var e=new Dictionary<string,object>();r["encyclopedia"]=e;SettingsManager.ShowGuiInScreenshots=true;
+            IEnumerable<bool> Shot2(string name){foreach(var x in During(.8,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");yield return true;}
+            // Help: five topics; every tower on exactly one tier page; its health and range as in towers.json
+            ScreensManager.SwitchScreen("Help");foreach(var x in During(.5,()=>{}))yield return x;
+            var help=ScreensManager.FindScreen<HelpScreen>("Help");
+            var ours=help.m_topics.Values.Where(t=>t.Name.StartsWith(MDEncyclopedia.Prefix)).OrderBy(t=>t.Index).ToList();
+            e["helpTopics"]=ours.Select(t=>t.Title).ToList();
+            if(ours.Count!=5||!help.m_topicsList.Items.Contains(ours[0]))throw new Exception("help: "+string.Join(", ",ours.Select(t=>t.Title)));
+            help.m_topicsList.ScrollToItem(ours[^1]);foreach(var x in Shot2("re_help_list"))yield return x;
+            foreach(var t in ours)MDEncyclopedia.Fill(t);
+            var tierPages=ours.Where(t=>t.Name.Contains("Tier")).ToList();var problems=new List<string>();
+            var paragraphs=tierPages.SelectMany(t=>t.Text.Split("\n\n")).ToList();
+            foreach(var d in MDTowerLibrary.All) {
+                var mine=paragraphs.Where(x=>x.StartsWith(d.name+"：")).ToList();
+                if(mine.Count!=1)problems.Add($"{d.id} in {mine.Count} paragraphs");
+                else if(!mine[0].Contains($"血量 {d.hp:0}，")||!mine[0].Contains($"射程 {d.attack.range:0.#} 格")||!mine[0].Contains($"占地 {d.cells[0]}×{d.cells[2]} 格")||!(mine[0].Contains("合成：")||mine[0].Contains("升级，另加："))||mine[0].Contains("没有配方"))
+                    problems.Add($"{d.id}: {mine[0][..Math.Min(140,mine[0].Length)]}");
+            }
+            e["helpTowers"]=$"{MDTowerLibrary.All.Count} towers, {paragraphs.Count} paragraphs on the tier pages ({string.Join(" / ",tierPages.Select(t=>t.Text.Split("\n\n").Length))})";
+            e["helpOverview"]=ours[0].Text[..Math.Min(120,ours[0].Text.Length)];e["helpSample"]=ours[3].Text[..Math.Min(400,ours[3].Text.Length)];e["helpMechs"]=ours[4].Text;
+            if(problems.Count>0)throw new Exception("help towers: "+string.Join("; ",problems.Take(8)));
+            if(ours.Any(t=>t.Text.Length<40)||ours[4].Text.Contains("没有配方"))throw new Exception("help: a short or recipe-less text");
+            if(!ours[4].Text.Contains("由水星机甲升级，另加：")||ours[4].Text.Contains("由“暴雨”铳械塔升级"))throw new Exception("help: the mechs' recipes read wrong");
+            help.ShowTopic(ours[3]);foreach(var x in Shot2("re_help_tier3"))yield return x;
+            // the bestiary: the four robots, each with its numbers; no egg item for them
+            ScreensManager.SwitchScreen("Bestiary");foreach(var x in During(.5,()=>{}))yield return x;
+            var best=ScreensManager.FindScreen<BestiaryScreen>("Bestiary");var infos=best.m_creaturesList.Items.OfType<BestiaryCreatureInfo>().ToList();
+            var found=MDEncyclopedia.Bestiary.Select(b=>infos.FirstOrDefault(i=>ReferenceEquals(i.EntityValuesDictionary,DatabaseManager.FindEntityValuesDictionary(b.Template,false)))).ToList();
+            // the list shows the short description (one row each); the numbers are only on the creature's own page
+            e["bestiary"]=found.Select((i,k)=>i==null?MDEncyclopedia.Bestiary[k].Template+" missing":$"{i.DisplayName} (order {i.Order}, resilience {i.AttackResilience:0}, loot {i.Loot.Count}, list text {i.Description.Length} chars)").ToList();
+            e["bestiaryCount"]=$"{infos.Count} entries";
+            if(found.Any(i=>i==null||i.Description.Contains("【数值】")||i.Description.Contains('\n')))throw new Exception("bestiary list: "+string.Join("; ",(List<string>)e["bestiary"]));
+            // EggBlock registers a hidden egg type for each (as for the game's creatures without eggs): exactly 3900-3903, no item in the
+            // creative inventory, no food value, no recipe that makes or uses one
+            var eggBlock=BlocksManager.Blocks[BlocksManager.GetBlockIndex<EggBlock>()] as EggBlock;
+            var robotEggs=eggBlock.m_eggTypes.Where(x=>x.Key>=3900&&x.Key<=3903||MDEncyclopedia.Bestiary.Any(b=>b.Template==x.Value?.TemplateName)).ToList();
+            bool Robot(EggBlock.EggType t)=>t!=null&&t.EggTypeIndex>=3900&&t.EggTypeIndex<=3903;
+            var eggItems=eggBlock.GetCreativeValues().Where(v=>Robot(eggBlock.GetEggType(Terrain.ExtractData(v)))).Count();
+            var eggRecipes=CraftingRecipesManager.Recipes.Count(cr=>Terrain.ExtractContents(cr.ResultValue)==eggBlock.BlockIndex&&Robot(eggBlock.GetEggType(Terrain.ExtractData(cr.ResultValue)))
+                ||cr.Ingredients.Any(i=>i!=null&&i.StartsWith("egg:")&&int.TryParse(i[4..],out int ed)&&Robot(eggBlock.GetEggType(ed))));
+            e["eggTypes"]=$"{eggBlock.m_eggTypes.Count} egg types; robots: {string.Join(", ",robotEggs.Select(x=>$"{x.Key} {x.Value.TemplateName} show {x.Value.ShowEgg} food {x.Value.NutritionalValue}"))}; items {eggItems}, recipes {eggRecipes}";
+            if(robotEggs.Count!=4||robotEggs.Any(x=>x.Value.ShowEgg||x.Value.NutritionalValue>0||!MDEncyclopedia.Bestiary.Any(b=>b.Template==x.Value.TemplateName))||eggItems>0||eggRecipes>0)
+                throw new Exception("robot eggs: "+e["eggTypes"]);
+            best.m_creaturesList.ScrollToItem(found[3]);foreach(var x in Shot2("re_bestiary_list"))yield return x;
+            var pages=new List<string>();
+            foreach(var (info,shot) in new[]{(found[3],"re_bestiary_devil"),(found[0],"re_bestiary_rd05"),(found[2],"re_bestiary_rd07")}) {
+                ScreensManager.SwitchScreen("Bestiary");foreach(var x in During(.3,()=>{}))yield return x;
+                ScreensManager.SwitchScreen("BestiaryDescription",info,infos);foreach(var x in Shot2(shot))yield return x;
+                var pg=ScreensManager.FindScreen<BestiaryDescriptionScreen>("BestiaryDescription");var mw=pg.m_modelWidget;
+                var model=ContentManager.Get<Engine.Graphics.Model>(info.ModelName);var bones=new Matrix[model.Bones.Count];model.CopyAbsoluteBoneTransformsTo(bones);var size=model.CalculateAbsoluteBoundingBox(bones).Size();
+                float fits=Vector3.Distance(mw.ViewPosition,mw.ViewTarget)*MathF.Tan(mw.ViewFov*.5f)/(.5f*Math.Max(size.Y,Math.Max(size.X,size.Z)/Math.Max(1,mw.Size.X/mw.Size.Y)));
+                pages.Add($"{info.DisplayName}: numbers {pg.m_descriptionWidget.Text.Contains("【数值】")}, model {size.X:0.0}x{size.Y:0.0}x{size.Z:0.0} m, frame/model {fits:0.00}");
+                if(!pg.m_descriptionWidget.Text.StartsWith(info.Description)||!pg.m_descriptionWidget.Text.Contains("【数值】")||!pg.m_descriptionWidget.Text.Contains("每发伤害")||fits<.97f)
+                    throw new Exception("bestiary page: "+pages[^1]);
+                if(info==found[3])e["devilText"]=pg.m_descriptionWidget.Text;
+            }
+            e["bestiaryPages"]=pages;
+            // these texts are made at run time, so the package's shown-text check cannot see them: no source game names
+            var shown=string.Join("\n",ours.Select(t=>t.Title+"\n"+t.Text))+"\n"+e["devilText"]+string.Concat(MDEncyclopedia.Bestiary.Select(b=>MDEncyclopedia.RobotNumbers(MDRobots.Kind(b.Kind),1)));
+            var named=new[]{"终末地","毁灭枪手","原作","Soldiers of Glory","Endfield","Destroy Gunners","Arknights"}.Where(n=>shown.Contains(n,StringComparison.OrdinalIgnoreCase)).ToList();
+            e["shownTextCheck"]=$"{shown.Length} chars, names found: {named.Count}";
+            if(named.Count>0)throw new Exception("help / bestiary text names a source game: "+string.Join(", ",named));
+            SettingsManager.ShowGuiInScreenshots=false;ScreensManager.SwitchScreen("Game");foreach(var x in During(1,()=>{}))yield return x;
         }
         // ---- the mech panel in play: default place, small at the top left, large and turned in the middle, without the key
         // line, hidden; its box read from the transform the game draws it with. Then the rifle's status while firing.

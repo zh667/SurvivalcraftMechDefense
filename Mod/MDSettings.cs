@@ -63,7 +63,7 @@ public static class MDSettings {
     public static string LastError;
 
     public static void Defaults() {
-        HudShow=HudKeys=true;Hud=new();
+        HudShow=HudKeys=true;Hud=new();MDMechKeys.Apply(MDMechKeys.Defaults());
         SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;
     }
     public static void Normalize() {
@@ -79,7 +79,8 @@ public static class MDSettings {
             new XAttribute("HudShow",HudShow),new XAttribute("HudKeys",HudKeys),new XAttribute("HudCustom",Hud.Custom),
             new XAttribute("HudX",F(Hud.X)),new XAttribute("HudY",F(Hud.Y)),new XAttribute("HudScale",F(Hud.Scale)),new XAttribute("HudRotation",F(Hud.Rotation)),
             new XAttribute("SpawnTime",SpawnTime),new XAttribute("SpawnInterval",F(SpawnInterval)),new XAttribute("SpawnDensity",F(SpawnDensity)),
-            new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize))));
+            new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize)),
+            new XAttribute("MechKeys",MDMechKeys.ToText(MDMechKeys.Current()))));   // 0.11.0: the mech's bound keys (MDMechKeys)
     }
     // a missing or unreadable value keeps the default
     public static void Load(XElement mod) {
@@ -91,6 +92,7 @@ public static class MDSettings {
             Hud=new MDHudPlacement{Custom=B("HudCustom",false),X=N("HudX",.85f),Y=N("HudY",.8f),Scale=N("HudScale",1),Rotation=N("HudRotation",0)};
             SpawnTime=Enum.TryParse<MDSpawnTime>((string)e.Attribute("SpawnTime"),out var st)?st:MDSpawnTime.Night;
             SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",75);RaidSize=N("RaidSize",1);
+            MDMechKeys.Apply(MDMechKeys.FromText((string)e.Attribute("MechKeys")));
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}
     }

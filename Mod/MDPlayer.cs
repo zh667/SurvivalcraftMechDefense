@@ -45,8 +45,8 @@ public class MDDeploymentBlock : Block {
     static string MechName(MDMechType t)=>t.Name+"机甲 · 部署";
     static string MechNote(MDMechType t)=>$"可驾驶的机甲「{t.Name}」：装甲 {t.Armour}，武器伤害 ×{t.Damage:0.##}，能量 {t.EnergyMax:0}"+
         (t.BurstRifle?"，步枪三连发，抗爆炸":"")+(t.Speed>1?"，机动最好":"")+$"。右键地面部署，需要约 {MathF.Ceiling(t.Box.X):0}×{MathF.Ceiling(t.Box.Z):0} 格空地、{MathF.Ceiling(t.Box.Y):0} 格净高。\n"+
-        "靠近按 R（游戏的骑乘键）上下车：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮（耗能量），空格跳，左键开火，F 近战（有目标时冲过去打），V 切换视角。"+
-        $"B 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 {t.Locks} 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
+        $"靠近按 {MDMechKeys.Hint(MDMechAction.Board)} 上下车：鼠标转向瞄准，WASD 移动，按住 {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮（耗能量），{MDMechKeys.Hint(MDMechAction.Jump)} 跳，{MDMechKeys.Hint(MDMechAction.Fire)} 开火，{MDMechKeys.Hint(MDMechAction.Melee)} 近战（有目标时冲过去打），{MDMechKeys.Hint(MDMechAction.View)} 切换视角。"+
+        $"{MDMechKeys.Hint(MDMechAction.Switch)} 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 {t.Locks} 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
         $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久和改装。";
     public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);

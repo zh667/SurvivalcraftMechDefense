@@ -99,6 +99,16 @@ the user's installed mods (below). Facts about the original game, with their sou
   editor (MDHudLayoutScreen, from the mod's settings page): drag, two fingers to move / pinch / twist, mouse wheel to scale,
   Shift + wheel or Q / E to turn, buttons for both; in play MDHudHost places it from MDSettings.Hud while the layout is measured. The rifle shows 射击中 while it fires: its
   0.25 s between shots used to read as 装填中 and flip with 就绪 four times a second (user report).
+- Key bindings (0.11.0, `MDMechKeys`, user 2026-10-24: like the CS weapons mod with 铃兰触控): hover, jump, melee, weapons and
+  view can be put on other keyboard keys, plus an extra fire key and an extra board key (both unset by default; the mouse
+  button, screen taps and the game's mount key keep working). Edited on the mod settings page, section 机甲按键 (click a key,
+  press the new one; Esc cancels, Delete clears; a key another mech action uses is refused; 恢复默认), saved per device in
+  ModSettings.xml, never in a world; the game's own key settings are untouched. On phones a touch mapper puts screen buttons
+  that press these keys. Hints (board message, item text, the panel's key line, Help) show the current keys.
+  While a player drives, a pressed mech key does only the mech's action: the game's actions on the same key (clothing on C,
+  precipitation on K, …) are cleared for that frame (`MDMechKeys.Suppress`; found in the lab: hover on C opened the clothing
+  panel, which then blocked the mech's input). The page names the game action a chosen key also has, and refuses the game's
+  mount key (it always boards and leaves).
 - Neorxna's info panel (optional mod) names it 水星机甲 with armour, kit level and pilot state (MDNeorxnaCompatibility; until
   0.9.0 round 4 it read 已移除的旧单位, the name meant for the removed 0.5.0 enemy, because Mercury uses the old mech template).
 - The pilot takes no damage while seated in a working mech (0.9.0 round 5; Harmony prefix on ComponentHealth.Injure(Injury),

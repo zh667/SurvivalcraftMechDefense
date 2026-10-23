@@ -1814,6 +1814,12 @@
         <Parameter Name="Kind" Type="string" Value="RD05" Guid="3968922f-b81f-502d-a0c9-fafe57b6f1b8" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="WalkAroundBehavior" Guid="eb0e2d12-db2d-59f2-a532-6950bd213cfe" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+      <ParameterSet Name="CreatureEggData" Guid="5f26e555-d6aa-5377-b13a-b88c173d9882">
+        <Parameter Name="EggTypeIndex" Type="int" Value="3900" Guid="4f32f7a5-a2fa-5590-b03d-272646c21a57" />
+        <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="a6006e70-cdbf-5410-ab05-d212edd93361" />
+        <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="24cd6298-94eb-53c3-ba75-7ab3033056c8" />
+        <Parameter Name="DisplayName" Type="string" Value="双管步行机兵" Guid="a0dcd69e-11fb-5bda-a12e-bc585fd79573" />
+      </ParameterSet>
     </EntityTemplate>
     <EntityTemplate Name="MDRobot05B" Guid="e7a8b9dd-46eb-58b8-aa84-4dbb5704babf" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
       <MemberComponentTemplate Name="Body" Guid="9106cb5e-d4a5-5195-b3e8-e0162bd74ee7">
@@ -1996,6 +2002,12 @@
         <Parameter Name="Kind" Type="string" Value="RD06" Guid="34ae69c6-f99c-5a34-85a7-d74521bb7ded" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="WalkAroundBehavior" Guid="9a83f82b-2672-5d62-9815-7e9d468612fd" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+      <ParameterSet Name="CreatureEggData" Guid="5449d513-0f14-5f52-bbfa-f6e399ce1cd1">
+        <Parameter Name="EggTypeIndex" Type="int" Value="3901" Guid="28902e7f-f15d-521c-8b43-c3e3b2bf300f" />
+        <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="e20e3c3d-5e82-5bd1-8f60-3df10f9a44e0" />
+        <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="90b7160f-0e1e-5402-a106-78c59d6cda6b" />
+        <Parameter Name="DisplayName" Type="string" Value="导弹步行机兵" Guid="2899731f-61ee-5ebf-a6bf-2040e91ed80e" />
+      </ParameterSet>
     </EntityTemplate>
     <EntityTemplate Name="MDRobot06B" Guid="92b698c5-8d72-5621-91bd-77a19c1613af" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
       <MemberComponentTemplate Name="Body" Guid="5be7ee36-2d97-5fb9-ab62-fbe014081b27">
@@ -2182,6 +2194,12 @@
         <Parameter Name="Kind" Type="string" Value="RD07" Guid="2fb1a869-846c-5b97-b1b9-7faab7deff32" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="WalkAroundBehavior" Guid="123bd5a7-316c-5c8f-aeab-ebe9ef91b318" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
+      <ParameterSet Name="CreatureEggData" Guid="f606008e-247b-578e-b4e4-b08464cec175">
+        <Parameter Name="EggTypeIndex" Type="int" Value="3902" Guid="11532c12-0fe6-5ff1-8a2d-27b21720b279" />
+        <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="733cb830-d868-5e8b-9f74-cb43be0b5e7a" />
+        <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="2580856e-58b1-5207-a961-0c58a4b298f6" />
+        <Parameter Name="DisplayName" Type="string" Value="炮击步行机兵" Guid="3cc4772b-7945-5d9f-ac5f-2af5c4edbf74" />
+      </ParameterSet>
     </EntityTemplate>
     <EntityTemplate Name="MDRobot07B" Guid="b36c4abf-f262-5200-8425-2a8199629650" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
       <MemberComponentTemplate Name="Body" Guid="ac2e2348-6458-5abe-a9db-219d559cbaae">
@@ -2369,6 +2387,12 @@
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="50c77fa4-d0d2-5dc3-84fb-eb76d5acdd26" />
         <Parameter Name="Kind" Type="string" Value="RD17" Guid="5a761783-6699-5c6e-b566-32bcafbb37cb" />
       </MemberComponentTemplate>
+      <ParameterSet Name="CreatureEggData" Guid="87326ce9-2b40-5959-8e2d-5b9c4aac7445">
+        <Parameter Name="EggTypeIndex" Type="int" Value="3903" Guid="a7adcc75-ce20-5034-a80c-5ebf97fc5684" />
+        <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="78a8edfe-ff5a-5140-bb30-71d046757520" />
+        <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="2e04b781-7783-5649-bb7a-b11d62b9bbe6" />
+        <Parameter Name="DisplayName" Type="string" Value="恶魔机甲" Guid="aa6a15e0-898c-5028-aaa4-eda93f29b273" />
+      </ParameterSet>
     </EntityTemplate>
   </Folder>
 </Mod>

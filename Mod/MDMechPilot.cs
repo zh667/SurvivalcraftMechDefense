@@ -38,8 +38,12 @@ public static class MDMechPilot {
     public static bool Board(ComponentPlayer p,ComponentMDUnit u) {
         if(!CanBoard(p,u))return false;
         u.AimYaw=u.Yaw;u.AimPitch=0;p.ComponentRider.StartMounting(u.Mount);p.GameWidget.ActiveCamera=p.GameWidget.FindCamera<TppCamera>();
-        MDPlayer.Message(p,MDSettings.HudKeys?$"已登上{u.Mech.Type.Name}：鼠标转向瞄准，WASD 移动，按住 Shift 悬浮，空格跳，左键开火，B 换武器，F 近战，V 视角，R 下车":$"已登上{u.Mech.Type.Name}");return true;
+        MDPlayer.Message(p,MDSettings.HudKeys?$"已登上{u.Mech.Type.Name}：{KeyHints(true)}":$"已登上{u.Mech.Type.Name}");return true;
     }
+    // the bound keys (MDMechKeys), for the boarding message (long) and the panel's key line (short)
+    public static string KeyHints(bool full)=>full
+        ?$"鼠标转向瞄准，WASD 移动，按住 {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮，{MDMechKeys.Hint(MDMechAction.Jump)} 跳，{MDMechKeys.Hint(MDMechAction.Fire)} 开火，{MDMechKeys.Hint(MDMechAction.Switch)} 换武器，{MDMechKeys.Hint(MDMechAction.Melee)} 近战，{MDMechKeys.Hint(MDMechAction.View)} 视角，{MDMechKeys.Hint(MDMechAction.Board)} 下车"
+        :$"{MDMechKeys.Hint(MDMechAction.Board)} 下车  {MDMechKeys.Hint(MDMechAction.View)} 视角  {MDMechKeys.Hint(MDMechAction.Switch)} 武器  {MDMechKeys.Hint(MDMechAction.Melee)} 近战  {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮  {MDMechKeys.Hint(MDMechAction.Jump)} 跳";
     public static bool Exit(ComponentPlayer p,ComponentMDUnit u,bool force=false) {
         var t=u.Project.FindSubsystem<SubsystemTerrain>(true);var bodies=u.Project.FindSubsystem<SubsystemBodies>(true);Vector3? destination=null;
         for(int radius=3;radius<=6&&destination==null;radius++)for(int i=0;i<8&&destination==null;i++) {
@@ -64,22 +68,23 @@ public static class MDMechPilot {
         if(p?.ComponentRider==null)return;
         var u=Mounted(p);var gi=p.GameWidget.Input;ref var v=ref p.ComponentInput.m_playerInput;
         bool blocked=p.ComponentHealth.Health<=0||DialogsManager.HasDialogs(p.GuiWidget)||p.ComponentGui.ModalPanelWidget!=null;
-        if(v.ToggleMount&&!blocked) {
-            if(u!=null){Exit(p,u);v.ToggleMount=false;}
-            else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found){Board(p,found);v.ToggleMount=false;}
+        if((v.ToggleMount||MDMechKeys.Pressed(gi,MDMechAction.Board))&&!blocked) {   // the game's mount key, or the mech's own extra key
+            if(u!=null){Exit(p,u);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);}
+            else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found){Board(p,found);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);}
         }
         u=Mounted(p);if(u==null||ExternalControls)return;var m=u.Mech;var input=v;
         if(blocked)Idle(m);
         else {
-            m.Move=new Vector2(input.Move.X,input.Move.Z);m.Hover=gi.IsKeyDown(Key.Shift);
-            if(input.Jump||gi.IsKeyDownOnce(Key.Space))m.Jump=true;
-            if(gi.IsKeyDownOnce(Key.F))m.Melee=true;
-            if(gi.IsKeyDownOnce(Key.B)){m.Switch=true;var next=(MDMechWeapon)(((int)m.Weapon+1)%5);if(MDSettings.HudKeys||!MDSettings.HudShow)MDPlayer.Message(p,"武器："+MDMechState.Name(next)+(MDSettings.HudKeys?next switch{MDMechWeapon.Missile=>"（按住开火扫过目标锁定，松开发射）",MDMechWeapon.Cannon=>"（开火时展开）",MDMechWeapon.Laser=>"（照射 1 秒）",_=>""}:""));}   // the panel shows the weapon
-            m.Trigger=gi.IsMouseButtonDown(MouseButton.Left)||input.Dig.HasValue||input.Hit.HasValue;
+            m.Move=new Vector2(input.Move.X,input.Move.Z);m.Hover=MDMechKeys.Down(gi,MDMechAction.Hover);   // bound keys (MDMechKeys)
+            if(input.Jump||MDMechKeys.Pressed(gi,MDMechAction.Jump))m.Jump=true;
+            if(MDMechKeys.Pressed(gi,MDMechAction.Melee))m.Melee=true;
+            if(MDMechKeys.Pressed(gi,MDMechAction.Switch)){m.Switch=true;var next=(MDMechWeapon)(((int)m.Weapon+1)%5);if(MDSettings.HudKeys||!MDSettings.HudShow)MDPlayer.Message(p,"武器："+MDMechState.Name(next)+(MDSettings.HudKeys?next switch{MDMechWeapon.Missile=>"（按住开火扫过目标锁定，松开发射）",MDMechWeapon.Cannon=>"（开火时展开）",MDMechWeapon.Laser=>"（照射 1 秒）",_=>""}:""));}   // the panel shows the weapon
+            m.Trigger=gi.IsMouseButtonDown(MouseButton.Left)||input.Dig.HasValue||input.Hit.HasValue||MDMechKeys.Down(gi,MDMechAction.Fire);
             u.AimYaw-=input.Look.X*p.ComponentLocomotion.LookSpeed*dt;
             u.AimPitch=Math.Clamp(u.AimPitch+input.Look.Y*p.ComponentLocomotion.LookSpeed*dt*(SettingsManager.FlipVerticalAxis?-1:1),-.5f,.65f);
-            if(gi.IsKeyDownOnce(Key.V))p.GameWidget.ActiveCamera=p.GameWidget.ActiveCamera is FppCamera?p.GameWidget.FindCamera<TppCamera>():p.GameWidget.FindCamera<FppCamera>();
+            if(MDMechKeys.Pressed(gi,MDMechAction.View))p.GameWidget.ActiveCamera=p.GameWidget.ActiveCamera is FppCamera?p.GameWidget.FindCamera<TppCamera>():p.GameWidget.FindCamera<FppCamera>();
             m.AimPoint=AimPoint(p,u);
+            MDMechKeys.Suppress(gi,ref v,MDMechKeys.All);   // a mech key does only the mech's action (not also the game's on that key)
         }
         v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
     }
@@ -114,7 +119,7 @@ public class MDStatusWidget:CanvasWidget {
         weapon=new LabelWidget{Size=new(300,24),FontScale=.7f,Color=new Color(90,220,255)};Add(weapon,10,34);
         armor=new RectangleWidget{Size=new(300,3),FillColor=new Color(90,220,255),OutlineThickness=0};Add(armor,10,62);
         energy=new RectangleWidget{Size=new(0,3),FillColor=new Color(120,170,255),OutlineThickness=0};Add(energy,10,68);
-        keys=new LabelWidget{Text="R 下车  V 视角  B 武器  F 近战  Shift 悬浮  空格 跳",Size=new(300,24),FontScale=.6f,Color=Color.White};Add(keys,10,80);
+        keys=new LabelWidget{Text=MDMechPilot.KeyHints(false),Size=new(300,24),FontScale=.6f,Color=Color.White};Add(keys,10,80);
     }
     // without the key line the panel is 26 units shorter
     public bool ShowKeys{get=>showKeys;set{showKeys=value;keys.IsVisible=value;var size=new Vector2(Width,value?Height:ShortHeight);if(Size!=size){Size=size;back.Size=size;}}}
@@ -127,6 +132,7 @@ public class MDStatusWidget:CanvasWidget {
         var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
         Show($"{m.Type.Name}  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}",u.Damage.Hitpoints,m.Energy/m.Type.EnergyMax,m.EnergyLock>0);
         if(ShowKeys!=MDSettings.HudKeys)ShowKeys=MDSettings.HudKeys;
+        if(ShowKeys){var k=MDMechPilot.KeyHints(false);if(keys.Text!=k)keys.Text=k;}   // the bound keys, also right after a change on the settings page
     }
     // the editor's sample
     public void Sample()=>Show("水星  装甲 100%   0 km/h","步枪   就绪",1,.8f,false);

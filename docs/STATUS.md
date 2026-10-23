@@ -1,4 +1,23 @@
-# Status — 2026-10-23
+# Status — 2026-10-24
+
+## 0.11.0: mech key bindings, enemies in the bestiary, towers and mechs in Help (branch feat/mech-keys-encyclopedia, 2026-10-24; not merged yet)
+
+User: "机甲绑定按键编辑（类似于CS枪械适配铃兰触控那样） 敌人图鉴（在帮助里可以看到敌人信息，包括数值什么的，炮塔这边也是）".
+Design and choices: docs/tasks/2026-10-24-mech-keys-and-encyclopedia.md. Contains the 0.10.1 hotfix below.
+- Mech keys (`Mod/MDMechKeys.cs`, page section 机甲按键 in `MDSettingsScreen`): hover, jump, melee, weapons, view, plus an extra fire
+  key and an extra board key; per device in ModSettings.xml. Phones: 铃兰触控 puts screen buttons that press these keys.
+  Found in the lab: a mech key that is also a game key (C clothing, K precipitation) opened the game's panel, which then blocked the
+  mech's input; while driving, a pressed mech key now clears the game's actions on that key (`MDMechKeys.Suppress`). The page names
+  the game action a chosen key also has and refuses the game's mount key.
+- Bestiary: 双管 / 导弹 / 炮击步行机兵 and 恶魔机甲 (hidden egg types 3900-3903, no egg item or recipe); the list shows the
+  short description, each page adds 【数值】 from live data and the current mod settings; big robot models are re-framed to fit.
+- Help (`Mod/MDEncyclopedia.cs`): 机甲防线 · 防御塔总览 / 一阶 / 二阶 / 三阶防御塔 / 主角机甲 (index 900-904), text written when a
+  topic opens from towers.json, the loaded recipes, MDMechType and the current keys.
+- Package dist/MechDefense-0.11.0.scmod, 29,603,469 bytes, SHA-256 b4f6775e942b2418ca741b31a43bf03bc65d542f3502f11b1aae7ba5adfe17b1.
+  Verified (PC): on 1.9.3.1 all, icons, robots (incl. settings + encyclopedia), robots-heroes, special, combat, mech, mech-view, old
+  save 0.5.0 -> 0.11.0, new world; on 1.9.4 mech, robots-settings, robots-encyclopedia, robots-heroes, icons, mech-view — 16/16 passed.
+  The lab presses the rebound keys for real (K boards and leaves, G strikes, N switches, C hovers without opening the clothing panel,
+  the old F / B do nothing) and checks every tower's Help paragraph against towers.json. Not verified: a phone with 铃兰触控.
 
 ## 0.10.1 hotfix (branch fix/android-api194, 2026-10-24; not merged yet)
 

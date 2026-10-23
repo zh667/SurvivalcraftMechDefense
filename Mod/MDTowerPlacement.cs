@@ -95,7 +95,7 @@ public static class MDNeorxnaCompatibility {
         else if(unit.Mech!=null) {
             label?.Invoke(__instance,["MDMechArmour",unit.Destroyed?"已损毁":$"装甲 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
             label?.Invoke(__instance,["MDMechKit",unit.Mech.Kit>0?$"武器改装 Mk{unit.Mech.Kit}":"未改装"]);
-            label?.Invoke(__instance,["MDMechPilot",MDMechPilot.Driver(unit)!=null?"驾驶中":"空闲 · 靠近按 R 上车"]);
+            label?.Invoke(__instance,["MDMechPilot",MDMechPilot.Driver(unit)!=null?"驾驶中":$"空闲 · 靠近按 {MDMechKeys.Hint(MDMechAction.Board)} 上车"]);
         }
     }
 }

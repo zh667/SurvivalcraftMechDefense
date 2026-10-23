@@ -127,6 +127,131 @@
     "gtg"
     "aaa"
   </Recipe>
+  <!-- 冰冻塔 Ⅰ-Ⅲ (data 35-37) and 火焰塔 Ⅰ-Ⅲ (data 38-40), 0.10.0: the same tier chain. -->
+  <Recipe Result="MDDeploymentBlock:35" ResultCount="1" RequiredHeatLevel="0" e="ice" r="rod" c="copperingot" i="ironingot" Description="冰冻塔 Ⅰ：一阶，低温喷射，减速">
+    "eee"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:36" ResultCount="1" RequiredHeatLevel="0" e="ice" r="rod" t="mddeploy:35" a="mdpart:1" Description="冰冻塔 Ⅱ：二阶，由冰冻塔 Ⅰ 升级">
+    "eee"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:37" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" e="ice" t="mddeploy:36" a="mdpart:1" Description="冰冻塔 Ⅲ：三阶，由冰冻塔 Ⅱ 升级">
+    "xdx"
+    "ete"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:38" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" i="ironingot" m="magmabucket" r="rod" c="copperingot" Description="火焰塔 Ⅰ：一阶，转向喷火，返还空桶">
+    "imi"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:39" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" r="rod" m="magmabucket" t="mddeploy:38" a="mdpart:1" Description="火焰塔 Ⅱ：二阶，由火焰塔 Ⅰ 升级，返还空桶">
+    "rmr"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:40" ResultCount="1" RequiredHeatLevel="0" Remains="EmptyBucketBlock" RemainsCount="1" x="mdpart:2" m="magmabucket" d="diamond" t="mddeploy:39" a="mdpart:1" Description="火焰塔 Ⅲ：三阶，由火焰塔 Ⅱ 升级，返还空桶">
+    "xmx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <!-- 导弹塔 Ⅰ-Ⅲ (data 41-43), 0.10.0. -->
+  <Recipe Result="MDDeploymentBlock:41" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" i="ironingot" r="rod" c="copperingot" Description="导弹塔 Ⅰ：一阶，导弹，对地对空">
+    "gig"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:42" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" r="rod" t="mddeploy:41" a="mdpart:1" Description="导弹塔 Ⅱ：二阶，由导弹塔 Ⅰ 升级">
+    "ggg"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:43" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" g="gunpowder" d="diamond" t="mddeploy:42" a="mdpart:1" Description="导弹塔 Ⅲ：三阶，由导弹塔 Ⅱ 升级">
+    "xgx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <!-- 加农炮 Ⅰ-Ⅲ (data 47-49) and 防空炮 Ⅰ-Ⅲ (data 50-52), 0.10.0. -->
+  <Recipe Result="MDDeploymentBlock:47" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" i="ironingot" c="copperingot" Description="加农炮 Ⅰ：一阶，炮弹溅射，只打地面">
+    "ggg"
+    "ici"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:48" ResultCount="1" RequiredHeatLevel="0" g="gunpowder" i="ironingot" t="mddeploy:47" a="mdpart:1" Description="加农炮 Ⅱ：二阶，由加农炮 Ⅰ 升级">
+    "ggg"
+    "iti"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:49" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" k="largegunpowderkeg" d="diamond" t="mddeploy:48" a="mdpart:1" Description="加农炮 Ⅲ：三阶，由加农炮 Ⅱ 升级">
+    "xkx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:50" ResultCount="1" RequiredHeatLevel="0" r="rod" c="copperingot" i="ironingot" g="gunpowder" Description="防空炮 Ⅰ：一阶，优先打空中">
+    "rcr"
+    "igi"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:51" ResultCount="1" RequiredHeatLevel="0" r="rod" c="copperingot" t="mddeploy:50" a="mdpart:1" Description="防空炮 Ⅱ：二阶，由防空炮 Ⅰ 升级">
+    "rcr"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:52" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" c="copperingot" d="diamond" t="mddeploy:51" a="mdpart:1" Description="防空炮 Ⅲ：三阶，由防空炮 Ⅱ 升级">
+    "xcx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <!-- 雷达 Ⅰ-Ⅲ (data 44-46), 0.10.0: lends range to nearby towers. -->
+  <Recipe Result="MDDeploymentBlock:44" ResultCount="1" RequiredHeatLevel="0" w="wire" r="rod" c="copperingot" i="ironingot" Description="雷达 Ⅰ：一阶，提高附近防御塔射程">
+    "www"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:45" ResultCount="1" RequiredHeatLevel="0" w="wire" r="rod" t="mddeploy:44" a="mdpart:1" Description="雷达 Ⅱ：二阶，由雷达 Ⅰ 升级">
+    "www"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:46" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" w="wire" d="diamond" t="mddeploy:45" a="mdpart:1" Description="雷达 Ⅲ：三阶，由雷达 Ⅱ 升级">
+    "xwx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <!-- 磁暴线圈 Ⅰ-Ⅲ (data 53-55) and 电磁脉冲 Ⅰ-Ⅲ (data 56-58), 0.10.0. -->
+  <Recipe Result="MDDeploymentBlock:53" ResultCount="1" RequiredHeatLevel="0" c="copperingot" w="wire" i="ironingot" Description="磁暴线圈 Ⅰ：一阶，闪电">
+    "ccc"
+    "wiw"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:54" ResultCount="1" RequiredHeatLevel="0" c="copperingot" w="wire" t="mddeploy:53" a="mdpart:1" Description="磁暴线圈 Ⅱ：二阶，由磁暴线圈 Ⅰ 升级">
+    "ccc"
+    "wtw"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:55" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" l="lightbulb" d="diamond" t="mddeploy:54" a="mdpart:1" Description="磁暴线圈 Ⅲ：三阶，由磁暴线圈 Ⅱ 升级">
+    "xlx"
+    "dtd"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:56" ResultCount="1" RequiredHeatLevel="0" n="magnet" r="rod" c="copperingot" i="ironingot" Description="电磁脉冲 Ⅰ：一阶，范围瘫痪">
+    "nnn"
+    "rcr"
+    "iii"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:57" ResultCount="1" RequiredHeatLevel="0" n="magnet" r="rod" t="mddeploy:56" a="mdpart:1" Description="电磁脉冲 Ⅱ：二阶，由电磁脉冲 Ⅰ 升级">
+    "nnn"
+    "rtr"
+    "aaa"
+  </Recipe>
+  <Recipe Result="MDDeploymentBlock:58" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" n="magnet" d="diamond" t="mddeploy:57" a="mdpart:1" Description="电磁脉冲 Ⅲ：三阶，由电磁脉冲 Ⅱ 升级">
+    "xnx"
+    "dtd"
+    "aaa"
+  </Recipe>
   <!-- Mercury, the mech (data 1), from the towers that are its weapons: "暴雨" (rifle), 高能射线塔 (laser), 序章炮塔
        (cannon), two 高爆榴弹塔 (missiles, grenades), with two alloy plates, the boss's blueprint (used up) and an energy
        core; player level 8 (user, 2026-10-20: only the mech has a level requirement; Wonderful Era's vehicle keys ask 4-10). -->

@@ -1,6 +1,26 @@
 # Status — 2026-10-23
 
-## Delivered: 0.9.0 (PR #7 into feat/progression-robots, PR #5 into main; merged 2026-10-23 on the user's approval, tag v0.9.0)
+## Delivered: 0.10.0 (branch feat/more-towers-enemy-models -> main, 2026-10-23)
+
+User 2026-10-23: "转轮机枪塔那个游戏的其他炮塔都可以开始建模了，并且恶魔机甲和地方机兵也可以我们自己重新建模 … 这些都可以直接放进游戏打包，
+另外现在已有的pr你可以在合适的时机合并了"; later rounds: frost / flame colours lighter, missile tower thicker without rings and firing
+real missiles, then "新加的这些炮塔AI味太重了，能按照终末地炮塔的风格建模吗" -> the gatling sample was approved ("挺不错的，其余的都按照这个做吧"),
+the radar should boost every tower in a larger range without lines or pings, the cannon hits only the ground.
+- The 2D tower-defence family is complete: 9 types x 3 levels (data 32-58) in our Endfield towers' style (poly_v2, one shared
+  Endfield-style base, <= 7,420 triangles, outline overlap with the sprites 0.765-0.873), see docs/TOWERS.md "新防御塔 v2".
+  New mechanics: turning sprayers (frost slow, flame burn), homing missiles (attack type "missile"), recoiling cannons (ground only),
+  anti-air (air first, half damage on the ground, raised barrels at rest), radar range boost for every tower in range (silent),
+  tesla chain lightning (1 / 2 / 3 targets), EMP stun pulse with a turning rotor. Original game sounds (mono).
+- Our own polygon enemies: walkers RD05 / RD06 / RD07 (3 skins each) and the devil mech RD17 (crimson), see docs/PROGRESSION.md;
+  node trees, clips, muzzles and boxes unchanged (tools/build_unit_assets.py POLY_UNITS / --poly-only).
+- Package: dist/MechDefense-0.10.0.scmod, 29,588,923 bytes, 368 files, SHA-256 9995ff0489f2ba09997feb045ffb140eee1ce8993cf3de52c57fc86c1bea5f8f;
+  shown texts name none of the source games ("Endfield" appears only in internal sound paths, as in 0.9.0).
+- Verification (isolated runtime, PC, on this package): all (37 towers), icons, robots (every part), robots-heroes, special, combat,
+  mech, old save 0.5.0 -> 0.10.0 and a new world all passed; per type view-<id> for all 27 new levels (firing, spin, recoil, radar
+  boost of 4 towers in range and none outside), robots-boss / -fight / -raid with the new enemies. Not verified: Android, a real
+  survival world, frame time with many towers on a phone.
+
+## Previous delivery: 0.9.0 (PR #7 into feat/progression-robots, PR #5 into main; merged 2026-10-23 on the user's approval, tag v0.9.0)
 
 User 2026-10-23: "现在已有的pr你可以在合适的时机合并了" — merged after 转轮机枪塔 Ⅰ was re-centred ("1级的转轮机枪塔，机枪位置并不是在正中位置")
 and the package passed view-gatling_1 (spin 1.0, 17 shots), all, icons, robots-items, special and old save 0.5.0 -> 0.9.0.

@@ -12,7 +12,7 @@ namespace Game;
 public sealed class MDTowerNode { public string name; public string parent; public float[] translation; }
 public sealed class MDTowerMuzzle { public string name; public string part; public float[] local; }
 public sealed class MDTowerAttack {
-    public string type;              // bolt shell snipe beam chain flame jet pulse heal
+    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile
     public float range, minRange, interval, power, splash, speed = 40, charge, duration;
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;
@@ -23,6 +23,9 @@ public sealed class MDTowerAttack {
     public float pushMaxMass = 1e9f;         // knockback moves only bodies up to this mass (small and medium enemies)
     public bool needsSight = true, threatFirst, directional, highArc;   // highArc: mortar lob instead of the flat solution
     public int soundEvery = 1;      // fast guns: the fire sound plays on every n-th shot only
+    public bool airFirst; public float groundFactor = 1;   // anti-air: flying targets first, ground targets take groundFactor of the damage
+    public bool groundOnly;          // never targets flying creatures (加农炮, user 10-23)
+    public float boost = 1; public int links = 3;          // radar: range x boost for up to `links` towers within range
     public float width;              // directional rectangle width (flame/jet)
 }
 // A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
@@ -41,6 +44,7 @@ public sealed class MDTowerDef {
     public float yawSpeed = 150, pitchSpeed = 90, restPitch;
     public string[] recoilParts = []; public float[] recoil = [];
     public string[] spinParts = []; public float spinSpeed = 1440;   // rotary barrel clusters turning about their own Z while a target is held (deg/s at full spin)
+    public string spinAxis = "z"; public bool spinIdle;               // "y": a dish / rotor turning about the vertical; spinIdle: always turning
     public MDTowerAttack attack; public MDTowerFx fx = new(); public MDTowerLink[] links = [];
     public string[] fireSounds = [], hitSounds = [], chargeSounds = [];
     // resolved at load
@@ -178,6 +182,6 @@ public class ComponentMDTowerModel : ComponentModel {
         if(pitch>=0)SetBoneTransform(pitch,Matrix.CreateRotationX(unit.TowerPitch));
         for(int k=0;k<recoil.Length;k++)if(recoil[k]>=0)SetBoneTransform(recoil[k],Matrix.CreateTranslation(0,0,unit.RecoilOffset(k)));
         for(int k=0;k<links.Length;k++)if(links[k]>=0)SetBoneTransform(links[k],MDTowerLibrary.LinkLocal(unit.Tower,k,unit.TowerPitch));
-        for(int k=0;k<spin.Length;k++)if(spin[k]>=0)SetBoneTransform(spin[k],Matrix.CreateRotationZ(k%2==0?unit.Spin:-unit.Spin));   // pairs turn opposite ways
+        for(int k=0;k<spin.Length;k++)if(spin[k]>=0){float s=k%2==0?unit.Spin:-unit.Spin;SetBoneTransform(spin[k],unit.Tower.spinAxis=="y"?Matrix.CreateRotationY(s):Matrix.CreateRotationZ(s));}   // pairs turn opposite ways
     }
 }

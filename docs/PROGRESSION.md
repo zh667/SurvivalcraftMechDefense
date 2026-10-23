@@ -40,6 +40,10 @@
 ## 敌方机兵（`Mod/MDRobots.cs`，模型 `tools/build_unit_assets.py`）
 
 模型是原游戏的敌方机体，和水星一样放大 4 倍（恶魔机甲 3 倍）；动作、炮口位置、贴图做法见 `E:/projects/dguns-enemy-models/README.md`。
+0.10.0 起（用户 10-23：“恶魔机甲和地方机兵也可以我们自己重新建模”）换成我们自己的多边形模型（`E:/projects/dguns-enemy-models/v2_poly/`）：
+三种机兵 2,608 / 2,952 / 2,992 面（共用机身，每套涂装一张 1024），恶魔机甲 7,368 面一张 2048（深红按原版逐部位对色）；轮廓照原版、细节自己设计，
+骨骼、动作、炮口点、碰撞盒不变。`tools/build_unit_assets.py` 导出后用 `POLY_UNITS` 把我们的 glb 和图标换上（节点树逐项核对），
+`--poly-only` 只做替换，`--no-poly` 保留原模型。
 它们是普通“生物”（原版 AICreature 模板，类别陆地捕食者）：原版寻路、掉落、刷怪、受伤，所以炮塔、别的模组的武器和限伤规则都按普通敌对生物对待它们。
 
 | 单位 | 模板 | 抗性 | 速度 | 武器 | 对生物 / 对建筑 每发 |
@@ -131,6 +135,7 @@
 ```
 python tools/build_part_models.py --selftest     # 物品立体模型和贴图（Blender，输出提交进仓库）
 python tools/build_unit_assets.py                # 机兵资产 -> Mod/Assets/Imported/RD05..RD17（忽略目录，约 18 MB）
+python tools/build_unit_assets.py --poly-only    # 只把 v2_poly 的自建模型换上
 python tools/prepare_database.py                 # 模板（含机兵）
 python tools/package.py                          # dist/MechDefense-<版本>.scmod
 python tools/run_isolated.py lab --mode robots   # 物品、配方、机兵、夜袭、首领、召唤物、改装件、设置、面板、刷新、目标；只跑一部分：--mode robots-items / gallery / fight / raid / boss / summons / kits / settings / hud / spawns / targets

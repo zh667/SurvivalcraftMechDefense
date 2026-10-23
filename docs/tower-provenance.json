@@ -524,16 +524,16 @@
    "id": "gatling_1",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\model.glb",
-     "glbSha256": "5b2ccbdb3b57ccc0526e552254f3be991f9d8b641ec5cfd1c88e36c38b8f2751",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\atlas.png",
-     "atlasSha256": "24ebf5cfe6535820ec9cd2193585b5c221e514d4a78fdc56850fe722758cfaf6"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\model.glb",
+     "glbSha256": "874924ec286d06f3fe607896c66798a2476247b33fde19e50e568c744c45cfe5",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\atlas.png",
+     "atlasSha256": "3e115d34e4d4303ab5db885d92617f9dadb3956df7b6d5480025065d45ce5448"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_1\\parts.json",
-    "partsSha256": "1c144bb22badbbfac0a3170331ca321c7e98b872d3772f81793de8da6ccb092c"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_1\\parts.json",
+    "partsSha256": "c7c621da2f14c591753e0e02cb366414ee7327b3002d764bb0cdd9ae5fb97bfb"
    },
    "model": "polygon",
-   "triangles": 3748,
+   "triangles": 4316,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -549,16 +549,16 @@
    "id": "gatling_2",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\model.glb",
-     "glbSha256": "d90edd95a4ef8aec24cfd765f3f57fa003875b1fad4e0802b19ee3bd29da1a0a",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\atlas.png",
-     "atlasSha256": "ff4e2cec6b36a0379ed7ad6bbed164c0c7488e3a0d6efb4bceb5657bfb1e8f51"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\model.glb",
+     "glbSha256": "79fbd653d77d57d2662547a9672a93d93fea41b8bc682ca11414f93465a0d92b",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\atlas.png",
+     "atlasSha256": "a3815845b4ace61e5c8aba80e4b61736c65544ceff460806690fce5cc99d7874"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_2\\parts.json",
-    "partsSha256": "7acb03a5805206319abea59b9add51acb3722c8f71dceffa1b01c4737bc888d4"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_2\\parts.json",
+    "partsSha256": "f8b8850f68105fcc2d71857be10bfdeac2e364fbaed767100991a5a3ec148b64"
    },
    "model": "polygon",
-   "triangles": 4232,
+   "triangles": 5752,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -574,16 +574,16 @@
    "id": "gatling_3",
    "source": {
     "poly": {
-     "glb": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\model.glb",
-     "glbSha256": "88c38c4daa0a216f816016e080907de22d0a082dd17cbdcebc8e20f0f23093da",
-     "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\atlas.png",
-     "atlasSha256": "d92c3871b09b94551763884f5301583827997c7e5626d2a47d7967f699f70a2d"
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\model.glb",
+     "glbSha256": "1a35ae3ed2d8b34b5819a823153a4078914b0c967ad7cc30314acae65f9663bb",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\atlas.png",
+     "atlasSha256": "35bbdaf9bf940840f3ff8e1b8d3a2f6ba39bda69a695eb9b41f976433689fc31"
     },
-    "parts": "E:\\projects\\sog-tower-model\\poly_v1\\gatling_3\\parts.json",
-    "partsSha256": "7c6bde15b0c35666306ec16aefb43980fdc00bf24f82814c74eaee136dac6a55"
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\gatling_3\\parts.json",
+    "partsSha256": "435e9a1c6245aba52e1fc7f7c0586076bd4a77d5ab803b7b27c15065e0aeecef"
    },
    "model": "polygon",
-   "triangles": 5704,
+   "triangles": 7420,
    "facesHidden": 0,
    "facesClipped": 0,
    "crossPartNudged": 0,
@@ -591,6 +591,606 @@
     "pitch": [
      -15,
      70
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "frost_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\model.glb",
+     "glbSha256": "5aea599de6d36310249785fce6255a93b9c80c1085cbb9d2f81b851e058ec3ff",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\atlas.png",
+     "atlasSha256": "83b3ad6f7e46b77624bde6c42ea26d5249df21d5f2a3ac1dbec43212b7e9683f"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_1\\parts.json",
+    "partsSha256": "a990a51fabf8776620fdb15a8f3a327e5ec87f9996914e5fa2b70a291175976b"
+   },
+   "model": "polygon",
+   "triangles": 3572,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "frost_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\model.glb",
+     "glbSha256": "f0f77b2208455ffffa3dd66466cace226469b6080041df17c0f0e302cc2aa50b",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\atlas.png",
+     "atlasSha256": "2b95005af0a6c240106ecf376b94b0bec11ed19e285da7841f06139acbebe04f"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_2\\parts.json",
+    "partsSha256": "392131d647e4a2b53b743a51850046719cfa72d10402e2e652987dc33f75ede4"
+   },
+   "model": "polygon",
+   "triangles": 5084,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "frost_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\model.glb",
+     "glbSha256": "9ebaee0b6a749c2f2acbd1adeace632055d6f206019df15833c585f3437f95a2",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\atlas.png",
+     "atlasSha256": "716b3d8c27d67c2e98fe58d51972d420d649f8ea156094481fa2ffa1a4ebd2df"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\frost_3\\parts.json",
+    "partsSha256": "27ca9514b4ad9ef0e34fca1cfdcc2efcc8a8b12a73876abdc9abf2204756d6f6"
+   },
+   "model": "polygon",
+   "triangles": 5224,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "flame_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\model.glb",
+     "glbSha256": "da17922dbb262aaf95ec85753c6bad65312337c3c171a269c7b378e0bfbfc4c8",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\atlas.png",
+     "atlasSha256": "d1c44614bc06168d9337e5dd7abe3526aca04219db3d61a8229ef4c6f831134d"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_1\\parts.json",
+    "partsSha256": "1307dceae9d81b810be9125c075002567685e5a87602f28a2df39fda5b218996"
+   },
+   "model": "polygon",
+   "triangles": 3936,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "flame_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\model.glb",
+     "glbSha256": "4c7c7c1a00f2d7883ffec67d2c0957cc8f762f4f8e4a633739ee186bd329c6c1",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\atlas.png",
+     "atlasSha256": "f2643d6448ff5f5ae58075fc39ea2c2ad2386db9451b854d915900226c4b5b2b"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_2\\parts.json",
+    "partsSha256": "c032d45294ec66d0bbd056163a9d457206b0dddc9ce537c43be01f7f04417434"
+   },
+   "model": "polygon",
+   "triangles": 5056,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "flame_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\model.glb",
+     "glbSha256": "8b98acd920fd803116a858e378cf5b4fe63aedafc628f385d2d4d360f9f5ee30",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\atlas.png",
+     "atlasSha256": "a59dd0f3b2f53b3ad390ee6078d47d5cbe9f625a27166e6b962d66b64b8e2cfa"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\flame_3\\parts.json",
+    "partsSha256": "2358e32e55e7be13b7af8f745ba69b75174a7126d10381587ffa60b7a4b43fb4"
+   },
+   "model": "polygon",
+   "triangles": 5440,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -20,
+     30
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "missile_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\model.glb",
+     "glbSha256": "02fbca2cd6216e7faec2f70410102758dd789ef4a6928875e9aa4c6df756e050",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\atlas.png",
+     "atlasSha256": "cd1a211e28a2a17a3d38ca4be2b090ac1e5647cfbf63ce65c5e6a4bcdf27ceb6"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_1\\parts.json",
+    "partsSha256": "43a5206eb7b8f0c4ccfa285afb3bf0b55ae6dd2250b659f0245a2f83c082fc40"
+   },
+   "model": "polygon",
+   "triangles": 4260,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     60
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "missile_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\model.glb",
+     "glbSha256": "a29326598cd4e8fe13248b726838444f15603324a247fbe9105c026daf08bd5e",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\atlas.png",
+     "atlasSha256": "0f7fb967a1754cbdbeab43cb4b886587c7591457b838b87df6e649b53186b6f7"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_2\\parts.json",
+    "partsSha256": "5143f2f2237637a1748b99e02d9e03d3fa5fe2cefb0c530eda7759810d1204fc"
+   },
+   "model": "polygon",
+   "triangles": 4984,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     60
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "missile_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\model.glb",
+     "glbSha256": "9a44469c5859f68f3ceff5ccf625af98c0b3b26dfd535c7838aefd20970f9ee1",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\atlas.png",
+     "atlasSha256": "a27b1e55844ea4c3efaef06c0116606963a2f9ebe5993c26dbbf283f0895ba28"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\missile_3\\parts.json",
+    "partsSha256": "8ce3fd378df46bc555948b4d2cf2e11ff6ffb7c6ba2ee4f8694c44fcf452e0c5"
+   },
+   "model": "polygon",
+   "triangles": 5328,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     60
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_1\\model.glb",
+     "glbSha256": "ced1a450656580ec12b104f1d89c7866257c3f8f29dff95f0b3b534dbaeba605",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_1\\atlas.png",
+     "atlasSha256": "1927caab46d082c4d426de1bbb0be603a043adfd04c6753023ffd89d53a9b7fb"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_1\\parts.json",
+    "partsSha256": "d714d5b03810c5246d4eb9d7720ec8631e9b42ebc46d5d5ac48f1b41cdc8bffb"
+   },
+   "model": "polygon",
+   "triangles": 4412,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_2\\model.glb",
+     "glbSha256": "8b70c23587cedd49928cdcf0a31e142bf183861d4a5c2bfaf40dd4dd6ae05afa",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_2\\atlas.png",
+     "atlasSha256": "4ee8a9f18e15623fb9c83f02301682c9b0ebc9031c5b5a9edc2b6417669e0032"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_2\\parts.json",
+    "partsSha256": "00f7c06c68ab41988f500653e115625812653bbf51d1c0b4e4fade46715b48d8"
+   },
+   "model": "polygon",
+   "triangles": 4956,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "cannon_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_3\\model.glb",
+     "glbSha256": "9df40b415202191562d9bddf97a9c65d3a1d453dfa2598a488d8faff3f7f78ba",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_3\\atlas.png",
+     "atlasSha256": "013a1c3190f82000b8577ac341c310f80e62e7089730d2277fc0e4003ca760da"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\cannon_3\\parts.json",
+    "partsSha256": "e184d20eb790ba506dd4b5b6bbd4fb89cea24917c729f111cf50fd2848a2825e"
+   },
+   "model": "polygon",
+   "triangles": 7340,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     -10,
+     45
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\aa_1\\model.glb",
+     "glbSha256": "d5dc76592df15cd02d52c85ee8ec6ac523a28989842cdaddad05c7c216406719",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\aa_1\\atlas.png",
+     "atlasSha256": "f0563604b9c8298ab47430e66d73aff1ff5559360875f340bce1197199c674ec"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\aa_1\\parts.json",
+    "partsSha256": "c0dcfe4569be985a6add66a4c47069116676c8f8905642a0c96b62e3a1900a17"
+   },
+   "model": "polygon",
+   "triangles": 3616,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\aa_2\\model.glb",
+     "glbSha256": "f87a40e9aec362332f6515c3d3290f1776d6f4776904cd774729aa5c0530d1b6",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\aa_2\\atlas.png",
+     "atlasSha256": "76154790c8e76d565028635bf4661804c3e7c6d09c3d93da9dd6ee1e18031acd"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\aa_2\\parts.json",
+    "partsSha256": "aa846c9c745aae01da8375a520ead1c19588af0a18b834de572fdf25d2082a7f"
+   },
+   "model": "polygon",
+   "triangles": 4928,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "aa_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\aa_3\\model.glb",
+     "glbSha256": "0fa07b7a67fb66044ebb28c331a0a18c6caf8b2b10240cf5e4ee21415613a070",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\aa_3\\atlas.png",
+     "atlasSha256": "46ab3e15a54b403e6be6efad92f6206111a34a795dc5a55afab4ffc03acdcaf5"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\aa_3\\parts.json",
+    "partsSha256": "9fe3205f64fa3e8bc8e93a5ebc7baf989d23699c19d2fc6532c6a4d2abc30c26"
+   },
+   "model": "polygon",
+   "triangles": 5960,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     85
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "radar_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\radar_1\\model.glb",
+     "glbSha256": "d91c573f71d927f831a120e92ae596c2d9a14ad26a98a1bffe29b6e9c50e3edc",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\radar_1\\atlas.png",
+     "atlasSha256": "327aa4fec95ff0aff2a61c7fccf530edeeaa11fc38c3c97f4f047d27d4394d58"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\radar_1\\parts.json",
+    "partsSha256": "9777bc9079655819a2537fefafe4f87cf0ea7e874e66a165c87c7876e9b46300"
+   },
+   "model": "polygon",
+   "triangles": 3236,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "radar_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\radar_2\\model.glb",
+     "glbSha256": "3e24b93d72d30fea1a9e9fdd27c3d45027871345d2d7a526c1b028461afde4b5",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\radar_2\\atlas.png",
+     "atlasSha256": "acd7edf59df12bb3125a06d806d0928bf17af6e726b3296955f9e7aef8997333"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\radar_2\\parts.json",
+    "partsSha256": "90b17d500b241d163c8f50611f452a8029a1da55de7514fe604b7fd4af43b423"
+   },
+   "model": "polygon",
+   "triangles": 4232,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "radar_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\radar_3\\model.glb",
+     "glbSha256": "c3bbca47ea930cafcec39b7a890ab17d0069f9c6966e1fe0998a24b588dffd63",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\radar_3\\atlas.png",
+     "atlasSha256": "41108b877dbd633028d5d1c2756c6f6c37efce15ac5918d07bdb1925cd635f50"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\radar_3\\parts.json",
+    "partsSha256": "cd0f85bdba1c2f6e6d361bcfd3163cd521e4a731a80d136ac28cde6af449dd7d"
+   },
+   "model": "polygon",
+   "triangles": 4684,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "tesla_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_1\\model.glb",
+     "glbSha256": "c424f151295865fafb1a56d6bc5ca23b74663d619b158a0841ca77fdc9bcf26d",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_1\\atlas.png",
+     "atlasSha256": "a033b4a88d1616425ea4ec7868a3fda5f40a94bede216b57ced3b64b5bf0e0d9"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_1\\parts.json",
+    "partsSha256": "30c9f94c8771f4311753465acef46677f48aed1a7b6be4079e3a6f93a628c299"
+   },
+   "model": "polygon",
+   "triangles": 4520,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "tesla_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_2\\model.glb",
+     "glbSha256": "0160427625abc084b93c3ed2b2fc5939f17f4373d93aee211ab628c3a94e1a52",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_2\\atlas.png",
+     "atlasSha256": "1a682aee70bf398557ecf52865dba671dead1f9d715cdf3629737d14f92da27e"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_2\\parts.json",
+    "partsSha256": "99f034637c90b48476aaac12039ee5a1f826f7f06cb359fda85a38c3b2ad9337"
+   },
+   "model": "polygon",
+   "triangles": 5536,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "tesla_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_3\\model.glb",
+     "glbSha256": "a3973ee6ea23a744520cf633771fab4ef922d1f68bcaf42569c586b072de5ca7",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_3\\atlas.png",
+     "atlasSha256": "ff32666ff74643cfc91f59c68d99dc88c2c00a63a3aef577209bfb102f5bb7cf"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\tesla_3\\parts.json",
+    "partsSha256": "55d7ed9ca6161ddeedbdb620b172c0c520490562a3ec6421cc0079e4eb12d0ee"
+   },
+   "model": "polygon",
+   "triangles": 6468,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "emp_1",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\emp_1\\model.glb",
+     "glbSha256": "67910ae5f6c937084730662d36723d1dfd429863a781b3f46b6c83015b1c3cc7",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\emp_1\\atlas.png",
+     "atlasSha256": "a87a88d4d288b553e3dd5f2ae47ff9f022f1f86c18888d7fd18a0bf7f6207ee2"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\emp_1\\parts.json",
+    "partsSha256": "fa3c891b98479ad6ad79803096f490a19ebc677e38590fe390c6d7fa9ef2c020"
+   },
+   "model": "polygon",
+   "triangles": 3292,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "emp_2",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\emp_2\\model.glb",
+     "glbSha256": "7276090eafd907052702b54f74d65aa5234cb9a8a862e86f3528ab91ffc55022",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\emp_2\\atlas.png",
+     "atlasSha256": "1678d2124dafeb73216f955989e96f6de710c241310ac00eade3f72f8a0fb000"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\emp_2\\parts.json",
+    "partsSha256": "95c2ce81e9351033fe9becf213c9bd2f76d4822c74a0096fde0d7ff0dca4cb4b"
+   },
+   "model": "polygon",
+   "triangles": 3204,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
+    ],
+    "from_model": true
+   }
+  },
+  {
+   "id": "emp_3",
+   "source": {
+    "poly": {
+     "glb": "E:\\projects\\sog-tower-model\\poly_v2\\emp_3\\model.glb",
+     "glbSha256": "8048e390c726287b079e29a0f7f2821722f449e91c187d56c94105e5ea033368",
+     "atlas": "E:\\projects\\sog-tower-model\\poly_v2\\emp_3\\atlas.png",
+     "atlasSha256": "c72ac27253c952f672bd256547cd3b072f8b8595c4e67f8e2a53c2d412ea1825"
+    },
+    "parts": "E:\\projects\\sog-tower-model\\poly_v2\\emp_3\\parts.json",
+    "partsSha256": "0a2115cd4a09ef6e2f0828ef9da415d72907ed7d7610485b40d07f36ccefe4c9"
+   },
+   "model": "polygon",
+   "triangles": 3248,
+   "facesHidden": 0,
+   "facesClipped": 0,
+   "crossPartNudged": 0,
+   "clearance": {
+    "pitch": [
+     0,
+     0
     ],
     "from_model": true
    }

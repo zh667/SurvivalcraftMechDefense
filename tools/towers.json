@@ -1066,7 +1066,7 @@
   {
    "id": "gatling_1",
    "name": "转轮机枪塔 Ⅰ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_1",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_1",
    "data": 32,
    "template": "MDTower_gatling_1",
    "hp": 800,
@@ -1108,7 +1108,7 @@
   {
    "id": "gatling_2",
    "name": "转轮机枪塔 Ⅱ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_2",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_2",
    "data": 33,
    "template": "MDTower_gatling_2",
    "hp": 1000,
@@ -1151,7 +1151,7 @@
   {
    "id": "gatling_3",
    "name": "转轮机枪塔 Ⅲ",
-   "polyOnly": "E:/projects/sog-tower-model/poly_v1/gatling_3",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_3",
    "data": 34,
    "template": "MDTower_gatling_3",
    "hp": 1300,
@@ -1192,6 +1192,1006 @@
     "Imported/SoG/Audio/ricochet_1",
     "Imported/SoG/Audio/ricochet_2"
    ]
+  },
+  {
+   "id": "frost_1",
+   "name": "冰冻塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_1",
+   "data": 35,
+   "template": "MDTower_frost_1",
+   "hp": 800,
+   "summary": "喷射低温气体，喷射带上的地面敌人大幅减速（速度 ×0.7），不造成伤害。",
+   "attack": {
+    "type": "jet",
+    "range": 12,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 0,
+    "knockback": 0,
+    "slow": 0.7,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 0.8,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "frost_2",
+   "name": "冰冻塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_2",
+   "data": 36,
+   "template": "MDTower_frost_2",
+   "hp": 1000,
+   "summary": "两支喷枪喷射低温气体，减速更强（速度 ×0.6），并造成少量冻伤。由冰冻塔 Ⅰ 升级。",
+   "attack": {
+    "type": "jet",
+    "range": 13.8,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 30,
+    "knockback": 0,
+    "slow": 0.6,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 0.9,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "frost_3",
+   "name": "冰冻塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_3",
+   "data": 37,
+   "template": "MDTower_frost_3",
+   "hp": 1300,
+   "summary": "重型低温喷射塔，减速最强（速度 ×0.5），冻伤更重，射程更远。由冰冻塔 Ⅱ 升级。",
+   "attack": {
+    "type": "jet",
+    "range": 15.6,
+    "width": 3,
+    "interval": 2,
+    "duration": 2,
+    "power": 60,
+    "knockback": 0,
+    "slow": 0.5,
+    "slowTime": 1.5
+   },
+   "fx": {
+    "color": [
+     0.51,
+     0.855,
+     1
+    ],
+    "color2": [
+     0.663,
+     0.937,
+     1
+    ],
+    "scale": 1,
+    "kind": "frost"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_jet1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_1",
+   "name": "火焰塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_1",
+   "data": 38,
+   "template": "MDTower_flame_1",
+   "hp": 800,
+   "summary": "朝目标方向喷射火焰，烧伤喷射带上的所有敌人并让其着火，射程短。",
+   "attack": {
+    "type": "flame",
+    "range": 10,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 174,
+    "burn": 3
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 0.8,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_2",
+   "name": "火焰塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_2",
+   "data": 39,
+   "template": "MDTower_flame_2",
+   "hp": 1000,
+   "summary": "两支火焰喷枪，火力更猛，射程更远。由火焰塔 Ⅰ 升级。",
+   "attack": {
+    "type": "flame",
+    "range": 11.5,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 294,
+    "burn": 3
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 0.9,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "flame_3",
+   "name": "火焰塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_3",
+   "data": 40,
+   "template": "MDTower_flame_3",
+   "hp": 1300,
+   "summary": "重型双管火焰喷射塔，火力最强。由火焰塔 Ⅱ 升级。",
+   "attack": {
+    "type": "flame",
+    "range": 13,
+    "width": 3.5,
+    "interval": 2,
+    "duration": 2,
+    "power": 520,
+    "burn": 4
+   },
+   "fx": {
+    "color": [
+     1,
+     0.7,
+     0.3
+    ],
+    "color2": [
+     1,
+     0.4,
+     0.1
+    ],
+    "scale": 1,
+    "kind": "fire"
+   },
+   "pitchSpeed": 60,
+   "fireSounds": [
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_0",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_1",
+    "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "missile_1",
+   "name": "导弹塔 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_1",
+   "data": 41,
+   "template": "MDTower_missile_1",
+   "hp": 800,
+   "summary": "导弹发射架，轮流发射追踪导弹，必定命中，命中时小范围爆炸，地面和空中的敌人都能打。",
+   "attack": {
+    "type": "missile",
+    "range": 26,
+    "interval": 0.6,
+    "power": 22,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.7,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
+  },
+  {
+   "id": "missile_2",
+   "name": "导弹塔 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_2",
+   "data": 42,
+   "template": "MDTower_missile_2",
+   "hp": 1000,
+   "summary": "六联装导弹发射架，火力更猛，射程更远。由导弹塔 Ⅰ 升级。",
+   "attack": {
+    "type": "missile",
+    "range": 30,
+    "interval": 0.6,
+    "power": 37,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.8,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
+  },
+  {
+   "id": "missile_3",
+   "name": "导弹塔 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_3",
+   "data": 43,
+   "template": "MDTower_missile_3",
+   "hp": 1300,
+   "summary": "八联装重型导弹发射架，火力最强。由导弹塔 Ⅱ 升级。",
+   "attack": {
+    "type": "missile",
+    "range": 34,
+    "interval": 0.6,
+    "power": 66,
+    "speed": 40,
+    "splash": 1.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.8,
+     0.5
+    ],
+    "color2": [
+     0.9,
+     0.45,
+     0.2
+    ],
+    "scale": 0.9,
+    "kind": "heavy"
+   },
+   "fireSounds": [
+    "Imported/SoG/Audio/missile2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/explo"
+   ]
+  },
+  {
+   "id": "cannon_1",
+   "name": "加农炮 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_1",
+   "data": 47,
+   "template": "MDTower_cannon_1",
+   "hp": 800,
+   "summary": "单管加农炮，炮弹落地爆炸，炸伤一片地面敌人，不打空中目标。射速慢、射程远。",
+   "attack": {
+    "type": "shell",
+    "range": 30,
+    "interval": 4,
+    "power": 147,
+    "speed": 28,
+    "splash": 3,
+    "needsSight": false,
+    "groundOnly": true
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.1,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1"
+   ],
+   "recoil": [
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "cannon_2",
+   "name": "加农炮 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_2",
+   "data": 48,
+   "template": "MDTower_cannon_2",
+   "hp": 1000,
+   "summary": "双管加农炮，两根炮管轮流开炮，威力更大。由加农炮 Ⅰ 升级。",
+   "attack": {
+    "type": "shell",
+    "range": 34.5,
+    "interval": 4,
+    "power": 250,
+    "speed": 30,
+    "splash": 3,
+    "needsSight": false,
+    "groundOnly": true
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.25,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2"
+   ],
+   "recoil": [
+    0.3,
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo1"
+   ]
+  },
+  {
+   "id": "cannon_3",
+   "name": "加农炮 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_3",
+   "data": 49,
+   "template": "MDTower_cannon_3",
+   "hp": 1300,
+   "summary": "四管重型加农炮，威力最大、射程最远。由加农炮 Ⅱ 升级。",
+   "attack": {
+    "type": "shell",
+    "range": 39,
+    "interval": 4,
+    "power": 440,
+    "speed": 32,
+    "splash": 3,
+    "needsSight": false,
+    "groundOnly": true
+   },
+   "fx": {
+    "color": [
+     1,
+     0.78,
+     0.42
+    ],
+    "color2": [
+     1,
+     0.5,
+     0.2
+    ],
+    "scale": 1.4,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2",
+    "barrel_3",
+    "barrel_4"
+   ],
+   "recoil": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "pitchSpeed": 45,
+   "yawSpeed": 90,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo2"
+   ]
+  },
+  {
+   "id": "aa_1",
+   "name": "防空炮 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_1",
+   "data": 50,
+   "template": "MDTower_aa_1",
+   "hp": 800,
+   "summary": "高射炮，优先打空中目标，射速快；也能打地面，但伤害减半，离得太近打不到。",
+   "attack": {
+    "type": "bolt",
+    "range": 32,
+    "minRange": 4,
+    "interval": 0.6,
+    "power": 19.2,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.6,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1"
+   ],
+   "recoil": [
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 0.9425,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon0"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "aa_2",
+   "name": "防空炮 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_2",
+   "data": 51,
+   "template": "MDTower_aa_2",
+   "hp": 1000,
+   "summary": "双管高射炮，火力更密。由防空炮 Ⅰ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 37,
+    "minRange": 4,
+    "interval": 0.45,
+    "power": 24.3,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.7,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2"
+   ],
+   "recoil": [
+    0.2,
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 1.021,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon1"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "aa_3",
+   "name": "防空炮 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_3",
+   "data": 52,
+   "template": "MDTower_aa_3",
+   "hp": 1300,
+   "summary": "四管重型高射炮，弹幕最密、射程最远。由防空炮 Ⅱ 升级。",
+   "attack": {
+    "type": "bolt",
+    "range": 42,
+    "minRange": 4,
+    "interval": 0.35,
+    "power": 33.6,
+    "speed": 90,
+    "splash": 0.8,
+    "airFirst": true,
+    "groundFactor": 0.5
+   },
+   "fx": {
+    "color": [
+     1,
+     0.85,
+     0.5
+    ],
+    "color2": [
+     1,
+     0.55,
+     0.2
+    ],
+    "scale": 0.8,
+    "kind": "heavy"
+   },
+   "recoilParts": [
+    "barrel_1",
+    "barrel_2",
+    "barrel_3",
+    "barrel_4"
+   ],
+   "recoil": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "pitchCap": 85,
+   "restPitch": 1.0472,
+   "fireSounds": [
+    "Imported/SoG/Audio/cannon2"
+   ],
+   "hitSounds": [
+    "Imported/SoG/Audio/cannon_explo0"
+   ]
+  },
+  {
+   "id": "radar_1",
+   "name": "雷达 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_1",
+   "data": 44,
+   "template": "MDTower_radar_1",
+   "hp": 800,
+   "summary": "雷达天线不停旋转，范围内所有防御塔射程提高 15 %。本身不攻击。",
+   "attack": {
+    "type": "radar",
+    "range": 24,
+    "interval": 1,
+    "boost": 1.15,
+    "links": 0
+   },
+   "fx": {
+    "color": [
+     0.55,
+     1,
+     0.65
+    ],
+    "color2": [
+     0.3,
+     0.85,
+     0.45
+    ],
+    "scale": 0.8
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 120,
+   "fireSounds": [],
+   "hitSounds": []
+  },
+  {
+   "id": "radar_2",
+   "name": "雷达 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_2",
+   "data": 45,
+   "template": "MDTower_radar_2",
+   "hp": 1000,
+   "summary": "更大的雷达，范围更大，范围内所有防御塔射程提高 20 %。由雷达 Ⅰ 升级。",
+   "attack": {
+    "type": "radar",
+    "range": 30,
+    "interval": 1,
+    "boost": 1.2,
+    "links": 0
+   },
+   "fx": {
+    "color": [
+     0.55,
+     1,
+     0.65
+    ],
+    "color2": [
+     0.3,
+     0.85,
+     0.45
+    ],
+    "scale": 0.9
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 120,
+   "fireSounds": [],
+   "hitSounds": []
+  },
+  {
+   "id": "radar_3",
+   "name": "雷达 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_3",
+   "data": 46,
+   "template": "MDTower_radar_3",
+   "hp": 1300,
+   "summary": "大型雷达，范围最大，范围内所有防御塔射程提高 25 %。由雷达 Ⅱ 升级。",
+   "attack": {
+    "type": "radar",
+    "range": 36,
+    "interval": 1,
+    "boost": 1.25,
+    "links": 0
+   },
+   "fx": {
+    "color": [
+     0.55,
+     1,
+     0.65
+    ],
+    "color2": [
+     0.3,
+     0.85,
+     0.45
+    ],
+    "scale": 1
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 120,
+   "fireSounds": [],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_1",
+   "name": "磁暴线圈 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_1",
+   "data": 53,
+   "template": "MDTower_tesla_1",
+   "hp": 800,
+   "summary": "磁暴线圈放出闪电击中一个敌人，造成电击伤害。",
+   "attack": {
+    "type": "chain",
+    "range": 21,
+    "interval": 3,
+    "power": 150,
+    "bounces": 0,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 0.9
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_2",
+   "name": "磁暴线圈 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_2",
+   "data": 54,
+   "template": "MDTower_tesla_2",
+   "hp": 1000,
+   "summary": "更强的闪电，击中后再弹射到附近 1 个敌人。由磁暴线圈 Ⅰ 升级。",
+   "attack": {
+    "type": "chain",
+    "range": 24,
+    "interval": 3,
+    "power": 255,
+    "bounces": 1,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 1.0
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "tesla_3",
+   "name": "磁暴线圈 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_3",
+   "data": 55,
+   "template": "MDTower_tesla_3",
+   "hp": 1300,
+   "summary": "大型磁暴线圈，闪电弹射到附近 2 个敌人，射程更远。由磁暴线圈 Ⅱ 升级。",
+   "attack": {
+    "type": "chain",
+    "range": 27,
+    "interval": 3,
+    "power": 450,
+    "bounces": 2,
+    "bounceRange": 5,
+    "duration": 0.25
+   },
+   "fx": {
+    "color": [
+     0.72,
+     0.91,
+     0.98
+    ],
+    "color2": [
+     0.5,
+     0.85,
+     1
+    ],
+    "scale": 1.15
+   },
+   "pitchFixed": true,
+   "fireSounds": [
+    "Imported/SoG/Audio/tesla"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_1",
+   "name": "电磁脉冲 Ⅰ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_1",
+   "data": 56,
+   "template": "MDTower_emp_1",
+   "hp": 800,
+   "summary": "每 5 秒放出一圈电磁脉冲，让范围内的普通和进阶敌人瘫痪 1.5 秒（首领不受影响），不造成伤害。",
+   "attack": {
+    "type": "pulse",
+    "range": 10,
+    "interval": 5,
+    "power": 0,
+    "stun": 1.5,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 0.9
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_2",
+   "name": "电磁脉冲 Ⅱ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_2",
+   "data": 57,
+   "template": "MDTower_emp_2",
+   "hp": 1000,
+   "summary": "范围更大，瘫痪 2 秒。由电磁脉冲 Ⅰ 升级。",
+   "attack": {
+    "type": "pulse",
+    "range": 11.5,
+    "interval": 5,
+    "power": 0,
+    "stun": 2,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 1.0
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
+   "hitSounds": []
+  },
+  {
+   "id": "emp_3",
+   "name": "电磁脉冲 Ⅲ",
+   "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_3",
+   "data": 58,
+   "template": "MDTower_emp_3",
+   "hp": 1300,
+   "summary": "范围最大，瘫痪 2.5 秒。由电磁脉冲 Ⅱ 升级。",
+   "attack": {
+    "type": "pulse",
+    "range": 13,
+    "interval": 5,
+    "power": 0,
+    "stun": 2.5,
+    "needsSight": false,
+    "bossResilience": 500
+   },
+   "fx": {
+    "color": [
+     0.6,
+     0.9,
+     1
+    ],
+    "color2": [
+     0.4,
+     0.75,
+     1
+    ],
+    "scale": 1.15
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 100,
+   "fireSounds": [
+    "Imported/SoG/Audio/sonar"
+   ],
+   "hitSounds": []
   }
  ]
 }

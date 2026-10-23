@@ -15,6 +15,9 @@ Output per unit: Mod/Assets/Imported/<UNIT>/ (ignored: extracted game data, rebu
   clips.bin      float32 per clip, per sample (every 2 ticks = 1/30 s), per joint: qx qy qz qw tx ty tz s (game frame)
   icon.bin / icon.png   inventory icon in MDTowerLibrary.IconMesh format (idle pose) and its 512 texture
   Audio/seNN.ogg the original sound effects by id (se.bin entry NN)
+Our own polygon models (0.10.0, E:/projects/dguns-enemy-models/v2_poly/<unit>/): for the units in POLY_UNITS the build then puts
+that folder's model*.glb and game/icon.bin, game/icon.png over the export (same node tree, checked; unit.json, clips.bin and Audio stay
+from the export, so clips, muzzles, boxes and feet keep working). --poly-only does just that swap, --no-poly skips it.
 Game frame: Y up, the unit faces -Z, its right is +X. The .blend files are Z up, face -Y, left +X: (x, y, z)_game = (-x, z, y).
 A joint's bone transform in the engine is T(p) L T(-p) (row vectors) with p its rest pivot and L the local deformation; this
 tool re-poses the model from its own output with the engine's composition and compares with Blender's evaluation (p99 < 1 mm).
@@ -27,6 +30,8 @@ ASSETS = Path(r'E:\projects\dguns-enemy-models')
 BLENDER = Path(r'E:\projects\tools\Blender\blender-4.2.9-windows-x64\blender.exe')
 SE_DIR = ROOT / 'local/dguns/assets/se.bin'      # the game's se.bin as ogg files 00NN.ogg (archive entry NN = sound id NN)
 STEP = 2
+POLY = Path(r'E:\projects\dguns-enemy-models\v2_poly')
+POLY_UNITS = ('RD05', 'RD06', 'RD07', 'RD17')   # shipped polygon models (user 2026-10-23: rebuild the enemies ourselves, straight into the package)
 WALKER_TEX = {'model': 'walker_A_1024_sharp.png', 'model_b': 'walker_B_1024_sharp.png', 'model_c': 'walker_C_1024_sharp.png'}
 UNITS = {
     'RD05': dict(blend='RD05_x4.blend', skins=WALKER_TEX, sounds={8: 'shot_gun', 13: 'hit_gun', 24: 'bomb_explosion (destroyed)'}),
@@ -318,14 +323,39 @@ def build(unit, a, np):
     return max(c['p99_m'] for c in report)
 
 
+def glb_nodes(b):
+    jl, = struct.unpack_from('<I', b, 12); js = json.loads(b[20:20 + jl])
+    r = lambda v: None if v is None else tuple(round(float(x), 5) for x in v)
+    return [(n.get('name') if i else None, tuple(n.get('children', [])), r(n.get('translation')), r(n.get('rotation')), r(n.get('scale'))) for i, n in enumerate(js['nodes'])]
+
+
+def use_poly(unit):
+    """Ship our polygon model of a unit over the export (model*.glb per skin, icon.bin, icon.png); the node tree must match."""
+    import hashlib, shutil
+    src = POLY / unit.lower(); out = ROOT / 'Mod/Assets/Imported' / unit
+    files = [(f'{m}.glb', f'{m}.glb') for m in UNITS[unit]['skins']] + [('game/icon.bin', 'icon.bin'), ('game/icon.png', 'icon.png')]
+    for s, d in files[:-2]:
+        a, b = glb_nodes((out / d).read_bytes()), glb_nodes((src / s).read_bytes())
+        if a != b: sys.exit(f'{unit} {d}: the polygon model\'s node tree differs from the export: {[(x, y) for x, y in zip(a, b) if x != y][:3]} ({len(a)} vs {len(b)} nodes)')
+    for s, d in files:
+        shutil.copyfile(src / s, out / d); print(f'  poly {unit} {d:12} {(out / d).stat().st_size:>10,} B  sha256 {hashlib.sha256((out / d).read_bytes()).hexdigest()[:16]}')
+
+
 def main():
     import argparse
     import numpy as np
     ap = argparse.ArgumentParser(); ap.add_argument('units', nargs='*', default=list(UNITS)); ap.add_argument('--rd17-scale', type=int, default=3, choices=(3, 4))
-    ap.add_argument('--blender', default=str(BLENDER)); a = ap.parse_args()
+    ap.add_argument('--blender', default=str(BLENDER)); ap.add_argument('--no-poly', action='store_true'); ap.add_argument('--poly-only', action='store_true'); a = ap.parse_args()
+    if a.poly_only:
+        for u in a.units:
+            if u in POLY_UNITS: use_poly(u)
+        return
     worst = {u: build(u, a, np) for u in a.units}
     bad = [u for u, w in worst.items() if w > 1e-3]
     if bad: sys.exit(f're-posed model does not match Blender (p99 > 1 mm): {bad}')
+    if not a.no_poly:
+        for u in a.units:
+            if u in POLY_UNITS: use_poly(u)
     print('UNIT_ASSETS_DONE', worst)
 
 

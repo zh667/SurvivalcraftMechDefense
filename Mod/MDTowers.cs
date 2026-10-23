@@ -114,7 +114,9 @@ public static class MDTowerLibrary {
     public static void DrawPicture(PrimitivesRenderer3D r,Texture2D picture,Color color,float size,Matrix matrix,DrawBlockEnvironmentData e) {
         var m=e?.ViewProjectionMatrix is {} vp?matrix*vp:matrix;float h=.9f*size;
         var sx=Vector3.Normalize(new Vector3(1,0,-1))*h;var sy=Vector3.Normalize(new Vector3(-1,2,-1))*h;
-        Vector3 P(Vector3 p){var v=new Vector4(p,1);Vector4.Transform(ref v,ref m,out v);return new Vector3(v.X,v.Y,v.Z)/v.W;}
+        // the projection by hand: Engine.Vector4.Transform throws PlatformNotSupportedException on API 1.9.4 phones (x86-only fast path)
+        Vector3 P(Vector3 p){float w=p.X*m.M14+p.Y*m.M24+p.Z*m.M34+m.M44;
+            return new Vector3(p.X*m.M11+p.Y*m.M21+p.Z*m.M31+m.M41,p.X*m.M12+p.Y*m.M22+p.Z*m.M32+m.M42,p.X*m.M13+p.Y*m.M23+p.Z*m.M33+m.M43)/w;}
         var c=Color.MultiplyColorOnly(color,LightingManager.LightIntensityByLightValue[Math.Clamp(e?.Light??15,0,15)]);
         r.TexturedBatch(picture,false,0,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp)
             .QueueQuad(P(-sx-sy),P(-sx+sy),P(sx+sy),P(sx-sy),new Vector2(0,1),new Vector2(0,0),new Vector2(1,0),new Vector2(1,1),c);

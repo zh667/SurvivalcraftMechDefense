@@ -3,6 +3,7 @@ using Engine.Graphics;
 using Game;
 using HarmonyLib;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 
 namespace TowerLab;
@@ -84,7 +85,32 @@ public partial class Lab:ModLoader {
     static Vector3 Home=>origin+new Vector3(22,0,21);
     static void Remove(IEnumerable<ComponentMDUnit> units){foreach(var u in units.ToList())if(u.Entity.IsAddedToProject)GameManager.Project.RemoveEntity(u.Entity,true);}
 
+    // API 1.9.4 on phones (player log 2026-10-23): Engine.Vector4.Transform and the array forms of Vector2/3/4.Transform and
+    // TransformNormal take an x86-only (Sse) path when the runtime reports vector acceleration but no ARM AdvSimd, and throw
+    // PlatformNotSupportedException; drawing a tower icon that way dropped players out of the world. The mod must not call
+    // them. A PC cannot reproduce it (Sse works there), so the lab scans the mod's IL instead; SimdTrapProbe proves the scan
+    // finds such a call.
+    static Vector4 SimdTrapProbe(Vector4 v,Matrix m)=>Vector4.Transform(v,m);
+    static List<string> SimdTraps(IEnumerable<Type> types) {
+        var bad=new List<string>();const BindingFlags all=BindingFlags.Instance|BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.DeclaredOnly;
+        foreach(var t in types)foreach(var m in t.GetMethods(all).Cast<MethodBase>().Concat(t.GetConstructors(all))) {
+            byte[] il;try{il=m.GetMethodBody()?.GetILAsByteArray();}catch{continue;}if(il==null)continue;
+            for(int i=0;i+4<il.Length;i++) {
+                if(il[i]!=0x28&&il[i]!=0x6F)continue;   // call, callvirt
+                MethodBase c;try{c=m.Module.ResolveMethod(BitConverter.ToInt32(il,i+1),t.IsGenericType?t.GetGenericArguments():null,m.IsGenericMethod?m.GetGenericArguments():null);}catch{continue;}
+                if(c?.DeclaringType is not {Namespace:"Engine"} dt||dt.Name is not ("Vector2" or "Vector3" or "Vector4")||c.Name is not ("Transform" or "TransformNormal"))continue;
+                var ps=c.GetParameters();
+                if(dt.Name=="Vector4"||ps.Length>0&&ps[0].ParameterType.IsArray)bad.Add($"{t.FullName}.{m.Name} -> {dt.Name}.{c.Name}({string.Join(",",ps.Select(p=>p.ParameterType.Name))})");
+            }
+        }
+        return bad.Distinct().ToList();
+    }
     static IEnumerable<bool> Run() {
+        {   // first, in every mode: the probe must be found, the mod must have none
+            if(SimdTraps([typeof(Lab)]).Count==0)throw new Exception("the SIMD trap scan misses SimdTrapProbe");
+            var traps=SimdTraps(typeof(MDTowerLibrary).Assembly.GetTypes());results["simdTraps"]=traps.Count==0?"none":traps;
+            if(traps.Count>0)throw new Exception("calls that crash on API 1.9.4 phones: "+string.Join("; ",traps));
+        }
         var p0=player.ComponentPlayer.ComponentBody.Position;origin=new(MathF.Floor(p0.X)+.5f,70,MathF.Floor(p0.Z)+.5f);
         var towers=MDTowerLibrary.All;results["towers"]=towers.Count;
         Clear((int)origin.X-30,(int)origin.X+75,(int)origin.Z-35,(int)origin.Z+70);

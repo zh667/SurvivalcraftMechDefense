@@ -1,5 +1,23 @@
 # Status — 2026-10-23
 
+## 0.10.1 hotfix (branch fix/android-api194, 2026-10-24; not merged yet)
+
+Player report (Android phone, API 1.9.4, log + video): "玩家打开武器那一些闪退出世界，并且机甲放置出来不可见".
+- Crash, root cause found: in the API 1.9.4 engine, `Engine.Vector4.Transform` (and the array forms of Vector2/3/4.Transform and
+  TransformNormal) take a SIMD path that falls back to x86-only `Sse` calls when the runtime reports vector acceleration but no ARM
+  AdvSimd; on that phone it throws PlatformNotSupportedException. The tower item pictures (`MDTowerLibrary.DrawPicture`) used it, so
+  opening the inventory page with the towers dropped the player out of the world (stack trace in the player's log). Fixed: the
+  projection is computed by hand. A PC cannot reproduce it (Sse works there), so every lab run now first scans the mod's IL for those
+  calls (`SimdTraps`, proven on `SimdTrapProbe`; it flagged 0.10.0 and passes on 0.10.1).
+- Invisible mech: not root-caused. The player's log has no session with a placed mech; on the PC 1.9.4 build all three mechs draw.
+  Each placed mech now writes one "[MechDefense] mech ..." line at its 2nd and 200th frame (model, registered with the renderer,
+  IsSet, DisableDrawing, visible, opacity, draw orders, mode, bounding sphere, view range, mods that override
+  OnModelCalculateIsVisible), so the next player log shows what the renderer sees.
+- `tools/run_isolated.py --source 1.9.4` runs the lab on the user's API 1.9.4 Windows build.
+- Package dist/MechDefense-0.10.1.scmod, 29,590,172 bytes, SHA-256 3c799e5e084e94f08b54c3898fb582633081a1fac883ad1b2053e749e688a52f.
+  Verified (PC): on 1.9.4 mech-view, mech, robots-heroes, robots-gallery, icons, robots-items; on 1.9.3.1 all, icons, robots,
+  robots-heroes, special, combat, mech, mech-view, old save 0.5.0 -> 0.10.1, new world — all passed. Not verified: the phone itself.
+
 ## Delivered: 0.10.0 (branch feat/more-towers-enemy-models -> main, 2026-10-23)
 
 User 2026-10-23: "转轮机枪塔那个游戏的其他炮塔都可以开始建模了，并且恶魔机甲和地方机兵也可以我们自己重新建模 … 这些都可以直接放进游戏打包，

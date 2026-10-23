@@ -178,6 +178,25 @@ public class ComponentMDMechModel : ComponentModel {
             if(allMeshes==null){allMeshes=Enumerable.Range(0,Model.Meshes.Count).ToArray();cockpitMeshes=allMeshes.Where(i=>d.roles.firstPerson.Any(p=>Model.Meshes[i].ParentBone.Name.StartsWith(p))).ToArray();}
             MeshDrawOrders=MDMechPilot.FirstPerson(unit)?cockpitMeshes:allMeshes;
         } catch(Exception e){if(LastError==null){LastError=e.ToString();Log.Error("[MechDefense] mech model: "+e);}SetBoneTransform(Model.RootBone.Index,m_componentFrame.Matrix);}
+        if(++diagFrames is 2 or 200)Diagnose();
+    }
+    // A player's phone (API 1.9.4, 2026-10-23): "机甲放置出来不可见", with nothing in the log. One line at the 2nd and the 200th
+    // frame of each placed mech says what the renderer sees, so the next log tells why. Read by reflection: some members are
+    // missing in older APIs, and nothing here may break the mech.
+    int diagFrames;
+    void Diagnose() {
+        try {
+            const System.Reflection.BindingFlags any=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic;
+            object Get(object o,string name){var t=o as Type??o.GetType();var f=t.GetField(name,any);if(f!=null)return f.GetValue(o is Type?null:o);var p=t.GetProperty(name,any);return p?.GetValue(o is Type?null:o);}
+            var renderer=Project.FindSubsystem<SubsystemModelsRenderer>(false);var sky=Project.FindSubsystem<SubsystemSky>(false);
+            bool? registered=(Get(renderer,"m_componentModels") as System.Collections.IDictionary)?.Contains(this);
+            var hooks=new List<string>();
+            if(Get(typeof(ModsManager),"ModLoaders") is System.Collections.IEnumerable loaders)
+                foreach(var l in loaders)if(l!=null&&l.GetType().GetMethod("OnModelCalculateIsVisible")?.DeclaringType is {} dt&&dt!=typeof(ModLoader))hooks.Add(l.GetType().FullName);
+            Log.Information($"[MechDefense] mech {unit?.Mech?.Type?.Id} frame {diagFrames} at {m_componentFrame?.Position}: model {(Model==null?"none":$"{Model.Meshes.Count} meshes, {Model.Bones.Count} bones")}, "+
+                $"registered {registered}, IsSet {Get(this,"IsSet")}, DisableDrawing {Get(this,"DisableDrawing")}, visible {IsVisibleForCamera}, opacity {Opacity?.ToString()??"null"}, "+
+                $"draw orders {MeshDrawOrders?.Length??-1}, mode {RenderingMode}, sphere {Get(this,"m_boundingSphereRadius")}, range {sky?.VisibilityRange}, visibility hooks [{string.Join(",",hooks)}]");
+        } catch(Exception e){Log.Warning("[MechDefense] mech diagnostics: "+e.Message);}
     }
 }
 

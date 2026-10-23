@@ -750,12 +750,12 @@
    "source": {
     "poly": {
      "glb": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\model.glb",
-     "glbSha256": "192d9e8c97fb4c831eaddad798de2e7ec6bd883a2c1f8f4e2434b57eccc88ec7",
+     "glbSha256": "b4cfa6ab36871c81cddbd2fde879140dab9f441ecef472f0c0a86307f4eb41d3",
      "atlas": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\atlas.png",
-     "atlasSha256": "b1abba2b21d9ec0a25d875a8efef33fab0a3745b7ff8c1259dcca7316b19395e"
+     "atlasSha256": "076d114b46540ec935a77e1ab98eb30b318730e069b644412a0d4f5d736237b4"
     },
     "parts": "E:\\projects\\sog-tower-model\\poly_v1\\missile_1\\parts.json",
-    "partsSha256": "158381ae9ceb7d2fe5a470150c2900bb09a7e6c09f73bb197daca772c47dec56"
+    "partsSha256": "064754b6f471be96eaf4c6d18e95baec89ed44eb1c9626f9132a77d262f59dc0"
    },
    "model": "polygon",
    "triangles": 3000,

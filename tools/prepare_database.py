@@ -80,6 +80,7 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDRobot07C','RD07','model_c','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
     ('MDDevilMech','RD17','model','恶魔机甲','用诱敌信标引来的首领，按附近炮塔数量强化耐久。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。',40000,7,4000,'boss'),
 ]
+BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903}   # bestiary entries (EggTypeIndex), see below
 def unit_box(kind):
     u=root/f'Mod/Assets/Imported/{kind}/unit.json'
     if u.exists():
@@ -109,5 +110,14 @@ for name,kind,skin,display,desc,hp,speed,mass,loot in ROBOTS:
                     ('CastsShadow','bool','True'),('BoundingSphereRadius','float',round(max(w,h,d)*(1.6 if boss else .8),2))],parent=CT['CreatureModel'])
     member('MDRobot',[('Class','string','Game.ComponentMDRobot'),('Kind','string',kind)],parent=CT['Generic'])
     if not boss:member('WalkAroundBehavior',[],parent=CT['WalkAround'])
+    # 0.11.0: the game's bestiary lists templates whose CreatureEggData has EggTypeIndex >= 0 (and sorts by it); skin A of each
+    # walker and the devil mech get one. EggBlock then registers a hidden egg type for each (the lab sees it: the set still
+    # counts as the game's egg data), as for the game's own creatures without eggs: ShowEgg False = no egg item, NutritionalValue
+    # 0 = no cooking recipe. EggBlock keys egg types by EggTypeIndex & 0xFFF and a repeated index replaces another creature's,
+    # so these sit far above the game's 0-49. Mod/MDEncyclopedia.cs adds the numbers to the descriptions.
+    if name in BESTIARY:
+        eggs=X.SubElement(e,'ParameterSet',Name='CreatureEggData',Guid=guid(f'robot/{name}/CreatureEggData'))
+        for k,typ,value in [('EggTypeIndex','int',BESTIARY[name]),('ShowEgg','bool','False'),('NutritionalValue','float',0),('DisplayName','string',display)]:
+            X.SubElement(eggs,'Parameter',Name=k,Type=typ,Value=str(value),Guid=guid(f'robot/{name}/CreatureEggData/{k}'))
 X.indent(mod);X.ElementTree(mod).write(root/'Mod/Assets/MechDefense.xdb',encoding='utf-8',xml_declaration=True)
 print('templates:',2+len(towers)+len(ROBOTS))

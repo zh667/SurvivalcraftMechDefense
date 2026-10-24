@@ -100,6 +100,9 @@ public sealed class MDSettingsScreen:Screen {
         public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=75,Size=1,StartDay=3};
         public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.Normalize();} }
     public Robots Working;
+    // the mech's keys being edited (MDMechKeys); capturing: the action waiting for a key press
+    public Dictionary<MDMechAction,Key> WorkingKeys;public MDMechAction? Capturing;
+    readonly Dictionary<MDMechAction,ButtonWidget> keyButtons=[];ButtonWidget pickKey,keysDefault;
     Screen back;bool returning,built,narrow;
     readonly MDWorldBackground background=new();
     readonly CanvasWidget root=new(){Size=new Vector2(float.PositiveInfinity)};
@@ -119,8 +122,8 @@ public sealed class MDSettingsScreen:Screen {
     }
     public override void Enter(object[] parameters) {
         background.Reset();
-        if(!returning){back=ScreensManager.PreviousScreen;Working=Robots.Current();}
-        returning=false;built=false;status.Text="";
+        if(!returning){back=ScreensManager.PreviousScreen;Working=Robots.Current();WorkingKeys=MDMechKeys.Current();}
+        returning=false;built=false;status.Text="";Capturing=null;
     }
     public override void Leave(){background.Release();base.Leave();}
     public override void MeasureOverride(Vector2 available) {
@@ -138,6 +141,12 @@ public sealed class MDSettingsScreen:Screen {
         content.Children.Add(MDUi.Heading("机甲面板"));
         editHud.ParentWidget?.Children.Remove(editHud);editHud.HorizontalAlignment=WidgetAlignment.Near;content.Children.Add(editHud);
         hudInfo=MDUi.Note("");content.Children.Add(hudInfo);
+        content.Children.Add(MDUi.Heading("机甲按键"));   // 0.11.0 (user: "机甲绑定按键编辑（类似于CS枪械适配铃兰触控那样）")
+        keyButtons.Clear();
+        foreach(var a in MDMechKeys.All){var b=MDUi.Button("",170);keyButtons[a]=b;content.Children.Add(MDUi.Row(MDUi.Label(MDMechKeys.ActionName(a)),b,n));}
+        pickKey=MDUi.Button("从列表选择按键",200);keysDefault=MDUi.Button("按键恢复默认",180);content.Children.Add(MDUi.Bar(pickKey,keysDefault));
+        content.Children.Add(MDUi.Note("点一个动作的按钮，再按下新按键（Esc 取消，Delete 清空）；没有键盘时点「从列表选择按键」。手机：用铃兰触控在屏幕上加按钮，映射到这些键。"+
+            "开火、上下车另外照常可以用鼠标左键／点屏、游戏的骑乘键。只对机甲有效，不改游戏原来的按键；驾驶机甲时，和游戏共用的键只做机甲动作。"));
         content.Children.Add(MDUi.Heading("敌方机兵"));
         less=MDUi.Button("−",64);more=MDUi.Button("+",64);input=MDUi.Button("输入",96);startLabel=MDUi.Label("");
         content.Children.Add(MDUi.Row(startLabel,MDUi.Bar(less,more,input),n));
@@ -155,16 +164,37 @@ public sealed class MDSettingsScreen:Screen {
         interval.Text=$"{r.Interval:0} 秒";density.Text=$"{r.Density:0.##} 倍";chance.Text=r.Chance<=0?"不夜袭":$"{r.Chance:0}%";size.Text=$"{r.Size:0.##} 倍";
         int cap=Math.Max(1,(int)MathF.Round(4*r.Density)),lo=Math.Max(1,(int)MathF.Round(r.Density)),hi=Math.Clamp((int)MathF.Round(2.5f*r.Density),1,cap);
         densityNote.Text=$"每批 {lo}～{hi} 台，玩家 80 米内最多 {cap} 台。";
+        foreach(var (a,b) in keyButtons){var t=Capturing==a?"请按键…":MDMechKeys.KeyName(WorkingKeys.GetValueOrDefault(a,Key.Null));if(b.Text!=t)b.Text=t;}
         var p=MDSettings.Hud;
         hudInfo.Text=$"显示：{(MDSettings.HudShow?"开":"关")} · 按键提示：{(MDSettings.HudKeys?"开":"关")} · 位置：{(p.Custom?$"自定义（大小 {p.Scale*100:0}%，旋转 {p.Rotation*180/MathF.PI:0}°）":"默认（右下角）")}";
     }
     // also used by the lab
     public void OpenEditor(){returning=true;ScreensManager.SwitchScreen(MDHudLayoutScreen.ScreenName);}
-    public void SaveNow(){Working.Apply();MDSettings.Persist();Close();}
+    public void SaveNow(){Working.Apply();MDMechKeys.Apply(WorkingKeys);MDSettings.Persist();Close();}
+    // a key for an action on the page (also used by the lab); refused when another mech action has it
+    public bool SetKey(MDMechAction a,Key k) {
+        if(k!=Key.Null&&!MDMechKeys.Bindable(k)){status.Text="这个键不能用。";return false;}
+        if(MDMechKeys.Holder(WorkingKeys,a,k) is {} other){status.Text=$"「{MDMechKeys.KeyName(k)}」已用于「{MDMechKeys.ActionName(other)}」，换一个键，或先改那个动作。";return false;}
+        if(k!=Key.Null&&MDMechKeys.GameKey("ToggleMount")==k){status.Text=$"「{MDMechKeys.KeyName(k)}」是游戏的骑乘键，已经用来上下机甲，换一个键。";return false;}
+        WorkingKeys[a]=k;Capturing=null;var shared=MDMechKeys.SharedWith(k);
+        status.Text=$"「{MDMechKeys.ActionName(a)}」改为 {MDMechKeys.KeyName(k)}（保存后生效）。"+(shared.Length>0?$"这个键在游戏里也是「{shared}」，驾驶机甲时只做机甲动作。":"");return true;
+    }
     void Close()=>ScreensManager.SwitchScreen(back??ScreensManager.FindScreen<Screen>("ModSettings")??ScreensManager.FindScreen<Screen>("MainMenu"));
     public override void Update() {
         if(!built)return;
         if(DialogsManager.HasDialogs(this))return;
+        if(Capturing is {} ca) {   // waiting for a key: Escape cancels (and must not close the page), Delete clears
+            if(Input.IsKeyDownOnce(Key.Escape)){Capturing=null;status.Text="已取消。";Refresh();return;}
+            if(Input.IsKeyDownOnce(Key.Delete)){SetKey(ca,Key.Null);Refresh();return;}
+            foreach(var k in Enum.GetValues<Key>())if(MDMechKeys.Bindable(k)&&Input.IsKeyDownOnce(k)){SetKey(ca,k);Refresh();return;}
+        }
+        foreach(var (a,b) in keyButtons)if(b.IsClicked){Capturing=a;status.Text=$"按下新按键给「{MDMechKeys.ActionName(a)}」（Esc 取消，Delete 清空），或点「从列表选择按键」。";}
+        if(pickKey.IsClicked) {
+            if(Capturing is not {} pa)status.Text="先点要改的动作。";
+            else DialogsManager.ShowDialog(this,new ListSelectionDialog($"给「{MDMechKeys.ActionName(pa)}」选择按键",
+                new object[]{Key.Null}.Concat(Enum.GetValues<Key>().Where(MDMechKeys.Bindable).Cast<object>()).ToArray(),56,k=>MDMechKeys.KeyName((Key)k),k=>{if(k is Key key)SetKey(pa,key);Refresh();}));
+        }
+        if(keysDefault.IsClicked){WorkingKeys=MDMechKeys.Defaults();Capturing=null;status.Text="机甲按键已恢复默认（保存后生效）。";}
         Working.Interval=interval.Value;Working.Density=density.Value;Working.Chance=chance.Value;Working.Size=size.Value;
         if(less.IsClicked)Working.StartDay=Math.Max(0,Working.StartDay-1);
         if(more.IsClicked)Working.StartDay=Math.Min(MDSettings.MaxStartDay,Working.StartDay+1);
@@ -173,7 +203,7 @@ public sealed class MDSettingsScreen:Screen {
             if(!int.TryParse(text,out int d)||d<0||d>MDSettings.MaxStartDay){status.Text=$"请输入 0～{MDSettings.MaxStartDay} 的整数。";return;}
             Working.StartDay=d;status.Text="";}));
         if(time.IsClicked)Working.Time=(MDSpawnTime)(((int)Working.Time+1)%3);
-        if(defaults.IsClicked){Working=Robots.Default();interval.Value=Working.Interval;density.Value=Working.Density;chance.Value=Working.Chance;size.Value=Working.Size;status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
+        if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;interval.Value=Working.Interval;density.Value=Working.Density;chance.Value=Working.Chance;size.Value=Working.Size;status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
         if(editHud.IsClicked){OpenEditor();return;}
         Refresh();
         if(cancel.IsClicked||Input.Back||Input.Cancel){Close();return;}

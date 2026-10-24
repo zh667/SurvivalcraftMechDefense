@@ -24,6 +24,23 @@ public static class LabKeys {
     public static void Release(){up.AddRange(Held);Held.Clear();}
 }
 
+// Watches the mech's extra board key while On: each frame K is down, what the input the mod reads says, and every Board / Exit
+// call with its result (0.11.0: K boarded but did not leave).
+[HarmonyPatch(typeof(ComponentInput),nameof(ComponentInput.Update))]
+public static class LabBoardWatch {
+    public static bool On;public static readonly List<string> Log=[];
+    [HarmonyPriority(Priority.Last)]
+    public static void Postfix(ComponentInput __instance) {
+        if(!On||Log.Count>40)return;var p=__instance.m_componentPlayer;var gi=p.GameWidget.Input;
+        if(!Keyboard.IsKeyDown(Key.K)&&!Keyboard.IsKeyDownOnce(Key.K))return;
+        Log.Add($"f{Time.FrameIndex} K down {Keyboard.IsKeyDown(Key.K)} once {Keyboard.IsKeyDownOnce(Key.K)} widget-once {gi.IsKeyDownOnce(Key.K)} cleared {gi.m_isCleared} devices {gi.Devices} bound {MDMechKeys.Get(MDMechAction.Board)} mounted {MDMechPilot.Mounted(p)!=null} parent {p.ComponentBody.ParentBody!=null} dialogs {DialogsManager.HasDialogs(p.GuiWidget)} modal {p.ComponentGui.ModalPanelWidget!=null}");
+    }
+}
+[HarmonyPatch(typeof(MDMechPilot),nameof(MDMechPilot.Exit))]
+public static class LabExitWatch {public static void Postfix(bool __result){if(LabBoardWatch.On)LabBoardWatch.Log.Add($"f{Time.FrameIndex} Exit -> {__result}");}}
+[HarmonyPatch(typeof(MDMechPilot),nameof(MDMechPilot.Board))]
+public static class LabBoardCallWatch {public static void Postfix(bool __result){if(LabBoardWatch.On)LabBoardWatch.Log.Add($"f{Time.FrameIndex} Board -> {__result}");}}
+
 // Counts the sounds played through SubsystemAudio's positional PlaySound (the one MDMechBrain.Sound uses), by name.
 [HarmonyPatch(typeof(SubsystemAudio),nameof(SubsystemAudio.PlaySound),new[]{typeof(string),typeof(float),typeof(float),typeof(Vector3),typeof(float),typeof(bool)})]
 public static class LabSounds {
@@ -38,6 +55,17 @@ public static class LabSounds {
 // its destruction. Results under "mech"; screenshots mc_* (clips), mt_* (turntable), mp_* (piloting), md_* (destroyed).
 public partial class Lab {
     static IEnumerable<bool> During(double seconds,Action each){for(double s0=Time.RealTime;Time.RealTime-s0<seconds;){each();yield return true;}}
+    // the small messages shown since a time, by reflection (the message's label is a LabelWidget on 1.9.3.1, a FontTextWidget on 1.9.4)
+    static List<string> Said(ComponentPlayer p,double since) {
+        var r=new List<string>();
+        if(typeof(MessageWidget).GetField("m_messages")?.GetValue(p.ComponentGui.m_messageWidget) is System.Collections.IEnumerable list)
+            foreach(var m in list) {
+                if(m==null||m.GetType().GetField("StartTime")?.GetValue(m) is not double t||t<since)continue;
+                var label=m.GetType().GetField("LabelWidget")?.GetValue(m);
+                if(label?.GetType().GetProperty("Text")?.GetValue(label) is string text)r.Add(text);
+            }
+        return r;
+    }
     static Vector3 Flat(Vector3 v)=>new(v.X,0,v.Z);
     static IEnumerable<bool> Mech() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(.5))yield return true;
@@ -98,6 +126,31 @@ public partial class Lab {
             foreach(var x in Tap(Key.E,.6))yield return x;k["E closes it"]=pl.ComponentGui.ModalPanelWidget==null;
             foreach(var x in Tap(Key.R,.8))yield return x;k["R leaves"]=MDMechPilot.Mounted(pl)==null&&pl.ComponentBody.ParentBody==null;
             foreach(var x in During(.5,()=>{}))yield return x;
+            {   // 0.11.0 bound keys (MDMechKeys): K boards and leaves (extra key), G strikes, N switches weapons, C hovers; the old F and B do nothing
+                MDMechKeys.Apply(new Dictionary<MDMechAction,Key>{[MDMechAction.Board]=Key.K,[MDMechAction.Melee]=Key.G,[MDMechAction.Switch]=Key.N,[MDMechAction.Hover]=Key.C});
+                var kb=new Dictionary<string,object>();k["bound keys"]=kb;LabBoardWatch.On=true;
+                foreach(var x in Tap(Key.K,.8))yield return x;kb["K boards"]=MDMechPilot.Mounted(pl)==u;
+                bool oldMelee=false;foreach(var x in Tap(Key.F,.1))yield return x;foreach(var x in During(.5,()=>oldMelee|=m.Anim.Action?.name=="melee"))yield return x;kb["F no longer strikes"]=!oldMelee;
+                foreach(var x in During(.6,()=>{}))yield return x;
+                bool newMelee=false;foreach(var x in Tap(Key.G,.1))yield return x;foreach(var x in During(.5,()=>newMelee|=m.Anim.Action?.name=="melee"))yield return x;kb["G strikes"]=newMelee;
+                foreach(var x in During(.6,()=>{}))yield return x;
+                var w0=m.Weapon;foreach(var x in Tap(Key.B,.5))yield return x;kb["B no longer switches"]=m.Weapon==w0;
+                foreach(var x in Tap(Key.N,.5))yield return x;kb["N switches"]=m.Weapon!=w0;
+                bool hov2=false;foreach(var x in HoldKeys(1.5,()=>hov2|=m.Hovering,Key.C))yield return x;kb["C hovers"]=hov2;   // in place: with W it flies off the platform
+                kb["C keeps the clothing panel shut"]=pl.ComponentGui.ModalPanelWidget==null;   // C is also the game's clothing key
+                // leaving needs ground under the mech (MDMechPilot.Exit refuses in the air): wait for it to land, and log where it is
+                kb["before K (air)"]=$"{u.Body.Position.Y-c.Y:0.00} m up, standing {u.Body.StandingOnValue.HasValue}, hovering {m.Hovering}";
+                for(double tl=Time.RealTime;!(u.Body.StandingOnValue.HasValue&&!m.Hovering)&&Time.RealTime-tl<8;)yield return true;
+                foreach(var x in During(.5,()=>{}))yield return x;
+                kb["before K (landed)"]=$"{u.Body.Position.Y-c.Y:0.00} m up, standing {u.Body.StandingOnValue.HasValue}, {Vector3.Distance(Flat(u.Body.Position),Flat(c)):0.0} m from the start";
+                double tk=Time.FrameStartTime;foreach(var x in Tap(Key.K,.8))yield return x;bool left=MDMechPilot.Mounted(pl)==null;
+                kb["K leaves"]=left&&pl.ComponentBody.ParentBody==null;
+                if(!left)kb["K stayed, said"]=string.Join(" / ",Said(pl,tk))+$" (modal {pl.ComponentGui.ModalPanelWidget!=null})";LabBoardWatch.On=false;kb["board key trace"]=string.Join(" | ",LabBoardWatch.Log);
+                kb["hint"]=MDMechPilot.KeyHints(false);
+                MDMechKeys.Apply(MDMechKeys.Defaults());
+                if(kb.Values.OfType<bool>().Any(b=>!b))throw new Exception("bound mech keys: "+string.Join(", ",kb.Select(x=>$"{x.Key} {x.Value}")));
+                foreach(var x in During(.5,()=>{}))yield return x;
+            }
         }
         // ---- board and look through both pilot cameras
         MDMechPilot.ExternalControls=true;

@@ -195,7 +195,8 @@ public class ComponentMDMechModel : ComponentModel {
                 foreach(var l in loaders)if(l!=null&&l.GetType().GetMethod("OnModelCalculateIsVisible")?.DeclaringType is {} dt&&dt!=typeof(ModLoader))hooks.Add(l.GetType().FullName);
             Log.Information($"[MechDefense] mech {unit?.Mech?.Type?.Id} frame {diagFrames} at {m_componentFrame?.Position}: model {(Model==null?"none":$"{Model.Meshes.Count} meshes, {Model.Bones.Count} bones")}, "+
                 $"registered {registered}, IsSet {Get(this,"IsSet")}, DisableDrawing {Get(this,"DisableDrawing")}, visible {IsVisibleForCamera}, opacity {Opacity?.ToString()??"null"}, "+
-                $"draw orders {MeshDrawOrders?.Length??-1}, mode {RenderingMode}, sphere {Get(this,"m_boundingSphereRadius")}, range {sky?.VisibilityRange}, visibility hooks [{string.Join(",",hooks)}]");
+                $"draw orders {MeshDrawOrders?.Length??-1}, mode {RenderingMode}, sphere {Get(this,"m_boundingSphereRadius")}, range {sky?.VisibilityRange}, visibility hooks [{string.Join(",",hooks)}], "+
+                $"bones per draw {Get(renderer,"MaxInstancesCount")} (GL vertex uniform vectors {Get(typeof(Engine.Graphics.GLWrapper),"GL_MAX_VERTEX_UNIFORM_VECTORS")}), batched draws {MDDrawBatches.Batched}");   // 0.12.0: see MDDrawBatches
         } catch(Exception e){Log.Warning("[MechDefense] mech diagnostics: "+e.Message);}
     }
 }

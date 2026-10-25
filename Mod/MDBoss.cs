@@ -156,9 +156,13 @@ public static class MDBoss {
         var hit=miner.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4){MDPlayer.Message(pl,"对着地面右键放下信标。");return false;}
         if(Alive(p)!=null){MDPlayer.Message(pl,"已经有一台恶魔机甲在附近了。");return false;}
         if(Counting(p)){MDPlayer.Message(pl,"已有一个信标在倒计时。");return false;}
-        var c=pending.GetOrCreateValue(p);c.at=hit.Value.HitPoint()+Vector3.UnitY*.05f;c.left=Countdown;miner.RemoveActiveTool(1);
-        Announce(p,c.at,$"诱敌信标已启动：{Countdown:0} 秒后恶魔机甲会来到这里。",new Color(255,120,100));
-        p.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(7),1,0,c.at,20,false);return true;
+        miner.RemoveActiveTool(1);Start(p,hit.Value.HitPoint()+Vector3.UnitY*.05f,$"诱敌信标已启动：{Countdown:0} 秒后恶魔机甲会来到这里。");return true;
+    }
+    // the countdown (a blinking red light at `at`), then the devil mech arrives there: from a beacon or after MDBossKills
+    public static void Start(Project p,Vector3 at,string text) {
+        var c=pending.GetOrCreateValue(p);c.at=at;c.left=Countdown;
+        Announce(p,c.at,text,new Color(255,120,100));
+        p.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(7),1,0,c.at,20,false);
     }
     public static void Tick(Project p,float dt) {
         if(!pending.TryGetValue(p,out var c)||c.left<0)return;
@@ -200,6 +204,36 @@ public static class MDBoss {
         a.ImpulseFactor=0;a.StunTimeSet=null;a.StunTimeAdd=0;
         string ch=a is MDTowerAttackment t?t.Channel??"kinetic":"kinetic";
         a.AttackPower*=ch==MDBossState.Channels[b.Weak]?MDBossState.WeakFactor:MDBossState.OtherFactor;
+    }
+}
+
+// 0.12.0 (players via the user, 2026-10-25: "恶魔机甲这种boss应该固定刷新，比如对机器人总击杀数达到多少刷新一只"): every
+// MDSettings.BossKills robots destroyed in a world (survival modes; Creative has no spawns and summons there do not count) bring
+// the devil mech: once no devil mech is alive or on its way, a 30 s countdown starts at the tower nearest to the player closest to
+// the last kill (within 80 m; else at that player) and it arrives there as from a beacon. The world's count is an attribute of
+// its Project.xml (MDModLoader.ProjectXmlLoad / ProjectXmlSave; one world is open at a time).
+public static class MDBossKills {
+    public const string Attribute="MechDefenseBossKills";
+    public static int Count;                 // robots destroyed in this world since the last devil mech came this way
+    static Vector3 last;                     // where the last one was destroyed
+    public static string LastStart="";       // tests
+    public static void Load(System.Xml.Linq.XElement project){Count=int.TryParse((string)project?.Attribute(Attribute),out int n)&&n>=0?n:0;}
+    public static void Save(System.Xml.Linq.XElement project)=>project?.SetAttributeValue(Attribute,Count);
+    public static void Killed(ComponentMDRobot r) {
+        if(r.Kind.Boss||MDSettings.BossKills<=0||!MDRobots.Spawns(r.Project))return;
+        Count++;last=r.Body.Position;
+        if(MDSettings.BossKills>=20&&MDSettings.BossKills-Count==10)MDBoss.Announce(r.Project,last,"再击毁 10 台机兵，恶魔机甲就会被惊动。",new Color(255,170,120));
+    }
+    public static void Tick(Project p) {
+        int need=MDSettings.BossKills;
+        if(need<=0||Count<need||!MDRobots.Spawns(p)||MDBoss.Alive(p)!=null||MDBoss.Counting(p))return;
+        var player=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers.Where(pl=>pl.ComponentHealth.Health>0).OrderBy(pl=>Vector3.Distance(pl.ComponentBody.Position,last)).FirstOrDefault();
+        if(player==null)return;
+        var pos=player.ComponentBody.Position;
+        var tower=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u?.Tower!=null&&!u.Legacy&&!u.Destroyed&&Vector3.Distance(u.Body.Position,pos)<80).OrderBy(u=>Vector3.Distance(u.Body.Position,pos)).FirstOrDefault();
+        var at=tower?.Body.Position??pos+Vector3.UnitY*.05f;
+        LastStart=tower!=null?"tower "+tower.Tower.id:"player";Count=0;
+        MDBoss.Start(p,at,$"已击毁 {need} 台机兵，恶魔机甲被惊动了：{MDBoss.Countdown:0} 秒后{(tower!=null?"飞到你的炮塔阵地":"飞到你这里")}！");
     }
 }
 

@@ -272,7 +272,7 @@ public partial class Lab {
         // MDDismantlePatch) take it down into its item with its health; that item deploys it again with that health
         var terrain=GameManager.Project.FindSubsystem<SubsystemTerrain>(true);var pickables=GameManager.Project.FindSubsystem<SubsystemPickables>(true);
         float armour=u.Damage.AttackResilience;u.SetHitpoints(.5f);
-        var iron=MDTowerMaintenance.Material(Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronIngotBlock>())).Value;
+        var iron=MDTowerMaintenance.Material(Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronIngotBlock>()),false).Value;
         bool repaired=MDTowerMaintenance.Repair(pl.ComponentMiner,u,iron.points,iron.name);float afterIron=u.Damage.Hitpoints;
         inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronPickaxeBlock>()),1);inv.ActiveSlotIndex=0;
         var hitAt=u.Body.Position+Vector3.UnitY*2;

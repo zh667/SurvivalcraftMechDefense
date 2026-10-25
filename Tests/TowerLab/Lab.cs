@@ -11,7 +11,8 @@ namespace TowerLab;
 // Isolated in-game lab: builds a flat creative world, places every tower, and records
 // screenshots (gallery, flicker sequences, firing sequences) plus frame-time measurements.
 // Mode (lab-mode.txt next to the exe): "gallery", "fire", "perf" or "all"; "recipes", "hand", "effects", "artillery" or "special" (those four);
-// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "mech-view" (MechView.cs, before / after shots of Mercury; "mech-view-nemesis" / "mech-view-regulus" for the heroes); "robots" (Robots.cs, 0.9.0).
+// "combat" (Combat.cs, a Harmless world with the ghoul and Wonderful Era mods); "mech" (Mech.cs, Mercury); "mech-view" (MechView.cs, before / after shots of Mercury; "mech-view-nemesis" / "mech-view-regulus" for the heroes); "robots" (Robots.cs, 0.9.0);
+// "phone" (Phone.cs, 0.12.0: a Snapdragon GPU's draw limit, the mechs drawn in batches).
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -19,7 +20,8 @@ public partial class Lab:ModLoader {
     static IEnumerator<bool> script;static string mode="all";
     static string Out=>Path.Combine(AppContext.BaseDirectory,"lab-result.json");
     public override void __ModInitialize(){new Harmony("local.towerlab").PatchAll(typeof(Lab).Assembly);SettingsManager.FileAssociationEnabled=false;
-        var m=Path.Combine(AppContext.BaseDirectory,"lab-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
+        var m=Path.Combine(AppContext.BaseDirectory,"lab-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();
+        if(mode=="phone")ModsManager.RegisterHook("OnModelDataDrawing",this);}
     public override IEnumerable<KeyValuePair<string,object>> GetKeyboardMappings(){yield return new("NUIConsle",(Engine.Input.Key)(-1));}
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
     static void Log(string s){log.Add($"{Time.RealTime-began:F1}s {s}");}
@@ -39,6 +41,7 @@ public partial class Lab:ModLoader {
             if(stage==0) {
                 if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
                 SettingsManager.VisibilityRange=128;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;SettingsManager.ShowLogoInScreenshots=false;
+                if(mode=="phone"){results["pcUniformVectors"]=GLWrapper.GL_MAX_VERTEX_UNIFORM_VECTORS;GLWrapper.GL_MAX_VERTEX_UNIFORM_VECTORS=PhoneUniformVectors;}   // read by SubsystemModelsRenderer.Load
                 world=WorldsManager.CreateWorld(new WorldSettings{Name="TowerLab_"+DateTime.Now.ToString("HHmmss"),Seed="7",GameMode=mode=="combat"?GameMode.Harmless:GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
                 ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").m_worldInfo=world;   // set by the loading screen in the real game; the ghoul mod reads it
                 GameManager.LoadProject(world,ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
@@ -179,6 +182,7 @@ public partial class Lab:ModLoader {
         }
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
+        if(mode=="phone")foreach(var x in Phone())yield return x;     // Tests/TowerLab/Phone.cs
         if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
         if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {

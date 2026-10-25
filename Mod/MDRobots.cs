@@ -51,7 +51,35 @@ public static class MDRobots {
     public const string Boss="MDDevilMech";
     public const float HuntRange=96;                       // a robot walks to the nearest tower or Mercury this close
     public const double ProvokeMemory=30;                  // seconds a robot fights back at a player that hit it
+    public const double ChaseTime=300;                     // seconds a raid on a player without towers follows that player
     public static bool IsRobot(Entity e)=>e?.FindComponent<ComponentMDRobot>()!=null;
+    // Leaves in reach of a robot's blast or body give way (players, 2026-10-25: "敌对机器人应该可以破坏树叶，不然在生存环境很容易卡在
+    // 那里，一直在放导弹，但炸不过去"). Leaves only (any LeavesBlock, other mods' too), no drops; returns the cells cleared.
+    public static int BreakLeaves(Project p,Vector3 c,float r) {
+        var t=p.FindSubsystem<SubsystemTerrain>(true);int n=0,x0=(int)MathF.Floor(c.X-r),x1=(int)MathF.Floor(c.X+r),z0=(int)MathF.Floor(c.Z-r),z1=(int)MathF.Floor(c.Z+r);
+        int y0=Math.Max(1,(int)MathF.Floor(c.Y-r)),y1=Math.Min(254,(int)MathF.Floor(c.Y+r));
+        for(int x=x0;x<=x1;x++)for(int z=z0;z<=z1;z++) {
+            if(t.Terrain.GetChunkAtCell(x,z)==null)continue;
+            for(int y=y0;y<=y1;y++) {
+                float dx=x+.5f-c.X,dy=y+.5f-c.Y,dz=z+.5f-c.Z;if(dx*dx+dy*dy+dz*dz>r*r)continue;
+                if(BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y,z))] is not LeavesBlock)continue;
+                t.DestroyCell(0,x,y,z,0,true,false);n++;
+            }
+        }
+        return n;
+    }
+    // the leaves inside a robot's box and half a metre around it (above its feet): it walks or flies through tree crowns
+    public static int BreakLeavesAround(ComponentBody b) {
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true);var box=b.BoundingBox;int n=0;
+        int x0=(int)MathF.Floor(box.Min.X-.5f),x1=(int)MathF.Floor(box.Max.X+.5f),z0=(int)MathF.Floor(box.Min.Z-.5f),z1=(int)MathF.Floor(box.Max.Z+.5f);
+        int y0=Math.Max(1,(int)MathF.Floor(box.Min.Y+.3f)),y1=Math.Min(254,(int)MathF.Floor(box.Max.Y+.5f));
+        for(int x=x0;x<=x1;x++)for(int z=z0;z<=z1;z++) {
+            if(t.Terrain.GetChunkAtCell(x,z)==null)continue;
+            for(int y=y0;y<=y1;y++)if(BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y,z))] is LeavesBlock){t.DestroyCell(0,x,y,z,0,true,false);n++;}
+        }
+        return n;
+    }
+    public static int LeavesBroken;   // tests
     static readonly System.Random random=new();
     public static float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
     public static T Pick<T>(IReadOnlyList<T> list)=>list[random.Next(list.Count)];
@@ -112,13 +140,15 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public ComponentBody Target; public Vector3? RaidGoal; public bool Raider;
     public ComponentBody Hunt;                      // the nearest tower or Mercury within HuntRange, walked to while nothing is in sight
     public ComponentBody Provoker; public double ProvokedUntil;   // a player (or the player's herd) that hit it
+    public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
-    float lastHealth=1,hitAge=9; double nextScan,nextHunt; MDMechPose pose;
+    float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
     public MDBossState Boss;                       // the devil mech only
     public string ForceClip; public float ForceTime; // lab: show one clip at one time, no behaviour
     public UpdateOrder UpdateOrder=>UpdateOrder.Default;
     // Above wandering (0-2) while it has something to fight, a raid to reach or a tower to walk to; else it wanders.
-    public override float ImportanceLevel=>Health.Health>0&&(Target!=null||RaidGoal.HasValue||Hunt!=null)?50:0;
+    public override float ImportanceLevel=>Health.Health>0&&(Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;
+    public bool Chasing=>Chase!=null&&time.GameTime<ChaseUntil;
     public void Provoke(ComponentBody b){Provoker=b;ProvokedUntil=time.GameTime+MDRobots.ProvokeMemory;nextScan=0;}
     public override void Load(ValuesDictionary v,IdToEntityMap map) {
         Kind=MDRobots.Kind(v.GetValue<string>("Kind"));Def=MDMechLibrary.Load(Kind.Root,"unit");Anim=new MDMechAnimator(Def);
@@ -144,7 +174,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(ForceClip!=null){Anim.PlayBase(ForceClip,1,.01f);Anim.BaseTime=ForceTime;Anim.Fade=1;Anim.Action=null;Anim.Update(0);pose=null;return;}
         if(Health.Health<=0) {
             Target=null;
-            if(!Exploded){Exploded=true;var c=MDCombat.Center(Body);w.Explosion(c,Kind.Boss?4.5f:Kind.Elite?3.5f:2.5f,"heavy",new Color(255,200,120),new Color(255,120,40));MDRobots.Sound(Project,Kind.Boss?20:24,c,1);Boss?.Died();}
+            if(!Exploded){Exploded=true;MDBossKills.Killed(this);var c=MDCombat.Center(Body);w.Explosion(c,Kind.Boss?4.5f:Kind.Elite?3.5f:2.5f,"heavy",new Color(255,200,120),new Color(255,120,40));MDRobots.Sound(Project,Kind.Boss?20:24,c,1);Boss?.Died();}
             if(Def.Has("death"))Anim.PlayBase("death",1,.1f);else Anim.PlayBase("idle",0,.1f);
             Anim.Update(dt);w.Wreck(MDCombat.Center(Body),Kind.Boss?3:1.4f);return;
         }
@@ -158,7 +188,9 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         // and brings it back later as a fresh copy without its orders. Raids and the devil mech's escorts arrive 40-64 m beyond
         // the towers, often farther from the player: they vanished on arrival (lab, 2026-10-21, user: escorts never attack).
         // Raiders stay while they have something to do; idle, they may be packed away again.
-        if(Raider&&spawn!=null){bool busy=Target!=null||Hunt!=null||RaidGoal.HasValue;if(spawn.AutoDespawn==busy)spawn.AutoDespawn=!busy;}
+        if(Raider&&spawn!=null){bool busy=Target!=null||Hunt!=null||RaidGoal.HasValue||Chasing;if(spawn.AutoDespawn==busy)spawn.AutoDespawn=!busy;}
+        if(Chase!=null&&(!Chasing||!Chase.Entity.IsAddedToProject))Chase=null;
+        leafCheck-=dt;if(leafCheck<=0){leafCheck=.3f;MDRobots.LeavesBroken+=MDRobots.BreakLeavesAround(Body);}
         if(Target!=null&&!Valid(Target))Target=null;
         if(Boss!=null)Boss.Update(dt);
         else if(IsActive)Engage(dt);
@@ -186,18 +218,26 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(MDMechPilot.Mounted(e.FindComponent<ComponentPlayer>())!=null)return false;   // seated in a mech: the mech is the target
         if(e.FindComponent<ComponentPlayer>()!=null?!MDRobots.FightsPlayers(Project):!(MDFaction.Friendly(e)&&e.FindComponent<ComponentCreature>()!=null&&MDRobots.Hostile(Project)))return false;
         if(b==Provoker&&time.GameTime<ProvokedUntil)return true;
-        return Hunt!=null&&Vector3.Distance(b.Position,Body.Position)<=Kind.Range;
+        if(b==Chase&&Chasing)return true;
+        float d=Vector3.Distance(b.Position,Body.Position);
+        if(Hunt!=null&&d<=Kind.Range)return true;
+        // 0.12.0 (players, 2026-10-25: "建议给他个寻敌范围 靠近一定范围内就会主动攻击玩家"): a player it sees within AggroRange (kept
+        // while within 1.5 x that range once it is the target)
+        return e.FindComponent<ComponentPlayer>()!=null&&MDSettings.AggroRange>0&&(b==Target?d<=MDSettings.AggroRange*1.5f:d<=MDSettings.AggroRange&&Sight(Eye,b));
     }
     // 0 Mercury, 1 a tower, 2 a player or the player's herd
     public static int Rank(ComponentBody b)=>b.Entity.FindComponent<ComponentMDUnit>() is {} u?(u.Mech!=null?0:1):2;
-    // Within sight range, in this order: Mercury in sight, a tower in sight, Mercury or a tower out of sight (it walks around to
-    // it), a player or the herd in sight, then out of sight. Nearest first within each; the current target counts 20 % nearer.
+    // Within sight range, in this order: the player (or the herd) that hit it within ProvokeMemory, if in sight (0.12.0, players
+    // 2026-10-25: "旁边有炮台的话 玩家打敌对机器人 机器人也不打玩家 只打炮台去了 应该给玩家拉仇恨"), Mercury in sight, a tower in sight,
+    // Mercury or a tower out of sight (it walks around to it), a player or the herd in sight, then out of sight. Nearest first
+    // within each; the current target counts 20 % nearer.
     public ComponentBody FindTarget() {
         var list=new DynamicArray<ComponentBody>();var p=Body.Position;bodies.FindBodiesAroundPoint(new(p.X,p.Z),Kind.Sight,list);
         ComponentBody best=null;var bestKey=(int.MaxValue,float.MaxValue);var eye=Eye;
         foreach(var b in list) {
             if(b==Body||!Valid(b))continue;float d=Vector3.Distance(b.Position,p);if(d>Kind.Sight)continue;
-            int rank=Rank(b);bool seen=Sight(eye,b);var key=(rank<2?(seen?rank:2):seen?3:4,d*(b==Target?.8f:1));
+            int rank=Rank(b);bool seen=Sight(eye,b);bool provoker=b==Provoker&&time.GameTime<ProvokedUntil;
+            var key=(provoker&&seen?-1:rank<2?(seen?rank:2):seen?3:4,d*(b==Target?.8f:1));
             if(key.CompareTo(bestKey)<0){bestKey=key;best=b;}
         }
         return best;
@@ -234,6 +274,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             // the nearest tower or Mercury first (user, 2026-10-21: straight for the nearest tower); the raid's goal only
             // without one (an escort around a devil mech summoned in the open walks to it)
             if(Hunt!=null)path.SetDestination(Hunt.Position,1,Kind.Sight*.5f,300,true,false,true,Hunt);
+            else if(Chasing&&Valid(Chase))path.SetDestination(Chase.Position,1,Kind.Range*.6f,300,true,false,true,Chase);
             else if(RaidGoal.HasValue) {
                 if(Vector2.Distance(new(RaidGoal.Value.X,RaidGoal.Value.Z),new(Body.Position.X,Body.Position.Z))<8)RaidGoal=null;
                 else path.SetDestination(RaidGoal.Value,1,6,300,true,false,false,null);
@@ -275,6 +316,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     void Landed(Vector3 p,Vector3 d,ComponentBody b) {
         var w=MDTowerWorld.For(Project);var k=Kind;MDRobots.Sound(Project,k.HitSe,p,.5f);
+        MDRobots.LeavesBroken+=MDRobots.BreakLeaves(Project,p+d*.3f,k.Splash>0?Math.Max(1.5f,k.Splash):1.2f);   // bolts clear the leaf they hit and its neighbours
         if(k.Splash<=0){w.Impact(k.Look,p,d,false);MDRobots.Hit(Entity,b,k,1,p,d);return;}
         w.Explosion(p,k.Splash,"heavy",new Color(k.Look.fx.color[0],k.Look.fx.color[1],k.Look.fx.color[2]),new Color(k.Look.fx.color2[0],k.Look.fx.color2[1],k.Look.fx.color2[2]));
         MDRobots.Hit(Entity,b,k,1,p,d);MDRobots.Splash(Entity,k,p,k.Splash,b);
@@ -358,7 +400,7 @@ public static class MDWildSpawns {
     }
 }
 [HarmonyPatch(typeof(SubsystemCreatureSpawn),nameof(SubsystemCreatureSpawn.Update))]
-public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDBoss.Tick(__instance.Project,dt);}}
+public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDBossKills.Tick(__instance.Project);MDBoss.Tick(__instance.Project,dt);}}
 
 // Night raids: shortly after nightfall (from game day StartDay, on RaidChance % of the nights, decided per day and world; mod
 // settings, default day 3 and 75 %) a group of robots comes for the strongest cluster of the player's towers near a player
@@ -366,6 +408,9 @@ public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatu
 // towers): defence = tier-1 towers 1, tier-2 2, tier-3 3, a Mercury 4; size 3 + defence / 2 + day / 8 (3-20), times RaidSize
 // (at most 40); elites from 3 days after StartDay a quarter, from 7 days after a third, half when the cluster has a tier-3
 // tower; a defence of 20 or more gets a second wave of half the size 60 s later.
+// 0.12.0 (players via the user, 2026-10-25: "希望能增加机器人定时攻城。增加一些生存压力"; user: without towers they come for the
+// player): a night without towers near any player sends 3 + day / 8 robots (3-20, times RaidSize) at a player on the surface,
+// and they follow that player for ChaseTime.
 public static class MDRaids {
     sealed class Wave { public double at; public Vector3 centre; public int size,elites; public float dir; }
     sealed class State { public float lastTime=-1; public readonly List<Wave> waves=[]; }
@@ -373,6 +418,7 @@ public static class MDRaids {
     static readonly HashSet<int> Tier2=[3,6,14,16,18,19],Tier3=[4,7,8,13,15,17];
     public static int Weight(ComponentMDUnit u)=>u.Mech!=null?u.Mech.Type.Weight:Tier3.Contains(u.Tower.data)?3:Tier2.Contains(u.Tower.data)?2:1;
     public static int LastRaid,LastPlanned,LastDefence,LastElites,LastSecondWave,SecondWavesSent;   // the last raid (tests; planned = before ground failures)
+    public static ComponentPlayer LastPlayer;   // the last raid's player when no towers were near (tests)
     public static void Update(Project p,float dt) {
         var st=states.GetOrCreateValue(p);var tod=p.FindSubsystem<SubsystemTimeOfDay>(true);float now=tod.TimeOfDay;
         var clock=p.FindSubsystem<SubsystemTime>(true).GameTime;
@@ -384,11 +430,11 @@ public static class MDRaids {
         var rng=new System.Random(p.FindSubsystem<SubsystemGameInfo>(true).WorldSeed*31+day*7919);if(rng.NextDouble()*100>=MDSettings.RaidChance)return;
         Raid(p,day,rng);
     }
-    // Starts a raid now on the strongest tower cluster near a player; returns the robots sent (0 without towers or ground).
+    // Starts a raid now on the strongest tower cluster near a player, without towers on a player; returns the robots sent.
     public static int Raid(Project p,int day,System.Random rng) {
         var units=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed).ToList();
-        var players=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers;
-        var near=units.Where(t=>t.Tower!=null&&players.Any(pl=>Vector3.Distance(pl.ComponentBody.Position,t.Body.Position)<80)).ToList();if(near.Count==0)return 0;
+        var players=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers;LastPlayer=null;
+        var near=units.Where(t=>t.Tower!=null&&players.Any(pl=>Vector3.Distance(pl.ComponentBody.Position,t.Body.Position)<80)).ToList();if(near.Count==0)return RaidPlayer(p,day,rng);
         int Score(ComponentMDUnit a)=>near.Where(o=>Vector3.Distance(o.Body.Position,a.Body.Position)<30).Sum(Weight);
         var anchor=near.OrderByDescending(Score).First();
         var cluster=near.Where(o=>Vector3.Distance(o.Body.Position,anchor.Body.Position)<30).ToList();
@@ -402,17 +448,30 @@ public static class MDRaids {
         if(defence>=20&&sent>0){var st=states.GetOrCreateValue(p);LastSecondWave=size/2;st.waves.Add(new Wave{at=p.FindSubsystem<SubsystemTime>(true).GameTime+60,centre=centre,size=size/2,elites=(int)MathF.Round(size/2*share),dir=dir+MathF.PI*.5f});}
         return sent;
     }
-    static int Send(Project p,Vector3 centre,int size,int elites,float dir,System.Random rng,string prefix) {
-        var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;
+    // no towers near any player: a group for a player on the surface (not in a cave: robots cannot reach one)
+    static int RaidPlayer(Project p,int day,System.Random rng) {
+        var terrain=p.FindSubsystem<SubsystemTerrain>(true);
+        var open=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers.Where(pl=>pl.ComponentHealth.Health>0&&pl.ComponentBody.Position.Y>=terrain.Terrain.GetTopHeight(Terrain.ToCell(pl.ComponentBody.Position.X),Terrain.ToCell(pl.ComponentBody.Position.Z))-8).ToList();
+        if(open.Count==0)return 0;
+        var target=open[rng.Next(open.Count)];LastPlayer=target;
+        int size=Math.Clamp((int)MathF.Round(Math.Clamp(3+day/8,3,20)*MDSettings.RaidSize),2,40);
+        float share=day+1>=MDSettings.StartDay+7?1/3f:day+1>=MDSettings.StartDay+3?.25f:0;
+        int elites=(int)MathF.Round(size*share);LastDefence=0;LastElites=elites;LastSecondWave=0;LastPlanned=size;
+        return Send(p,target.ComponentBody.Position,size,elites,(float)(rng.NextDouble()*Math.PI*2),rng,"",target);
+    }
+    static int Send(Project p,Vector3 centre,int size,int elites,float dir,System.Random rng,string prefix,ComponentPlayer chase=null) {
+        var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;double now=p.FindSubsystem<SubsystemTime>(true).GameTime;
         for(int i=0;i<size;i++) {
             var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
             var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;   // see ComponentMDRobot.Update
+            if(chase!=null){r.Chase=chase.ComponentBody;r.ChaseUntil=now+MDRobots.ChaseTime;}
             p.AddEntity(e);sent++;
         }
         LastRaid=sent;if(prefix.Length>0)SecondWavesSent+=sent;
         if(sent>0)foreach(var pl in p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers)if(Vector3.Distance(pl.ComponentBody.Position,centre)<120)
-            pl.ComponentGui.DisplaySmallMessage($"警报：{prefix}{sent} 台机兵正在逼近你的炮塔阵地（约 {Math.Round(Vector3.Distance(pl.ComponentBody.Position,centre)+55)} 米外）。",new Color(255,120,100),true,true);
+            pl.ComponentGui.DisplaySmallMessage(chase!=null?(pl==chase?$"警报：{sent} 台机兵正朝你逼近（约 {Math.Round(Vector3.Distance(pl.ComponentBody.Position,centre)+55)} 米外）！附近没有炮塔，小心应战。":$"警报：{sent} 台机兵正朝附近的玩家逼近。")
+                :$"警报：{prefix}{sent} 台机兵正在逼近你的炮塔阵地（约 {Math.Round(Vector3.Distance(pl.ComponentBody.Position,centre)+55)} 米外）。",new Color(255,120,100),true,true);
         return sent;
     }
     // a dry surface cell around `centre` at `dist`, in loaded terrain, with room for a 4 m robot: near `angle` first, then from

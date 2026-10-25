@@ -51,9 +51,10 @@ public static class MDEncyclopedia {
         s.Append(k.Boss?$"\n移动：飞行 {k.Speed:0.#} 米／秒，冲刺 {MDBossState.ChargeSpeed:0} 米／秒":$"\n移动：{k.Speed:0.#} 米／秒");
         s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
         s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
+        if(k.Boss)s.Append($"\n限伤：每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");
         if(k.Boss)s.Append($"\n弱点：每 {MDBossState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDBossState.OtherFactor*100:0}%");
         s.Append("\n出现："+Appear(k));
-        s.Append($"\n优先攻击：刚打过它的玩家（{MDRobots.ProvokeMemory:0} 秒内，看得见时）> 机甲 > 炮塔 > 玩家");
+        s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
         s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");
         return s.ToString();
     }

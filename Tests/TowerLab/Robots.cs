@@ -218,10 +218,25 @@ public partial class Lab {
             Cam(Home+new Vector3(26,14,-26),boss.Body.Position);Shot("rx_arrived");yield return true;
             // weak channel: the same hit in the weak channel and in another one
             boss.Boss.WeakTimer=999;string weak=MDBossState.Channels[boss.Boss.Weak],other=MDBossState.Channels[(boss.Boss.Weak+1)%3];
-            float h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,900){Channel=weak});float dWeak=h0-boss.Health.Health;
-            h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,900){Channel=other});float dOther=h0-boss.Health.Health;
-            x2["weak"]=$"{weak}: {dWeak*boss.Health.AttackResilience:0} of 900, {other}: {dOther*boss.Health.AttackResilience:0} of 900";
+            float h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=weak});float dWeak=h0-boss.Health.Health;   // 600 of 39000: under the 2 % cap
+            h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=other});float dOther=h0-boss.Health.Health;
+            x2["weak"]=$"{weak}: {dWeak*boss.Health.AttackResilience:0} of 600, {other}: {dOther*boss.Health.AttackResilience:0} of 600";
             if(Math.Abs(dOther/dWeak-MDBossState.OtherFactor)>.02f)throw new Exception("weak channel: "+x2["weak"]);
+            // 0.12.0 damage cap (user: "恶魔机甲要设置限伤害"): a 20000 hit and a direct Injure of half its health each take 2 %
+            h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,20000){Channel=weak});float dBig=h0-boss.Health.Health;
+            h0=boss.Health.Health;boss.Health.Injure(.5f,null,false,"lab");float dInjure=h0-boss.Health.Health;
+            x2["cap"]=$"a 20000 hit took {dBig*100:0.00} %, Injure(50 %) took {dInjure*100:0.00} % (cap {MDBoss.MaxHitShare*100:0} %)";
+            if(Math.Abs(dBig-MDBoss.MaxHitShare)>.001f||Math.Abs(dInjure-MDBoss.MaxHitShare)>.001f)throw new Exception("boss cap: "+x2["cap"]);
+            {   // 0.12.0 a mech that hits it takes its whole volley and is its target (user: "我登上机甲去攻击恶魔机甲，恶魔机甲还在攻击炮塔")
+                var keep=pl.ComponentBody.Position;var mech=Deploy(Home+new Vector3(-14,0,26));pl.ComponentBody.Position=keep;
+                ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,mech.Entity,boss.Body.Position,Vector3.UnitY,100){Channel=weak});
+                int v0=boss.Boss.Volleys;var shotAt=new List<string>();double tv=Time.RealTime;bool aimed=false;   // the next volley after the hit
+                while(Time.RealTime-tv<14&&!aimed){if(boss.Windup<0&&boss.ShotsLeft==0)boss.Boss.Volley=Math.Min(boss.Boss.Volley,0);if(boss.Boss.Volleys>v0&&boss.Boss.Volleyed.Count>0){aimed=true;shotAt.AddRange(boss.Boss.Volleyed.Select(b=>b==mech.Body?"mech":b.Entity.FindComponent<ComponentMDUnit>()?.TowerId??"other"));}yield return true;}
+                x2["provokedByMech"]=$"provoker the mech {boss.ProvokerNow==mech.Body}, target the mech {boss.Target==mech.Body}, volley at [{string.Join(",",shotAt)}]";
+                bool ok=boss.ProvokerNow==mech.Body&&boss.Target==mech.Body&&aimed&&shotAt.All(x=>x=="mech");
+                boss.Provoker=null;proj.RemoveEntity(mech.Entity,true);
+                if(!ok)throw new Exception("boss provoked by a mech: "+x2["provokedByMech"]);
+            }
             boss.Boss.WeakTimer=3;float bh=boss.Health.Health;float lowest=99;int weakChanges=0,lastWeak=boss.Boss.Weak;
             var clipsSeen=new HashSet<string>();
             foreach(var x in During(30,()=>{lowest=Math.Min(lowest,boss.Body.Position.Y-Home.Y);if(boss.Boss.Weak!=lastWeak){weakChanges++;lastWeak=boss.Boss.Weak;}clipsSeen.Add(boss.Anim.Base.name);}))yield return x;
@@ -234,7 +249,7 @@ public partial class Lab {
             x2["weakNow"]=MDBossState.Channels[boss.Boss.Weak];
             Cam(Home+new Vector3(-24,16,-20),boss.Body.Position);Shot("rx_fight");yield return true;
             // finish it: it falls, explodes and drops the blueprint
-            boss.Health.Injure(2f,null,true,"lab");var died=Time.RealTime;
+            boss.Health.Health=.01f;boss.Health.Injure(2f,null,true,"lab");var died=Time.RealTime;   // the 2 % cap: from 1 % health one hit is enough
             foreach(var x in During(7,()=>{}))yield return x;
             var drops=Pickables(boss.Body.Position,10);x2["drops"]=Names(drops);x2["corpseGone"]=!boss.Entity.IsAddedToProject;
             Cam(boss.Body.Position+new Vector3(8,6,-8),boss.Body.Position);Shot("rx_drops");yield return true;
@@ -327,8 +342,9 @@ public partial class Lab {
             string xml;using(var st=Storage.OpenFile(ModsManager.ModsSettingsPath,OpenFileMode.Read))using(var rd=new StreamReader(st))xml=rd.ReadToEnd();
             int at=xml.IndexOf(MDSettings.Element);s["file"]=at<0?"no element":xml.Substring(at,Math.Min(400,xml.Length-at));
             MDSettings.StartDay=5;MDSettings.SpawnTime=MDSpawnTime.Night;MDSettings.AggroRange=16;MDSettings.BossKills=50;ModSettingsManager.LoadModSettings();s["reloaded"]=$"start day {MDSettings.StartDay}, time {MDSettings.SpawnTime}, aggro {MDSettings.AggroRange}, boss kills {MDSettings.BossKills}";
-            bool pageNew=((string)s["page"]).Contains("主动攻击距离")&&((string)s["page"]).Contains("恶魔机甲出现")&&((string)s["pageDay0"]).Contains("关闭（被打才还手）")&&((string)s["pageDay0"]).Contains("每击毁 30 台");
-            if(MDSettings.StartDay!=0||MDSettings.SpawnTime!=MDSpawnTime.Always||MDSettings.AggroRange!=0||MDSettings.BossKills!=30||!pageNew||at<0)throw new Exception("settings save/load: "+s["saved"]+"; "+s["reloaded"]+"; new rows shown "+pageNew+"; "+s["file"]);
+            MDSettings.StartDay=365;MDSettings.Normalize();int day365=MDSettings.StartDay;MDSettings.StartDay=0;   // no 30-day cap since 0.12.0
+            bool pageNew=day365==365&&((string)s["page"]).Contains("主动攻击距离")&&((string)s["page"]).Contains("恶魔机甲出现")&&((string)s["pageDay0"]).Contains("关闭（被打才还手）")&&((string)s["pageDay0"]).Contains("每击毁 30 台");
+            if(MDSettings.StartDay!=0||MDSettings.SpawnTime!=MDSpawnTime.Always||MDSettings.AggroRange!=0||MDSettings.BossKills!=30||!pageNew||at<0)throw new Exception("settings save/load: "+s["saved"]+"; "+s["reloaded"]+"; new rows shown and day 365 kept "+pageNew+"; "+s["file"]);
             {   // 0.11.0 the mech's keys on the page: a key per action, a key another action has is refused, Save applies them, the file keeps them
                 MDSettingsScreen.Open();foreach(var x in During(.5,()=>{}))yield return x;
                 if(ScreensManager.CurrentScreen is not MDSettingsScreen kp)throw new Exception("settings: the page did not reopen");
@@ -527,16 +543,27 @@ public partial class Lab {
             // provoked, and then before Mercury and the tower (0.12.0)
             gameInfo.WorldSettings.GameMode=GameMode.Survival;var pb=pl.ComponentBody;var keepHunt=rb2.Hunt;
             pb.Position=rb2.Body.Position+new Vector3(10,0,0);bool atDefences=rb2.Valid(pb);var pick=rb2.FindTarget();
-            rb2.Provoke(pb);var pickProvoked=rb2.FindTarget();rb2.ProvokedUntil=0;
+            rb2.Provoke(pb);var pickProvoked=rb2.FindTarget();
+            // the lock holds out of sight and sight range (60 m), ends 96 m away (user: "玩家攻击了就一直攻击玩家…不要拉来拉去")
+            pb.Position=rb2.Body.Position+new Vector3(0,0,60);bool lockedFar=rb2.FindTarget()==pb;
+            pb.Position=rb2.Body.Position+new Vector3(0,0,120);var afterLost=rb2.FindTarget();bool released=rb2.Provoker==null&&afterLost!=pb;
+            pb.Position=rb2.Body.Position+new Vector3(10,0,0);rb2.Provoker=null;
             rb2.Hunt=null;MDSettings.AggroRange=0;bool noTowers=rb2.Valid(pb);
             MDSettings.AggroRange=16;bool aggro10=rb2.Valid(pb);pb.Position=rb2.Body.Position+new Vector3(20,0,0);bool aggro20=rb2.Valid(pb);
-            pb.Position=rb2.Body.Position+new Vector3(10,0,0);rb2.Provoke(pb);bool provoked=rb2.Valid(pb);rb2.ProvokedUntil=0;rb2.Hunt=keepHunt;MDSettings.Defaults();
-            gameInfo.WorldSettings.GameMode=GameMode.Creative;pb.Position=Home+new Vector3(16,0,16);
+            pb.Position=rb2.Body.Position+new Vector3(10,0,0);rb2.Provoke(pb);bool provoked=rb2.Valid(pb);rb2.Provoker=null;rb2.Hunt=keepHunt;MDSettings.Defaults();
+            gameInfo.WorldSettings.GameMode=GameMode.Creative;
+            // Creative (user, 2026-10-25: "拉仇恨…创造模式下应该也是这样"): a player only after hitting it, then before Mercury and the tower
+            bool creativeBefore=rb2.Valid(pb);rb2.Provoke(pb);bool creativeProvoked=rb2.Valid(pb);var creativePick=rb2.FindTarget();
+            // a locked-on player who boards a mech passes the lock to the mech
+            pb.Position=mech.Body.Position+new Vector3(0,0,2.5f);pb.Velocity=Vector3.Zero;bool boarded=MDMechPilot.Board(pl,mech);
+            foreach(var x in During(1,()=>{}))yield return x;bool lockToMech=rb2.ProvokerNow==mech.Body;MDMechPilot.Exit(pl,mech,true);rb2.Provoker=null;
+            foreach(var x in During(.5,()=>{}))yield return x;
+            pb.Position=Home+new Vector3(16,0,16);
             proj.RemoveEntity(mech.Entity,true);while(Wait(1.5))yield return true;
             string then=rb2.Target==t2.Body?"tower":rb2.Target==null?"none":"other";
             string Who(ComponentBody b)=>b==mech.Body?"Mercury":b==t2.Body?"tower":b==pb?"player":"none";
-            g["priority"]=$"with Mercury: {first}; without: {then}; player 10 m away at the defences valid {atDefences} (picked {Who(pick)}, after the player hit it {Who(pickProvoked)}), without towers: aggro off {noTowers}, aggro 16 m at 10 m {aggro10}, at 20 m {aggro20}; provoked {provoked}";
-            if(first!="Mercury"||then!="tower"||!atDefences||pick==pb||pickProvoked!=pb||noTowers||!aggro10||aggro20||!provoked)throw new Exception("targets/priority: "+g["priority"]);
+            g["priority"]=$"with Mercury: {first}; without: {then}; player 10 m away at the defences valid {atDefences} (picked {Who(pick)}, after the player hit it {Who(pickProvoked)}), without towers: aggro off {noTowers}, aggro 16 m at 10 m {aggro10}, at 20 m {aggro20}; provoked {provoked}; lock: 60 m away still the player {lockedFar}, 120 m away released {released} (then {Who(afterLost)}); creative: before a hit {creativeBefore}, after {creativeProvoked} (picked {Who(creativePick)}); boarded {boarded}, lock passed to the mech {lockToMech}";
+            if(first!="Mercury"||then!="tower"||!atDefences||pick==pb||pickProvoked!=pb||noTowers||!aggro10||aggro20||!provoked||creativeBefore||!creativeProvoked||creativePick!=pb||!lockedFar||!released||!boarded||!lockToMech)throw new Exception("targets/priority: "+g["priority"]);
             Kill([rb2]);Remove([t2]);while(Wait(.5))yield return true;
             // a tower behind another tower: the robot stands still in front of both
             float reach=Math.Min(gun.attack.range*.7f,20);var back=Place(gun,Home,0);var front=Place(gun,Home+new Vector3(0,0,-3.5f),0);
@@ -582,11 +609,15 @@ public partial class Lab {
             int CrownLeft(){int n=0;for(int x=-4;x<=4;x++)for(int z=-4;z<=4;z++)for(int y=0;y<=7;y++)if(Shell(x,y,z)&&Terrain.ExtractContents(terrain.Terrain.GetCellValue(hx+x,y0+y,hz+z))==BlocksManager.GetBlockIndex<OakLeavesBlock>())n++;return n;}
             foreach(var (tpl,label) in new[]{("MDRobot05","bolt"),("MDRobot06","missile")}) {
                 Crown(leaf);int full=CrownLeft();
-                var rb=Spawn(tpl,Home+new Vector3(0,0,-18),MathF.PI);rb.ForceClip="idle";while(Wait(.5))yield return true;   // facing the tower
-                int broken0=MDRobots.LeavesBroken;float hp0=tower.Damage.Hitpoints;
-                for(int k=0;k<3;k++){rb.FireOne(tower.Body);while(Wait(.4))yield return true;}
-                while(Wait(5))yield return true;
-                lv[label]=$"{full} leaves -> {CrownLeft()} after 3 shots ({MDRobots.LeavesBroken-broken0} broken), tower {hp0:0.00} -> {tower.Damage.Hitpoints:0.00}";
+                // the missiles climb, then home with a limited turn rate (about 13 m radius at full speed): from 18 m they sometimes
+                // circled the 9 m crown and never touched it (one full run, 2026-10-25); from 34 m they line up first. Shots are
+                // counted until none is in flight.
+                var rb=Spawn(tpl,Home+new Vector3(0,0,label=="missile"?-34:-18),MathF.PI);rb.ForceClip="idle";while(Wait(.5))yield return true;   // facing the tower
+                int broken0=MDRobots.LeavesBroken;float hp0=tower.Damage.Hitpoints;var fw=MDTowerWorld.For(proj);
+                for(int k=0;k<4;k++){rb.FireOne(tower.Body);while(Wait(.4))yield return true;}
+                for(double s0=Time.RealTime;fw.ForeignShots>0&&Time.RealTime-s0<12;)yield return true;
+                while(Wait(.5))yield return true;
+                lv[label]=$"{full} leaves -> {CrownLeft()} after 4 shots ({MDRobots.LeavesBroken-broken0} broken), tower {hp0:0.00} -> {tower.Damage.Hitpoints:0.00}, still in flight {fw.ForeignShots}";
                 Cam(Home+new Vector3(12,10,-16),Home+new Vector3(0,3,0));Shot("rl_leaves_after_"+label);yield return true;
                 bool ok=CrownLeft()<full;Kill([rb]);Crown(0);
                 if(!ok)throw new Exception("leaves/"+label+": "+lv[label]);
@@ -636,6 +667,24 @@ public partial class Lab {
             MDBossKills.Load(saved);bk["persist"]=$"hooks round trip 7 -> {round}; saved world file {saved.Attribute(MDBossKills.Attribute)?.Value} -> loaded {MDBossKills.Count}";
             bool persisted=round==7&&MDBossKills.Count==11;MDBossKills.Count=0;MDSettings.Defaults();while(Wait(.5))yield return true;
             if(creative!=0||two!=2||early||!counting||start!="player"||afterStart!=0||boss==null||!persisted)throw new Exception("boss kills: "+bk["count"]+"; "+bk["persist"]);
+        }
+        // ---- 0.12.0 the devil mech under blocks (user: "恶魔机甲作为boss，应该可以清理一切阻挡他的方块（现在放恶魔机甲在方块下面会把它卡死）"):
+        // summoned inside a closed stone box 12 x 12 x 4 m, it clears its way and rises to its hover height
+        if(Part("bossdig")) {
+            var bd=new Dictionary<string,object>();r["bossDig"]=bd;Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());
+            int stone=Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<GraniteBlock>()),hx=(int)MathF.Floor(Home.X),hz=(int)MathF.Floor(Home.Z)-20,y0=(int)MathF.Floor(Home.Y);
+            bool Wall(int x,int y,int z)=>Math.Abs(x)==6||Math.Abs(z)==6||y==4;
+            for(int x=-6;x<=6;x++)for(int z=-6;z<=6;z++)for(int y=0;y<=4;y++)if(Wall(x,y,z))terrain.ChangeCell(hx+x,y0+y,hz+z,stone);
+            int StoneLeft(){int n=0;for(int x=-6;x<=6;x++)for(int z=-6;z<=6;z++)for(int y=0;y<=4;y++)if(Wall(x,y,z)&&Terrain.ExtractContents(terrain.Terrain.GetCellValue(hx+x,y0+y,hz+z))==BlocksManager.GetBlockIndex<GraniteBlock>())n++;return n;}
+            int full=StoneLeft();pl.ComponentBody.Position=Home+new Vector3(20,0,10);while(Wait(.5))yield return true;
+            var at=new Vector3(hx+.5f,y0+.1f,hz+.5f);int cleared0=MDBoss.BlocksCleared;var boss=MDBoss.Spawn(proj,at,at);float top=0;
+            foreach(var x in During(12,()=>top=Math.Max(top,boss.Body.Position.Y-y0)))yield return x;
+            bd["result"]=$"stone {full} -> {StoneLeft()} blocks, {MDBoss.BlocksCleared-cleared0} cleared, highest feet {top:0.0} m above the floor (roof at 4-5 m, body {boss.Body.BoxSize.Y:0.0} m tall, hovers 3 m up), now {boss.Body.Position.Y-y0:0.0} m";
+            Cam(at+new Vector3(18,12,-18),at+new Vector3(0,4,0));Shot("rbd_boss_dug_out");yield return true;
+            bool ok=MDBoss.BlocksCleared>cleared0&&StoneLeft()<full&&top>=2.5f;Kill([boss]);
+            for(int x=-6;x<=6;x++)for(int z=-6;z<=6;z++)for(int y=0;y<=6;y++)terrain.ChangeCell(hx+x,y0+y,hz+z,0);
+            ClearPickables();while(Wait(.5))yield return true;
+            if(!ok)throw new Exception("boss dig: "+bd["result"]);
         }
         // ---- 0.12.0 tower health and repair (user's choice: health x2; scrap 400, alloy plate 1500; iron and copper only for the mechs)
         if(Part("repair")) {

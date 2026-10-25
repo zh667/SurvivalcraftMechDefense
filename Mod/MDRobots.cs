@@ -50,7 +50,10 @@ public static class MDRobots {
     public static readonly string[] Elites=["MDRobot06","MDRobot06B","MDRobot06C","MDRobot07","MDRobot07B","MDRobot07C"];
     public const string Boss="MDDevilMech";
     public const float HuntRange=96;                       // a robot walks to the nearest tower or Mercury this close
-    public const double ProvokeMemory=30;                  // seconds a robot fights back at a player that hit it
+    // A robot that a player, the player's herd or a mech hits locks on to it and fights it until it dies, leaves the world or is
+    // this far away (user, 2026-10-25: "玩家攻击了就一直攻击玩家，不要一会被炮塔拉仇恨，一会被玩家拉仇恨，拉来拉去的"; was 30 s
+    // and only while in sight). Not saved: after loading the world it picks targets afresh.
+    public const float LoseRange=HuntRange;
     public const double ChaseTime=300;                     // seconds a raid on a player without towers follows that player
     public static bool IsRobot(Entity e)=>e?.FindComponent<ComponentMDRobot>()!=null;
     // Leaves in reach of a robot's blast or body give way (players, 2026-10-25: "敌对机器人应该可以破坏树叶，不然在生存环境很容易卡在
@@ -89,12 +92,16 @@ public static class MDRobots {
     public static bool Spawns(Project p){var m=p.FindSubsystem<SubsystemGameInfo>(true).WorldSettings.GameMode;return m!=GameMode.Harmless&&m!=GameMode.Creative;}
     // a player (not the player's herd or the towers) is never a robot's target in Creative or Harmless
     public static bool FightsPlayers(Project p)=>Spawns(p);
-    // ModLoader hook ProcessAttackment: a player or the player's herd that hurts a robot is fought back (towers and Mercury
-    // are targets anyway)
+    // ModLoader hook ProcessAttackment: a player, the player's herd or a mech that hurts a robot is fought first (towers are
+    // targets anyway). A mech's own weapons hit with the mech as the attacker; a seated pilot counts as the mech (user,
+    // 2026-10-25: "我登上机甲去攻击恶魔机甲，恶魔机甲还在攻击炮塔").
     public static void Provoked(Attackment a) {
         if(a.AttackPower<=0||a.Attacker==null||a.Target?.FindComponent<ComponentMDRobot>() is not {} r)return;
-        if(a.Attacker.FindComponent<ComponentMDUnit>()!=null||!MDFaction.Friendly(a.Attacker)||a.Attacker.FindComponent<ComponentBody>() is not {} b)return;
-        r.Provoke(b);
+        ComponentBody b;
+        if(a.Attacker.FindComponent<ComponentMDUnit>() is {} u){if(u.Mech==null)return;b=u.Body;}
+        else if(!MDFaction.Friendly(a.Attacker))return;
+        else b=MDMechPilot.Mounted(a.Attacker.FindComponent<ComponentPlayer>())?.Body??a.Attacker.FindComponent<ComponentBody>();
+        if(b!=null)r.Provoke(b);
     }
 
     // A robot's hit: structures (towers, Mercury, boats: ComponentDamage without health) take VsStructure, creatures VsCreature.
@@ -139,7 +146,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     SubsystemTime time; SubsystemBodies bodies; SubsystemTerrain terrain;
     public ComponentBody Target; public Vector3? RaidGoal; public bool Raider;
     public ComponentBody Hunt;                      // the nearest tower or Mercury within HuntRange, walked to while nothing is in sight
-    public ComponentBody Provoker; public double ProvokedUntil;   // a player (or the player's herd) that hit it
+    public ComponentBody Provoker;                  // locked on: the player, herd animal or mech that hit it (see LoseRange)
     public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
     float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
@@ -149,7 +156,22 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     // Above wandering (0-2) while it has something to fight, a raid to reach or a tower to walk to; else it wanders.
     public override float ImportanceLevel=>Health.Health>0&&(Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;
     public bool Chasing=>Chase!=null&&time.GameTime<ChaseUntil;
-    public void Provoke(ComponentBody b){Provoker=b;ProvokedUntil=time.GameTime+MDRobots.ProvokeMemory;nextScan=0;}
+    // A hit locks it on to the hitter. The lock stays on the first hitter while that one is valid (a second player's hit does not
+    // pull it away), except from a mech nobody drives.
+    public void Provoke(ComponentBody b) {
+        if(ProvokerNow is {} now&&now!=b&&!(now.Entity.FindComponent<ComponentMDUnit>() is {} m&&MDMechPilot.Driver(m)==null))return;
+        Provoker=b;nextScan=0;
+    }
+    // the locked target, or null once it is gone, invalid or LoseRange away; a player who boards a mech passes the lock to the mech.
+    // Every attack aims at it (the devil mech's volley too), seen or not: out of sight the robot walks round to it.
+    public ComponentBody ProvokerNow {
+        get {
+            if(Provoker==null)return null;
+            if(MDMechPilot.Mounted(Provoker.Entity.FindComponent<ComponentPlayer>()) is {} mech)Provoker=mech.Body;
+            if(!Provoker.Entity.IsAddedToProject||!Valid(Provoker)||Vector3.Distance(Provoker.Position,Body.Position)>MDRobots.LoseRange)Provoker=null;
+            return Provoker;
+        }
+    }
     public override void Load(ValuesDictionary v,IdToEntityMap map) {
         Kind=MDRobots.Kind(v.GetValue<string>("Kind"));Def=MDMechLibrary.Load(Kind.Root,"unit");Anim=new MDMechAnimator(Def);
         Creature=Entity.FindComponent<ComponentCreature>(true);Body=Entity.FindComponent<ComponentBody>(true);Health=Entity.FindComponent<ComponentHealth>(true);path=Entity.FindComponent<ComponentPathfinding>(true);spawn=Entity.FindComponent<ComponentSpawn>();
@@ -209,15 +231,20 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     // What a robot fights (user, 2026-10-21: "敌兵刷新之后应该直接找离自己最近的炮塔攻击（没有炮塔就正常呆着，不要找玩家）……优先级，
     // 机甲>炮塔>玩家"): Mercury and towers that are not wrecked, wherever they are; a player or the player's herd only after it
-    // hit this robot (ProvokeMemory), or while the robot is at the player's defences (a tower or Mercury within HuntRange) and
-    // the player is within its weapon range. Players never in Creative or Harmless.
+    // hit this robot (locked on, Provoker), or while the robot is at the player's defences (a tower or Mercury within HuntRange) and
+    // the player is within its weapon range. Players never in Harmless; in Creative only the one it is locked on to.
     public bool Valid(ComponentBody b) {
         if(b==null||!b.Entity.IsAddedToProject||!MDCombat.Living(b))return false;
         var e=b.Entity;
         if(e.FindComponent<ComponentMDUnit>() is {} u)return !u.Destroyed&&!u.Legacy;
         if(MDMechPilot.Mounted(e.FindComponent<ComponentPlayer>())!=null)return false;   // seated in a mech: the mech is the target
-        if(e.FindComponent<ComponentPlayer>()!=null?!MDRobots.FightsPlayers(Project):!(MDFaction.Friendly(e)&&e.FindComponent<ComponentCreature>()!=null&&MDRobots.Hostile(Project)))return false;
-        if(b==Provoker&&time.GameTime<ProvokedUntil)return true;
+        bool provoked=b==Provoker;
+        if(e.FindComponent<ComponentPlayer>()!=null) {
+            if(!MDRobots.Hostile(Project))return false;                    // Harmless: never a player
+            if(!MDRobots.FightsPlayers(Project))return provoked;           // Creative: only a player who hit it (user, 2026-10-25: "拉仇恨…创造模式下应该也是这样")
+        }
+        else if(!(MDFaction.Friendly(e)&&e.FindComponent<ComponentCreature>()!=null&&MDRobots.Hostile(Project)))return false;
+        if(provoked)return true;
         if(b==Chase&&Chasing)return true;
         float d=Vector3.Distance(b.Position,Body.Position);
         if(Hunt!=null&&d<=Kind.Range)return true;
@@ -227,17 +254,18 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     // 0 Mercury, 1 a tower, 2 a player or the player's herd
     public static int Rank(ComponentBody b)=>b.Entity.FindComponent<ComponentMDUnit>() is {} u?(u.Mech!=null?0:1):2;
-    // Within sight range, in this order: the player (or the herd) that hit it within ProvokeMemory, if in sight (0.12.0, players
-    // 2026-10-25: "旁边有炮台的话 玩家打敌对机器人 机器人也不打玩家 只打炮台去了 应该给玩家拉仇恨"), Mercury in sight, a tower in sight,
+    // The locked-on hitter first, wherever it is (0.12.0, players 2026-10-25: "旁边有炮台的话 玩家打敌对机器人 机器人也不打玩家 只打炮台去了
+    // 应该给玩家拉仇恨"; user: no switching back and forth). Else within sight range, in this order: Mercury in sight, a tower in sight,
     // Mercury or a tower out of sight (it walks around to it), a player or the herd in sight, then out of sight. Nearest first
     // within each; the current target counts 20 % nearer.
     public ComponentBody FindTarget() {
+        if(ProvokerNow is {} locked)return locked;
         var list=new DynamicArray<ComponentBody>();var p=Body.Position;bodies.FindBodiesAroundPoint(new(p.X,p.Z),Kind.Sight,list);
         ComponentBody best=null;var bestKey=(int.MaxValue,float.MaxValue);var eye=Eye;
         foreach(var b in list) {
             if(b==Body||!Valid(b))continue;float d=Vector3.Distance(b.Position,p);if(d>Kind.Sight)continue;
-            int rank=Rank(b);bool seen=Sight(eye,b);bool provoker=b==Provoker&&time.GameTime<ProvokedUntil;
-            var key=(provoker&&seen?-1:rank<2?(seen?rank:2):seen?3:4,d*(b==Target?.8f:1));
+            int rank=Rank(b);bool seen=Sight(eye,b);
+            var key=(rank<2?(seen?rank:2):seen?3:4,d*(b==Target?.8f:1));
             if(key.CompareTo(bestKey)<0){bestKey=key;best=b;}
         }
         return best;

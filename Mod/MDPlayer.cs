@@ -7,11 +7,13 @@ namespace Game;
 public class MDModLoader : ModLoader {
     public override void __ModInitialize() {
         new Harmony("local.mechdefense.sample").PatchAll();
-        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave"})ModsManager.RegisterHook(hook,this);
+        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount"})ModsManager.RegisterHook(hook,this);
     }
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
         skip=MDDrawBatches.Draw(modelData,modelShader,subsystemModelsRenderer);
+    // The devil mech takes at most MDBoss.MaxHitShare of its armour per hit.
+    public override void CalculateCreatureInjuryAmount(Injury injury)=>MDBoss.CapInjury(injury);
     // The world's count of destroyed robots towards the next devil mech (MDBossKills) is an attribute of Project.xml.
     public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget)=>MDBossKills.Load(xElement);
     public override void ProjectXmlSave(System.Xml.Linq.XElement xElement)=>MDBossKills.Save(xElement);

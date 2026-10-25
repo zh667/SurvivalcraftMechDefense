@@ -59,7 +59,7 @@ public static class MDSettings {
     public static MDSpawnTime SpawnTime=MDSpawnTime.Night;
     public static float SpawnInterval=60,SpawnDensity=1,RaidChance=75,RaidSize=1;
     public static int StartDay=3;
-    public const int MaxStartDay=30;
+    public const int MaxStartDay=99999;   // no practical limit (user, 2026-10-25: "开始天数玩家可随意设置数值（上限不设为30）"; was 30)
     // 0.12.0 (players via the user, 2026-10-25): a robot attacks a player within AggroRange m that it sees (0: only when hit or at
     // the defences, as before); every BossKills destroyed robots bring the devil mech (0: only the beacon)
     public static float AggroRange=16;

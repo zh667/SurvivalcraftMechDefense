@@ -206,7 +206,7 @@ public sealed class MDSettingsScreen:Screen {
         Working.Interval=interval.Value;Working.Density=density.Value;Working.Chance=chance.Value;Working.Size=size.Value;Working.Aggro=aggro.Value;Working.BossKills=(int)MathF.Round(bossKills.Value);
         if(less.IsClicked)Working.StartDay=Math.Max(0,Working.StartDay-1);
         if(more.IsClicked)Working.StartDay=Math.Min(MDSettings.MaxStartDay,Working.StartDay+1);
-        if(input.IsClicked)DialogsManager.ShowDialog(this,new TextBoxDialog($"开始天数（0～{MDSettings.MaxStartDay}，0 为不刷新）",Working.StartDay.ToString(),2,text=>{
+        if(input.IsClicked)DialogsManager.ShowDialog(this,new TextBoxDialog($"开始天数（0～{MDSettings.MaxStartDay}，0 为不刷新）",Working.StartDay.ToString(),5,text=>{
             if(text==null)return;
             if(!int.TryParse(text,out int d)||d<0||d>MDSettings.MaxStartDay){status.Text=$"请输入 0～{MDSettings.MaxStartDay} 的整数。";return;}
             Working.StartDay=d;status.Text="";}));

@@ -12,13 +12,22 @@ Seven player reports forwarded by the user; decisions and evidence: docs/tasks/2
   uniform vectors, so the engine draws at most 30 bones of a model at once; the mechs have 38-40 and the devil mech 33, the draw throws,
   the exception is swallowed and every model after the mech in that frame's list (towers too) is skipped. `Mod/MDDrawBatches.cs` draws
   such models in batches. Reproduced and checked in the lab with the GPU limit set to 256 (`--mode phone`), not on a phone.
-- Robots: a player who hit a robot is fought first (before Mercury and towers, while in sight, 30 s); robots attack a player they see
+- Robots: a player, pet or mech that hits a robot is locked on: fought first and without switching until it dies, leaves or is 96 m away (round 2); robots attack a player they see
   within 16 m (mod setting 主动攻击距离, 0 = only when hit); their blasts and bodies clear leaves; a night without towers near any
   player sends the raid at a player (3 + day / 8 robots, following that player for 5 minutes).
 - The devil mech comes after every 50 robots destroyed in a world (mod setting, 0 = beacon only), counted in Project.xml.
 - Towers: health x2; repaired only with robot scrap (400) or alloy plates (1500), mechs still with iron and copper; 哨戒塔 from
   扩装铳械塔, 重锤迫击炮 and 序章炮塔 from 高爆榴弹塔, 电涌塔 from 磁暴线圈 Ⅰ, 全向声波塔 from 电磁脉冲 Ⅰ; tier 1 unchanged.
-- Package dist/MechDefense-0.12.0.scmod, 29,610,071 bytes, SHA-256 4e5b577873fb26bd2d22cd8a9adcc382d8a51d866550a44df6b1c732a66102da.
+- Round 2 (user, same day): a robot also fights a player who hit it in Creative; a mech (or its pilot) that hits a robot is
+  fought first, and the devil mech aims every attack (the whole missile volley too) at whoever hit it; the devil mech clears any
+  block in its way (not bedrock, no drops) and takes at most 2 % of its armour per hit (CalculateCreatureInjuryAmount, as the
+  Subnautica and Wonderful Era bosses do); the start day has no 30-day limit (0-99999).
+- Package (round 2): dist/MechDefense-0.12.0.scmod, 29,610,728 bytes, SHA-256 b8deec2f48e64ba3a68b1e7582fe8b01f61d710849f91a6e48ceecf270aeb733.
+  Verified (PC): on 1.9.3.1 robots (every part), robots-targets / -boss / -bossdig / -settings / -encyclopedia / -heroes / -leaves (x2),
+  mech, combat, special, all, phone, old save 0.5.0 -> 0.12.0, new world; on 1.9.4 robots-targets / -boss / -bossdig / -settings /
+  -encyclopedia / -heroes / -raidplayer / -bosskills / -leaves (x2) / -repair, mech, phone. One full robots run failed once on the
+  leaf test's missile shots (fired 18 m from a 9 m leaf crown they circled it; the test now fires from 34 m and waits for every shot).
+- Round 1 package (superseded): dist/MechDefense-0.12.0.scmod, 29,610,071 bytes, SHA-256 4e5b577873fb26bd2d22cd8a9adcc382d8a51d866550a44df6b1c732a66102da.
   Verified (PC, isolated runtimes): on 1.9.3.1 phone, all, icons, robots (every part), robots-heroes, special, combat, mech, mech-view, old
   save 0.5.0 -> 0.12.0, new world; on 1.9.4 phone, mech, robots-settings / -encyclopedia / -heroes / -items / -targets / -raidplayer /
   -leaves / -bosskills / -repair, icons, mech-view — 24/24 passed. Not verified: a phone, a real survival world over a night.

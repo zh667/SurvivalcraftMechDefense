@@ -164,7 +164,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b5dfe35b-1121-55bf-a3ef-8ac979b5c035" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="e334aa56-33fb-5250-9211-6d03c455e4a2" />
-        <Parameter Name="AttackResilience" Type="float" Value="650" Guid="77b78e66-f83d-56a8-be83-d1efbf3a0805" />
+        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="77b78e66-f83d-56a8-be83-d1efbf3a0805" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="0a484073-9c45-5490-a5a3-40e6a985a775" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="92e709f7-6221-5b6c-8463-dbbfcf206641" />
       </MemberComponentTemplate>
@@ -199,7 +199,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="a60995de-0d72-5dbf-a18a-8299caf82f64" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="fe3598a2-d803-5c1a-996b-23a39f8728bd" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="a0320d59-9208-5ef9-a6ea-e1e36aa6addd" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="a0320d59-9208-5ef9-a6ea-e1e36aa6addd" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="8ed2017b-4ca2-5a97-bfff-c91e85b5f979" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="0b77830b-5f95-5b0e-8761-e94a6d86c1f0" />
       </MemberComponentTemplate>
@@ -234,7 +234,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="672ba649-90bc-5d71-8a1c-181e16c805b4" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="5863dc94-c124-54ef-859a-13b1b6e0ba16" />
-        <Parameter Name="AttackResilience" Type="float" Value="1100" Guid="0f76d4e6-30b1-54ee-87ca-80995eb2ff5c" />
+        <Parameter Name="AttackResilience" Type="float" Value="2200" Guid="0f76d4e6-30b1-54ee-87ca-80995eb2ff5c" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="cd74bcbd-1392-5915-ab5b-dbb40a34515d" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="2747d982-7a64-5f1b-b92c-d3842d59f69c" />
       </MemberComponentTemplate>
@@ -269,7 +269,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="24d7e771-3f37-541c-8937-d960d563ba4d" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="379dfd81-b042-5003-9e46-01e37a1e5000" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="a8b54c59-c4f6-56ad-898c-199a263b47fd" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="a8b54c59-c4f6-56ad-898c-199a263b47fd" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="0179bf25-c9c5-56ea-ad00-270c4ad7b513" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="a707f80f-d100-5ade-95f8-04c1d1c2204b" />
       </MemberComponentTemplate>
@@ -304,7 +304,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="0e143254-d2e4-5e42-9673-75002e2bc6db" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="41ec8bff-0239-54d6-a75e-1f6b6d5f9332" />
-        <Parameter Name="AttackResilience" Type="float" Value="950" Guid="c9202637-a62c-5d9e-9fcf-6f65a7ae9d9d" />
+        <Parameter Name="AttackResilience" Type="float" Value="1900" Guid="c9202637-a62c-5d9e-9fcf-6f65a7ae9d9d" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="20653a4f-cc0e-5767-95fc-b495d70323c7" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="62165af8-e1b3-57ca-8c08-51ed7d9e5890" />
       </MemberComponentTemplate>
@@ -339,7 +339,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="96f8a2e2-e0d9-5aac-8c18-8652912c0305" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="cb643457-a8ba-57e2-ab14-055914286ee3" />
-        <Parameter Name="AttackResilience" Type="float" Value="850" Guid="2f0d6c2b-8100-5f16-a105-9249efb762b2" />
+        <Parameter Name="AttackResilience" Type="float" Value="1700" Guid="2f0d6c2b-8100-5f16-a105-9249efb762b2" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="4dbff194-26a3-59df-9e70-c3749fce4601" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="231020be-1f8e-558c-b078-d74a5c03a8ae" />
       </MemberComponentTemplate>
@@ -374,7 +374,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="2e9f1846-5dd2-50b6-863b-db7e917202d4" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="1cb2750f-915a-5eab-9a0c-50d5ba87a68a" />
-        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="b99f0014-a206-57da-bd9d-1045cfe0eba0" />
+        <Parameter Name="AttackResilience" Type="float" Value="5200" Guid="b99f0014-a206-57da-bd9d-1045cfe0eba0" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="dfd8443f-bef0-59d8-9bf7-9cb9186caf8e" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="5494a984-adc0-5c7d-80af-cf06e159f24c" />
       </MemberComponentTemplate>
@@ -409,7 +409,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="d03aa8da-6477-5d07-bda1-47feff936d7a" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="743d1918-0f7a-5ed9-85d3-b27449945194" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="eafc3678-3f6f-57b8-b090-849aa02ec15b" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="eafc3678-3f6f-57b8-b090-849aa02ec15b" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="2b9e3318-70d7-5407-be00-1c2fda83a5b9" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="f56aa541-cc18-58b3-bb09-d97d7e6b9da6" />
       </MemberComponentTemplate>
@@ -444,7 +444,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b0a23df6-6846-5ffe-81dd-0118492ed034" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ff7e0e68-31a8-5ea7-956c-b0e6e2d494ac" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="24664379-7206-51f4-9fe4-c0a32f4aa6f7" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="24664379-7206-51f4-9fe4-c0a32f4aa6f7" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="fcd0d976-4476-57c3-b47c-f0c3646cf446" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="0fab782b-37cb-50bf-ba45-57b98b3b9aaa" />
       </MemberComponentTemplate>
@@ -479,7 +479,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="5a8038fe-0e64-51c3-9cf0-6bb67144cfb2" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="26a0c908-b275-5a69-88ce-7e869d278c3b" />
-        <Parameter Name="AttackResilience" Type="float" Value="850" Guid="f33d9e8d-f5f2-55c1-8a01-65e7ad9c662f" />
+        <Parameter Name="AttackResilience" Type="float" Value="1700" Guid="f33d9e8d-f5f2-55c1-8a01-65e7ad9c662f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="6f2d6840-d9f6-55e3-906a-3a5e90bdbf00" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="27fbe310-0cdf-50fc-a81a-761a5626d283" />
       </MemberComponentTemplate>
@@ -514,7 +514,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="3a294029-0949-509d-a463-c97ad78cecc1" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="70b67f9d-cbfb-59b3-bd3c-5feb1a10a9ac" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="4c76645d-3171-5cf0-a8da-fe3a2d10306f" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="4c76645d-3171-5cf0-a8da-fe3a2d10306f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="09a9614f-bf18-5cc6-b646-e69d8771d361" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="6240fcfd-c7a8-5c70-8846-9666791a8fec" />
       </MemberComponentTemplate>
@@ -549,7 +549,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="99c704d0-3fe9-5da9-96e6-6a7e8ded295e" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="6bd09933-8a77-51d0-842f-105789226b16" />
-        <Parameter Name="AttackResilience" Type="float" Value="1400" Guid="b4051394-3437-5a53-b2ad-cde5e9511a13" />
+        <Parameter Name="AttackResilience" Type="float" Value="2800" Guid="b4051394-3437-5a53-b2ad-cde5e9511a13" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="7a8d1c28-5e5d-5157-bf67-a7aade1806a1" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="f2f71a68-7c9f-5467-81b4-cafb84d6b631" />
       </MemberComponentTemplate>
@@ -584,7 +584,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b711d3e3-b1b6-5ef8-8df6-7096099bd109" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="db7c4ca4-34bf-53e2-b443-982c4e426bfb" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="308b7bfa-fed1-5198-87da-3fb447253688" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="308b7bfa-fed1-5198-87da-3fb447253688" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="a28639d9-ffeb-5480-9ee8-32afd5d11f59" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="72470256-9a87-5587-8a23-eff7c7c930bf" />
       </MemberComponentTemplate>
@@ -619,7 +619,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="f16121bb-39be-585d-9977-0879b531710f" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="5d1e3323-21f2-557e-8be1-53c008482f54" />
-        <Parameter Name="AttackResilience" Type="float" Value="1200" Guid="30817b1f-c051-5d87-8cc9-7b3264cc68fe" />
+        <Parameter Name="AttackResilience" Type="float" Value="2400" Guid="30817b1f-c051-5d87-8cc9-7b3264cc68fe" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="49d50d15-4182-56de-91ae-fef2bf442c32" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="565576cc-2083-56ee-986b-2d165a49a957" />
       </MemberComponentTemplate>
@@ -654,7 +654,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="5e2052af-fbe3-56cc-b5f4-1aaeba9ad0ac" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="82b04f4c-6f68-5f57-99a5-f2693d8dcc48" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="c46f198b-60dc-5233-b428-01f1e3273604" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="c46f198b-60dc-5233-b428-01f1e3273604" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="328746e9-2fcb-5eda-b3f0-fc28e405c211" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="b8cf9df9-b704-5027-b79b-381187b20fe8" />
       </MemberComponentTemplate>
@@ -689,7 +689,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="6385e92c-f6b5-5640-af1d-8d90240f02cd" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="29bbef86-b55c-5ac3-a12a-af81fdd9c5d9" />
-        <Parameter Name="AttackResilience" Type="float" Value="1100" Guid="a4286cdd-a206-5bae-9f2f-ff897f655c45" />
+        <Parameter Name="AttackResilience" Type="float" Value="2200" Guid="a4286cdd-a206-5bae-9f2f-ff897f655c45" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="064b1f77-2458-5aba-9cf7-1b4d7292a840" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="509640b4-2eb7-5a4c-ac73-edb3c3dda8b3" />
       </MemberComponentTemplate>
@@ -724,7 +724,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="4c336526-5719-53aa-8e08-b71cf51df37c" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="8a73d354-a4e0-586f-8a19-b05c79110cb2" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="46646b65-60c8-54ac-a7de-5bcf8c702df5" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="46646b65-60c8-54ac-a7de-5bcf8c702df5" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="74e60c2d-a20f-5809-8331-a98535cc07a6" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="107ba288-6a99-5eae-9e63-a1a9cba1e039" />
       </MemberComponentTemplate>
@@ -759,7 +759,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="bcb30c91-11a8-58d9-b539-173564db961a" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="3be7d618-3d65-5a7c-9a02-33ce6358540f" />
-        <Parameter Name="AttackResilience" Type="float" Value="900" Guid="f9d2d221-bd04-5579-bcd3-e947f1b3b3fc" />
+        <Parameter Name="AttackResilience" Type="float" Value="1800" Guid="f9d2d221-bd04-5579-bcd3-e947f1b3b3fc" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="2a19c274-265a-5b19-8c76-8d59f3731e5c" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="1180e1b0-1c8d-5485-b1db-27cb70b9926e" />
       </MemberComponentTemplate>
@@ -794,7 +794,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="d138a372-02ff-5d41-9e93-eba3f432a6fd" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="52d415b2-f1ed-5611-b3c8-6d32862a0922" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="ffc8444b-16ea-5f5f-b9b9-b9e1d66476cc" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="ffc8444b-16ea-5f5f-b9b9-b9e1d66476cc" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="104a819b-477a-56e4-8eac-db0451a66ec2" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="b211a41a-e700-5a36-81ab-4f203842c372" />
       </MemberComponentTemplate>
@@ -829,7 +829,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="9f7b52bd-7065-51d8-9cbd-2e760a7aa5d9" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f3d9a1d1-e00d-5537-97f9-e2377818ab38" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="ca47a57c-c28c-5acb-b617-be1f1c38e350" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="ca47a57c-c28c-5acb-b617-be1f1c38e350" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="d33b1cb9-9adb-59b1-922c-dd87d802d592" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="de066291-33a1-5e9f-970f-d078f56b71a9" />
       </MemberComponentTemplate>
@@ -864,7 +864,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="5dc35bcb-7d5c-59d9-8d51-77bd0e22b8d3" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ed7db8d3-1f4c-5651-91a0-987da719b822" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="386c6753-7d54-559c-91dc-fb844ebc89cf" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="386c6753-7d54-559c-91dc-fb844ebc89cf" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="dcd7b358-d41a-5de0-92e3-e21d63ca6d20" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="d6030237-11db-5c30-b81e-8ae19800adb6" />
       </MemberComponentTemplate>
@@ -899,7 +899,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="41f3659c-71a1-5cb3-94c7-5148d0fececd" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="29d3cc4c-4e3e-5111-9e31-e33772402ba6" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="5bb35f25-b211-5806-8606-f50409af1c4a" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="5bb35f25-b211-5806-8606-f50409af1c4a" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="1b7b2207-2027-5b18-b400-f47b78ff7464" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="fb21997e-cd7b-5486-b18a-28169fb0dbc8" />
       </MemberComponentTemplate>
@@ -934,7 +934,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="451eedce-ac98-5427-a67e-a7ab69b25772" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="8b82e52f-eb11-5844-a97c-8f8020743be8" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="0ce701c8-9f5a-5883-939e-3c27b7c16d7f" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="0ce701c8-9f5a-5883-939e-3c27b7c16d7f" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="cc6e7ade-bcce-519f-9f74-433426640b3b" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="a3d81d88-3618-58f9-bd8a-834fa7a68e0e" />
       </MemberComponentTemplate>
@@ -969,7 +969,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="648237b8-6dbe-5f09-92df-7b73429d7221" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="8449898b-db6e-5aa7-932c-e6787a069075" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="6c00f634-e6d0-5159-854e-07d3d460ca0c" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="6c00f634-e6d0-5159-854e-07d3d460ca0c" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="53e486a8-874b-5ab0-aeac-81b9886b3ec8" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="f006875a-5c8c-543b-9740-902dd50a17e2" />
       </MemberComponentTemplate>
@@ -1004,7 +1004,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="9b0c97f0-533f-59a0-afc2-a0dfbb64ff9f" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="a0e2d84c-5597-551f-9122-08a0bfca4ae0" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="abad6104-90b1-5384-9b91-3ce5a1048349" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="abad6104-90b1-5384-9b91-3ce5a1048349" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="3173bd79-408d-526b-8e83-0e2a46081b52" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="ffad8e87-39c8-5239-94d5-aec0daf7a2c1" />
       </MemberComponentTemplate>
@@ -1039,7 +1039,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b21870a3-cd2d-5bb4-b265-e71beda953c7" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ea2688b6-cb73-56cc-b1bb-1e1b81bccb53" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="a48e9a1f-a027-5cfc-96ae-f795daa33afb" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="a48e9a1f-a027-5cfc-96ae-f795daa33afb" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="a9d8f906-7283-5f56-a539-f9f05335887d" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="1a660daa-59b7-5515-a5db-2e253f1ab32d" />
       </MemberComponentTemplate>
@@ -1074,7 +1074,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="0f0c8571-5443-5c51-9ad9-64dc95ea03c4" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="5a214d2c-fafc-55c1-a7fc-90f9ca4b7c48" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="d678da52-e707-55b8-9895-6fe2c2b4a09a" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="d678da52-e707-55b8-9895-6fe2c2b4a09a" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="75f28d90-b232-511f-a7f4-1b58eab9e6b4" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="eeb0dd89-35fb-55dc-844f-df9986c9bb70" />
       </MemberComponentTemplate>
@@ -1109,7 +1109,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="85832d8b-b785-5de8-a8b2-af5de53f1754" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="c282fa68-73aa-5353-a0b4-922d4b4a41ac" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="9ce81270-9a00-57ab-b9b2-3090229adc1e" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="9ce81270-9a00-57ab-b9b2-3090229adc1e" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="f26505ee-c67c-508a-b52c-6a9df2fac67e" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="207ca96b-cb2d-5cb7-91c8-cb9ec6a189a6" />
       </MemberComponentTemplate>
@@ -1144,7 +1144,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b30d4bc9-c47e-5b87-9b02-6f3be87859f5" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="0937b3f0-4c1c-58cb-ba51-fd9c07c10c37" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="48ffd7b4-8bed-50d5-af18-7d8035c8db91" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="48ffd7b4-8bed-50d5-af18-7d8035c8db91" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="c572ca1d-6857-5edb-a55e-e72ca582ddb7" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="d438f80e-bfb7-5189-84de-327bc95d76eb" />
       </MemberComponentTemplate>
@@ -1179,7 +1179,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="39a09f15-a1b1-5974-a518-79cb5d15f904" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="66d4051c-f37a-5de1-b1bf-bf7430ac3ec9" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="cf2d9092-57b5-5612-9262-2fd6a2efe000" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="cf2d9092-57b5-5612-9262-2fd6a2efe000" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="686fe4a5-948b-5559-923c-931414b98d18" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="cb0ffad1-cf1a-560c-8d14-45b4c5d0f508" />
       </MemberComponentTemplate>
@@ -1214,7 +1214,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="b98665d8-02db-5b2e-83d1-6d3c366c091d" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="e76f3a47-17e0-5fcd-8e62-e60aa9dfb43c" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="8c3aa2f0-4a44-53ab-af22-6e213dc1faf1" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="8c3aa2f0-4a44-53ab-af22-6e213dc1faf1" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="a63117f4-2b3d-5834-bbfe-606c3839cd66" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="cd6338ab-e4e3-5994-b09a-e74ae65108ab" />
       </MemberComponentTemplate>
@@ -1249,7 +1249,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="e6044b14-deb5-5f26-9d6e-fd6b8f020f04" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="8edd84be-2ff4-5fdc-8f9e-fed37ad8907c" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="cc4f6dcc-7eae-562b-b302-48ff052f15eb" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="cc4f6dcc-7eae-562b-b302-48ff052f15eb" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="f0334a3c-0f8b-514b-8916-e927a4196885" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="7291424d-78ec-5c3b-8aec-3191c4f3be5b" />
       </MemberComponentTemplate>
@@ -1284,7 +1284,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="73268e17-074e-5738-ace9-99093b92e26d" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="6ba37b02-cd6d-52f3-9a40-2e7f031bda7e" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="60621bc4-0504-5bbf-b5cc-1673a40a7de8" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="60621bc4-0504-5bbf-b5cc-1673a40a7de8" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="fbba1080-e976-5ec7-88b8-54d3aa2a4fa9" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="20a9a2c3-f76c-519b-809c-7bc00f881b8f" />
       </MemberComponentTemplate>
@@ -1319,7 +1319,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="f2f6aeee-3bd2-5822-8c1c-821bb013328e" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="b8941f23-9930-5f59-8fcc-bb96073eca32" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="7216e1d1-e8d1-57c6-9ccb-6fe392dc0aa0" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="7216e1d1-e8d1-57c6-9ccb-6fe392dc0aa0" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="5594f2c0-2494-55ca-9f43-be069ff99a00" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="69f08374-fade-5593-9987-96c2f3af7b0a" />
       </MemberComponentTemplate>
@@ -1354,7 +1354,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="def3b1ee-86a8-5b28-9089-1bfa535cefe7" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="93419351-d74b-5bff-a7e3-5e3e71679434" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="0ef0ed79-e15f-59f6-8985-9fb2b476d972" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="0ef0ed79-e15f-59f6-8985-9fb2b476d972" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="a6a4eb7e-fbed-56c8-baaa-a83f8fa15041" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="13084334-1a6b-5cf5-93f5-5dcb389cf0cb" />
       </MemberComponentTemplate>
@@ -1389,7 +1389,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="91e178e5-f646-5cd3-9460-e96951190709" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ff29a22b-a19b-5d22-b531-e99a1988ae1c" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="c789d10e-2fe4-5846-8af0-8ab0d5ca80e8" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="c789d10e-2fe4-5846-8af0-8ab0d5ca80e8" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="205eacb5-19f7-5f81-9e75-f1faf81bb633" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="c730554d-863c-586d-88a7-8f217aff3b4c" />
       </MemberComponentTemplate>
@@ -1424,7 +1424,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="75c84b52-c191-58e0-b6dd-f5f282aef0a8" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="eea611f0-218e-50e2-b07c-6452552bc5c3" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="52a829e3-dc49-5142-97d5-7e7adc40a9ee" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="52a829e3-dc49-5142-97d5-7e7adc40a9ee" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="800f6a1b-d808-5b46-8ab7-30cefc8e7d8b" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="0c058b19-5fa0-5fc5-93d6-4a923ad1e08c" />
       </MemberComponentTemplate>
@@ -1459,7 +1459,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="e1aa3598-cfcb-5bd0-82f3-8a0bf7e71d99" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="47d6a422-db3a-5729-86c9-b8f142dbc070" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="0c65907f-1a14-5173-9433-2b5090a62c89" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="0c65907f-1a14-5173-9433-2b5090a62c89" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="c63a8010-34da-5f2a-a367-84a5c9509dce" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="73966a3d-2679-5416-a19f-33382a7c74f0" />
       </MemberComponentTemplate>
@@ -1494,7 +1494,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="5d54233e-6492-5598-8660-dae449f3603b" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f77b5275-92be-57c0-bd41-72196c286927" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="942b26dc-f564-5a8c-9818-e55cef6e3b98" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="942b26dc-f564-5a8c-9818-e55cef6e3b98" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="ffc82b58-4b9e-52f8-9c5b-7ab933ba1a8e" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="7975437a-3e82-5436-83d4-f163e05b166f" />
       </MemberComponentTemplate>
@@ -1529,7 +1529,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="d4a6ab1b-ce58-57c5-86c5-8f8ad0f346aa" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="f9b657c9-16ce-56fa-aab1-5ea1a0015afd" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="bbc46663-d187-5abc-89b8-45016354a84e" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="bbc46663-d187-5abc-89b8-45016354a84e" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="79e8ed78-7b4b-5542-8d13-f8d313ba315a" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="de37799d-cf3f-53fd-8449-e032bce4d1d5" />
       </MemberComponentTemplate>
@@ -1564,7 +1564,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="6216d014-c9c0-591b-a108-a6918599ff6f" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="4c692440-6ac3-5277-a48b-782544c995c2" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="3a7cb317-9dd0-5d5f-8eb7-24dc39b9e665" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="3a7cb317-9dd0-5d5f-8eb7-24dc39b9e665" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="b1287feb-28f0-5f2c-80cc-104b95d5598b" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="23a72375-1a1b-5dca-b4b9-cecc36ac1019" />
       </MemberComponentTemplate>
@@ -1599,7 +1599,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="04a7b28b-6907-5d31-934f-03661dc07e88" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="77f3dc63-1385-507f-8e94-d49ee1d42fa9" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="927ef2fa-0408-50dc-aa24-8c58ce104107" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="927ef2fa-0408-50dc-aa24-8c58ce104107" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="88b34c9b-a685-5233-b90b-93f4b91c4cae" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="1291310f-214a-5eed-8411-0fceea7b8926" />
       </MemberComponentTemplate>
@@ -1634,7 +1634,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="a4024f43-f9d2-5aa9-b51b-37a2cf7ffcd1" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="ce31c095-0188-5bdd-babd-db003e86af31" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="2c078cfa-c085-5757-85ee-383a97a77a17" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="2c078cfa-c085-5757-85ee-383a97a77a17" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="c1783711-9ad4-5abc-95b4-577b11943e13" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="09474d52-5683-56bb-8d11-20c1cbd9c566" />
       </MemberComponentTemplate>
@@ -1669,7 +1669,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="845bfff5-1342-573a-aa56-face0fdce917" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="b1731a32-2895-58cb-8857-97aa42b1d8b9" />
-        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="94c029ba-a3ed-58eb-b200-2e6505a34baa" />
+        <Parameter Name="AttackResilience" Type="float" Value="1600" Guid="94c029ba-a3ed-58eb-b200-2e6505a34baa" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="575cef11-0394-53f3-b57f-85af49b07676" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="e4090ecc-2c53-5890-a3fc-296283aa2e6a" />
       </MemberComponentTemplate>
@@ -1704,7 +1704,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="eb031494-774a-5774-8d35-a159b139c4e6" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="faac588a-664e-517e-a6b7-2df15759879a" />
-        <Parameter Name="AttackResilience" Type="float" Value="1000" Guid="9d06f99c-b80b-5392-8133-36ed8bfc6869" />
+        <Parameter Name="AttackResilience" Type="float" Value="2000" Guid="9d06f99c-b80b-5392-8133-36ed8bfc6869" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="1d02ccfd-3b37-53b4-967d-bbbd99b6ce5c" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="f288ff63-0007-5521-997e-934d074b4a63" />
       </MemberComponentTemplate>
@@ -1739,7 +1739,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Damage" Guid="45199893-399f-5fd0-ad3e-bedca6182627" InheritanceParent="17bb7b53-159c-4eb3-b4bc-137b10bba88a">
         <Parameter Name="Class" Type="string" Value="Game.ComponentMDDamage" Guid="2f2269b1-f3cc-5d8c-85d0-7fdce8c22d2e" />
-        <Parameter Name="AttackResilience" Type="float" Value="1300" Guid="ca918284-2308-513f-9f30-b59ca9d76398" />
+        <Parameter Name="AttackResilience" Type="float" Value="2600" Guid="ca918284-2308-513f-9f30-b59ca9d76398" />
         <Parameter Name="FallResilience" Type="float" Value="15" Guid="f6d94627-636b-505b-9f23-869956dbc7a1" />
         <Parameter Name="FireResilience" Type="float" Value="100" Guid="4551a1cc-6d0f-5e1b-a061-44a06eb6cd7d" />
       </MemberComponentTemplate>

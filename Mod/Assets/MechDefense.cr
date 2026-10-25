@@ -8,6 +8,9 @@
      times their normal price (user, 2026-10-20: 不打怪要贵 5 倍): plate 3 iron (two scrap counted as one iron ingot each,
      plus the ingot) -> 15; chip 2 germanium + 1 copper -> 10 + 5; core 1 diamond + 2 copper -> 5 + 10. The blueprint
      only drops from the boss and the mech recipe uses it up.
+     0.12.0 (players via the user, 2026-10-25: higher towers from a lower tower of the same kind): 哨戒塔 from 扩装铳械塔,
+     重锤迫击炮 and 序章炮塔 from 高爆榴弹塔, 电涌塔 from 磁暴线圈 Ⅰ (both chain lightning), 全向声波塔 from 电磁脉冲 Ⅰ (both stun
+     an area); 射线塔 and 医疗塔 have no lower tower of their kind. Tier 1 stays vanilla only (user's choice).
      Vanilla ingredients and this mod's own items only: with RecipaediaEX (the user's pack) one unresolved ingredient drops
      that recipe and every later one of the merged list from the crafting table. -->
 <Recipes>
@@ -63,14 +66,14 @@
     "gbg"
     "aaa"
   </Recipe>
-  <Recipe Result="MDDeploymentBlock:16" ResultCount="1" RequiredHeatLevel="0" w="wire" b="battery" c="copperingot" a="mdpart:1" Description="电涌塔：二阶，弹射电击">
+  <Recipe Result="MDDeploymentBlock:16" ResultCount="1" RequiredHeatLevel="0" w="wire" b="battery" c="copperingot" t="mddeploy:53" a="mdpart:1" Description="电涌塔：二阶，由磁暴线圈 Ⅰ 升级，弹射电击">
     "wbw"
-    "cbc"
+    "ctc"
     "aaa"
   </Recipe>
-  <Recipe Result="MDDeploymentBlock:18" ResultCount="1" RequiredHeatLevel="0" s="soundgenerator" b="battery" c="copperingot" i="ironingot" a="mdpart:1" Description="全向声波塔：二阶，范围晕眩">
+  <Recipe Result="MDDeploymentBlock:18" ResultCount="1" RequiredHeatLevel="0" s="soundgenerator" b="battery" t="mddeploy:56" i="ironingot" a="mdpart:1" Description="全向声波塔：二阶，由电磁脉冲 Ⅰ 升级，范围晕眩">
     "sbs"
-    "ici"
+    "iti"
     "aaa"
   </Recipe>
   <Recipe Result="MDDeploymentBlock:19" ResultCount="1" RequiredHeatLevel="0" w="cottonwad" l="glass" b="battery" i="ironingot" a="mdpart:1" Description="医疗塔：二阶，治疗玩家、修复友方炮塔">
@@ -84,15 +87,15 @@
     "gtg"
     "aaa"
   </Recipe>
-  <Recipe Result="MDDeploymentBlock:7" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" l="glass" d="diamond" m="ironblock" a="mdpart:1" Description="哨戒塔：三阶，远程点杀">
+  <Recipe Result="MDDeploymentBlock:7" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" l="glass" d="diamond" t="mddeploy:3" a="mdpart:1" Description="哨戒塔：三阶，由扩装铳械塔升级，远程点杀">
     "xlx"
-    "ada"
-    "ama"
+    "dtd"
+    "aaa"
   </Recipe>
-  <Recipe Result="MDDeploymentBlock:13" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" k="largegunpowderkeg" m="ironblock" a="mdpart:1" Description="重锤迫击炮：三阶，远程重炮">
+  <Recipe Result="MDDeploymentBlock:13" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" k="largegunpowderkeg" t="mddeploy:6" a="mdpart:1" Description="重锤迫击炮：三阶，由高爆榴弹塔升级，远程重炮">
     "xdx"
     "aka"
-    "ama"
+    "ata"
   </Recipe>
   <Recipe Result="MDDeploymentBlock:15" ResultCount="1" RequiredHeatLevel="0" l="lightbulb" d="diamond" x="mdpart:2" t="mddeploy:14" e="mdpart:3" a="mdpart:1" Description="高能射线塔：三阶，由射线塔升级">
     "ldl"
@@ -104,9 +107,9 @@
     "xtx"
     "aea"
   </Recipe>
-  <Recipe Result="MDDeploymentBlock:8" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" m="ironblock" k="largegunpowderkeg" a="mdpart:1" Description="序章炮塔：三阶，大型攻城重炮">
+  <Recipe Result="MDDeploymentBlock:8" ResultCount="1" RequiredHeatLevel="0" x="mdpart:2" d="diamond" m="ironblock" t="mddeploy:6" a="mdpart:1" Description="序章炮塔：三阶，由高爆榴弹塔升级，大型攻城重炮">
     "xdx"
-    "mkm"
+    "mtm"
     "aaa"
   </Recipe>
   <!-- 转轮机枪塔 Ⅰ-Ⅲ (data 32-34; 0.9.0 round 6, the towers rebuilt from a 2D tower-defence game, E:/projects/sog-tower-model):

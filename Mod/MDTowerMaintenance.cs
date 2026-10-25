@@ -7,23 +7,26 @@ namespace Game;
 // Dismantle: three pickaxe hits (at the normal hit pace, within 3 s of each other) take a tower down into its deploy item.
 // The item keeps the tower's health (MDDeploymentBlock: wear in its data, shown as the slot's health bar) and deploying it
 // again restores that health. A wrecked tower cannot be taken down.
-// Repair: right-click a tower holding iron or copper (ingot or block). One item restores a fixed number of the tower's hit
-// points, so big towers take more: iron ingot 200, copper ingot 120, the blocks nine times that. A 650-point gun tower
-// takes 4 iron ingots from nearly wrecked to full (it is built from 5), the 2600-point prologue cannon 13 (built from 7
-// iron blocks). Iron and copper are the towers' own build materials; in the user's pack the Industrial Era sieve turns
-// gravel into ore and its iron/copper plates stand in for ingots, so they are easier to come by than with vanilla smelting
-// alone. Wonderful Era's wrench, for comparison, restores 10-75% of a vehicle per use by armour class.
-// Mercury (since its survival recipe) the same way: its armour (3000) is the scale, so an iron ingot restores 6.7 % and an
-// iron block 60 %; taken down it becomes its deploy item with its health (a rider is set down first, OnEntityRemoved).
+// Repair: right-click a tower holding robot scrap or an alloy plate (0.12.0, players via the user 2026-10-25: towers more durable
+// and repaired only with the robots' drops, "修复就用这些掉落材料，医疗塔的修复功能不变"). One item restores a fixed number of the
+// tower's hit points, so big towers take more: scrap 400, an alloy plate 1500. Tower health doubled in 0.12.0: a 1300-point
+// tier-1 gun tower takes 4 scrap (a normal walker drops 2-4) or one plate from nearly wrecked to full. The medic tower still
+// heals a share of the health (MDTowerBrain.Heal).
+// The mechs are repaired with iron or copper (ingot or block) as before: iron ingot 200, copper ingot 120, the blocks nine times
+// that, against the mech's armour (Mercury 4000: an iron ingot 5 %); taken down a mech becomes its deploy item with its health
+// (a rider is set down first, OnEntityRemoved).
 public static class MDTowerMaintenance {
     public const int HitsToDismantle=3;
     const double DismantleWindow=3,RepairPace=.3;
-    static readonly (string craftingId,float points,string name)[] materials=[("ironingot",200,"铁锭"),("copperingot",120,"铜锭"),("ironblock",1800,"铁块"),("copperblock",1080,"铜块")];
+    static readonly (string craftingId,float points,string name)[] metals=[("ironingot",200,"铁锭"),("copperingot",120,"铜锭"),("ironblock",1800,"铁块"),("copperblock",1080,"铜块")];
+    public const float ScrapPoints=400,AlloyPoints=1500;
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ComponentPlayer,System.Runtime.CompilerServices.StrongBox<double>> lastRepair=new();
     static readonly System.Random random=new();
-    public static (float points,string name)? Material(int value) {
+    // what one item restores on a tower (robot drops) or a mech (iron, copper); null when it is no repair material for either
+    public static (float points,string name)? Material(int value,bool tower) {
+        if(tower)return MDPartBlock.Of(value) switch{MDPartBlock.Kind.Scrap=>(ScrapPoints,"机兵残骸"),MDPartBlock.Kind.Alloy=>(AlloyPoints,"合金板"),_=>null};
         var id=BlocksManager.Blocks[Terrain.ExtractContents(value)].GetCraftingId(value);
-        foreach(var m in materials)if(m.craftingId==id)return (m.points,m.name);
+        foreach(var m in metals)if(m.craftingId==id)return (m.points,m.name);
         return null;
     }
     static int Percent(float f)=>(int)MathF.Round(f*100);
@@ -56,16 +59,22 @@ public static class MDTowerMaintenance {
         u.Project.RemoveEntity(u.Entity,true);return value;
     }
 
-    // Right-click with a repair material (ModLoader hook OnPlayerInputInteract). True when the click was about a tower or Mercury.
+    // Right-click with a repair material (ModLoader hook OnPlayerInputInteract). True when the click was about a tower or a mech.
+    // Iron or copper on a tower (the old way) and robot drops on a mech say what to use instead.
     public static bool TryRepair(ComponentPlayer p) {
-        var ray=p.ComponentInput.PlayerInput.Interact;var miner=p.ComponentMiner;
-        if(!ray.HasValue||Material(miner.ActiveBlockValue) is not {} m)return false;
+        var ray=p.ComponentInput.PlayerInput.Interact;var miner=p.ComponentMiner;int value=miner.ActiveBlockValue;
+        if(!ray.HasValue||Material(value,true)==null&&Material(value,false)==null)return false;
         var u=miner.Raycast<BodyRaycastResult>(ray.Value,RaycastMode.Interaction)?.ComponentBody.Entity.FindComponent<ComponentMDUnit>();
         if(u==null||u.Legacy)return false;
         double now=u.Clock.GameTime;
         var last=lastRepair.GetValue(p,_=>new(double.MinValue));
         if(now-last.Value<RepairPace&&now>=last.Value)return true;   // a held button repeats every frame
-        last.Value=now;Repair(miner,u,m.points,m.name);return true;
+        last.Value=now;
+        if(Material(value,u.Tower!=null) is not {} m) {
+            MDPlayer.Message(p,u.Tower!=null?"炮塔要用机兵残骸或合金板维修（铁、铜只能修机甲）。":"机甲用铁锭、铜锭（或铁块、铜块）维修。");
+            return true;
+        }
+        Repair(miner,u,m.points,m.name);return true;
     }
     public static bool Repair(ComponentMiner miner,ComponentMDUnit u,float points,string material) {
         var p=miner.ComponentPlayer;

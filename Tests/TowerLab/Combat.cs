@@ -8,7 +8,8 @@ namespace TowerLab;
 // Mode "combat" (0.7.0), in a Harmless world with the user's ghoul and Wonderful Era mods loaded (run_isolated.py copies
 // them into the isolated runtime only): friend or foe per creature template; gunfire against the ghouls' bullet defence
 // (body, head) and explosion damage; where real rounds hit a ghoul; hits on a running target with and without lead;
-// pickaxe dismantle, the worn deploy item, redeploy with the tower's health, and repair with iron ingots. Dismantle,
+// pickaxe dismantle, the worn deploy item, redeploy with the tower's health, and repair (since 0.12.0 with robot scrap; an
+// iron ingot is refused on a tower). Dismantle,
 // redeploy and repair go through real player input (Hit / Interact injected into ComponentInput), not direct calls.
 public partial class Lab {
     static readonly HashSet<Entity> spawned=[];
@@ -144,9 +145,9 @@ public partial class Lab {
         else {
             gw.ActiveCamera=gw.FindCamera<FppCamera>();
             var M=T+new Vector3(0,0,0);var tower=Place(gun,M,0);tower.Cooldown=1e6f;tower.SetHitpoints(.62f);
-            int pick=Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronPickaxeBlock>()),ingot=Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronIngotBlock>());
+            int pick=Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronPickaxeBlock>()),ingot=Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<IronIngotBlock>()),scrap=MDPartBlock.Value(MDPartBlock.Kind.Scrap);
             for(int i=0;i<inv.SlotsCount;i++)inv.RemoveSlotItems(i,inv.GetSlotCount(i));
-            inv.AddSlotItems(0,pick,1);inv.AddSlotItems(1,ingot,3);inv.ActiveSlotIndex=0;
+            inv.AddSlotItems(0,pick,1);inv.AddSlotItems(1,ingot,1);inv.AddSlotItems(2,scrap,3);inv.ActiveSlotIndex=0;
             float depth=tower.Body.BoxSize.Z*.5f;var stand=M+new Vector3(0,0,-depth-.9f);
             Ray3 RayTo(Vector3 p){var eye=pl.ComponentCreatureModel.EyePosition;return new Ray3(eye,Vector3.Normalize(p-eye));}
             void Stand(){pl.ComponentBody.Position=stand;pl.ComponentBody.Velocity=Vector3.Zero;}
@@ -190,14 +191,19 @@ public partial class Lab {
                 if(again!=null) {
                     again.Cooldown=1e6f;inv.ActiveSlotIndex=1;var rep=new List<string>();var at=again.Body.Position+new Vector3(0,1,0);
                     void Near(){pl.ComponentBody.Position=again.Body.Position+new Vector3(0,0,-again.Body.BoxSize.Z*.5f-1.2f);pl.ComponentBody.Velocity=Vector3.Zero;}
+                    // click 1 with the iron ingot (refused: towers take robot drops), then three with scrap: 62 % + 400 / 1300 = 93 %,
+                    // full, and the third finds it full
+                    float afterIron=-1;
                     for(int k=0;k<4;k++) {
+                        inv.ActiveSlotIndex=k==0?1:2;
                         foreach(var x in For(.3,Near))yield return x;
                         InjectInput.Interact=RayTo(at);InjectInput.Frames=2;
                         foreach(var x in For(.5,Near))yield return x;   // each click is injected for two input frames: pacing must repair once
-                        rep.Add($"click {k+1}: hp {again.Damage.Hitpoints:F3}, ingots {inv.GetSlotCount(1)}");
+                        if(k==0)afterIron=again.Damage.Hitpoints;
+                        rep.Add($"click {k+1} ({(k==0?"iron":"scrap")}): hp {again.Damage.Hitpoints:F3}, ingots {inv.GetSlotCount(1)}, scrap {inv.GetSlotCount(2)}");
                     }
                     mt["repair"]=rep;
-                    if(MathF.Abs(again.Damage.Hitpoints-1)>.001f||inv.GetSlotCount(1)!=1)bad.Add("repair: "+string.Join("; ",rep));
+                    if(MathF.Abs(afterIron-.62f)>.006f||MathF.Abs(again.Damage.Hitpoints-1)>.001f||inv.GetSlotCount(1)!=1||inv.GetSlotCount(2)!=1)bad.Add("repair: "+string.Join("; ",rep));
                     Remove([again]);
                 }
             }

@@ -1,6 +1,38 @@
-# Status — 2026-10-24
+# Status — 2026-10-25
 
-## 0.11.0: mech key bindings, enemies in the bestiary, towers and mechs in Help (branch feat/mech-keys-encyclopedia, 2026-10-24; not merged yet)
+Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
+r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
+below no longer exist; the numbers recorded here stand. Kept: `local/claude-work/bug1023` (the player's log and video),
+`local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
+
+## Delivered: 0.12.0: player feedback (raids on players, aggro, leaves, the devil mech by kills, tower chains and repair, phone drawing) (PR #11, merged 2026-10-25 on the user's approval, tag v0.12.0)
+
+Seven player reports forwarded by the user; decisions and evidence: docs/tasks/2026-10-25-player-feedback.md.
+- Phones (Honor WIN, Snapdragon): "机甲会隐身…炮台在特定视角也会隐身". Root cause from the engine source: a Snapdragon GPU reports 256 vertex
+  uniform vectors, so the engine draws at most 30 bones of a model at once; the mechs have 38-40 and the devil mech 33, the draw throws,
+  the exception is swallowed and every model after the mech in that frame's list (towers too) is skipped. `Mod/MDDrawBatches.cs` draws
+  such models in batches. Reproduced and checked in the lab with the GPU limit set to 256 (`--mode phone`), not on a phone.
+- Robots: a player, pet or mech that hits a robot is locked on: fought first and without switching until it dies, leaves or is 96 m away (round 2); robots attack a player they see
+  within 16 m (mod setting 主动攻击距离, 0 = only when hit); their blasts and bodies clear leaves; a night without towers near any
+  player sends the raid at a player (3 + day / 8 robots, following that player for 5 minutes).
+- The devil mech comes after every 50 robots destroyed in a world (mod setting, 0 = beacon only), counted in Project.xml.
+- Towers: health x2; repaired only with robot scrap (400) or alloy plates (1500), mechs still with iron and copper; 哨戒塔 from
+  扩装铳械塔, 重锤迫击炮 and 序章炮塔 from 高爆榴弹塔, 电涌塔 from 磁暴线圈 Ⅰ, 全向声波塔 from 电磁脉冲 Ⅰ; tier 1 unchanged.
+- Round 2 (user, same day): a robot also fights a player who hit it in Creative; a mech (or its pilot) that hits a robot is
+  fought first, and the devil mech aims every attack (the whole missile volley too) at whoever hit it; the devil mech clears any
+  block in its way (not bedrock, no drops) and takes at most 2 % of its armour per hit (CalculateCreatureInjuryAmount, as the
+  Subnautica and Wonderful Era bosses do); the start day has no 30-day limit (0-99999).
+- Package (round 2): dist/MechDefense-0.12.0.scmod, 29,610,728 bytes, SHA-256 b8deec2f48e64ba3a68b1e7582fe8b01f61d710849f91a6e48ceecf270aeb733.
+  Verified (PC): on 1.9.3.1 robots (every part), robots-targets / -boss / -bossdig / -settings / -encyclopedia / -heroes / -leaves (x2),
+  mech, combat, special, all, phone, old save 0.5.0 -> 0.12.0, new world; on 1.9.4 robots-targets / -boss / -bossdig / -settings /
+  -encyclopedia / -heroes / -raidplayer / -bosskills / -leaves (x2) / -repair, mech, phone. One full robots run failed once on the
+  leaf test's missile shots (fired 18 m from a 9 m leaf crown they circled it; the test now fires from 34 m and waits for every shot).
+- Round 1 package (superseded): dist/MechDefense-0.12.0.scmod, 29,610,071 bytes, SHA-256 4e5b577873fb26bd2d22cd8a9adcc382d8a51d866550a44df6b1c732a66102da.
+  Verified (PC, isolated runtimes): on 1.9.3.1 phone, all, icons, robots (every part), robots-heroes, special, combat, mech, mech-view, old
+  save 0.5.0 -> 0.12.0, new world; on 1.9.4 phone, mech, robots-settings / -encyclopedia / -heroes / -items / -targets / -raidplayer /
+  -leaves / -bosskills / -repair, icons, mech-view — 24/24 passed. Not verified: a phone, a real survival world over a night.
+
+## Delivered: 0.11.0: mech key bindings, enemies in the bestiary, towers and mechs in Help (PR #10, merged 2026-10-24 on the user's approval, tag v0.11.0)
 
 User: "机甲绑定按键编辑（类似于CS枪械适配铃兰触控那样） 敌人图鉴（在帮助里可以看到敌人信息，包括数值什么的，炮塔这边也是）".
 Design and choices: docs/tasks/2026-10-24-mech-keys-and-encyclopedia.md. Contains the 0.10.1 hotfix below.
@@ -19,7 +51,7 @@ Design and choices: docs/tasks/2026-10-24-mech-keys-and-encyclopedia.md. Contain
   The lab presses the rebound keys for real (K boards and leaves, G strikes, N switches, C hovers without opening the clothing panel,
   the old F / B do nothing) and checks every tower's Help paragraph against towers.json. Not verified: a phone with 铃兰触控.
 
-## 0.10.1 hotfix (branch fix/android-api194, 2026-10-24; not merged yet)
+## Delivered: 0.10.1 hotfix (branch fix/android-api194, PR #9; merged into main with 0.11.0 on 2026-10-24)
 
 Player report (Android phone, API 1.9.4, log + video): "玩家打开武器那一些闪退出世界，并且机甲放置出来不可见".
 - Crash, root cause found: in the API 1.9.4 engine, `Engine.Vector4.Transform` (and the array forms of Vector2/3/4.Transform and
@@ -28,7 +60,7 @@ Player report (Android phone, API 1.9.4, log + video): "玩家打开武器那一
   opening the inventory page with the towers dropped the player out of the world (stack trace in the player's log). Fixed: the
   projection is computed by hand. A PC cannot reproduce it (Sse works there), so every lab run now first scans the mod's IL for those
   calls (`SimdTraps`, proven on `SimdTrapProbe`; it flagged 0.10.0 and passes on 0.10.1).
-- Invisible mech: not root-caused. The player's log has no session with a placed mech; on the PC 1.9.4 build all three mechs draw.
+- Invisible mech: not root-caused in 0.10.1 (the likely cause, the phone GPU's draw limit, is handled in 0.12.0 above). The player's log has no session with a placed mech; on the PC 1.9.4 build all three mechs draw.
   Each placed mech now writes one "[MechDefense] mech ..." line at its 2nd and 200th frame (model, registered with the renderer,
   IsSet, DisableDrawing, visible, opacity, draw orders, mode, bounding sphere, view range, mods that override
   OnModelCalculateIsVisible), so the next player log shows what the renderer sees.

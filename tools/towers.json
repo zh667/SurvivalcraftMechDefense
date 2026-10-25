@@ -27,7 +27,7 @@
    ],
    "data": 0,
    "template": "MDTurret",
-   "hp": 650,
+   "hp": 1300,
    "summary": "持续发射能量弹，对敌人造成物理伤害。",
    "attack": {
     "type": "bolt",
@@ -87,7 +87,7 @@
    ],
    "data": 3,
    "template": "MDTurret2",
-   "hp": 800,
+   "hp": 1600,
    "summary": "持续发射Ⅱ级能量弹，每第 4 次攻击发射一次强力能量弹。",
    "attack": {
     "type": "bolt",
@@ -149,7 +149,7 @@
    ],
    "data": 4,
    "template": "MDTurret3",
-   "hp": 1100,
+   "hp": 2200,
    "summary": "持续发射Ⅲ级能量弹，每第 6 次攻击发射强力能量弹，对落点范围内的敌人造成伤害。",
    "attack": {
     "type": "bolt",
@@ -202,7 +202,7 @@
     }
    ],
    "data": 5,
-   "hp": 800,
+   "hp": 1600,
    "summary": "以抛物线发射榴弹，在敌人附近爆炸，造成范围灼热伤害。",
    "attack": {
     "type": "shell",
@@ -257,7 +257,7 @@
     }
    ],
    "data": 6,
-   "hp": 950,
+   "hp": 1900,
    "summary": "发射Ⅱ级榴弹，范围灼热伤害，并在地面留下 5 秒燃烧区域。",
    "attack": {
     "type": "shell",
@@ -315,7 +315,7 @@
     }
    ],
    "data": 7,
-   "hp": 850,
+   "hp": 1700,
    "summary": "射程远，优先锁定范围内威胁更高的敌人，造成高额物理伤害。",
    "attack": {
     "type": "snipe",
@@ -451,7 +451,7 @@
     }
    ],
    "data": 8,
-   "hp": 2600,
+   "hp": 5200,
    "summary": "大型重炮：远距离发射重型炮弹，落点范围伤害（最小射程 10 格）。",
    "attack": {
     "type": "shell",
@@ -499,7 +499,7 @@
    "poly": "poly_v1/battle_debuff_1",
    "tools": "v5/tools",
    "data": 9,
-   "hp": 900,
+   "hp": 1800,
    "summary": "发射酸液弹，在敌人附近爆炸造成范围自然伤害，并降低敌人防御 30%（受到的塔伤害提高，持续 15 秒）。",
    "attack": {
     "type": "shell",
@@ -551,7 +551,7 @@
    "poly": "poly_v1/battle_fog_1",
    "tools": "v5/tools",
    "data": 10,
-   "hp": 900,
+   "hp": 1800,
    "summary": "发射毒雾弹，落地后留下 5 秒紫色毒雾区：区内敌人中毒（持续自然伤害）并减速到 25%，离开毒雾后中毒和减速还会持续 5 秒。",
    "attack": {
     "type": "shell",
@@ -607,7 +607,7 @@
    "poly": "poly_v1/battle_frost_1",
    "tools": "v5/tools",
    "data": 11,
-   "hp": 850,
+   "hp": 1700,
    "summary": "发射液氮晶体，爆裂后使范围内敌人移速降到 25%（4 秒）并冻结 1.5 秒（首领级不会被冻结；同一敌人解冻后 4 秒内不会再被冻结），落点留下 3 秒冰面继续减速。不造成伤害。",
    "attack": {
     "type": "shell",
@@ -660,7 +660,7 @@
    "poly": "poly_v1/battle_jet_1",
    "tools": "v5/tools",
    "data": 12,
-   "hp": 900,
+   "hp": 1800,
    "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（10×4 格范围，朝向放置方向；犀牛这类大型敌人推不动），不造成伤害。",
    "attack": {
     "type": "jet",
@@ -708,7 +708,7 @@
    "poly": "poly_v1/battle_rocket_1",
    "tools": "v5/tools",
    "data": 13,
-   "hp": 1400,
+   "hp": 2800,
    "summary": "消耗大量充能向远处发射威力极大的炮弹，对落点范围内敌人造成高额物理伤害。",
    "attack": {
     "type": "shell",
@@ -763,7 +763,7 @@
    "poly": "poly_v1/battle_laser_1",
    "tools": "v5/tools",
    "data": 14,
-   "hp": 1000,
+   "hp": 2000,
    "summary": "充能后向目标发射射线，造成高额电磁伤害。",
    "attack": {
     "type": "beam",
@@ -807,7 +807,7 @@
    "poly": "poly_v1/battle_laser_2",
    "tools": "v5/tools",
    "data": 15,
-   "hp": 1200,
+   "hp": 2400,
    "summary": "充能后发射强力射线，优先锁定威胁更高的敌人，造成高额电磁伤害。",
    "attack": {
     "type": "beam",
@@ -852,7 +852,7 @@
    "poly": "poly_v1/battle_lightning_1",
    "tools": "v5/tools",
    "data": 16,
-   "hp": 900,
+   "hp": 1800,
    "summary": "释放电能攻击敌人，可弹射到附近敌人（至多 2 次），造成电磁伤害。",
    "attack": {
     "type": "chain",
@@ -901,7 +901,7 @@
    "poly": "poly_v1/battle_lightning_2",
    "tools": "v5/tools",
    "data": 17,
-   "hp": 1100,
+   "hp": 2200,
    "summary": "释放电能并弹射（至多 2 次），在敌人附近留下金色电球（5 秒），持续电击附近的敌人。",
    "attack": {
     "type": "chain",
@@ -953,7 +953,7 @@
    "poly": "poly_v1/battle_shockwave_1",
    "tools": "v5/tools",
    "data": 18,
-   "hp": 900,
+   "hp": 1800,
    "summary": "发射一道震荡波，使范围内的普通和进阶敌人晕眩 2 秒（首领级不受影响），不造成伤害。",
    "attack": {
     "type": "pulse",
@@ -992,7 +992,7 @@
    "poly": "poly_v1/battle_medic_1",
    "tools": "v5/tools",
    "data": 19,
-   "hp": 900,
+   "hp": 1800,
    "summary": "把充能转化为治疗量，治疗周围受伤的玩家并修复友方防御塔（范围 10 格）。",
    "attack": {
     "type": "heal",
@@ -1029,7 +1029,7 @@
    "poly": "poly_v1/battle_trap_1",
    "tools": "v5/tools",
    "data": 20,
-   "hp": 1000,
+   "hp": 2000,
    "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（10×4 格范围，朝向放置方向）。",
    "attack": {
     "type": "flame",
@@ -1069,7 +1069,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_1",
    "data": 32,
    "template": "MDTower_gatling_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "转管机枪高速连射，地面和空中的敌人都能打，射程一般。",
    "attack": {
     "type": "bolt",
@@ -1111,7 +1111,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_2",
    "data": 33,
    "template": "MDTower_gatling_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "两挺转管机枪交替连射，地面和空中都能打。由转轮机枪塔 Ⅰ 升级。",
    "attack": {
     "type": "bolt",
@@ -1154,7 +1154,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/gatling_3",
    "data": 34,
    "template": "MDTower_gatling_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "四组转管枪管的重型机枪塔，弹幕密集，地面和空中都能打。由转轮机枪塔 Ⅱ 升级。",
    "attack": {
     "type": "bolt",
@@ -1199,7 +1199,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_1",
    "data": 35,
    "template": "MDTower_frost_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "喷射低温气体，喷射带上的地面敌人大幅减速（速度 ×0.7），不造成伤害。",
    "attack": {
     "type": "jet",
@@ -1240,7 +1240,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_2",
    "data": 36,
    "template": "MDTower_frost_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "两支喷枪喷射低温气体，减速更强（速度 ×0.6），并造成少量冻伤。由冰冻塔 Ⅰ 升级。",
    "attack": {
     "type": "jet",
@@ -1281,7 +1281,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/frost_3",
    "data": 37,
    "template": "MDTower_frost_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "重型低温喷射塔，减速最强（速度 ×0.5），冻伤更重，射程更远。由冰冻塔 Ⅱ 升级。",
    "attack": {
     "type": "jet",
@@ -1322,7 +1322,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_1",
    "data": 38,
    "template": "MDTower_flame_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "朝目标方向喷射火焰，烧伤喷射带上的所有敌人并让其着火，射程短。",
    "attack": {
     "type": "flame",
@@ -1361,7 +1361,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_2",
    "data": 39,
    "template": "MDTower_flame_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "两支火焰喷枪，火力更猛，射程更远。由火焰塔 Ⅰ 升级。",
    "attack": {
     "type": "flame",
@@ -1400,7 +1400,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/flame_3",
    "data": 40,
    "template": "MDTower_flame_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "重型双管火焰喷射塔，火力最强。由火焰塔 Ⅱ 升级。",
    "attack": {
     "type": "flame",
@@ -1439,7 +1439,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_1",
    "data": 41,
    "template": "MDTower_missile_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "导弹发射架，轮流发射追踪导弹，必定命中，命中时小范围爆炸，地面和空中的敌人都能打。",
    "attack": {
     "type": "missile",
@@ -1476,7 +1476,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_2",
    "data": 42,
    "template": "MDTower_missile_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "六联装导弹发射架，火力更猛，射程更远。由导弹塔 Ⅰ 升级。",
    "attack": {
     "type": "missile",
@@ -1513,7 +1513,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/missile_3",
    "data": 43,
    "template": "MDTower_missile_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "八联装重型导弹发射架，火力最强。由导弹塔 Ⅱ 升级。",
    "attack": {
     "type": "missile",
@@ -1550,7 +1550,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_1",
    "data": 47,
    "template": "MDTower_cannon_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "单管加农炮，炮弹落地爆炸，炸伤一片地面敌人，不打空中目标。射速慢、射程远。",
    "attack": {
     "type": "shell",
@@ -1597,7 +1597,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_2",
    "data": 48,
    "template": "MDTower_cannon_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "双管加农炮，两根炮管轮流开炮，威力更大。由加农炮 Ⅰ 升级。",
    "attack": {
     "type": "shell",
@@ -1646,7 +1646,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/cannon_3",
    "data": 49,
    "template": "MDTower_cannon_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "四管重型加农炮，威力最大、射程最远。由加农炮 Ⅱ 升级。",
    "attack": {
     "type": "shell",
@@ -1699,7 +1699,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_1",
    "data": 50,
    "template": "MDTower_aa_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "高射炮，优先打空中目标，射速快；也能打地面，但伤害减半，离得太近打不到。",
    "attack": {
     "type": "bolt",
@@ -1747,7 +1747,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_2",
    "data": 51,
    "template": "MDTower_aa_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "双管高射炮，火力更密。由防空炮 Ⅰ 升级。",
    "attack": {
     "type": "bolt",
@@ -1797,7 +1797,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/aa_3",
    "data": 52,
    "template": "MDTower_aa_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "四管重型高射炮，弹幕最密、射程最远。由防空炮 Ⅱ 升级。",
    "attack": {
     "type": "bolt",
@@ -1851,7 +1851,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_1",
    "data": 44,
    "template": "MDTower_radar_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "雷达天线不停旋转，范围内所有防御塔射程提高 15 %。本身不攻击。",
    "attack": {
     "type": "radar",
@@ -1889,7 +1889,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_2",
    "data": 45,
    "template": "MDTower_radar_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "更大的雷达，范围更大，范围内所有防御塔射程提高 20 %。由雷达 Ⅰ 升级。",
    "attack": {
     "type": "radar",
@@ -1927,7 +1927,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/radar_3",
    "data": 46,
    "template": "MDTower_radar_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "大型雷达，范围最大，范围内所有防御塔射程提高 25 %。由雷达 Ⅱ 升级。",
    "attack": {
     "type": "radar",
@@ -1965,7 +1965,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_1",
    "data": 53,
    "template": "MDTower_tesla_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "磁暴线圈放出闪电击中一个敌人，造成电击伤害。",
    "attack": {
     "type": "chain",
@@ -2001,7 +2001,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_2",
    "data": 54,
    "template": "MDTower_tesla_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "更强的闪电，击中后再弹射到附近 1 个敌人。由磁暴线圈 Ⅰ 升级。",
    "attack": {
     "type": "chain",
@@ -2037,7 +2037,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/tesla_3",
    "data": 55,
    "template": "MDTower_tesla_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "大型磁暴线圈，闪电弹射到附近 2 个敌人，射程更远。由磁暴线圈 Ⅱ 升级。",
    "attack": {
     "type": "chain",
@@ -2073,7 +2073,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_1",
    "data": 56,
    "template": "MDTower_emp_1",
-   "hp": 800,
+   "hp": 1600,
    "summary": "每 5 秒放出一圈电磁脉冲，让范围内的普通和进阶敌人瘫痪 1.5 秒（首领不受影响），不造成伤害。",
    "attack": {
     "type": "pulse",
@@ -2115,7 +2115,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_2",
    "data": 57,
    "template": "MDTower_emp_2",
-   "hp": 1000,
+   "hp": 2000,
    "summary": "范围更大，瘫痪 2 秒。由电磁脉冲 Ⅰ 升级。",
    "attack": {
     "type": "pulse",
@@ -2157,7 +2157,7 @@
    "polyOnly": "E:/projects/sog-tower-model/poly_v2/emp_3",
    "data": 58,
    "template": "MDTower_emp_3",
-   "hp": 1300,
+   "hp": 2600,
    "summary": "范围最大，瘫痪 2.5 秒。由电磁脉冲 Ⅱ 升级。",
    "attack": {
     "type": "pulse",

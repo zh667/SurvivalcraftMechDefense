@@ -1,5 +1,10 @@
 # Status — 2026-10-25
 
+Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
+r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
+below no longer exist; the numbers recorded here stand. Kept: `local/claude-work/bug1023` (the player's log and video),
+`local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
+
 ## 0.12.0: player feedback (raids on players, aggro, leaves, the devil mech by kills, tower chains and repair, phone drawing) (branch feat/player-feedback-1025, 2026-10-25; not merged yet)
 
 Seven player reports forwarded by the user; decisions and evidence: docs/tasks/2026-10-25-player-feedback.md.

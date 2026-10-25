@@ -1,6 +1,6 @@
 # 0.12.0：玩家反馈（攻城、仇恨、索敌、树叶、首领、炮塔升级和维修、手机隐身）（2026-10-25）
 
-Status: review
+Status: accepted for merge (user, 2026-10-25: "可以合并"; PR #11, tag v0.12.0; not yet checked on a phone)
 Branch: feat/player-feedback-1025    Current writer: Claude Code（VPS 编辑，Windows 构建和测试）
 User-authorized scope: 用户转来的 7 条玩家反馈，“这次要做的”；已有的告诉用户触发条件。
 Out of scope: 安装到用户的游戏、Mods 或存档；合并 main（要用户同意）。

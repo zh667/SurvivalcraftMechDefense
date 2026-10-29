@@ -11,13 +11,22 @@ import hashlib, json, shutil, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = Path(r'E:/projects/dguns-enemy-models/v3_new')
-UNITS = ['RD14', 'RD09', 'EN02']
+UNITS = ['RD14', 'RD09', 'EN02', 'RD13', 'RD21', 'RD08', 'RD19']
 # units shipped although their SUMMARY.json misses a gate: what it misses (from the unit's README.md / HANDOFF.md), written into
 # v3_checks.json as "accepted"
 ACCEPTED = {
     'RD09': 'outline side view 3.62 % of the height (gate 3 %): the level duct lip against the original lower rear rim',
     'EN02': 'outline side view 3.70 % (gate 3 %); see-through 558 px (gate 405) through the open ducted fans; '
             '2 coplanar overlaps of 1.5 cm2 (sight bracket end inside the barrel)',
+    # 0.14.0 bosses (their README.md "没过的检查"; no gate relaxed)
+    'RD13': 'LOD1 coplanar 27.8 cm2 at the rear mount trunnion pin; see-through 2601 px (original 1347); cannon-mount cheeks 2.4 cm '
+            'from the centre block; LOD0 plate coplanars',
+    'RD21': 'outline side view 3.08 % in LOD1 (4.11 % LOD0 / high) at the tail-spike root; death clip clash 14.4 vs 11.6 cm (right '
+            'forearm into the body); coplanar 181 cm2 per side between upper-arm sleeve and body in idle; 1 open edge on a body shell; '
+            'railgun white share -12.7 points (gate 10); LOD0 352 triangles under the budget',
+    # interim: the models as they stand while their last modelling round runs (replaced when it delivers)
+    'RD08': 'interim: modelling round still running, final checks pending',
+    'RD19': 'interim: modelling round still running, final checks pending',
 }
 
 def main():

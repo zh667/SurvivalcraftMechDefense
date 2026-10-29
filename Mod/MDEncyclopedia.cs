@@ -13,7 +13,7 @@ public static class MDEncyclopedia {
     // ---- the bestiary lists templates with CreatureEggData (EggTypeIndex >= 0). tools/prepare_database.py gives these four one
     // (index 3900-3903, after the game's 0-49; ShowEgg false and no food value: a hidden egg type, no item, no recipe); skins B
     // and C stay out.
-    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14"),("MDRobot09","RD09"),("MDRobotEN02","EN02")];
+    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14"),("MDRobot09","RD09"),("MDRobotEN02","EN02"),("MDBoss13","RD13"),("MDBoss21","RD21"),("MDBoss08","RD08"),("MDBoss19","RD19")];
     // the numbers for a bestiary entry of ours (null for any other creature). The list shows each creature's description in one
     // row, so the numbers go only on its own page (MDBestiaryPagePatch), computed when shown: the mod settings may have changed.
     public static string NumbersFor(BestiaryCreatureInfo info) {
@@ -38,21 +38,32 @@ public static class MDEncyclopedia {
     // when it shows up, from the current mod settings (the same rules as MDRobots' wild spawns and MDRaids: elites 7 days later in
     // the wild, 3 days later in raids)
     static string Appear(MDRobotKind k) {
-        if(k.Boss)return $"用诱敌信标召唤，{MDBoss.Countdown:0} 秒后从远处飞来"+(MDSettings.BossKills>0?$"；生存模式里每击毁 {MDSettings.BossKills} 台机兵也会自动出现（这个存档已击毁 {MDBossKills.Count} 台）":"");
+        if(k.Boss)return $"用诱敌信标召唤，{MDBoss.Countdown:0} 秒后到来（从 {MDBoss.Bosses.Length} 种首领里随机来一台，这个存档下一台是{MDBoss.NextName}）"+(MDSettings.BossKills>0?$"；生存模式里每击毁 {MDSettings.BossKills} 台机兵也会自动出现（这个存档已击毁 {MDBossKills.Count} 台）":"");
         int d=MDSettings.StartDay;var parts=new List<string>();
         if(d>0&&MDSettings.SpawnTime!=MDSpawnTime.Off)parts.Add($"第 {d+(k.Elite?7:k.FromDay)} 天起出现在野外（{MDSettings.SpawnTimeName(MDSettings.SpawnTime)}）");
         if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite||k.FromDay>0?$"第 {d+3} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
         return parts.Count==0?"现在的模组设置不刷新敌方机兵":string.Join("；",parts)+"（模组设置里可改）";
     }
-    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","drone"=>"机炮点射（在空中绕着目标飞）","gunship"=>"两门机炮交替扫射（在空中绕着目标飞）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",_=>k.Weapon};
+    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","drone"=>"机炮点射（在空中绕着目标飞）","gunship"=>"两门机炮交替扫射（在空中绕着目标飞）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",
+        "bird"=>"双加特林压制（蹲下预警）、背炮覆盖（地上红圈标出落点）、近身机枪旋扫、跃击",
+        "sabre"=>"机鼻机炮、双光剑冲刺（地上红线标出路线）、磁轨炮狙击（红色瞄准线）、导弹",
+        "gunboat"=>"三挺机枪、双轨炮（炮口蓄光）、追踪导弹（锁定预警）、放出无人机",
+        "siege"=>"六门榴弹炮（地上红圈标出落点）、主炮光束（蓄能 3 秒，可打断）、追踪导弹",_=>k.Weapon};
+    static string BossMove(MDRobotKind k)=>k.Id switch{
+        "RD13"=>$"步行 {k.Speed:0.#} 米／秒，挡路的方块直接推平；躲着它太久会跳过来",
+        "RD21"=>$"飞行 {k.Speed:0.#} 米／秒，离地约 {MDSabreState.Altitude:0} 米，冲刺 {MDSabreState.DashSpeed:0} 米／秒",
+        "RD08"=>$"飞行 {k.Speed:0.#} 米／秒，离地约 {MDGunboatState.Altitude:0} 米，和目标保持约 {MDGunboatState.StandOff:0} 米",
+        "RD19"=>$"不能移动：从地下钻出，升起 {MDSiegeState.UpTime:0} 秒、收回底座 {MDSiegeState.DownTime:0} 秒，轮流进行",
+        _=>$"飞行 {k.Speed:0.#} 米／秒，冲刺 {MDDevilState.ChargeSpeed:0} 米／秒"};
     public static string RobotNumbers(MDRobotKind k,float hp) {
         var s=new StringBuilder("【数值】");
-        s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +1000 / 2000 / 3000，每台机甲 +3000～5000，最高 160000）":$"{hp:0}")}");
-        s.Append(k.Boss?$"\n移动：飞行 {k.Speed:0.#} 米／秒，冲刺 {MDBossState.ChargeSpeed:0} 米／秒":k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
+        s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour*k.BossArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +1000 / 2000 / 3000，每台机甲 +3000～5000{(k.BossArmour!=1?$"，再乘 {k.BossArmour:0.##}":"")}，最高 {MDBoss.MaxArmour*k.BossArmour:0}）":$"{hp:0}")}");
+        s.Append(k.Boss?"\n移动："+BossMove(k):k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
         s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
         s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
-        if(k.Boss)s.Append($"\n限伤：每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");
-        if(k.Boss)s.Append($"\n弱点：每 {MDBossState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDBossState.OtherFactor*100:0}%；脚下光环的颜色就是当前弱点（白 = 冲击，橙 = 爆炸，蓝 = 能量）");
+        if(k.Boss)s.Append($"\n装甲：{MDBossState.Layers} 层，每层能吸收约 {MDBossState.PlateShare*100:0}% 耐久的伤害，装甲在时只有 {MDBossState.Through*100:0}% 伤害打进本体；击破一层它会硬直 {MDBossState.StaggerTime:0} 秒，之后 {MDBossState.ExposedTime:0} 秒内受到的伤害 +{(MDBossState.ExposedFactor-1)*100:0}%（留着机甲和重炮打这个时机）。每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");
+        if(k.Id=="RD17")s.Append($"\n弱点：每 {MDDevilState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDDevilState.OtherFactor*100:0}%；脚下光环的颜色就是当前弱点（白 = 冲击，橙 = 爆炸，蓝 = 能量）");
+        else if(k.Boss)s.Append("\n打法："+MDBossState.Hint(k.Id));
         s.Append("\n出现："+Appear(k));
         s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
         s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");

@@ -88,10 +88,20 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDRobotEN02B','EN02','model_b','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2200,5,900,'elite'),
     ('MDRobotEN02C','EN02','model_c','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2200,5,900,'elite'),
     ('MDDevilMech','RD17','model','恶魔机甲','用诱敌信标引来的首领，按附近炮塔数量强化耐久。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。',40000,7,4000,'boss'),
+    # 0.14.0: four more bosses (our own models, tools/stage_v3_units.py), one of the five at random with the devil mech (MDBoss.Bosses)
+    ('MDBoss13','RD13','model','鸟形重装机甲','首领：步行的重装火力平台，双加特林、背炮和六挺机枪，躲起来太久它会跳过来。玩家打它头部的发光镜头伤害更高。和其他首领随机出现，必掉机甲设计图。',30000,2.6,9000,'boss'),
+    ('MDBoss21','RD21','model','双光剑飞行机甲','首领：高速飞行的双光剑机甲，会沿地上的红线冲刺砍杀，还会用磁轨炮狙击。看到红线往旁边躲。和其他首领随机出现，必掉机甲设计图。',30000,9,5000,'boss'),
+    ('MDBoss08','RD08','model','重装悬浮炮艇','首领：悬浮炮艇，停在大多数炮塔的射程外用轨道炮轰击阵地，还会放出无人机。要主动去追它。和其他首领随机出现，必掉机甲设计图。',30000,4,7000,'boss'),
+    ('MDBoss19','RD19','model','重型装甲炮车','首领：从地下钻出的重型炮台，不能移动，主炮和榴弹炮从远处轰击阵地。升起时绕到背后打，主炮蓄能时集中火力能打断。和其他首领随机出现，必掉机甲设计图。',30000,0,20000,'boss'),
 ]
-BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903,'MDRobot14':3904,'MDRobot09':3905,'MDRobotEN02':3906}   # bestiary entries (EggTypeIndex), see below
-FLY={'RD09','EN02'}   # drones: no walking, they fly through fly orders (ComponentMDRobot.EngageAir)
+BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903,'MDRobot14':3904,'MDRobot09':3905,'MDRobotEN02':3906,
+          'MDBoss13':3907,'MDBoss21':3908,'MDBoss08':3909,'MDBoss19':3910}   # bestiary entries (EggTypeIndex), see below
+FLY={'RD09','EN02','RD17','RD21','RD08'}   # no walking: they fly through fly orders (the drones ComponentMDRobot.EngageAir, the bosses MDBossState.Fly)
+FLY_SPEED={'RD17':16,'RD21':24,'RD08':12}    # a boss's top fly speed (its dash); the drones fly at their speed
+# the bosses' body boxes (unit.json suggests the whole footprint; RD13's tail and beak, RD19's gun stick out of these)
+BOSS_BOX={'RD13':[3.2,5.0,3.2],'RD21':[4.0,3.6,4.0],'RD08':[4.2,2.9,4.2],'RD19':[5.0,3.6,5.0]}
 def unit_box(kind):
+    if kind in BOSS_BOX:return BOSS_BOX[kind]
     u=root/f'Mod/Assets/Imported/{kind}/unit.json'
     if u.exists():
         j=json.loads(u.read_text(encoding='utf-8'))
@@ -107,19 +117,20 @@ for name,kind,skin,display,desc,hp,speed,mass,loot in ROBOTS:
         for sname,items in (sets or {}).items():
             s=X.SubElement(node,'ParameterSet',Name=sname,Guid=guid(f'robot/{name}/{cname}/{sname}'))
             for i,v in enumerate(items,1):X.SubElement(s,'Parameter',Name=str(i),Type='string',Value=v,Guid=guid(f'robot/{name}/{cname}/{sname}/{i}'))
-    w,h,d=unit_box(kind);boss=loot=='boss';fly=boss or kind in FLY
+    w,h,d=unit_box(kind);boss=loot=='boss';fly=kind in FLY
     member('Body',[('BoxSize','Vector3',f'{w:g},{h:g},{d:g}'),('Mass','float',mass),('Density','float',4),('MaxSmoothRiseHeight','float',1.05),('AirDrag','Vector2','0.1,0.1' if fly else '0.25,0.25')])
     member('Health',[('AttackResilience','float',hp),('FallResilience','float',60),('FireResilience','float',500),('ExplosionResilience','float',5),('CorpseDuration','float',4 if boss else 3)])
     member('Creature',[('DisplayName','string',display),('Description','string',desc),('KillVerbs','string','killed'),('Category','Game.CreatureCategory','LandPredator')])
-    # the devil mech flies through its locomotion's fly orders (MDBossState.Fly): its charge is 16 m/s; the drones at their own speed
-    member('Locomotion',[('WalkSpeed','float',0 if fly else speed),('FlySpeed','float',16 if boss else speed if fly else 0),('SwimSpeed','float',0),('LadderSpeed','float',0),('JumpSpeed','float',0),
+    # the flying bosses through their locomotion's fly orders (MDBossState.Fly): the devil mech's charge is 16 m/s, RD21's dash 24;
+    # the drones at their own speed. RD13 walks (walk orders, MDBossState.Walk), RD19 does not move.
+    member('Locomotion',[('WalkSpeed','float',0 if fly else speed),('FlySpeed','float',FLY_SPEED.get(kind,speed) if fly else 0),('SwimSpeed','float',0),('LadderSpeed','float',0),('JumpSpeed','float',0),
                          ('TurnSpeed','float',2.5),('LookSpeed','float',3),('AccelerationFactor','float',1.2 if fly else .6),('WalkSpeedWhenTurning','float',.5)])
     member('Spawn',[('AutoDespawn','bool','False' if boss else 'True')])
     member('Loot',[],sets={'Loot':LOOT[loot],'LootOnFire':LOOT[loot]})
     member('Model',[('Class','string','Game.ComponentMDRobotModel'),('ModelName','string',f'Imported/{kind}/{skin}'),('TextureOverride','string',''),
                     ('CastsShadow','bool','True'),('BoundingSphereRadius','float',round(max(w,h,d)*(1.6 if boss else .8),2))],parent=CT['CreatureModel'])
     member('MDRobot',[('Class','string','Game.ComponentMDRobot'),('Kind','string',kind)],parent=CT['Generic'])
-    if not fly:member('WalkAroundBehavior',[],parent=CT['WalkAround'])
+    if not fly and not boss:member('WalkAroundBehavior',[],parent=CT['WalkAround'])
     # 0.11.0: the game's bestiary lists templates whose CreatureEggData has EggTypeIndex >= 0 (and sorts by it); skin A of each
     # walker and the devil mech get one. EggBlock then registers a hidden egg type for each (the lab sees it: the set still
     # counts as the game's egg data), as for the game's own creatures without eggs: ShowEgg False = no egg item, NutritionalValue

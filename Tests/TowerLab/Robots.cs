@@ -200,7 +200,7 @@ public partial class Lab {
         // ---- the devil mech: beacon countdown, arrival, weak channel, a fight against tier-3 towers, the blueprint
         if(Part("boss")) {
             var x2=new Dictionary<string,object>();r["boss"]=x2;var defs=MDTowerLibrary.All;
-            pl.ComponentBody.Position=Home+new Vector3(0,0,18);pl.ComponentBody.Rotation=Quaternion.Identity;while(Wait(.5))yield return true;
+            pl.ComponentBody.Position=Home+new Vector3(0,0,18);pl.ComponentBody.Rotation=Quaternion.Identity;MDBoss.Next=0;while(Wait(.5))yield return true;   // the next boss: the devil mech
             var inv=pl.ComponentMiner.Inventory;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Beacon),1);inv.ActiveSlotIndex=0;
             var foot=pl.ComponentBody.Position;pl.ComponentMiner.Use(new Ray3(foot+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-6f))));
             x2["countdown"]=MDBoss.Counting(proj);x2["beaconUsedUp"]=inv.GetSlotCount(0)==0;
@@ -212,44 +212,50 @@ public partial class Lab {
             x2["flyingAfterArrival"]=boss.Creature.ComponentLocomotion.m_flying;x2["armour"]=boss.Health.AttackResilience;x2["escortSize"]=boss.Boss.EscortSize;
             if(boss.Health.AttackResilience!=39000)throw new Exception("boss armour "+boss.Health.AttackResilience+" (want 30000 + 3 tier-3 towers x 3000)");
             var hover=new List<string>();double th=Time.RealTime;int hs=0;
-            foreach(var x in During(8,()=>{if(Time.RealTime-th>=hs*.5){hs++;var l=boss.Creature.ComponentLocomotion;hover.Add($"{Time.RealTime-th:0.0}s y {boss.Body.Position.Y-Home.Y:0.00} want {boss.Boss.LastWant.Y-Home.Y:0.00} ask {boss.Boss.LastFly} vel {boss.Body.Velocity} grav {boss.Body.IsGravityEnabled} stand {boss.Body.StandingOnValue.HasValue} fly {l.FlySpeed:0.0} order {l.LastFlyOrder} flying {l.m_flying} imm {boss.Body.ImmersionFactor:0.00} crushed {boss.Body.CrushedTime:0.00} stun {l.StunTime:0.00} onBody {boss.Body.StandingOnBody?.Entity.FindComponent<ComponentCreature>()?.DisplayName} charge {boss.Boss.Charge:0.0}/{boss.Boss.Slash:0.0} target {boss.Target?.Entity.FindComponent<ComponentMDUnit>()?.TowerId}");}}))yield return x;
+            foreach(var x in During(8,()=>{if(Time.RealTime-th>=hs*.5){hs++;var l=boss.Creature.ComponentLocomotion;hover.Add($"{Time.RealTime-th:0.0}s y {boss.Body.Position.Y-Home.Y:0.00} want {boss.Boss.LastWant.Y-Home.Y:0.00} ask {boss.Boss.LastFly} vel {boss.Body.Velocity} grav {boss.Body.IsGravityEnabled} stand {boss.Body.StandingOnValue.HasValue} fly {l.FlySpeed:0.0} order {l.LastFlyOrder} flying {l.m_flying} imm {boss.Body.ImmersionFactor:0.00} crushed {boss.Body.CrushedTime:0.00} stun {l.StunTime:0.00} onBody {boss.Body.StandingOnBody?.Entity.FindComponent<ComponentCreature>()?.DisplayName} charge {boss.Devil.Charge:0.0}/{boss.Devil.Slash:0.0} target {boss.Target?.Entity.FindComponent<ComponentMDUnit>()?.TowerId}");}}))yield return x;
             x2["hover"]=hover;var ground=Home.Y;x2["altitude"]=boss.Body.Position.Y-ground;x2["flying"]=boss.Creature.ComponentLocomotion.m_flying;
             if(boss.Body.Position.Y-ground<1.5f)throw new Exception($"boss does not hover: {boss.Body.Position.Y-ground:0.00} m");x2["distanceToBeacon"]=Vector3.Distance(new Vector3(boss.Body.Position.X,0,boss.Body.Position.Z),new Vector3(Home.X,0,Home.Z+12));
             Cam(Home+new Vector3(26,14,-26),boss.Body.Position);Shot("rx_arrived");yield return true;
             // weak channel: the same hit in the weak channel and in another one
-            boss.Boss.WeakTimer=999;string weak=MDBossState.Channels[boss.Boss.Weak],other=MDBossState.Channels[(boss.Boss.Weak+1)%3];
-            float h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=weak});float dWeak=h0-boss.Health.Health;   // 600 of 39000: under the 2 % cap
+            if(MDBoss.Next<0||MDBoss.Next>=MDBoss.Bosses.Length)throw new Exception("next boss "+MDBoss.Next+" after the devil mech");
+            boss.Boss.SetArmour(boss.Boss.Armour);boss.Boss.Exposed=0;boss.Boss.Stagger=0;   // the towers have been chipping at its first layer: a fresh one (the hits below land in one frame)
+            boss.Devil.WeakTimer=999;string weak=MDDevilState.Channels[boss.Devil.Weak],other=MDDevilState.Channels[(boss.Devil.Weak+1)%3];
+            float h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=weak});float dWeak=h0-boss.Health.Health;   // both under the first armour layer (x 0.2)
             h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=other});float dOther=h0-boss.Health.Health;
             x2["weak"]=$"{weak}: {dWeak*boss.Health.AttackResilience:0} of 600, {other}: {dOther*boss.Health.AttackResilience:0} of 600";
-            if(Math.Abs(dOther/dWeak-MDBossState.OtherFactor)>.02f)throw new Exception("weak channel: "+x2["weak"]);
-            // 0.12.0 damage cap (user: "恶魔机甲要设置限伤害"): a 20000 hit and a direct Injure of half its health each take 2 %
+            if(Math.Abs(dOther/dWeak-MDDevilState.OtherFactor)>.02f||Math.Abs(dWeak*boss.Health.AttackResilience-600*MDBossState.Through)>2)throw new Exception("weak channel: "+x2["weak"]);
+            // 0.14.0 armour phases (user, 2026-10-30, instead of the 2 % cap): a hit through what is left of the first layer breaks it
+            // (stagger, window), in the window a hit does x 1.5; a 20000 hit and a direct Injure of half its health each take 8 %
+            float plate=boss.Boss.Plate;h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,plate+100){Channel=weak});float dBreak=h0-boss.Health.Health;
+            int layers=boss.Boss.LayersLeft;float exposed=boss.Boss.Exposed,stagger=boss.Boss.Stagger;
+            h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,600){Channel=weak});float dWindow=h0-boss.Health.Health;
             h0=boss.Health.Health;ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,towers[0].Entity,boss.Body.Position,Vector3.UnitY,20000){Channel=weak});float dBig=h0-boss.Health.Health;
             h0=boss.Health.Health;boss.Health.Injure(.5f,null,false,"lab");float dInjure=h0-boss.Health.Health;
-            x2["cap"]=$"a 20000 hit took {dBig*100:0.00} %, Injure(50 %) took {dInjure*100:0.00} % (cap {MDBoss.MaxHitShare*100:0} %)";
-            if(Math.Abs(dBig-MDBoss.MaxHitShare)>.001f||Math.Abs(dInjure-MDBoss.MaxHitShare)>.001f)throw new Exception("boss cap: "+x2["cap"]);
+            x2["phases"]=$"layer of {plate:0} broken by {plate+100:0}: took {dBreak*boss.Health.AttackResilience:0}, layers {layers}, window {exposed:0.0} s, stagger {stagger:0.0} s; 600 in the window took {dWindow*boss.Health.AttackResilience:0}; a 20000 hit took {dBig*100:0.00} %, Injure(50 %) {dInjure*100:0.00} % (cap {MDBoss.MaxHitShare*100:0} %)";
+            if(Math.Abs(plate-(MDBossState.PlateShare*39000-600-600*MDDevilState.OtherFactor))>1||layers!=1||exposed<9||stagger<2.5f||Math.Abs(dWindow*boss.Health.AttackResilience-900)>3||Math.Abs(dBig-MDBoss.MaxHitShare)>.001f||Math.Abs(dInjure-MDBoss.MaxHitShare)>.001f)throw new Exception("boss phases: "+x2["phases"]);
             {   // 0.12.0 a mech that hits it takes its whole volley and is its target (user: "我登上机甲去攻击恶魔机甲，恶魔机甲还在攻击炮塔")
                 var keep=pl.ComponentBody.Position;var mech=Deploy(Home+new Vector3(-14,0,26));pl.ComponentBody.Position=keep;
                 ComponentMiner.AttackBody(new MDTowerAttackment(boss.Entity,mech.Entity,boss.Body.Position,Vector3.UnitY,100){Channel=weak});
-                int v0=boss.Boss.Volleys;var shotAt=new List<string>();double tv=Time.RealTime;bool aimed=false;   // the next volley after the hit
-                while(Time.RealTime-tv<14&&!aimed){if(boss.Windup<0&&boss.ShotsLeft==0)boss.Boss.Volley=Math.Min(boss.Boss.Volley,0);if(boss.Boss.Volleys>v0&&boss.Boss.Volleyed.Count>0){aimed=true;shotAt.AddRange(boss.Boss.Volleyed.Select(b=>b==mech.Body?"mech":b.Entity.FindComponent<ComponentMDUnit>()?.TowerId??"other"));}yield return true;}
+                int v0=boss.Devil.Volleys;var shotAt=new List<string>();double tv=Time.RealTime;bool aimed=false;   // the next volley after the hit
+                while(Time.RealTime-tv<14&&!aimed){if(boss.Windup<0&&boss.ShotsLeft==0)boss.Devil.Volley=Math.Min(boss.Devil.Volley,0);if(boss.Devil.Volleys>v0&&boss.Devil.Volleyed.Count>0){aimed=true;shotAt.AddRange(boss.Devil.Volleyed.Select(b=>b==mech.Body?"mech":b.Entity.FindComponent<ComponentMDUnit>()?.TowerId??"other"));}yield return true;}
                 x2["provokedByMech"]=$"provoker the mech {boss.ProvokerNow==mech.Body}, target the mech {boss.Target==mech.Body}, volley at [{string.Join(",",shotAt)}]";
                 bool ok=boss.ProvokerNow==mech.Body&&boss.Target==mech.Body&&aimed&&shotAt.All(x=>x=="mech");
                 boss.Provoker=null;proj.RemoveEntity(mech.Entity,true);
                 if(!ok)throw new Exception("boss provoked by a mech: "+x2["provokedByMech"]);
             }
-            boss.Boss.WeakTimer=3;float bh=boss.Health.Health;float lowest=99;int weakChanges=0,lastWeak=boss.Boss.Weak;
+            boss.Devil.WeakTimer=3;float bh=boss.Health.Health;float lowest=99;int weakChanges=0,lastWeak=boss.Devil.Weak;
             var clipsSeen=new HashSet<string>();
-            foreach(var x in During(30,()=>{lowest=Math.Min(lowest,boss.Body.Position.Y-Home.Y);if(boss.Boss.Weak!=lastWeak){weakChanges++;lastWeak=boss.Boss.Weak;}clipsSeen.Add(boss.Anim.Base.name);}))yield return x;
+            foreach(var x in During(30,()=>{lowest=Math.Min(lowest,boss.Body.Position.Y-Home.Y);if(boss.Devil.Weak!=lastWeak){weakChanges++;lastWeak=boss.Devil.Weak;}clipsSeen.Add(boss.Anim.Base.name);}))yield return x;
             x2["baseClips"]=string.Join(",",clipsSeen);if(clipsSeen.Overlaps(new[]{"fly_forward","strafe_left","strafe_right"}))throw new Exception("boss pedals: "+x2["baseClips"]);
             boss.Health.Health=Math.Min(boss.Health.Health,.69f);foreach(var x in During(1,()=>{}))yield return x;x2["escortsAt69"]=boss.Boss.EscortsSent;
             if(boss.Boss.EscortsSent<2)throw new Exception("no escort at 69 %");
-            x2["attacks"]=$"volleys {boss.Boss.Volleys}, sweeps {boss.Boss.Sweeps}, charges {boss.Boss.Charges}";x2["lowestIn30s"]=lowest;x2["weakChanges"]=weakChanges;
-            if(boss.Boss.Volleys==0||boss.Boss.Sweeps==0||boss.Boss.Charges==0||weakChanges==0)throw new Exception("boss attacks: "+x2["attacks"]+", weak changes "+weakChanges);
+            x2["attacks"]=$"volleys {boss.Devil.Volleys}, sweeps {boss.Devil.Sweeps}, charges {boss.Devil.Charges}";x2["lowestIn30s"]=lowest;x2["weakChanges"]=weakChanges;
+            if(boss.Devil.Volleys==0||boss.Devil.Sweeps==0||boss.Devil.Charges==0||weakChanges==0)throw new Exception("boss attacks: "+x2["attacks"]+", weak changes "+weakChanges);
             x2["healthLostIn30s"]=(bh-boss.Health.Health)*boss.Health.AttackResilience;x2["bossShots"]=boss.ShotsFired;x2["towers"]=string.Join(" ",towers.Select(t=>$"{t.Damage.Hitpoints:0.00}"));
-            x2["weakNow"]=MDBossState.Channels[boss.Boss.Weak];
+            x2["weakNow"]=MDDevilState.Channels[boss.Devil.Weak];
             Cam(Home+new Vector3(-24,16,-20),boss.Body.Position);Shot("rx_fight");yield return true;
             // finish it: it falls, explodes and drops the blueprint
-            boss.Health.Health=.01f;boss.Health.Injure(2f,null,true,"lab");var died=Time.RealTime;   // the 2 % cap: from 1 % health one hit is enough
+            boss.Health.Health=.01f;boss.Health.Injure(2f,null,true,"lab");var died=Time.RealTime;   // the 8 % cap: from 1 % health one hit is enough
             foreach(var x in During(7,()=>{}))yield return x;
             var drops=Pickables(boss.Body.Position,10);x2["drops"]=Names(drops);x2["corpseGone"]=!boss.Entity.IsAddedToProject;
             Cam(boss.Body.Position+new Vector3(8,6,-8),boss.Body.Position);Shot("rx_drops");yield return true;
@@ -649,7 +655,7 @@ public partial class Lab {
         // Creative; three in Survival (setting 3) start the countdown at the player; the count is kept in Project.xml
         if(Part("bosskills")) {
             var bk=new Dictionary<string,object>();r["bossKills"]=bk;Kill(proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToList());
-            pl.ComponentBody.Position=Home;pl.ComponentBody.Velocity=Vector3.Zero;MDSettings.BossKills=3;MDBossKills.Count=0;while(Wait(.5))yield return true;
+            pl.ComponentBody.Position=Home;pl.ComponentBody.Velocity=Vector3.Zero;MDSettings.BossKills=3;MDBossKills.Count=0;MDBoss.Next=0;while(Wait(.5))yield return true;
             IEnumerable<bool> Destroy(int n){var rs=Enumerable.Range(0,n).Select(i=>Spawn("MDRobot05",Home+new Vector3(-30+i*4,0,-40),0)).ToList();foreach(var x in During(.5,()=>{}))yield return x;foreach(var q in rs)q.Health.Injure(2f,null,true,"lab");foreach(var x in During(2,()=>{}))yield return x;Kill(rs);}
             foreach(var x in Destroy(1))yield return x;int creative=MDBossKills.Count;
             var health=pl.ComponentHealth;float resilience=health.AttackResilience;health.AttackResilience=1e6f;gameInfo.WorldSettings.GameMode=GameMode.Survival;

@@ -61,7 +61,7 @@ public static class MDSettings {
     public static int StartDay=3;
     public const int MaxStartDay=99999;   // no practical limit (user, 2026-10-25: "开始天数玩家可随意设置数值（上限不设为30）"; was 30)
     // 0.12.0 (players via the user, 2026-10-25): a robot attacks a player within AggroRange m that it sees (0: only when hit or at
-    // the defences, as before); every BossKills destroyed robots bring the devil mech (0: only the beacon)
+    // the defences, as before); every BossKills destroyed robots bring the next boss (0: only the beacon)
     public static float AggroRange=16;
     // 0.13.0 (players via the user, 2026-10-29: phones run hot with many towers; "烟雾和粒子效果可以削减"): particle amount,
     // 0 完整 / 1 精简 (default) / 2 极简 (MDTowerWorld.Emit)

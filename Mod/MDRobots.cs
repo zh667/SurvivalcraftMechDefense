@@ -15,7 +15,7 @@ namespace Game;
 // simulated by MDTowerWorld (Foreign shots). Damage is set separately against creatures (a player has 1.0 health, power /
 // resilience) and against structures (towers, Mercury: hit points x armour).
 // Where they come from: wild spawns (MDWildSpawns: at night from game day 3, elites from day 10, adjustable in the mod
-// settings), night raids on the player's tower clusters (MDRaids) and the devil mech, summoned with the decoy beacon (MDBoss).
+// settings), night raids on the player's tower clusters (MDRaids) and the bosses, summoned with the decoy beacon (MDBoss).
 // Drops: MDPartBlock materials.
 public sealed class MDRobotKind {
     public string Id,Name,Root; public bool Elite,Boss;
@@ -30,11 +30,12 @@ public sealed class MDRobotKind {
     public string AimYaw,AimPitch; public float YawLimit,PitchMin,PitchMax,AimRate=1.6f;
     public float Fly;                             // 0.14.0 drones: flies this many metres over the ground (0: walks)
     public int FromDay;                           // a normal enemy that appears this many days after the start day
+    public float BossArmour=1;                    // 0.14.0 bosses: their armour at arrival times this (MDBoss.Spawn)
 }
 
 public static class MDRobots {
     public const string Root="Imported/";
-    static MDTowerDef Look(string id,string type,float[] c,float[] c2,float scale,string kind="heavy")=>new(){id="robot_"+id,name=id,attack=new MDTowerAttack{type=type},fx=new MDTowerFx{color=c,color2=c2,scale=scale,kind=kind},muzzles=[],nodes=[]};
+    public static MDTowerDef Look(string id,string type,float[] c,float[] c2,float scale,string kind="heavy")=>new(){id="robot_"+id,name=id,attack=new MDTowerAttack{type=type},fx=new MDTowerFx{color=c,color2=c2,scale=scale,kind=kind},muzzles=[],nodes=[]};
     // Numbers (starting values; raised 2026-10-21, user: "难度需要提高，因为玩家一般会放置很多炮塔"): a normal walker (1000)
     // beats one tier-1 gun tower (it deals 4 x 14 per 1.8 s = 31/s to the tower's 650; the tower 32/s to its 1000) and loses
     // to two; elites (2400 / 2800) take a tier-3 tower to stop. Raids and the boss grow with the defence (MDRaids, MDBoss).
@@ -59,12 +60,37 @@ public static class MDRobots {
               VsCreature=1.5f,VsStructure=14,Muzzles=["gunL","gunR"],FireSe=8,HitSe=13,Speed=5,Fly=9,Look=Look("gunship","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
         new(){Id="RD17",Name="恶魔机甲",Root=Root+"RD17/",Boss=true,Weapon="devil",Sight=64,Range=40,MinRange=0,Interval=8,Shots=10,ShotGap=.2f,ShotSpeed=16,Splash=2.5f,Windup=1,
               VsCreature=3f,VsStructure=80,Muzzles=["armL","armR"],FireSe=9,HitSe=14,Speed=7,Look=Look("devil","shell",[1,.3f,.35f],[1,.2f,.25f],1.3f)},
+        // 0.14.0 bosses, our own models (v3_new/rd13, rd21, rd08, rd19); their attacks are in Mod/MDBoss.cs. The numbers here are their
+        // main guns: RD13's gatlings, RD21's nose guns, RD08's machine guns, RD19's howitzers.
+        new(){Id="RD13",Name="鸟形重装机甲",Root=Root+"RD13/",Boss=true,Weapon="bird",Sight=60,Range=34,Interval=5,Shots=16,ShotGap=.08f,ShotSpeed=80,Spread=.05f,Windup=.8f,
+              VsCreature=.6f,VsStructure=12,Muzzles=["gatlingL","gatlingR"],FireSe=8,HitSe=13,Speed=2.6f,BossArmour=1.2f,Look=Look("bird","bolt",[1,.5f,.2f],[1,.32f,.14f],1f),
+              AimYaw="02_",YawLimit=100*MathF.PI/180,AimRate=1.2f},
+        new(){Id="RD21",Name="双光剑飞行机甲",Root=Root+"RD21/",Boss=true,Weapon="sabre",Sight=64,Range=30,Interval=3,Shots=8,ShotGap=.1f,ShotSpeed=80,Spread=.03f,Windup=.3f,
+              VsCreature=.6f,VsStructure=10,Muzzles=["gun1","gun2","gun3","gun4"],FireSe=8,HitSe=13,Speed=9,BossArmour=.85f,Look=Look("sabre","bolt",[1,.35f,.4f],[1,.2f,.3f],.9f)},
+        new(){Id="RD08",Name="重装悬浮炮艇",Root=Root+"RD08/",Boss=true,Weapon="gunboat",Sight=64,Range=40,Interval=2.5f,Shots=12,ShotGap=.09f,ShotSpeed=70,Spread=.05f,Windup=.3f,
+              VsCreature=.5f,VsStructure=8,Muzzles=["mgC","mgL","mgR"],FireSe=8,HitSe=13,Speed=4,BossArmour=.9f,Look=Look("gunboat","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
+        new(){Id="RD19",Name="重型装甲炮车",Root=Root+"RD19/",Boss=true,Weapon="siege",Sight=72,Range=60,MinRange=12,Interval=7,Shots=6,ShotGap=.35f,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
+              VsCreature=3f,VsStructure=90,Muzzles=["hou1","hou2","hou3","hou4"],FireSe=11,HitSe=24,Speed=0,BossArmour=1.1f,Look=Look("siege","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f),
+              AimYaw="10_",AimPitch="11_",YawLimit=150*MathF.PI/180,PitchMin=-5*MathF.PI/180,PitchMax=35*MathF.PI/180,AimRate=.5f},
     ];
+    // a boss's other weapons (Mod/MDBoss.cs): type "missile" homes, Gravity > 0 flies an arc, anything else straight
+    public static MDRobotKind Weapon(string id,float speed,float vsCreature,float vsStructure,float splash=0,float spread=0,float gravity=0,int fire=8,int hit=13,string look="bolt",float scale=1,string type="shot")=>
+        new(){Id=id,Name=id,Weapon=type,ShotSpeed=speed,VsCreature=vsCreature,VsStructure=vsStructure,Splash=splash,Spread=spread,Gravity=gravity,FireSe=fire,HitSe=hit,Muzzles=[],
+              Look=Look(id,look,look=="shell"?new[]{1,.5f,.22f}:new[]{1,.45f,.2f},look=="shell"?new[]{1,.32f,.12f}:new[]{1,.3f,.15f},scale)};
     public static MDRobotKind Kind(string id)=>Kinds.FirstOrDefault(k=>k.Id==id)??throw new KeyNotFoundException("robot kind "+id);
+    // the kind of an entity template (its ComponentMDRobot Kind)
+    static readonly Dictionary<string,string> templateKinds=[];
+    public static MDRobotKind KindOf(string template) {
+        if(!templateKinds.TryGetValue(template,out var id)) {
+            var vd=DatabaseManager.FindEntityValuesDictionary(template,true);
+            templateKinds[template]=id=DatabaseManager.FindValuesDictionaryForComponent(vd,typeof(ComponentMDRobot)).GetValue<string>("Kind");
+        }
+        return Kind(id);
+    }
     // Entity templates (tools/prepare_database.py): one per skin; elites and the boss as below.
     public static readonly string[] Normal=["MDRobot05","MDRobot05B","MDRobot05C"];
     public static readonly string[] Elites=["MDRobot06","MDRobot06B","MDRobot06C","MDRobot07","MDRobot07B","MDRobot07C"];
-    public const string Boss="MDDevilMech";
+    public const string Boss="MDDevilMech";                // the devil mech; all the bosses: MDBoss.Bosses
     public static readonly string[] Tanks=["MDRobot14","MDRobot14B","MDRobot14C"];   // 0.14.0
     public static readonly string[] Drones=["MDRobot09"],Gunships=["MDRobotEN02","MDRobotEN02B","MDRobotEN02C"];   // 0.14.0
     // a normal enemy: from 3 days after the start day 15 % tanks and 15 % small drones (lab: always allowed)
@@ -135,8 +161,10 @@ public static class MDRobots {
         if(b==null||IsRobot(b.Entity)||!MDCombat.Living(b))return;
         bool structure=b.Entity.FindComponent<ComponentHealth>()==null;
         float power=(structure?k.VsStructure:k.VsCreature)*scale;if(power<=0)return;
+        if(b.Entity.FindComponent<ComponentPlayer>()!=null){PlayerHits++;if(PlayerHitLog.Count<200)PlayerHitLog.Add($"{k.Id} x{scale:0.00} at {Vector3.Distance(point,b.Position):0.0} m");}
         ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power){Explosive=k.Splash>0});
     }
+    public static int PlayerHits; public static readonly List<string> PlayerHitLog=[];   // tests: robot hits on players
     public static void Splash(Entity attacker,MDRobotKind k,Vector3 point,float r,ComponentBody skip) {
         var bodies=new DynamicArray<ComponentBody>();attacker.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1.5f,bodies);
         foreach(var b in bodies) {
@@ -177,11 +205,13 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
     float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
-    public MDBossState Boss;                       // the devil mech only
+    public MDBossState Boss;                       // the bosses only (Mod/MDBoss.cs)
+    public MDDevilState Devil=>Boss as MDDevilState;
+    public ComponentPathfinding Path=>path;
     public string ForceClip; public float ForceTime; // lab: show one clip at one time, no behaviour
     public UpdateOrder UpdateOrder=>UpdateOrder.Default;
     // Above wandering (0-2) while it has something to fight, a raid to reach or a tower to walk to; else it wanders.
-    public override float ImportanceLevel=>Health.Health>0&&(Kind.Fly>0||Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;   // a drone always flies on its own
+    public override float ImportanceLevel=>Health.Health>0&&(Kind.Fly>0||Kind.Boss||Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;   // a drone always flies on its own
     public bool Chasing=>Chase!=null&&time.GameTime<ChaseUntil;
     // A hit locks it on to the hitter. The lock stays on the first hitter while that one is valid (a second player's hit does not
     // pull it away), except from a mech nobody drives.
@@ -205,7 +235,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         time=Project.FindSubsystem<SubsystemTime>(true);bodies=Project.FindSubsystem<SubsystemBodies>(true);terrain=Project.FindSubsystem<SubsystemTerrain>(true);
         Raider=v.GetValue("Raider",false);if(v.GetValue("HasRaidGoal",false))RaidGoal=v.GetValue("RaidGoal",Vector3.Zero);
         Cooldown=MDRobots.R(.5f,1.5f);lastHealth=Health.Health;
-        if(Kind.Boss)Boss=new MDBossState(this,v);
+        if(Kind.Boss)Boss=MDBossState.For(this,v);
     }
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         v.SetValue("Raider",Raider);v.SetValue("HasRaidGoal",RaidGoal.HasValue);if(RaidGoal.HasValue)v.SetValue("RaidGoal",RaidGoal.Value);Boss?.Save(v);
@@ -244,7 +274,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             Target=null;
             FlyWanted=null;
             if(!Exploded){Exploded=true;if(Kind.Fly>0)Body.Velocity=new(Body.Velocity.X*.5f,-2,Body.Velocity.Z*.5f);MDBossKills.Killed(this);var c=MDCombat.Center(Body);w.Explosion(c,Kind.Boss?4.5f:Kind.Elite?3.5f:2.5f,"heavy",new Color(255,200,120),new Color(255,120,40));MDRobots.Sound(Project,Kind.Boss?20:24,c,1);Boss?.Died();}
-            if(Def.Has("death"))Anim.PlayBase("death",1,.1f);else if(Kind.Fly>0&&Def.Has("down"))Anim.PlayBase("down",1,.1f);else Anim.PlayBase("idle",0,.1f);   // drones: tilted, falling
+            if(Boss?.DeathPose(dt)==true){}else if(Def.Has("death"))Anim.PlayBase("death",1,.1f);else if(Kind.Fly>0&&Def.Has("down"))Anim.PlayBase("down",1,.1f);else Anim.PlayBase("idle",0,.1f);   // drones: tilted, falling
             Anim.Update(dt);w.Wreck(MDCombat.Center(Body),Kind.Boss?3:1.4f);return;
         }
         hitAge+=dt;
@@ -433,7 +463,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         MDRobots.Hit(Entity,b,k,1,p,d);MDRobots.Splash(Entity,k,p,k.Splash,b);
     }
     // the flatter of the two arcs that reach the point at this speed; out of reach: 45 degrees
-    static Vector3 Ballistic(Vector3 from,Vector3 to,float v,float g) {
+    public static Vector3 Ballistic(Vector3 from,Vector3 to,float v,float g) {
         var flat=new Vector3(to.X-from.X,0,to.Z-from.Z);float x=flat.Length(),y=to.Y-from.Y;var h=x>1e-3f?flat/x:Vector3.UnitX;
         float disc=v*v*v*v-g*(g*x*x+2*y*v*v);float a=disc<0?MathF.PI/4:MathF.Atan((v*v-MathF.Sqrt(disc))/(g*Math.Max(x,.1f)));
         return h*v*MathF.Cos(a)+Vector3.UnitY*v*MathF.Sin(a);

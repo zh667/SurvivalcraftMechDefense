@@ -162,8 +162,8 @@ public sealed class MDSettingsScreen:Screen {
         content.Children.Add(MDUi.Note("夜袭在天黑后不久到来：玩家 80 米内有炮塔时打炮塔阵地，没有炮塔时直接冲着玩家来。"));
         aggro=MDUi.Slider(0,MDSettings.MaxAggroRange,2,Working.Aggro);content.Children.Add(MDUi.Row(MDUi.Label("主动攻击距离"),aggro,n));
         content.Children.Add(MDUi.Note("机兵看见这个距离内的玩家就主动攻击；0 为只在被打时还手。附近有炮塔、机甲时仍先打它们，谁打了它就先打谁。"));
-        bossKills=MDUi.Slider(0,MDSettings.MaxBossKills,10,Working.BossKills);content.Children.Add(MDUi.Row(MDUi.Label("恶魔机甲出现"),bossKills,n));
-        content.Children.Add(MDUi.Note("每击毁这么多台机兵，恶魔机甲就会在 30 秒后到来（按存档计数）；0 为只用诱敌信标召唤。"));
+        bossKills=MDUi.Slider(0,MDSettings.MaxBossKills,10,Working.BossKills);content.Children.Add(MDUi.Row(MDUi.Label("首领出现"),bossKills,n));
+        content.Children.Add(MDUi.Note("每击毁这么多台机兵，就会有一台首领机甲在 30 秒后到来（从五种首领里随机来一台，按存档计数）；0 为只用诱敌信标召唤。"));
         content.Children.Add(MDUi.Note("所有存档通用，保存后立即生效。开始天数为 0 时不刷新：野外机兵和夜袭都没有，诱敌信标照常可用。"));
         Refresh();
     }

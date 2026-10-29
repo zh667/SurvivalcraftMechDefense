@@ -183,6 +183,7 @@ public partial class Lab:ModLoader {
         if(mode=="combat")foreach(var x in Combat())yield return x;   // Tests/TowerLab/Combat.cs
         if(mode=="mech")foreach(var x in Mech())yield return x;       // Tests/TowerLab/Mech.cs
         if(mode=="phone")foreach(var x in Phone())yield return x;     // Tests/TowerLab/Phone.cs
+        if(mode=="fb13"||mode=="faction-mods")foreach(var x in Feedback13())yield return x;   // Tests/TowerLab/Feedback13.cs
         if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
         if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs
         if(mode=="probe") {

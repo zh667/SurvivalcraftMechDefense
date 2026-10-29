@@ -147,17 +147,19 @@ public static class MDDeployPatch {
         if(MDPartBlock.Of(__instance.ActiveBlockValue)==MDPartBlock.Kind.Beacon){__result=true;MDBoss.PlaceBeacon(__instance,ray);return false;}   // the devil mech's beacon
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)==BlocksManager.GetBlockIndex<MDSummonBlock>()){__result=true;MDSummonBlock.Place(__instance,ray);return false;}   // creative robot summons
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)!=BlocksManager.GetBlockIndex<MDDeploymentBlock>())return true;
-        __result=true;var hit=__instance.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4)return false;
+        __result=true;var hit=__instance.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue)return false;
         var terrain=__instance.Project.FindSubsystem<SubsystemTerrain>(true);
         if(MDDeploymentBlock.Tower(__instance.ActiveBlockValue) is {} tower) {
-            var pos=MDTowerPlacement.Snap(hit.Value.CellFace,tower);var subsystemBodies=__instance.Project.FindSubsystem<SubsystemBodies>(true);
-            if(!MDTowerPlacement.Validate(terrain,subsystemBodies,pos,tower,out var reason)){MDPlayer.Message(__instance.ComponentPlayer,reason);return false;}
+            var subsystemBodies=__instance.Project.FindSubsystem<SubsystemBodies>(true);
+            if(!MDTowerPlacement.Find(terrain,subsystemBodies,hit.Value,tower,out var pos,out var reason)){MDPlayer.Message(__instance.ComponentPlayer,reason);return false;}
+            MDTowerPlacement.ClearPlants(terrain,pos,tower);
             var entity=DatabaseManager.CreateEntity(__instance.Project,tower.template,true);
             var fixedBody=entity.FindComponent<ComponentMDTowerBody>(true);var rot=MDTowerPlacement.SnapRotation(__instance.ComponentCreature.ComponentBody.Rotation);
             fixedBody.FixAt(pos,rot);var state=entity.FindComponent<ComponentMDUnit>();state.Yaw=state.AimYaw=MathF.Atan2(-fixedBody.Matrix.Forward.X,-fixedBody.Matrix.Forward.Z);
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)state.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // a dismantled tower keeps its health
             entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
         }
+        if(hit.Value.CellFace.Face!=4&&MDDeploymentBlock.MechType(__instance.ActiveBlockValue)!=null)return false;   // a mech: top faces only, as before
         if(MDDeploymentBlock.MechType(__instance.ActiveBlockValue) is {} mechType) {   // the mech stands on the hit point, facing like the player
             var size=mechType.Box;var at=hit.Value.HitPoint()+Vector3.UnitY*.06f;
             if(!MDMechPilot.Clear(terrain,at,size)){MDPlayer.Message(__instance.ComponentPlayer,$"空间不足：{mechType.Name}需要约 {MathF.Ceiling(size.X):0}×{MathF.Ceiling(size.Z):0} 格空地、{MathF.Ceiling(size.Y):0} 格净高。");return false;}

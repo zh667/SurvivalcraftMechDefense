@@ -29,7 +29,7 @@ public sealed class MDBossState {
     public float Armour; public int Escorts,EscortSize;   // armour set at arrival (saved: the template's is the base), escorts called (bits 1, 2), their size
     public readonly List<ComponentBody> Volleyed=[]; float aura;
     float stuck;
-    public Vector3 LastWant,LastFly; public int Charges,Sweeps,Volleys,EscortsSent;   // lab: where it wanted to be, the velocity it asked for, attacks started
+    public Vector3 LastWant,LastFly; public int Charges,Sweeps,Volleys,EscortsSent,WeakChanges;   // lab: where it wanted to be, the velocity it asked for, attacks started
     public MDBossState(ComponentMDRobot robot,ValuesDictionary v) {
         r=robot;Weak=Math.Clamp(v.GetValue("BossWeak",0),0,2);WeakTimer=v.GetValue("BossWeakTimer",WeakPeriod);
         if(v.GetValue("BossHasHome",false))Home=v.GetValue("BossHome",Vector3.Zero);
@@ -51,8 +51,10 @@ public sealed class MDBossState {
         var w=MDTowerWorld.For(r.Project);var body=r.Body;
         dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(body);}
         // weak channel
-        WeakTimer-=dt;if(WeakTimer<=0){WeakTimer=WeakPeriod;Weak=(Weak+1+MDRobots.Pick(new[]{0,1}))%3;MDBoss.Announce(r.Project,body.Position,"恶魔机甲的弱点变成了："+ChannelNames[Weak],ChannelColors[Weak]);}
-        aura-=dt;if(aura<=0){aura=.12f;var c=MDCombat.Center(body);w.Ring(c-Vector3.UnitY*body.BoxSize.Y*.45f,4.5f,ChannelColors[Weak],.25f,0);w.Flash(r.Point("weak",out _),1.1f,ChannelColors[Weak],.12f);}
+        // 0.13.0 (players via the user, 2026-10-29: "恶魔机甲希望隐藏胸前那个弱点，不然屏幕会一直弹提示"; the user kept the rule): the weak
+        // channel still changes every 20 s, silently, shown only by the colour of the ring at its feet (no chest flash, no message)
+        WeakTimer-=dt;if(WeakTimer<=0){WeakTimer=WeakPeriod;Weak=(Weak+1+MDRobots.Pick(new[]{0,1}))%3;WeakChanges++;}
+        aura-=dt;if(aura<=0){aura=.12f;var c=MDCombat.Center(body);w.Ring(c-Vector3.UnitY*body.BoxSize.Y*.45f,4.5f,ChannelColors[Weak],.25f,0);}
         foreach(var (bit,at) in new[]{(1,.7f),(2,.35f)})if((Escorts&bit)==0&&r.Health.Health<at){Escorts|=bit;MDBoss.Escort(r,EscortSize);}
         if(Charge>=0||Slash>=0){ChargeStep(dt,w);return;}
         // movement: hover over the ground, circle the target (or the beacon), always facing what it fights
@@ -211,7 +213,7 @@ public static class MDBoss {
         int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null),tiers=units.Where(u=>u.Tower!=null).Sum(MDRaids.Weight);
         r.Boss.Armour=Math.Clamp(BaseArmour+1000*tiers+units.Where(u=>u.Mech!=null).Sum(u=>u.Mech.Type.BossArmour),BaseArmour,160000);r.Health.AttackResilience=r.Boss.Armour;r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
         p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
-        Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。当前弱点："+MDBossState.ChannelNames[r.Boss.Weak],new Color(255,90,90));
+        Announce(p,at,$"恶魔机甲来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。",new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;
     }
     // An escort wave: robots 40-50 m from the beacon, half of them elites; they go for the nearest tower or Mercury (or, with

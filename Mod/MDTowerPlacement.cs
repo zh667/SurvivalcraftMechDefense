@@ -51,13 +51,48 @@ public static class MDTowerPlacement {
         var box=new BoundingBox(new(x+.001f,y+.001f,z+.001f),new(x+.999f,y+.999f,z+.999f));
         return near.Any(b=>b.Entity.FindComponent<ComponentMDUnit>()?.Kind=="Turret"&&box.Intersection(b.BoundingBox));
     }
+    // Grass, flowers, dry bushes and snow give way to a tower (0.13.0); crops, saplings, torches and every solid block do not.
+    public static bool Replaceable(int value) {
+        var b=BlocksManager.Blocks[Terrain.ExtractContents(value)];
+        return Terrain.ExtractContents(value)!=0&&!b.IsCollidable_(value)&&b is TallGrassBlock or FlowerBlock or DryBushBlock or LargeDryBushBlock or SnowBlock;
+    }
+    static bool Free(int value)=>Terrain.ExtractContents(value)==0||Replaceable(value);
+    static bool Solid(int value)=>BlocksManager.Blocks[Terrain.ExtractContents(value)].IsCollidable_(value);
+    // Where a click puts a tower (players via the user, 2026-10-29: "有时候明明空间足够，但是就是放置不下去"). Until 0.12.0 only a
+    // block's top face counted (a side face did nothing at all), the clicked cell was always the footprint's south-west corner,
+    // and a click on grass (the ray stops at the grass) took the grass as the floor, so "no full support". Now: the floor cell is
+    // the grass / flower cell itself, the cell on a top face, or the cell beside a side face (down to the ground below it); the
+    // footprint is the one of all placements that contain that cell which is free and closest to the click.
+    public static bool Find(SubsystemTerrain terrain,SubsystemBodies bodies,TerrainRaycastResult hit,MDTowerDef d,out Vector3 position,out string reason) {
+        position=default;var size=Cells(d);var f=hit.CellFace;int bx=f.X,by=f.Y,bz=f.Z;
+        if(Replaceable(hit.Value)){}   // the plant's own cell is the floor cell
+        else if(f.Face==4)by++;
+        else if(f.Face==5){reason="对着地面或方块侧面右键放置。";return false;}
+        else {
+            var n=CellFace.FaceToPoint3(f.Face);bx+=n.X;bz+=n.Z;
+            for(int k=0;k<4&&!Solid(terrain.Terrain.GetCellValue(bx,by-1,bz));k++)by--;   // beside a wall: down to the ground
+        }
+        var click=hit.HitPoint();string first=null;
+        var tries=new List<(float d,int x0,int z0)>();
+        for(int ox=0;ox<size.X;ox++)for(int oz=0;oz<size.Z;oz++){int x0=bx-ox,z0=bz-oz;var c=new Vector2(x0+size.X*.5f,z0+size.Z*.5f);tries.Add((Vector2.Distance(c,new Vector2(click.X,click.Z)),x0,z0));}
+        foreach(var (_,x0,z0) in tries.OrderBy(t=>t.d)) {
+            var at=new Vector3(x0+size.X*.5f,by,z0+size.Z*.5f);
+            if(Validate(terrain,bodies,at,d,out reason)){position=at;return true;}
+            first??=reason;
+        }
+        reason=first;return false;
+    }
+    // clears the grass and flowers in a validated footprint
+    public static void ClearPlants(SubsystemTerrain terrain,Vector3 position,MDTowerDef d) {
+        var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
+        for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++)for(int y=y0;y<y0+size.Y;y++)if(Replaceable(terrain.Terrain.GetCellValue(x,y,z)))terrain.DestroyCell(0,x,y,z,0,false,false);
+    }
     public static bool Validate(SubsystemTerrain terrain,SubsystemBodies bodies,Vector3 position,MDTowerDef d,out string reason) {
         var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
         for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++) {
             if(terrain.Terrain.GetChunkAtCell(x,z)==null){reason="部署区域尚未加载。";return false;}
-            int support=terrain.Terrain.GetCellValue(x,y0-1,z);
-            if(!BlocksManager.Blocks[Terrain.ExtractContents(support)].IsCollidable_(support)){reason=$"{Name(d)}需要完整平整的 {size.X}×{size.Z} 格支撑面。";return false;}
-            for(int y=y0;y<y0+size.Y;y++)if(Terrain.ExtractContents(terrain.Terrain.GetCellValue(x,y,z))!=0){reason=$"空间不足：{Name(d)}需要 {SizeText(d)}。";return false;}
+            if(!Solid(terrain.Terrain.GetCellValue(x,y0-1,z))){reason=$"{Name(d)}需要完整平整的 {size.X}×{size.Z} 格支撑面。";return false;}
+            for(int y=y0;y<y0+size.Y;y++)if(!Free(terrain.Terrain.GetCellValue(x,y,z))){reason=$"空间不足：{Name(d)}需要 {SizeText(d)}。";return false;}
         }
         var box=new BoundingBox(new(x0+.001f,y0+.001f,z0+.001f),new(x0+size.X-.001f,y0+size.Y-.001f,z0+size.Z-.001f));
         var near=new DynamicArray<ComponentBody>();bodies.FindBodiesAroundPoint(new(position.X,position.Z),8,near);

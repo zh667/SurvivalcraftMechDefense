@@ -1,9 +1,26 @@
-# Status — 2026-10-25
+# Status — 2026-10-29
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
 below no longer exist; the numbers recorded here stand. Kept: `local/claude-work/bug1023` (the player's log and video),
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
+
+
+## 0.13.0: player feedback (silent weak point, Black Scorpion terrorists, medics, placement, phone heat) (branch feat/player-feedback-1029, 2026-10-29; not merged yet)
+
+Five player reports forwarded by the user; decisions: docs/tasks/2026-10-29-player-feedback.md. The sixth (new enemies) follows as 0.14.0.
+- Devil mech: no chest flash and no "weak point changed" message; the weak channel still changes every 20 s, shown by its ring colour.
+- Towers attack creatures of the herd "Terrorist" (the Black Scorpion gun mod's terrorists and their gun turrets; its neutral and
+  guerrilla NPCs are left alone) and any creature whose attack target object points at the player's side.
+- Medic towers no longer heal medic towers.
+- Placement: a click on grass / flowers / snow, on a block's side, or beside a wall now places the tower; the footprint is the free one
+  nearest the click; grass and flowers in it are cleared, crops and saplings block.
+- Fast towers fire at most once a second with the same damage per second (gatling x4, missile x2, anti-air x2 / x3 per shot); a mod
+  setting 特效数量 (完整 / 精简 default / 极简) thins smoke and small particles.
+- Package dist/MechDefense-0.13.0.scmod, 29,613,066 bytes, SHA-256 eaaad1c0b4527ed8e20d1cacd28be3f21e9093f8a3b065267d599e27af22308a.
+  Verified (PC): 1.9.3.1 fb13, robots (all parts), robots-heroes, all, icons, special, combat, mech, mech-view, phone, old save 0.5.0 -> 0.13.0,
+  new world; 1.9.4 fb13, faction-mods (with the Black Scorpion gun mod), robots-targets / -boss / -settings / -encyclopedia, mech, phone, icons
+  — 21/21 passed. Not verified: a phone.
 
 ## Delivered: 0.12.0: player feedback (raids on players, aggro, leaves, the devil mech by kills, tower chains and repair, phone drawing) (PR #11, merged 2026-10-25 on the user's approval, tag v0.12.0)
 

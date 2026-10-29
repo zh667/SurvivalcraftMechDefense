@@ -52,8 +52,19 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     // The alpha batch blends premultiplied (One, InvSrcAlpha): a straight colour with alpha < 1 adds its full RGB, and
     // overlapping clouds wash out to white. The coloured clouds and ground stains below are premultiplied.
     static Color PM(Color c)=>new((byte)(c.R*c.A/255),(byte)(c.G*c.A/255),(byte)(c.B*c.A/255),c.A);
+    // 0.13.0 particle amount (MDSettings.FxLevel 0 完整 / 1 精简 / 2 极简): smoke (big alpha-blended quads, the costly overdraw on
+    // phones) and the many small bits are thinned at random; flashes, glows, rings, beams and ground marks are kept; fewer may be
+    // alive at once (the oldest quarter goes first).
+    static readonly float[] SmokeKeep=[1,.35f,.15f],BitsKeep=[1,.5f,.25f];static readonly int[] MaxAlive=[3000,1500,800];
+    public static int Thinned;   // tests
     void Emit(S slot,Vector3 pos,Vector3 vel,float life,float s0,float s1,Color c0,Color c1,bool additive,float gravity=0,float drag=0,float stretch=0,float spin=0,bool flat=false) {
-        if(pn>=ps.Length){Array.Copy(ps,ps.Length/4,ps,0,ps.Length-ps.Length/4);pn=ps.Length-ps.Length/4;}
+        int lv=Math.Clamp(MDSettings.FxLevel,0,2);
+        if(lv>0) {
+            float keep=slot switch{S.Smoke or S.Smoke2=>SmokeKeep[lv],S.Spark or S.Pixel or S.Drop or S.Bubble or S.Crystal or S.Fire or S.Dot=>BitsKeep[lv],_=>1f};
+            if(keep<1&&random.NextDouble()>keep){Thinned++;return;}
+        }
+        int cap=Math.Min(ps.Length,MaxAlive[lv]);
+        if(pn>=cap){Array.Copy(ps,cap/4,ps,0,pn-cap/4);pn-=cap/4;}
         ps[pn++]=new P{pos=pos,vel=vel,life=life,s0=s0,s1=s1,c0=c0,c1=c1,slot=slot,add=additive,gravity=gravity,drag=drag,stretch=stretch,rot=R(0,6.28f),spin=spin,flat=flat};
     }
     public void Flash(Vector3 p,float size,Color c,float life=.08f) {

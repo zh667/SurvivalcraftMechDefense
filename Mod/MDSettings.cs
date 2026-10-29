@@ -63,6 +63,10 @@ public static class MDSettings {
     // 0.12.0 (players via the user, 2026-10-25): a robot attacks a player within AggroRange m that it sees (0: only when hit or at
     // the defences, as before); every BossKills destroyed robots bring the devil mech (0: only the beacon)
     public static float AggroRange=16;
+    // 0.13.0 (players via the user, 2026-10-29: phones run hot with many towers; "烟雾和粒子效果可以削减"): particle amount,
+    // 0 完整 / 1 精简 (default) / 2 极简 (MDTowerWorld.Emit)
+    public static int FxLevel=1;
+    public static readonly string[] FxNames=["完整","精简（默认）","极简"];
     public static int BossKills=50;
     public const float MaxAggroRange=48;
     public const int MaxBossKills=200;
@@ -70,12 +74,12 @@ public static class MDSettings {
 
     public static void Defaults() {
         HudShow=HudKeys=true;Hud=new();MDMechKeys.Apply(MDMechKeys.Defaults());
-        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;AggroRange=16;BossKills=50;
+        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;AggroRange=16;BossKills=50;FxLevel=1;
     }
     public static void Normalize() {
         Hud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
         StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,75),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
-        AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);
+        AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);FxLevel=Math.Clamp(FxLevel,0,2);
         if(!Enum.IsDefined(SpawnTime))SpawnTime=MDSpawnTime.Night;
     }
     static float Finite(float v,float d)=>float.IsFinite(v)?v:d;
@@ -87,7 +91,7 @@ public static class MDSettings {
             new XAttribute("HudX",F(Hud.X)),new XAttribute("HudY",F(Hud.Y)),new XAttribute("HudScale",F(Hud.Scale)),new XAttribute("HudRotation",F(Hud.Rotation)),
             new XAttribute("SpawnTime",SpawnTime),new XAttribute("SpawnInterval",F(SpawnInterval)),new XAttribute("SpawnDensity",F(SpawnDensity)),
             new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize)),
-            new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),   // 0.12.0
+            new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),new XAttribute("FxLevel",FxLevel),   // 0.12.0
             new XAttribute("MechKeys",MDMechKeys.ToText(MDMechKeys.Current()))));   // 0.11.0: the mech's bound keys (MDMechKeys)
     }
     // a missing or unreadable value keeps the default
@@ -100,7 +104,7 @@ public static class MDSettings {
             Hud=new MDHudPlacement{Custom=B("HudCustom",false),X=N("HudX",.85f),Y=N("HudY",.8f),Scale=N("HudScale",1),Rotation=N("HudRotation",0)};
             SpawnTime=Enum.TryParse<MDSpawnTime>((string)e.Attribute("SpawnTime"),out var st)?st:MDSpawnTime.Night;
             SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",75);RaidSize=N("RaidSize",1);
-            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",50));
+            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",50));FxLevel=(int)MathF.Round(N("FxLevel",1));
             MDMechKeys.Apply(MDMechKeys.FromText((string)e.Attribute("MechKeys")));
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}

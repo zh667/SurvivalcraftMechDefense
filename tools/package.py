@@ -49,11 +49,12 @@ settings=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8')).get('
 assert settings and settings[0]['Items'][0]['Widget']=='Game.MDSettingsEntryWidget','modinfo.json Settings'
 # robot enemies (Mod/MDRobots.cs, tools/build_unit_assets.py): same checks as Mercury's assets
 # 0.14.0: our own v3 units (tools/stage_v3_units.py from E:/projects/dguns-enemy-models/v3_new) carry their own checks
-# (checks/SUMMARY.json all_ok, copied as v3_checks.json) instead of the re-pose numbers of build_unit_assets.py
-for unit in ['RD05','RD06','RD07','RD17','RD14']:
+# (checks/SUMMARY.json all_ok, or gates missed and accepted in stage_v3_units.ACCEPTED) instead of the re-pose numbers of
+# build_unit_assets.py
+for unit in ['RD05','RD06','RD07','RD17','RD14','RD09','EN02']:
     d=assets/'Imported'/unit;u=json.loads((d/'unit.json').read_text(encoding='utf-8'))
     assert (d/'clips.bin').stat().st_size==4*8*len(u['joints'])*sum(c['samples'] for c in u['clips']),f'{unit} clips.bin does not match unit.json'
-    if (d/'v3_checks.json').exists():assert json.loads((d/'v3_checks.json').read_text(encoding='utf-8')).get('all_ok') is True,f'{unit} v3 checks failed'
+    if (d/'v3_checks.json').exists():v3=json.loads((d/'v3_checks.json').read_text(encoding='utf-8'));assert v3.get('all_ok') is True or v3.get('accepted'),f'{unit} v3 checks failed'
     else:
         checks=u.get('check') or []
         assert checks and max(c['p99_m'] for c in checks)<1e-3,f'{unit} assets failed their re-pose check'

@@ -8,7 +8,7 @@ namespace Game;
 // like any robot (towers and Mercury; players only outside Creative) and drops its loot. The devil mech only while none is
 // about, scaled to the towers around it like one called by the beacon. Icons: each unit's icon mesh (tools/build_unit_assets.py).
 public class MDSummonBlock : Block {
-    public static readonly string[] Templates=[..MDRobots.Normal,..MDRobots.Elites,MDRobots.Boss,..MDRobots.Tanks];   // new units at the end: an item's data keeps its unit
+    public static readonly string[] Templates=[..MDRobots.Normal,..MDRobots.Elites,MDRobots.Boss,..MDRobots.Tanks,..MDRobots.Drones,..MDRobots.Gunships];   // new units at the end: an item's data keeps its unit
     static readonly string[] SkinNames=["","（B 型涂装）","（C 型涂装）"];
     public static int Count=>Templates.Length;
     static int Data(int value)=>Math.Clamp(Terrain.ExtractData(value),0,Templates.Length-1);

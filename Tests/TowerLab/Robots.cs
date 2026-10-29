@@ -119,7 +119,7 @@ public partial class Lab {
         }
         // ---- every robot template: model, joints, loot; a gallery and each unit's clips
         if(Part("gallery")) {
-        var tpl=MDRobots.Normal.Concat(MDRobots.Elites).Concat(MDRobots.Tanks).ToList();var loads=new Dictionary<string,object>();var gallery=new List<ComponentMDRobot>();
+        var tpl=MDRobots.Normal.Concat(MDRobots.Elites).Concat(MDRobots.Tanks).Concat(MDRobots.Drones).Concat(MDRobots.Gunships).ToList();var loads=new Dictionary<string,object>();var gallery=new List<ComponentMDRobot>();
         for(int i=0;i<tpl.Count;i++)gallery.Add(Spawn(tpl[i],origin+new Vector3(i*4.5f-4,0,12),MathF.PI));
         foreach(var g in gallery){g.ForceClip="idle";g.ForceTime=0;}
         while(Wait(1.5))yield return true;

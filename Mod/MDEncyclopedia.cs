@@ -13,7 +13,7 @@ public static class MDEncyclopedia {
     // ---- the bestiary lists templates with CreatureEggData (EggTypeIndex >= 0). tools/prepare_database.py gives these four one
     // (index 3900-3903, after the game's 0-49; ShowEgg false and no food value: a hidden egg type, no item, no recipe); skins B
     // and C stay out.
-    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14")];
+    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14"),("MDRobot09","RD09"),("MDRobotEN02","EN02")];
     // the numbers for a bestiary entry of ours (null for any other creature). The list shows each creature's description in one
     // row, so the numbers go only on its own page (MDBestiaryPagePatch), computed when shown: the mod settings may have changed.
     public static string NumbersFor(BestiaryCreatureInfo info) {
@@ -40,15 +40,15 @@ public static class MDEncyclopedia {
     static string Appear(MDRobotKind k) {
         if(k.Boss)return $"用诱敌信标召唤，{MDBoss.Countdown:0} 秒后从远处飞来"+(MDSettings.BossKills>0?$"；生存模式里每击毁 {MDSettings.BossKills} 台机兵也会自动出现（这个存档已击毁 {MDBossKills.Count} 台）":"");
         int d=MDSettings.StartDay;var parts=new List<string>();
-        if(d>0&&MDSettings.SpawnTime!=MDSpawnTime.Off)parts.Add($"第 {d+(k.Elite?7:0)} 天起出现在野外（{MDSettings.SpawnTimeName(MDSettings.SpawnTime)}）");
-        if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite?$"第 {d+3} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
+        if(d>0&&MDSettings.SpawnTime!=MDSpawnTime.Off)parts.Add($"第 {d+(k.Elite?7:k.FromDay)} 天起出现在野外（{MDSettings.SpawnTimeName(MDSettings.SpawnTime)}）");
+        if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite||k.FromDay>0?$"第 {d+3} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
         return parts.Count==0?"现在的模组设置不刷新敌方机兵":string.Join("；",parts)+"（模组设置里可改）";
     }
-    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",_=>k.Weapon};
+    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","drone"=>"机炮点射（在空中绕着目标飞）","gunship"=>"两门机炮交替扫射（在空中绕着目标飞）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",_=>k.Weapon};
     public static string RobotNumbers(MDRobotKind k,float hp) {
         var s=new StringBuilder("【数值】");
         s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +1000 / 2000 / 3000，每台机甲 +3000～5000，最高 160000）":$"{hp:0}")}");
-        s.Append(k.Boss?$"\n移动：飞行 {k.Speed:0.#} 米／秒，冲刺 {MDBossState.ChargeSpeed:0} 米／秒":$"\n移动：{k.Speed:0.#} 米／秒");
+        s.Append(k.Boss?$"\n移动：飞行 {k.Speed:0.#} 米／秒，冲刺 {MDBossState.ChargeSpeed:0} 米／秒":k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
         s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
         s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
         if(k.Boss)s.Append($"\n限伤：每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");

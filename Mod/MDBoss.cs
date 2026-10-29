@@ -39,7 +39,7 @@ public sealed class MDBossState {
     // that speed. Setting the body's gravity or velocity directly does not hold: locomotion turns gravity back on every update.
     // The vanilla pilot adds a (0, -0.5, 0) fly order to every idle flying creature (birds settle down); depending on the update
     // order of the components it was added on top of this one and pulled the boss to the ground (full lab run, 2026-10-21), so
-    // the wanted order is also set right before locomotion runs (MDBossFlyOrder).
+    // the wanted order is also set right before locomotion runs (MDBossFlyOrder; the drones' too, ComponentMDRobot.FlyWanted).
     public Vector3? Wanted;
     void Fly(Vector3 velocity){var l=r.Creature.ComponentLocomotion;Wanted=l.FlySpeed>0?velocity/l.FlySpeed:Vector3.Zero;l.FlyOrder=Wanted;}
     public void Save(ValuesDictionary v){v.SetValue("BossArmour",Armour);v.SetValue("BossEscorts",Escorts);v.SetValue("BossEscortSize",EscortSize);v.SetValue("BossWeak",Weak);v.SetValue("BossWeakTimer",WeakTimer);v.SetValue("BossHasHome",Home.HasValue);if(Home.HasValue)v.SetValue("BossHome",Home.Value);}
@@ -222,7 +222,7 @@ public static class MDBoss {
         var p=boss.Project;var home=boss.Boss.Home??boss.Body.Position;var rng=new System.Random();var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
         for(int i=0;i<size;i++) {
             var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.Pick(MDRobots.Elites):MDRobots.PickNormal(p,rng),true);
+            var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=home;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;p.AddEntity(e);sent++;   // kept while busy (ComponentMDRobot.Update)
         }
         boss.Boss.EscortsSent+=sent;
@@ -230,10 +230,12 @@ public static class MDBoss {
     }
     // ModLoader hook ProcessAttackment (MDModLoader): the weak channel takes full damage, the others 40 %. No knockback and no
     // stun: every hit stuns a creature 0.2 s, and a stunned creature's locomotion stops flying and turns gravity back on, so
-    // under tower fire the boss sank to the ground (lab trace, 2026-10-20).
+    // under tower fire the boss sank to the ground (lab trace, 2026-10-20). The drones (0.14.0) the same: under an anti-air tower
+    // they kept dropping to the ground (lab, 2026-10-30).
     public static void Modify(Attackment a) {
-        if(a.Target?.FindComponent<ComponentMDRobot>() is not {Boss:{} b})return;
+        if(a.Target?.FindComponent<ComponentMDRobot>() is not {} r||r.Boss==null&&r.Kind.Fly<=0)return;
         a.ImpulseFactor=0;a.StunTimeSet=null;a.StunTimeAdd=0;
+        if(r.Boss is not {} b)return;
         string ch=a is MDTowerAttackment t?t.Channel??"kinetic":"kinetic";
         a.AttackPower*=ch==MDBossState.Channels[b.Weak]?MDBossState.WeakFactor:MDBossState.OtherFactor;
     }
@@ -271,5 +273,5 @@ public static class MDBossKills {
 
 [HarmonyLib.HarmonyPatch(typeof(ComponentLocomotion),nameof(ComponentLocomotion.Update))]
 public static class MDBossFlyOrder {
-    public static void Prefix(ComponentLocomotion __instance){if(__instance.Entity.FindComponent<ComponentMDRobot>() is {Boss:{Wanted:{} w}} r&&r.Health.Health>0)__instance.FlyOrder=w;}
+    public static void Prefix(ComponentLocomotion __instance){if(__instance.Entity.FindComponent<ComponentMDRobot>() is {} r&&r.Health.Health>0&&(r.Boss!=null?r.Boss.Wanted:r.FlyWanted) is {} w)__instance.FlyOrder=w;}
 }

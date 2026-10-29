@@ -8,13 +8,23 @@ namespace Game;
 // like any robot (towers and Mercury; players only outside Creative) and drops its loot. The devil mech only while none is
 // about, scaled to the towers around it like one called by the beacon. Icons: each unit's icon mesh (tools/build_unit_assets.py).
 public class MDSummonBlock : Block {
-    public static readonly string[] Templates=[..MDRobots.Normal,..MDRobots.Elites,MDRobots.Boss];
+    public static readonly string[] Templates=[..MDRobots.Normal,..MDRobots.Elites,MDRobots.Boss,..MDRobots.Tanks];   // new units at the end: an item's data keeps its unit
     static readonly string[] SkinNames=["","（B 型涂装）","（C 型涂装）"];
     public static int Count=>Templates.Length;
     static int Data(int value)=>Math.Clamp(Terrain.ExtractData(value),0,Templates.Length-1);
     public static string Template(int value)=>Templates[Data(value)];
-    static MDRobotKind KindOf(int value)=>MDRobots.Kind(Data(value) switch{<3=>"RD05",<6=>"RD06",<9=>"RD07",_=>"RD17"});
-    static string Skin(int value)=>Data(value)<9?SkinNames[Data(value)%3]:"";
+    // the unit and skin from the item's template (its ComponentMDRobot Kind; skins end in B / C): 0.14.0 adds units after the boss,
+    // so data ranges no longer say which one (the tank showed as the devil mech)
+    static readonly Dictionary<string,string> kinds=[];
+    static MDRobotKind KindOf(int value) {
+        var t=Template(value);
+        if(!kinds.TryGetValue(t,out var id)) {
+            var vd=DatabaseManager.FindEntityValuesDictionary(t,true);
+            kinds[t]=id=DatabaseManager.FindValuesDictionaryForComponent(vd,typeof(ComponentMDRobot)).GetValue<string>("Kind");
+        }
+        return MDRobots.Kind(id);
+    }
+    static string Skin(int value){var t=Template(value);return KindOf(value).Boss?"":t.EndsWith("B")?SkinNames[1]:t.EndsWith("C")?SkinNames[2]:"";}
     public static int Value(int data)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDSummonBlock>(),0,data);
     public override void Initialize(){DefaultDisplayName="机兵召唤";DefaultCategory="Spawn";CraftingId="mdsummon";IsPlaceable=false;DefaultIsUseable=true;MaxStacking=1;base.Initialize();}
     public override string GetDisplayName(SubsystemTerrain t,int v)=>$"召唤：{KindOf(v).Name}{Skin(v)}";

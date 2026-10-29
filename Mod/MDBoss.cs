@@ -222,7 +222,7 @@ public static class MDBoss {
         var p=boss.Project;var home=boss.Boss.Home??boss.Body.Position;var rng=new System.Random();var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
         for(int i=0;i<size;i++) {
             var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+            var e=DatabaseManager.CreateEntity(p,i%2==0?MDRobots.Pick(MDRobots.Elites):MDRobots.PickNormal(p,rng),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=home;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;p.AddEntity(e);sent++;   // kept while busy (ComponentMDRobot.Update)
         }
         boss.Boss.EscortsSent+=sent;

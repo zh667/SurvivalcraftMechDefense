@@ -25,6 +25,9 @@ public sealed class MDRobotKind {
     public float VsCreature,VsStructure;          // damage per hit against creatures (players: 1.0 health) and against towers / Mercury
     public string[] Muzzles; public int FireSe,HitSe;
     public MDTowerDef Look;
+    // 0.14.0 procedural aim (the original tank's clips move no joint): a turret joint that yaws within ±YawLimit (rad) of the body
+    // and a cradle joint that pitches between PitchMin and PitchMax, both turning at AimRate rad/s; joint name prefixes
+    public string AimYaw,AimPitch; public float YawLimit,PitchMin,PitchMax,AimRate=1.6f;
 }
 
 public static class MDRobots {
@@ -41,6 +44,11 @@ public static class MDRobots {
               VsCreature=3f,VsStructure=60,Muzzles=["podL","podR"],FireSe=9,HitSe=14,Speed=3f,Look=Look("missile","shell",[1,.6f,.25f],[1,.4f,.15f],1.1f)},
         new(){Id="RD07",Name="炮击步行机兵",Root=Root+"RD07/",Elite=true,Weapon="cannon",Sight=48,Range=44,MinRange=7,Interval=5.5f,Shots=1,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
               VsCreature=4f,VsStructure=140,Muzzles=["cannonL","cannonR"],FireSe=11,HitSe=24,Speed=2.8f,Look=Look("shell","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f)},
+        // 0.14.0 (players via the user, 2026-10-29; our own model, E:/projects/dguns-enemy-models/v3_new/rd14): twin-barrel tank, a
+        // heavier normal enemy from 3 days after the start day; its turret aims on its own (±135°, -5°..30°), so it fires on the move
+        new(){Id="RD14",Name="双管装甲战车",Root=Root+"RD14/",Weapon="tank",Sight=40,Range=30,MinRange=4,Interval=3.2f,Shots=2,ShotGap=.35f,ShotSpeed=55,Spread=.02f,Splash=1.5f,Windup=.3f,
+              VsCreature=2.5f,VsStructure=45,Muzzles=["gunL","gunR"],FireSe=11,HitSe=13,Speed=3f,Look=Look("tank","shell",[1,.55f,.25f],[1,.35f,.15f],1f),
+              AimYaw="04_",AimPitch="05_",YawLimit=135*MathF.PI/180,PitchMin=-5*MathF.PI/180,PitchMax=30*MathF.PI/180},
         new(){Id="RD17",Name="恶魔机甲",Root=Root+"RD17/",Boss=true,Weapon="devil",Sight=64,Range=40,MinRange=0,Interval=8,Shots=10,ShotGap=.2f,ShotSpeed=16,Splash=2.5f,Windup=1,
               VsCreature=3f,VsStructure=80,Muzzles=["armL","armR"],FireSe=9,HitSe=14,Speed=7,Look=Look("devil","shell",[1,.3f,.35f],[1,.2f,.25f],1.3f)},
     ];
@@ -49,6 +57,9 @@ public static class MDRobots {
     public static readonly string[] Normal=["MDRobot05","MDRobot05B","MDRobot05C"];
     public static readonly string[] Elites=["MDRobot06","MDRobot06B","MDRobot06C","MDRobot07","MDRobot07B","MDRobot07C"];
     public const string Boss="MDDevilMech";
+    public static readonly string[] Tanks=["MDRobot14","MDRobot14B","MDRobot14C"];   // 0.14.0
+    // a normal enemy: from 3 days after the start day a quarter of them are tanks (lab: always allowed)
+    public static string PickNormal(Project p,System.Random rng,bool lab=false)=>(lab||MDSettings.StartDay>0&&MDWildSpawns.Day(p)>=MDSettings.StartDay+3)&&rng.NextDouble()<.25?Tanks[rng.Next(Tanks.Length)]:Normal[rng.Next(Normal.Length)];
     public const float HuntRange=96;                       // a robot walks to the nearest tower or Mercury this close
     // A robot that a player, the player's herd or a mech hits locks on to it and fights it until it dies, leaves the world or is
     // this far away (user, 2026-10-25: "玩家攻击了就一直攻击玩家，不要一会被炮塔拉仇恨，一会被玩家拉仇恨，拉来拉去的"; was 30 s
@@ -122,10 +133,12 @@ public static class MDRobots {
     public static void Sound(Project p,int se,Vector3 at,float volume)=>p.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(se),volume,R(-.05f,.05f),at,20,false);
     // The robots' own pose: the clip's local transforms composed down the joint tree (row form, like MDMechPose without the
     // pilot's aim): Bone[j] is the engine's bone transform T(p) L T(-p), Model[j] takes a rest point of joint j to model space.
-    public static MDMechPose Pose(MDMechDef d,MDXf[] local) {
+    public static MDMechPose Pose(MDMechDef d,MDXf[] local,int yawJoint=-1,float yaw=0,int pitchJoint=-1,float pitch=0) {
         int n=d.joints.Length;var p=new MDMechPose{Bone=new Matrix[n],Model=new Matrix[n]};
         for(int j=0;j<n;j++) {
-            var L=local[j].Row;var pv=d.pivots[j];int pj=d.joints[j].parent;var M=pj>=0?L*p.Model[pj]:L;
+            var L=local[j].Row;
+            if(j==yawJoint&&yaw!=0)L=Matrix.CreateRotationY(yaw)*L;          // in the joint's own frame, about its pivot (row form)
+            if(j==pitchJoint&&pitch!=0)L=Matrix.CreateRotationX(pitch)*L;var pv=d.pivots[j];int pj=d.joints[j].parent;var M=pj>=0?L*p.Model[pj]:L;
             p.Bone[j]=Matrix.CreateTranslation(pv)*L*Matrix.CreateTranslation(-pv);p.Model[j]=M;
         }
         return p;
@@ -183,7 +196,26 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         v.SetValue("Raider",Raider);v.SetValue("HasRaidGoal",RaidGoal.HasValue);if(RaidGoal.HasValue)v.SetValue("RaidGoal",RaidGoal.Value);Boss?.Save(v);
     }
-    public MDMechPose Pose()=>pose??=MDRobots.Pose(Def,Anim.Evaluate());
+    public MDMechPose Pose()=>pose??=MDRobots.Pose(Def,Anim.Evaluate(),yawJoint,AimYawNow,pitchJoint,AimPitchNow);
+    // 0.14.0 turret aim (Kind.AimYaw / AimPitch): relative to the body, eased towards the target
+    public float AimYawNow,AimPitchNow; int yawJoint=-2,pitchJoint=-2;
+    void Aim(float dt) {
+        if(yawJoint==-2){yawJoint=Kind.AimYaw!=null?Def.Joint(Kind.AimYaw):-1;pitchJoint=Kind.AimPitch!=null?Def.Joint(Kind.AimPitch):-1;}
+        if(yawJoint<0)return;
+        float wantYaw=0,wantPitch=0;
+        if(Target!=null) {
+            var c=MDCombat.Center(Target);var inv=Matrix.Invert(Body.Matrix);var local=Vector3.Transform(c,inv);
+            var from=Def.pivots[pitchJoint>=0?pitchJoint:yawJoint];var d=local-from;
+            wantYaw=Math.Clamp(MathF.Atan2(-d.X,-d.Z),-Kind.YawLimit,Kind.YawLimit);
+            wantPitch=Math.Clamp(MathF.Atan2(d.Y,new Vector2(d.X,d.Z).Length()),Kind.PitchMin,Kind.PitchMax);
+        }
+        float step=Kind.AimRate*dt;AimYawNow+=Math.Clamp(wantYaw-AimYawNow,-step,step);AimPitchNow+=Math.Clamp(wantPitch-AimPitchNow,-step,step);pose=null;
+    }
+    // aimed at the target: the turret (when it has one) or the body within 0.35 rad
+    bool Aligned(Vector2 flat) {
+        float want=MathF.Atan2(-flat.X,-flat.Y);
+        return yawJoint>=0?MathF.Abs(MDCombat.AngleDelta(Yaw+AimYawNow,want))<.12f:MathF.Abs(MDCombat.AngleDelta(Yaw,want))<.35f;
+    }
     public float Yaw=>MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);
     public Vector3 Point(string muzzle,out Vector3 dir) {
         if(!Def.muzzles.TryGetValue(muzzle,out var m)&&!Def.muzzles.TryGetValue("core",out m)){dir=Body.Matrix.Forward;return Body.Position+Vector3.UnitY*Body.BoxSize.Y*.6f;}
@@ -214,6 +246,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(Chase!=null&&(!Chasing||!Chase.Entity.IsAddedToProject))Chase=null;
         leafCheck-=dt;if(leafCheck<=0){leafCheck=.3f;MDRobots.LeavesBroken+=MDRobots.BreakLeavesAround(Body);}
         if(Target!=null&&!Valid(Target))Target=null;
+        Aim(dt);
         if(Boss!=null)Boss.Update(dt);
         else if(IsActive)Engage(dt);
         else if(ShotsLeft>0||Windup>=0){ShotsLeft=0;Windup=-1;}
@@ -224,7 +257,8 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     void BaseClip() {
         var v=Body.Velocity;v.Y=0;float sp=v.Length();var f=Body.Matrix.Forward;
         if(sp>.35f) {
-            string clip=Vector3.Dot(v,f)<-.3f*sp&&Def.Has("walk_backward")?"walk_backward":Def.Has("walk_forward")?"walk_forward":"idle";
+            bool back=Vector3.Dot(v,f)<-.3f*sp;   // walkers: walk_*; the tank: move_* (0.14.0)
+            string clip=back&&Def.Has("walk_backward")?"walk_backward":back&&Def.Has("move_backward")?"move_backward":Def.Has("walk_forward")?"walk_forward":Def.Has("move_forward")?"move_forward":"idle";
             float foot=Def.Clip(clip).footSpeed is float fs&&fs>.2f?fs:Kind.Speed;Anim.PlayBase(clip,Math.Clamp(sp/foot,.5f,2f),.2f);
         }
         else Anim.PlayBase("idle",1,.3f);
@@ -294,7 +328,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             else if(dist<Kind.MinRange){var away=Body.Position-new Vector3(flat.X,0,flat.Y)/Math.Max(dist,.1f)*6;path.SetDestination(away,1,1.5f,100,true,true,false,null);}
             else path.Stop();
             if(sight&&dist<=Kind.Range&&path.Destination==null)Face(tc,dt);
-            bool aligned=MathF.Abs(MDCombat.AngleDelta(Yaw,MathF.Atan2(-flat.X,-flat.Y)))<.35f;
+            bool aligned=Aligned(flat);
             Fire(dt,sight&&dist<=Kind.Range&&dist>=Kind.MinRange*.7f&&aligned);
         }
         else {
@@ -325,7 +359,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         var f=new MDTowerWorld.Foreign{owner=Entity,look=k.Look,pos=from,pass=b=>b==Body||MDRobots.IsRobot(b.Entity)};
         f.landed=(p,d,b)=>Landed(p,d,b);ShotsFired++;
         switch(k.Weapon) {
-            case "twin": {
+            case "twin": case "tank": {   // straight shots (the tank's shells burst: Splash)
                 float t=Vector3.Distance(from,tc)/k.ShotSpeed;var aim=tc+target.Velocity*t;
                 var dir=Vector3.Normalize(Vector3.Normalize(aim-from)+new Vector3(MDRobots.R(-1,1),MDRobots.R(-1,1),MDRobots.R(-1,1))*k.Spread);
                 f.vel=dir*k.ShotSpeed;f.life=2;w.Muzzle(k.Look,from,dir,false);break;
@@ -419,7 +453,7 @@ public static class MDWildSpawns {
             if(centre==null){LastReason="no open ground";continue;}
             for(int i=0;i<group;i++) {
                 var spot=i==0?centre:MDRaids.Ground(terrain,centre.Value,(float)(rng.NextDouble()*Math.PI*2),3+(float)rng.NextDouble()*3,rng);if(spot==null)continue;
-                var e=DatabaseManager.CreateEntity(p,elites&&rng.NextDouble()<.25?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+                var e=DatabaseManager.CreateEntity(p,elites&&rng.NextDouble()<.25?MDRobots.Pick(MDRobots.Elites):MDRobots.PickNormal(p,rng,lab),true);
                 var b=e.FindComponent<ComponentBody>(true);b.Position=spot.Value;b.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,(float)(rng.NextDouble()*Math.PI*2));
                 e.FindComponent<ComponentCreature>(true).ConstantSpawn=true;p.AddEntity(e);sent++;
             }
@@ -491,7 +525,7 @@ public static class MDRaids {
         var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;double now=p.FindSubsystem<SubsystemTime>(true).GameTime;
         for(int i=0;i<size;i++) {
             var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+            var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.PickNormal(p,rng),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;   // see ComponentMDRobot.Update
             if(chase!=null){r.Chase=chase.ComponentBody;r.ChaseUntil=now+MDRobots.ChaseTime;}
             p.AddEntity(e);sent++;

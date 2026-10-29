@@ -119,7 +119,7 @@ public partial class Lab {
         }
         // ---- every robot template: model, joints, loot; a gallery and each unit's clips
         if(Part("gallery")) {
-        var tpl=MDRobots.Normal.Concat(MDRobots.Elites).ToList();var loads=new Dictionary<string,object>();var gallery=new List<ComponentMDRobot>();
+        var tpl=MDRobots.Normal.Concat(MDRobots.Elites).Concat(MDRobots.Tanks).ToList();var loads=new Dictionary<string,object>();var gallery=new List<ComponentMDRobot>();
         for(int i=0;i<tpl.Count;i++)gallery.Add(Spawn(tpl[i],origin+new Vector3(i*4.5f-4,0,12),MathF.PI));
         foreach(var g in gallery){g.ForceClip="idle";g.ForceTime=0;}
         while(Wait(1.5))yield return true;
@@ -263,9 +263,11 @@ public partial class Lab {
             var s=new List<string>();r["summons"]=s;var inv=pl.ComponentMiner.Inventory;var placedRobots=new List<ComponentMDRobot>();
             var block=(MDSummonBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDSummonBlock>()];
             if(block.GetCreativeValues().Count()!=MDSummonBlock.Count)throw new Exception("summons in the creative list: "+block.GetCreativeValues().Count());
+            // terrain is generated around the camera: look at the summon rows first (a click on a missing chunk went 32 m off or nowhere)
+            for(double s0=Time.RealTime;Time.RealTime-s0<2.5;){Cam(Home+new Vector3(0,16,-4),Home+new Vector3(0,0,-28));yield return true;}
             for(int i=0;i<MDSummonBlock.Count;i++) {
-                var spot=Home+new Vector3(-27+i*6,0,-22);pl.ComponentBody.Position=spot+new Vector3(0,0,5);pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;
-                foreach(var x in During(.3,()=>{}))yield return x;
+                var spot=Home+new Vector3(-27+i%10*6,0,-22-i/10*12);pl.ComponentBody.Position=spot+new Vector3(0,0,5);pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;
+                foreach(var x in During(.3,()=>Cam(Home+new Vector3(0,16,-4),Home+new Vector3(0,0,-28))))yield return x;
                 int v=MDSummonBlock.Value(i);inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,v,1);inv.ActiveSlotIndex=0;
                 var before=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null).ToHashSet();
                 pl.ComponentMiner.Use(new Ray3(pl.ComponentBody.Position+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
@@ -422,7 +424,7 @@ public partial class Lab {
             var eggRecipes=CraftingRecipesManager.Recipes.Count(cr=>Terrain.ExtractContents(cr.ResultValue)==eggBlock.BlockIndex&&Robot(eggBlock.GetEggType(Terrain.ExtractData(cr.ResultValue)))
                 ||cr.Ingredients.Any(i=>i!=null&&i.StartsWith("egg:")&&int.TryParse(i[4..],out int ed)&&Robot(eggBlock.GetEggType(ed))));
             e["eggTypes"]=$"{eggBlock.m_eggTypes.Count} egg types; robots: {string.Join(", ",robotEggs.Select(x=>$"{x.Key} {x.Value.TemplateName} show {x.Value.ShowEgg} food {x.Value.NutritionalValue}"))}; items {eggItems}, recipes {eggRecipes}";
-            if(robotEggs.Count!=4||robotEggs.Any(x=>x.Value.ShowEgg||x.Value.NutritionalValue>0||!MDEncyclopedia.Bestiary.Any(b=>b.Template==x.Value.TemplateName))||eggItems>0||eggRecipes>0)
+            if(robotEggs.Count!=MDEncyclopedia.Bestiary.Length||robotEggs.Any(x=>x.Value.ShowEgg||x.Value.NutritionalValue>0||!MDEncyclopedia.Bestiary.Any(b=>b.Template==x.Value.TemplateName))||eggItems>0||eggRecipes>0)
                 throw new Exception("robot eggs: "+e["eggTypes"]);
             best.m_creaturesList.ScrollToItem(found[3]);foreach(var x in Shot2("re_bestiary_list"))yield return x;
             var pages=new List<string>();
@@ -708,7 +710,7 @@ public partial class Lab {
                 var towers=new[]{Place(defs.First(t=>t.data==0),Home+new Vector3(-7,0,4),0),Place(defs.First(t=>t.data==0),Home+new Vector3(7,0,4),0),Place(defs.First(t=>t.data==4),Home+new Vector3(0,0,10),0)};
                 var mech=Deploy(Home+new Vector3(14,0,14));
                 pl.ComponentBody.Position=summonAt+new Vector3(0,0,6);pl.ComponentBody.Rotation=Quaternion.Identity;pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.5))yield return true;
-                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDSummonBlock.Value(MDSummonBlock.Count-1),1);inv.ActiveSlotIndex=0;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDSummonBlock.Value(Array.IndexOf(MDSummonBlock.Templates,MDRobots.Boss)),1);inv.ActiveSlotIndex=0;
                 pl.ComponentMiner.Use(new Ray3(pl.ComponentBody.Position+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
                 var boss=MDBoss.Alive(proj)??throw new Exception("escorts: no boss");pl.ComponentBody.Position=Home+new Vector3(-20,0,24);
                 while(Wait(2))yield return true;

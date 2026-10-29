@@ -13,7 +13,7 @@ public static class MDEncyclopedia {
     // ---- the bestiary lists templates with CreatureEggData (EggTypeIndex >= 0). tools/prepare_database.py gives these four one
     // (index 3900-3903, after the game's 0-49; ShowEgg false and no food value: a hidden egg type, no item, no recipe); skins B
     // and C stay out.
-    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17")];
+    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14")];
     // the numbers for a bestiary entry of ours (null for any other creature). The list shows each creature's description in one
     // row, so the numbers go only on its own page (MDBestiaryPagePatch), computed when shown: the mod settings may have changed.
     public static string NumbersFor(BestiaryCreatureInfo info) {
@@ -44,7 +44,7 @@ public static class MDEncyclopedia {
         if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite?$"第 {d+3} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
         return parts.Count==0?"现在的模组设置不刷新敌方机兵":string.Join("；",parts)+"（模组设置里可改）";
     }
-    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",_=>k.Weapon};
+    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",_=>k.Weapon};
     public static string RobotNumbers(MDRobotKind k,float hp) {
         var s=new StringBuilder("【数值】");
         s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +1000 / 2000 / 3000，每台机甲 +3000～5000，最高 160000）":$"{hp:0}")}");

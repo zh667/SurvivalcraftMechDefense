@@ -78,9 +78,13 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDRobot07','RD07','model','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
     ('MDRobot07B','RD07','model_b','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
     ('MDRobot07C','RD07','model_c','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
+    # 0.14.0: the tank (our own model, tools/stage_v3_units.py), three paint schemes
+    ('MDRobot14','RD14','model','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
+    ('MDRobot14B','RD14','model_b','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
+    ('MDRobot14C','RD14','model_c','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
     ('MDDevilMech','RD17','model','恶魔机甲','用诱敌信标引来的首领，按附近炮塔数量强化耐久。弱点每 20 秒在冲击、爆炸、能量之间变化，只有弱点伤害全额生效。必掉机甲设计图。',40000,7,4000,'boss'),
 ]
-BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903}   # bestiary entries (EggTypeIndex), see below
+BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903,'MDRobot14':3904}   # bestiary entries (EggTypeIndex), see below
 def unit_box(kind):
     u=root/f'Mod/Assets/Imported/{kind}/unit.json'
     if u.exists():

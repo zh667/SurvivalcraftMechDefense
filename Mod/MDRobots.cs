@@ -70,7 +70,7 @@ public static class MDRobots {
         new(){Id="RD08",Name="重装悬浮炮艇",Root=Root+"RD08/",Boss=true,Weapon="gunboat",Sight=64,Range=40,Interval=2.5f,Shots=12,ShotGap=.09f,ShotSpeed=70,Spread=.05f,Windup=.3f,
               VsCreature=.5f,VsStructure=8,Muzzles=["mgC","mgL","mgR"],FireSe=8,HitSe=13,Speed=4,BossArmour=.9f,Look=Look("gunboat","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
         new(){Id="RD19",Name="重型装甲炮车",Root=Root+"RD19/",Boss=true,Weapon="siege",Sight=72,Range=60,MinRange=12,Interval=7,Shots=6,ShotGap=.35f,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
-              VsCreature=3f,VsStructure=90,Muzzles=["hou1","hou2","hou3","hou4"],FireSe=11,HitSe=24,Speed=0,BossArmour=1.1f,Look=Look("siege","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f),
+              VsCreature=3f,VsStructure=90,Muzzles=["hou1","hou2","hou3","hou4"],FireSe=11,HitSe=24,Speed=3,BossArmour=1.1f,Look=Look("siege","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f),
               AimYaw="10_",AimPitch="11_",YawLimit=150*MathF.PI/180,PitchMin=-5*MathF.PI/180,PitchMax=35*MathF.PI/180,AimRate=.5f},
     ];
     // a boss's other weapons (Mod/MDBoss.cs): type "missile" homes, Gravity > 0 flies an arc, anything else straight
@@ -163,6 +163,7 @@ public static class MDRobots {
         float power=(structure?k.VsStructure:k.VsCreature)*scale;if(power<=0)return;
         if(b.Entity.FindComponent<ComponentPlayer>()!=null){PlayerHits++;if(PlayerHitLog.Count<200)PlayerHitLog.Add($"{k.Id} x{scale:0.00} at {Vector3.Distance(point,b.Position):0.0} m");}
         ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power){Explosive=k.Splash>0});
+        if(structure&&attacker?.FindComponent<ComponentMDRobot>()?.Kind.Boss==true)MDTowerWorld.For(attacker.Project).BlockHeal(b,MDBoss.HealBlock);   // 0.14.0: no healing for a while
     }
     public static int PlayerHits; public static readonly List<string> PlayerHitLog=[];   // tests: robot hits on players
     public static void Splash(Entity attacker,MDRobotKind k,Vector3 point,float r,ComponentBody skip) {

@@ -3058,12 +3058,12 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Creature" Guid="b56280cb-6795-58a5-aaed-8111bb3ecd52">
         <Parameter Name="DisplayName" Type="string" Value="重型装甲炮车" Guid="d2affda5-a324-5085-a83f-900bbcc326da" />
-        <Parameter Name="Description" Type="string" Value="首领：从地下钻出的重型炮台，不能移动，主炮和榴弹炮从远处轰击阵地。升起时绕到背后打，主炮蓄能时集中火力能打断。和其他首领随机出现，必掉机甲设计图。" Guid="15bf4f4f-1fce-5f52-bd10-04365878df84" />
+        <Parameter Name="Description" Type="string" Value="首领：从地下钻出的重型炮车，主炮和榴弹炮从远处轰击阵地，收回底座后会开到侧面另一处再升起。升起时绕到背后打，主炮蓄能时集中火力能打断，贴近它会逼它换位置。和其他首领随机出现，必掉机甲设计图。" Guid="15bf4f4f-1fce-5f52-bd10-04365878df84" />
         <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="51cab1a6-e1bc-52da-92ef-d05a145dd708" />
         <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="3927acb0-b6d7-522f-b91a-2bd55600a8b7" />
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Locomotion" Guid="c8207de7-1a3d-50b2-adaf-3bb4ed6c6134">
-        <Parameter Name="WalkSpeed" Type="float" Value="0" Guid="e7c36ab5-08d0-5aad-803c-9e02a0574ffb" />
+        <Parameter Name="WalkSpeed" Type="float" Value="3" Guid="e7c36ab5-08d0-5aad-803c-9e02a0574ffb" />
         <Parameter Name="FlySpeed" Type="float" Value="0" Guid="3aa5388d-6df0-5ee0-9cef-6501186544fd" />
         <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="1fcb30c4-8dc1-5971-8105-a046eac205af" />
         <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="32e60440-e57e-5279-956b-9c234946b100" />

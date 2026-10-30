@@ -29,6 +29,8 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument('test', choices=TESTS); ap.add_argument('--mode', default='all')
     ap.add_argument('--package'); ap.add_argument('--label', default=''); ap.add_argument('--limit', type=int, default=1500)
     ap.add_argument('--source', choices=SOURCES, default='1.9.3.1')
+    # --no-build: use the test DLL already built (a batch builds once, then runs several isolated runtimes at the same time)
+    ap.add_argument('--no-build', action='store_true')
     a = ap.parse_args(); project, result_name = TESTS[a.test]; source = SOURCES[a.source]
     info = json.loads((ROOT / 'Mod/modinfo.json').read_text(encoding='utf-8'))
     package = Path(a.package) if a.package else ROOT / f"dist/MechDefense-{info['Version']}.scmod"
@@ -37,8 +39,9 @@ def main():
         if f.is_file() and f.suffix.lower() in ('.dll', '.exe', '.json', '.zip', '.js', '.xml'): shutil.copy2(f, runtime / f.name)
     if (source / 'runtimes').exists(): shutil.copytree(source / 'runtimes', runtime / 'runtimes', dirs_exist_ok=True)
     print('runtime source:', source)
-    p = subprocess.run(['dotnet', 'build', str(ROOT / f'Tests/{project}/{project}.csproj'), '-c', 'Release', '--nologo', '-v', 'q'], capture_output=True, text=True, encoding='utf-8', errors='replace')
-    if p.returncode: print(p.stdout[-3000:]); sys.exit('test build failed')
+    if not a.no_build:
+        p = subprocess.run(['dotnet', 'build', str(ROOT / f'Tests/{project}/{project}.csproj'), '-c', 'Release', '--nologo', '-v', 'q'], capture_output=True, text=True, encoding='utf-8', errors='replace')
+        if p.returncode: print(p.stdout[-3000:]); sys.exit('test build failed')
     for f in mods.iterdir(): f.unlink()
     shutil.copy2(ROOT / package if not package.is_absolute() else package, mods / 'MechDefense.scmod')
     if a.test == 'lab':

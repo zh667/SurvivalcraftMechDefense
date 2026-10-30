@@ -24,9 +24,9 @@ ACCEPTED = {
     'RD21': 'outline side view 3.08 % in LOD1 (4.11 % LOD0 / high) at the tail-spike root; death clip clash 14.4 vs 11.6 cm (right '
             'forearm into the body); coplanar 181 cm2 per side between upper-arm sleeve and body in idle; 1 open edge on a body shell; '
             'railgun white share -12.7 points (gate 10); LOD0 352 triangles under the budget',
-    # interim: the models as they stand while their last modelling round runs (replaced when it delivers)
-    'RD08': 'interim: modelling round still running, final checks pending',
-    'RD19': 'interim: modelling round still running, final checks pending',
+    'RD08': 'see-through on LOD0 only (2430 px, limit 2321; LOD0 does not ship); every LOD1 check passes',
+    'RD19': 'see-through 3285 px in 6 of 26 views (original 0): 1-2 cm slivers between the open front lids and the rail tops, seen '
+            'level or from below; LOD0 (not shipped): 2 bolt/plate z-fights on the turret cheeks, a 1.6 cm gap at the sight lens',
 }
 
 def main():

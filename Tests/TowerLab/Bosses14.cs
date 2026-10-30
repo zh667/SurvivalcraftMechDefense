@@ -44,14 +44,14 @@ public partial class Lab {
             pl.ComponentBody.Position=Home+new Vector3(0,0,14);pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(1))yield return true;
             ComponentMDRobot boss=null;
             if(id=="RD13") {   // through the countdown, as the next boss drawn
-                MDBoss.Next=Array.IndexOf(MDBoss.Bosses,template);MDBoss.Start(proj,Home,"{0}");f["countdown"]=MDBoss.Counting(proj);
-                foreach(var x in During(34,()=>{boss??=MDBoss.Alive(proj);pl.ComponentBody.Position=Home+new Vector3(0,0,14);}))yield return x;
+                MDBoss.Next=Array.IndexOf(MDBoss.Bosses,template);MDBoss.Start(proj,Home,"{0}");f["countdown"]=MDBoss.Counting(proj);MDBoss.Hurry(proj,3);   // the 30 s countdown cut to 3
+                for(double tw=Time.RealTime;boss==null&&Time.RealTime-tw<10;){boss=MDBoss.Alive(proj);pl.ComponentBody.Position=Home+new Vector3(0,0,14);yield return true;}
                 f["next"]=$"arrived {boss?.Kind.Id ?? "nothing"}, the next one drawn: {MDBoss.NextTemplate}";
                 if(boss?.Kind.Id!="RD13"){bad.Add("countdown: "+f["next"]);continue;}
             }
             else boss=MDBoss.Spawn(proj,Home,null,template);
             var arrive=boss.Body.Position;f["arrival"]=$"{FlatD(arrive,Home):0} m from the towers, {Above(boss.Body):0.0} m up, armour {boss.Health.AttackResilience:0}";
-            float wantArmour=MathF.Round((MDBoss.BaseArmour+3000)*boss.Kind.BossArmour);if(boss.Health.AttackResilience!=wantArmour)bad.Add($"{id} armour {boss.Health.AttackResilience} (want {wantArmour})");
+            float wantArmour=MathF.Round((MDBoss.BaseArmour+3*MDBoss.PerTier)*boss.Kind.BossArmour);if(boss.Health.AttackResilience!=wantArmour)bad.Add($"{id} armour {boss.Health.AttackResilience} (want {wantArmour})");
             // the player hits it once: it duels the player
             foreach(var x in During(3,()=>{}))yield return x;
             Hit(boss,MDCombat.Center(boss.Body),Vector3.Normalize(MDCombat.Center(boss.Body)-pl.ComponentBody.Position),1);
@@ -74,7 +74,7 @@ public partial class Lab {
             if(heights.Count==0)bad.Add($"{id}: no samples");
             else if(id=="RD21"&&(heights.Average()<2||heights.Average()>7))bad.Add($"{id} height {heights.Average():0.0}");
             else if(id=="RD08"&&(heights.Average()<3.5f||heights.Average()>9))bad.Add($"{id} height {heights.Average():0.0}");
-            if(id=="RD19"&&FlatD(boss.Body.Position,arrive)>.5f)bad.Add($"{id} moved {FlatD(boss.Body.Position,arrive):0.0} m");
+            if(id=="RD19"&&(walked<10||boss.Boss.Moves.GetValueOrDefault("drive")==0))bad.Add($"{id} did not drive to another spot: {walked:0.0} m in 40 s");
             if(id=="RD13"&&walked<10)bad.Add($"{id} did not walk: {walked:0.0} m in 40 s");
             f["walked"]=walked;
             // ---- the player's answers
@@ -138,6 +138,12 @@ public partial class Lab {
                 foreach(var x in During(3,()=>{}))yield return x;
                 ans.Add($"main gun charge under fire: interrupted {siege.Interrupts-i0}, fired {siege.MainShots-m0}, stagger {boss.Boss.Stagger:0.0} s");
                 if(siege.Interrupts==i0||siege.MainShots>m0)bad.Add("RD19 interrupt: "+ans[^1]);
+                // a player close by makes it sink back and drive away
+                boss.Boss.SetArmour(boss.Boss.Armour);boss.Boss.Stagger=0;siege.Force("up");int e0=siege.Evades;var bp=boss.Body.Position;
+                var close=bp+Vector3.Normalize(new Vector3(Home.X-bp.X,0,Home.Z-bp.Z))*7;close.Y=terrain.Terrain.GetTopHeight(Terrain.ToCell(close.X),Terrain.ToCell(close.Z))+1.1f;
+                foreach(var x in During(12,()=>{if(siege.Evades==e0){pl.ComponentBody.Position=close;pl.ComponentBody.Velocity=Vector3.Zero;health.Health=1;}else pl.ComponentBody.Position=Home+new Vector3(0,0,14);}))yield return x;
+                ans.Add($"a player 7 m off: sank back {siege.Evades-e0}, then {FlatD(boss.Body.Position,bp):0.0} m from where it stood, now {siege.Now}");
+                if(siege.Evades==e0||FlatD(boss.Body.Position,bp)<5)bad.Add("RD19 crowd: "+ans[^1]);
             }
             // ---- destroyed: it falls or sinks and drops the blueprint
             pl.ComponentBody.Position=Home+new Vector3(-40,0,40);pl.ComponentBody.Velocity=Vector3.Zero;foreach(var x in During(.3,()=>{}))yield return x;   // not where the loot falls: a player picks it up

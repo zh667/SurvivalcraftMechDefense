@@ -271,8 +271,9 @@ public static class MDTowerBrain {
             if(Vector3.DistanceSquared(b.Position,p)>a.range*a.range)continue;
             var player=b.Entity.FindComponent<ComponentPlayer>();var unit=b.Entity.FindComponent<ComponentMDUnit>();
             if(player!=null&&player.ComponentHealth.Health<1&&player.ComponentHealth.Health>0){player.ComponentHealth.Heal(a.power);w.Heal(b.Position);any=true;}
-            // not another medic tower (players via the user, 2026-10-29: two medics healing each other were all but invulnerable)
-            else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"&&unit.Tower?.attack.type!="heal"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Heal(b.Position);any=true;}   // towers and, since 0.9.0 round 5, Mercury
+            // not another medic tower (players via the user, 2026-10-29: two medics healing each other were all but invulnerable);
+            // 0.14.0: not a tower a boss hit in the last MDBoss.HealBlock seconds, and once per interval however many medics reach it
+            else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"&&unit.Tower?.attack.type!="heal"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1&&w.CanHeal(b)){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+a.power);w.Healed(b,a.interval);w.Heal(b.Position);any=true;}   // towers and, since 0.9.0 round 5, Mercury
         }
         u.Cooldown=any?a.interval:.5f;
         if(any){w.Ring(p,a.range,MDTowerWorldColor(d.fx.color),.8f);w.Flash(Muzzle(u,0),.5f,MDTowerWorldColor(d.fx.color),.2f);Sound(u,d.fireSounds,p,.5f);}

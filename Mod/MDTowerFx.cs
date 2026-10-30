@@ -34,7 +34,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     public int ForeignShots=>foreign.Count;
     public void LaunchForeign(Foreign f){f.last=f.pos;foreign.Add(f);}
     sealed class Status {
-        public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick;
+        public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick,healBlockUntil,healedUntil;
         public ComponentMDUnit poisonOwner; public Color slowColor=new(200,235,255),armorColor=new(220,255,110);
         public float walk,fly,swim,jump,turn,look; public bool saved;
     }
@@ -192,6 +192,12 @@ public sealed class MDTowerWorld : ParticleSystemBase {
         var s=Get(b);if(s.poisonUntil<=time||dps>=s.poisonDps){s.poisonDps=dps;s.poisonOwner=owner;}
         s.poisonUntil=Math.Max(s.poisonUntil,time+seconds);
     }
+    // 0.14.0 (user, 2026-10-30: "我有很多的炮塔和医疗塔配合，敌方boss还是不堪一击"): a tower a boss hit cannot be healed for a while,
+    // and a medic's heal counts once per interval whatever the number of medics around it
+    public void BlockHeal(ComponentBody b,float seconds){var s=Get(b);s.healBlockUntil=Math.Max(s.healBlockUntil,time+seconds);}
+    public bool CanHeal(ComponentBody b)=>!status.TryGetValue(b,out var s)||s.healBlockUntil<=time&&s.healedUntil<=time;
+    public bool HealBlocked(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.healBlockUntil>time;
+    public void Healed(ComponentBody b,float seconds){var s=Get(b);s.healedUntil=time+seconds;}
     public float DamageFactor(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.armorUntil>time?s.armorFactor:1;
     public bool IsStunned(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.stunUntil>time;
     public bool IsFrozen(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.freezeUntil>time;
@@ -229,7 +235,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
                 }
             }
             if(f>=1&&s.saved&&loc!=null){loc.WalkSpeed=s.walk;loc.FlySpeed=s.fly;loc.SwimSpeed=s.swim;loc.JumpSpeed=s.jump;loc.TurnSpeed=s.turn;loc.LookSpeed=s.look;s.saved=false;}
-            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&s.freezeUntil<=time&&s.poisonUntil<=time&&s.freezeImmuneUntil<=time&&!s.saved))(done??=[]).Add(b);
+            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&s.freezeUntil<=time&&s.poisonUntil<=time&&s.freezeImmuneUntil<=time&&s.healBlockUntil<=time&&s.healedUntil<=time&&!s.saved))(done??=[]).Add(b);
         }
         if(done!=null)foreach(var b in done)status.Remove(b);
     }

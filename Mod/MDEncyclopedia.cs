@@ -53,17 +53,18 @@ public static class MDEncyclopedia {
         "RD13"=>$"步行 {k.Speed:0.#} 米／秒，挡路的方块直接推平；躲着它太久会跳过来",
         "RD21"=>$"飞行 {k.Speed:0.#} 米／秒，离地约 {MDSabreState.Altitude:0} 米，冲刺 {MDSabreState.DashSpeed:0} 米／秒",
         "RD08"=>$"飞行 {k.Speed:0.#} 米／秒，离地约 {MDGunboatState.Altitude:0} 米，和目标保持约 {MDGunboatState.StandOff:0} 米",
-        "RD19"=>$"不能移动：从地下钻出，升起 {MDSiegeState.UpTime:0} 秒、收回底座 {MDSiegeState.DownTime:0} 秒，轮流进行",
+        "RD19"=>$"从地下钻出，升起开火约 {MDSiegeState.UpTime:0} 秒后收回底座，以 {k.Speed:0.#} 米／秒开到侧面另一处再升起；玩家贴近 {MDSiegeState.Crowd:0} 米会让它提前收回",
         _=>$"飞行 {k.Speed:0.#} 米／秒，冲刺 {MDDevilState.ChargeSpeed:0} 米／秒"};
     public static string RobotNumbers(MDRobotKind k,float hp) {
         var s=new StringBuilder("【数值】");
-        s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour*k.BossArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +1000 / 2000 / 3000，每台机甲 +3000～5000{(k.BossArmour!=1?$"，再乘 {k.BossArmour:0.##}":"")}，最高 {MDBoss.MaxArmour*k.BossArmour:0}）":$"{hp:0}")}");
+        s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour*k.BossArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +{MDBoss.PerTier:0} / {MDBoss.PerTier*2:0} / {MDBoss.PerTier*3:0}，每台机甲 +{MDBoss.PerMech*3000:0}～{MDBoss.PerMech*5000:0}{(k.BossArmour!=1?$"，再乘 {k.BossArmour:0.##}":"")}，最高 {MDBoss.MaxArmour*k.BossArmour:0}）":$"{hp:0}")}");
         s.Append(k.Boss?"\n移动："+BossMove(k):k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
         s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
         s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
         if(k.Boss)s.Append($"\n装甲：{MDBossState.Layers} 层，每层能吸收约 {MDBossState.PlateShare*100:0}% 耐久的伤害，装甲在时只有 {MDBossState.Through*100:0}% 伤害打进本体；击破一层它会硬直 {MDBossState.StaggerTime:0} 秒，之后 {MDBossState.ExposedTime:0} 秒内受到的伤害 +{(MDBossState.ExposedFactor-1)*100:0}%（留着机甲和重炮打这个时机）。每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");
         if(k.Id=="RD17")s.Append($"\n弱点：每 {MDDevilState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDDevilState.OtherFactor*100:0}%；脚下光环的颜色就是当前弱点（白 = 冲击，橙 = 爆炸，蓝 = 能量）");
         else if(k.Boss)s.Append("\n打法："+MDBossState.Hint(k.Id));
+        if(k.Boss)s.Append($"\n压制：被它打中的炮塔和机甲 {MDBoss.HealBlock:0} 秒内不能被医疗塔治疗");
         s.Append("\n出现："+Appear(k));
         s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
         s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");

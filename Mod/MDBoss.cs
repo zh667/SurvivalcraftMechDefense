@@ -14,8 +14,8 @@ namespace Game;
 // 是敌人和玩家之间的对抗和交互"): its attacks are telegraphed (a crouch, a red ring on the ground where shells will land, a red line
 // along a dash, an aiming beam) so a player who moves dodges them, and each has a weak spot or a window only a player or a mech can
 // use (MDBossState subclasses below).
-// Strength grows with the defence it meets (user, 2026-10-21: players place many towers): armour 30000 + 1000 / 2000 / 3000 per
-// tier-1 / 2 / 3 tower and 3000-5000 per mech within 48 m of the beacon, at most 160000, times the boss's own factor
+// Strength grows with the defence it meets (user, 2026-10-21: players place many towers): armour 30000 + 3000 / 6000 / 9000 per
+// tier-1 / 2 / 3 tower and 6000-10000 per mech within 48 m of the beacon, at most 300000, times the boss's own factor
 // (MDRobotKind.BossArmour); at 70 % and 35 % health it calls an escort of robots (2 + towers / 5, at most 8).
 // Armour phases (user, 2026-10-30, replacing the 0.12.0 2 % per-hit cap: "首领限伤改装甲阶段"): two layers of plating, each soaking
 // 10 % of the armour; while one holds, 20 % of every hit reaches the boss. Breaking one staggers it for 3 s and opens a 10 s window
@@ -28,6 +28,7 @@ public abstract class MDBossState {
     public int LayersLeft=Layers; public float Plate,Exposed,Stagger;          // layers still up, what is left of the current one (attack power), window and stagger left (s)
     public float Taken;                                                         // attack power that went through since arrival (RD19's interrupt)
     public int EscortsSent,Breaks; public readonly Dictionary<string,int> Moves=[];   // lab: escorts sent, layers broken, attacks started
+    public readonly Dictionary<string,float> Injuries=[]; public Attackment LastAttack;  // lab: health lost by source (in armour points), the last hit through Damage
     public Vector3 LastWant,LastFly;                                            // lab: where it wanted to be, the velocity it asked for
     protected MDBossState(ComponentMDRobot robot,ValuesDictionary v) {
         r=robot;if(v.GetValue("BossHasHome",false))Home=v.GetValue("BossHome",Vector3.Zero);
@@ -55,7 +56,7 @@ public abstract class MDBossState {
         "RD13"=>"它蹲下架起加特林时躲到掩体后；后仰时快离开地上的红圈；躲太久它会跳过来。玩家打它头部的发光镜头伤害更高。",
         "RD21"=>"地上出现红线就往旁边躲开光剑冲刺，冲完它会低空停顿；红色瞄准线变白前躲到掩体后。",
         "RD08"=>"它停在大多数炮塔的射程外：开机甲或亲自去追它，先打掉它放出的无人机；靠近时它会后退并用机枪扫你。",
-        "RD19"=>"收进底座时几乎打不动；升起后绕到背后打（伤害更高），主炮蓄能时集中火力能打断它；离它 12 米内主炮和榴弹都打不到你。",
+        "RD19"=>"收进底座时几乎打不动，它会开到侧面另一处再升起；升起后绕到背后打（伤害更高），主炮蓄能时集中火力能打断它；离它 12 米内主炮和榴弹都打不到你，贴近它会逼它收回换位置。",
         _=>"脚下光环的颜色是它当前的弱点：白色冲击、橙色爆炸、蓝色能量。"};
 
     float dig; protected float Dt;
@@ -80,9 +81,16 @@ public abstract class MDBossState {
         float p=a.AttackPower*Factor(a);
         if(Exposed>0)p*=ExposedFactor;
         else if(LayersLeft>0){Plate-=p;p*=Through;if(Plate<=0)Break();}
-        a.AttackPower=p;Taken+=p;Hurt();
+        a.AttackPower=p;Taken+=p;LastAttack=a;Hurt();
     }
     protected virtual float Factor(Attackment a)=>1;
+    // an injury that did not come through an attack (fire, mostly): the armour phase the same way (MDBoss.CapInjury); it burned
+    // RD19 for 22 % of its armour past both layers (bench, 2026-10-30)
+    public float Phase(float amount) {
+        if(Exposed>0)return amount*ExposedFactor;
+        if(LayersLeft<=0)return amount;
+        Plate-=amount*Armour;if(Plate<=0)Break();return amount*Through;
+    }
     void Break() {
         LayersLeft--;Breaks++;Exposed=ExposedTime;Stagger=StaggerTime;Plate=LayersLeft>0?PlateShare*Armour:0;
         var w=MDTowerWorld.For(P);var c=MDCombat.Center(r.Body);w.Flash(c,3,new Color(255,230,160),.15f);w.Sparks(c,Vector3.UnitY,24,new Color(255,200,120),8,1,.6f,.07f);MDRobots.Sound(P,24,c,1);
@@ -101,9 +109,10 @@ public abstract class MDBossState {
         var o=new Vector2(Vector3.Dot(velocity,m.Right),Vector3.Dot(velocity,m.Forward))/l.WalkSpeed;if(o.LengthSquared()>1)o=Vector2.Normalize(o);
         WalkWanted=o;l.WalkOrder=o;r.Path.Stop();
     }
-    // the ground (the top collidable block) under a point, from 4 m above it down
+    // the ground (the top collidable block, or the surface of water) under a point, from 4 m above it down: over the sea the
+    // gunboat hovered 6 m over the sea floor, under water, and drowned (bench, 2026-10-30)
     protected float GroundY(Vector3 at) {
-        var hit=P.FindSubsystem<SubsystemTerrain>(true).Raycast(new Vector3(at.X,at.Y+4,at.Z),new Vector3(at.X,at.Y-40,at.Z),false,true,(cv,cd)=>BlocksManager.Blocks[Terrain.ExtractContents(cv)].IsCollidable_(cv));
+        var hit=P.FindSubsystem<SubsystemTerrain>(true).Raycast(new Vector3(at.X,at.Y+4,at.Z),new Vector3(at.X,at.Y-40,at.Z),false,true,(cv,cd)=>BlocksManager.Blocks[Terrain.ExtractContents(cv)] is var bl&&(bl.IsCollidable_(cv)||bl is FluidBlock));
         return hit.HasValue?at.Y+4-hit.Value.Distance:at.Y-2;
     }
     // Flies to `want` (x, z) `altitude` over the ground and the towers under it, at up to `speed` (gentle: the fly order lags
@@ -592,8 +601,10 @@ public sealed class MDGunboatState:MDBossState {
 // ------------------------------------------------------------------------------------------------ 重型装甲炮车 RD19 (0.14.0)
 // The problem: a siege emplacement that shells the defences from 60 m and cannot be moved. The answers: go to it, get behind it,
 // break its main gun's charge.
-// - It comes out of the ground 34-40 m from the beacon facing it, rises out of its base (4 s), fights for 16 s, sinks back for 6 s
-//   (hits then do 30 %), and rises again. Hits from behind do 150 %, from the front 70 %.
+// - It comes out of the ground 34-40 m from the beacon facing it, rises out of its base (4 s), fights for 16 s, sinks back (hits then
+//   do 30 %) and drives on its base at 3 m/s to another firing spot 30-40 m from its target, 30-50 degrees round to one side (away
+//   from a player close by), and rises again (user, 2026-10-30: "那个固定在地面上的装甲炮车好像不能移动"). A player or mech within
+//   10 m for 1.5 s makes it sink back early and move. Hits from behind do 150 %, from the front 70 %.
 // - 主炮: the gun turns slowly (0.5 rad/s) after its target and a red beam shows where it points, brighter for 3 s; then a beam that
 //   hits the first thing on its line (500 against a tower). 3 % of its armour in damage during the charge breaks it off and staggers
 //   it for 2.5 s. Every 10 s.
@@ -605,13 +616,14 @@ public sealed class MDGunboatState:MDBossState {
 public sealed class MDSiegeState:MDBossState {
     static readonly MDRobotKind Main=MDRobots.Weapon("siege_main",0,6,500,splash:3,fire:10,hit:24),
         Missile=MDRobots.Weapon("siege_missile",14,2.5f,50,splash:2,fire:9,hit:14,look:"shell",type:"missile");
-    public const float DeployTime=4,StowTime=2,UpTime=16,DownTime=6,MainTell=3,MainBreak=.03f,Close=12,StowedFactor=.3f,RearFactor=1.5f,FrontFactor=.7f;
-    public string Phase="stowed"; float phaseT=DownTime-1,t,howitzer=3,main=5,missiles=4,charged,deathT;string move="";ComponentBody lockOn;readonly object mainKey=new();
-    public int Interrupts,MainShots;   // lab
+    public const float DeployTime=4,StowTime=2,UpTime=16,DownTime=3,MaxDrive=12,MainTell=3,MainBreak=.03f,Close=12,Crowd=10,StowedFactor=.3f,RearFactor=1.5f,FrontFactor=.7f;
+    public string Phase="stowed"; float phaseT=DownTime-1,t,howitzer=3,main=5,missiles=4,charged,deathT,crowded,dust;string move="";ComponentBody lockOn;readonly object mainKey=new();
+    public Vector3? Spot;                // where it drives to while sunk in its base
+    public int Interrupts,MainShots,Moves2,Evades;   // lab: interrupted charges, main gun shots, drives, early sinks with a player close
     public MDSiegeState(ComponentMDRobot robot,ValuesDictionary v):base(robot,v){}
     public bool Up=>Phase=="up";
     public override string Now=>Phase+(move.Length>0?"/"+move:"");
-    public override void Force(string m,ComponentBody at=null){if(m=="up"){Phase="up";phaseT=0;return;}move=m;t=0;charged=Taken;if(m=="missiles")lockOn=at??r.Target;Count(m);}
+    public override void Force(string m,ComponentBody at=null){if(m=="up"){Phase="up";phaseT=0;Spot=null;return;}if(m=="stow"){Phase="stow";phaseT=0;move="";return;}move=m;t=0;charged=Taken;if(m=="missiles")lockOn=at??r.Target;Count(m);}
     // 3 % of its armour in damage during the main gun's charge breaks it off
     protected override void Hurt() {
         if(move!="main"||Taken-charged<MainBreak*Armour)return;
@@ -630,14 +642,18 @@ public sealed class MDSiegeState:MDBossState {
     protected override void Act(float dt,MDTowerWorld w) {
         var body=r.Body;phaseT+=dt;howitzer-=dt;main-=dt;missiles-=dt;
         switch(Phase) {
-            case "stowed": if(phaseT>=DownTime){Phase="deploy";phaseT=0;MDRobots.Sound(P,31,body.Position,1);}break;
+            case "stowed": Drive(dt,w);if(phaseT>=DownTime&&Spot==null||phaseT>=DownTime+MaxDrive){Spot=null;Phase="deploy";phaseT=0;MDRobots.Sound(P,31,body.Position,1);}break;
             case "deploy": if(phaseT>=DeployTime){Phase="up";phaseT=0;}break;
-            case "up": if(phaseT>=UpTime&&move.Length==0&&!Queued){Phase="stow";phaseT=0;Count("stow");}break;
-            case "stow": if(phaseT>=StowTime){Phase="stowed";phaseT=0;}break;
+            case "up":
+                crowded=Duelist(Crowd)!=null?crowded+dt:0;
+                if((phaseT>=UpTime||crowded>=1.5f)&&move.Length==0&&!Queued){if(crowded>=1.5f)Evades++;Phase="stow";phaseT=0;crowded=0;Count("stow");}
+                break;
+            case "stow": if(phaseT>=StowTime){Phase="stowed";phaseT=0;PickSpot();}break;
         }
         Pose();
         var tg=r.Target;
-        if(tg!=null&&MathF.Abs(MDCombat.AngleDelta(r.Yaw,MathF.Atan2(-(tg.Position.X-body.Position.X),-(tg.Position.Z-body.Position.Z))))>2)r.Face(tg.Position,dt,.15f);   // beyond the gun's traverse: the whole body creeps round
+        if(Phase=="deploy"&&tg!=null)r.Face(tg.Position,dt,.8f);
+        else if(tg!=null&&Phase!="stowed"&&MathF.Abs(MDCombat.AngleDelta(r.Yaw,MathF.Atan2(-(tg.Position.X-body.Position.X),-(tg.Position.Z-body.Position.Z))))>2)r.Face(tg.Position,dt,.15f);   // beyond the gun's traverse: the whole body creeps round
         if(!Up)return;
         if(move=="main"){MainStep(dt,w);return;}
         if(move=="missiles") {
@@ -659,6 +675,24 @@ public sealed class MDSiegeState:MDBossState {
         }
         else if(missiles<=0&&(lockOn=Duelist(50))!=null){move="missiles";t=0;Count("missiles");MDRobots.Sound(P,7,body.Position,1);}
     }
+    // the next firing spot: 30-40 m from its target (or the beacon), 30-50 degrees round to the side away from a player close by
+    void PickSpot() {
+        var body=r.Body;var focus=r.Target?.Position??Home??body.Position;var from=new Vector3(body.Position.X-focus.X,0,body.Position.Z-focus.Z);
+        float d=Math.Clamp(from.Length(),30,40),a=MathF.Atan2(from.X,from.Z),turn=MDRobots.R(.5f,.9f);
+        Vector3 At(float s)=>focus+new Vector3(MathF.Sin(a+s*turn),0,MathF.Cos(a+s*turn))*d;
+        var near=Duelist(20);float side=MDRobots.R(0,1)<.5f?-1:1;if(near!=null)side=Vector3.Distance(At(1),near.Position)>=Vector3.Distance(At(-1),near.Position)?1:-1;
+        var t=P.FindSubsystem<SubsystemTerrain>(true).Terrain;
+        bool Dry(Vector3 q){int x=Terrain.ToCell(q.X),z=Terrain.ToCell(q.Z);return t.GetChunkAtCell(x,z)!=null&&BlocksManager.Blocks[Terrain.ExtractContents(t.GetCellValueFast(x,t.GetTopHeight(x,z),z))] is not FluidBlock;}
+        if(!Dry(At(side)))side=-side;if(!Dry(At(side)))return;   // water or unloaded on both sides: it rises where it is
+        var p=At(side);p.Y=GroundY(p);Spot=p;Moves2++;Count("drive");
+    }
+    // sunk in its base it drives to the spot (blocks in the way give way, MDBoss.ClearBlocks), facing where it goes
+    void Drive(float dt,MDTowerWorld w) {
+        if(Spot is not {} s)return;var body=r.Body;var to=new Vector3(s.X-body.Position.X,0,s.Z-body.Position.Z);
+        if(to.Length()<1.5f){Spot=null;return;}
+        var v=Vector3.Normalize(to)*r.Kind.Speed;Walk(v);r.Face(body.Position+v,dt,.8f);
+        dust-=dt;if(dust<=0){dust=.4f;w.SmokePuffs(body.Position+Vector3.UnitY*.3f,1,1.2f,new Color(150,130,100,140),.4f,1.2f,.4f);}
+    }
     void MainStep(float dt,MDTowerWorld w) {
         t+=dt;var tg=r.Target;
         if(tg==null||!r.Valid(tg)){move="";main=3;return;}
@@ -674,8 +708,15 @@ public static class MDBoss {
     // At most this share of its armour per hit (0.12.0: 2 %, user, 2026-10-25: "恶魔机甲要设置限伤害…可参考美好时代，深海迷航的一些boss";
     // 0.14.0: 8 % with the armour phases, MDBossState): other mods' one-shot weapons. ModLoader hook CalculateCreatureInjuryAmount.
     public const float MaxHitShare=.08f;
+    // a tower or mech a boss hits cannot be healed for this long (MDTowerWorld.BlockHeal; user, 2026-10-30: many towers with medics
+    // made the bosses "不堪一击")
+    public const float HealBlock=8;
     public static void CapInjury(Injury injury) {
-        if(injury?.ComponentHealth?.Entity.FindComponent<ComponentMDRobot>() is {Boss:not null}&&injury.Amount>MaxHitShare)injury.Amount=MaxHitShare;
+        if(injury?.ComponentHealth?.Entity.FindComponent<ComponentMDRobot>() is not {Boss:{} b})return;
+        if(injury.Attackment==null||!ReferenceEquals(injury.Attackment,b.LastAttack))injury.Amount=b.Phase(injury.Amount);   // not through MDBoss.Modify
+        if(injury.Amount>MaxHitShare)injury.Amount=MaxHitShare;
+        var key=injury.Attackment!=null?injury.Attackment.GetType().Name+(ReferenceEquals(injury.Attackment,b.LastAttack)?"":" (no armour)"):"cause "+(injury.Cause??"-");   // lab
+        b.Injuries[key]=b.Injuries.GetValueOrDefault(key)+injury.Amount*b.Armour;
     }
     // Any block in its way gives way (user, 2026-10-25: "恶魔机甲作为boss，应该可以清理一切阻挡他的方块（现在放恶魔机甲在方块下面会把它卡死）"):
     // every collidable block in its body box, half a metre around and above it and 1.5 m ahead of its movement, from just above its
@@ -696,10 +737,12 @@ public static class MDBoss {
         }
         return n;
     }
-    // armour at arrival: 30000 + 1000 / 2000 / 3000 per tier-1 / 2 / 3 tower and 3000 per Mercury within 48 m, at most 160000
-    // (user, 2026-10-21, round 5: early players only have tier-1 towers; was 40000 + 2000 per tower + 4000 per Mercury), times the
-    // boss's factor (MDRobotKind.BossArmour)
-    public const float BaseArmour=30000,MaxArmour=160000;   // + per mech: Mercury 3000, 复仇女神 4000, 轩辕十四 5000 (MDMechType.BossArmour)
+    // armour at arrival: 30000 + PerTier x the towers' tiers (1 / 2 / 3) + PerMech x the mechs' BossArmour within 48 m, at most
+    // MaxArmour, times the boss's factor (MDRobotKind.BossArmour) (user, 2026-10-21, round 5: early players only have tier-1 towers;
+    // was 40000 + 2000 per tower + 4000 per Mercury)
+    // 0.14.0 (user, 2026-10-30: "我有很多的炮塔和医疗塔配合，敌方boss还是不堪一击"; bench-fortress: ten tier-2 / 3 towers and three medics
+    // killed the devil mech in 70 s and RD21 in 28 s, none of them lost a tower): x 3 per tower, x 2 per mech, the cap 160000 -> 300000
+    public const float BaseArmour=30000,MaxArmour=300000,PerTier=3000,PerMech=2;   // per mech: PerMech x Mercury 3000, 复仇女神 4000, 轩辕十四 5000 (MDMechType.BossArmour)
     // 0.14.0 (user, 2026-10-29, "和恶魔机甲轮换": "击杀数到了随机来 5 个 boss 里的一个；诱敌信标也随机"): the beacon and the kill
     // count bring one of these at random. The next one is drawn when the last one arrives, so the countdown and the kill-count
     // warning can name it; it is an attribute of the world's Project.xml (MDBossKills.Load / Save).
@@ -712,6 +755,7 @@ public static class MDBoss {
     static readonly ConditionalWeakTable<Project,Pending> pending=new();
     public static ComponentMDRobot Alive(Project p)=>p.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).FirstOrDefault(x=>x?.Kind.Boss==true&&x.Health.Health>0);
     public static bool Counting(Project p)=>pending.TryGetValue(p,out var c)&&c.left>=0;
+    public static void Hurry(Project p,float left){if(pending.TryGetValue(p,out var c)&&c.left>left)c.left=left;}   // tests: a shorter countdown
     public static void Announce(Project p,Vector3 at,string text,Color c) {
         foreach(var pl in p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers)if(Vector3.Distance(pl.ComponentBody.Position,at)<150)pl.ComponentGui.DisplaySmallMessage(text,c,true,true);
     }
@@ -750,7 +794,7 @@ public static class MDBoss {
         var r=e.FindComponent<ComponentMDRobot>(true);
         var units=p.Entities.Select(x=>x.FindComponent<ComponentMDUnit>()).Where(u=>u!=null&&!u.Legacy&&!u.Destroyed&&Vector3.Distance(u.Body.Position,at)<48).ToList();
         int towers=units.Count(u=>u.Tower!=null),mechs=units.Count(u=>u.Mech!=null),tiers=units.Where(u=>u.Tower!=null).Sum(MDRaids.Weight);
-        r.Boss.SetArmour(MathF.Round(Math.Clamp(BaseArmour+1000*tiers+units.Where(u=>u.Mech!=null).Sum(u=>u.Mech.Type.BossArmour),BaseArmour,MaxArmour)*kind.BossArmour));r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
+        r.Boss.SetArmour(MathF.Round(Math.Clamp(BaseArmour+PerTier*tiers+PerMech*units.Where(u=>u.Mech!=null).Sum(u=>u.Mech.Type.BossArmour),BaseArmour,MaxArmour)*kind.BossArmour));r.Boss.EscortSize=Math.Clamp(2+(towers+2*mechs)/5,2,8);
         p.AddEntity(e);r.Boss.Home=at;r.RaidGoal=at;
         Announce(p,at,$"{kind.Name}来了！它感应到 {towers} 座炮塔，耐久强化到 {r.Boss.Armour:0}。{(kind.Id=="RD17"?"":MDBossState.Hint(kind.Id))}",new Color(255,90,90));
         MDRobots.Sound(p,31,from,1);return r;

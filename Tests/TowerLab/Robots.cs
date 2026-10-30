@@ -323,7 +323,9 @@ public partial class Lab {
             var before=proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(x=>x?.Mech!=null).ToHashSet();
             inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.MechValue(hitpoints,kit,type),1);inv.ActiveSlotIndex=0;
             pl.ComponentMiner.Use(new Ray3(standAt+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))));
-            return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null&&!before.Contains(x))??throw new Exception((type??MDMechType.Mercury).Name+" did not deploy");
+            return proj.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).FirstOrDefault(x=>x?.Mech!=null&&!before.Contains(x))??throw new Exception((type??MDMechType.Mercury).Name+" did not deploy: "+Why());
+            string Why(){var hit=pl.ComponentMiner.Raycast<TerrainRaycastResult>(new Ray3(standAt+new Vector3(0,1.6f,0),Vector3.Normalize(new Vector3(0,-1.6f,-5f))),RaycastMode.Digging);
+                return hit is {} h?$"hit {h.CellFace.Point} face {h.CellFace.Face}, stood at {standAt.Y:0.0}":"no ground hit";}
         }
         var pkg=MDSettings.Package;var gameInfo=proj.FindSubsystem<SubsystemGameInfo>(true);
         // ---- mod settings (round 4, user: one page like the CS weapons mod, the panel adjusted on a game page): the game's

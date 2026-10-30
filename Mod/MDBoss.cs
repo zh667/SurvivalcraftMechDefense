@@ -679,12 +679,16 @@ public sealed class MDSiegeState:MDBossState {
     void PickSpot() {
         var body=r.Body;var focus=r.Target?.Position??Home??body.Position;var from=new Vector3(body.Position.X-focus.X,0,body.Position.Z-focus.Z);
         float d=Math.Clamp(from.Length(),30,40),a=MathF.Atan2(from.X,from.Z),turn=MDRobots.R(.5f,.9f);
-        Vector3 At(float s)=>focus+new Vector3(MathF.Sin(a+s*turn),0,MathF.Cos(a+s*turn))*d;
-        var near=Duelist(20);float side=MDRobots.R(0,1)<.5f?-1:1;if(near!=null)side=Vector3.Distance(At(1),near.Position)>=Vector3.Distance(At(-1),near.Position)?1:-1;
+        Vector3 At(float s,float tn,float dd)=>focus+new Vector3(MathF.Sin(a+s*tn),0,MathF.Cos(a+s*tn))*dd;
+        var near=Duelist(20);float side=MDRobots.R(0,1)<.5f?-1:1;if(near!=null)side=Vector3.Distance(At(1,turn,d),near.Position)>=Vector3.Distance(At(-1,turn,d),near.Position)?1:-1;
         var t=P.FindSubsystem<SubsystemTerrain>(true).Terrain;
         bool Dry(Vector3 q){int x=Terrain.ToCell(q.X),z=Terrain.ToCell(q.Z);return t.GetChunkAtCell(x,z)!=null&&BlocksManager.Blocks[Terrain.ExtractContents(t.GetCellValueFast(x,t.GetTopHeight(x,z),z))] is not FluidBlock;}
-        if(!Dry(At(side)))side=-side;if(!Dry(At(side)))return;   // water or unloaded on both sides: it rises where it is
-        var p=At(side);p.Y=GroundY(p);Spot=p;Moves2++;Count("drive");
+        // the wanted side first, then the other, a few turns and distances each (two tries alone often both fell in a lake or the
+        // sea and it never moved: lab bosses14 1.9.3.1, 10-30); nothing dry or loaded: it rises where it is
+        foreach(float s in new[]{side,-side})foreach(float tn in new[]{turn,.5f,.9f,.3f,1.2f})foreach(float dd in new[]{d,30,40}) {
+            var p=At(s,tn,dd);if(!Dry(p))continue;
+            p.Y=GroundY(p);Spot=p;Moves2++;Count("drive");return;
+        }
     }
     // sunk in its base it drives to the spot (blocks in the way give way, MDBoss.ClearBlocks), facing where it goes
     void Drive(float dt,MDTowerWorld w) {
@@ -725,6 +729,7 @@ public static class MDBoss {
     public static int ClearBlocks(ComponentBody b) {
         var t=b.Project.FindSubsystem<SubsystemTerrain>(true);var box=b.BoundingBox;var v=b.Velocity;
         var min=new Vector3(box.Min.X-.5f,box.Min.Y+.3f,box.Min.Z-.5f);var max=new Vector3(box.Max.X+.5f,box.Max.Y+.6f,box.Max.Z+.5f);
+        v.Y=Math.Max(v.Y,0);   // ahead never reaches below its feet: coming down onto a mech it dug a pit there (lab robots-escorts, 10-30)
         if(v.LengthSquared()>.25f){var ahead=Vector3.Normalize(v)*1.5f;min=Vector3.Min(min,min+ahead);max=Vector3.Max(max,max+ahead);}
         int n=0;
         for(int x=(int)MathF.Floor(min.X);x<=(int)MathF.Floor(max.X);x++)for(int z=(int)MathF.Floor(min.Z);z<=(int)MathF.Floor(max.Z);z++) {

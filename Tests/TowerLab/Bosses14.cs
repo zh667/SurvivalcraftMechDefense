@@ -82,8 +82,8 @@ public partial class Lab {
             boss.Boss.SetArmour(boss.Boss.Armour);boss.Boss.Exposed=0;boss.Boss.Stagger=0;boss.Health.Health=1;
             var ans=new List<string>();f["answers"]=ans;
             // a forced attack; the player stays, or steps 10 m sideways (across the line from the boss) once moveAway() says so
-            IEnumerable<bool> Attack(string move,Func<bool> moveAway,double seconds,Action<bool> done) {
-                bool moved=false;int h0=MDRobots.PlayerHits;MDRobots.PlayerHitLog.Clear();var stand=Home+new Vector3(0,0,14);boss.Boss.Force(move,pl.ComponentBody);var trace=new List<string>();
+            IEnumerable<bool> Attack(string move,Func<bool> moveAway,double seconds,Action<bool> done,Vector3? at=null) {
+                bool moved=false;int h0=MDRobots.PlayerHits;MDRobots.PlayerHitLog.Clear();var stand=at??Home+new Vector3(0,0,14);boss.Boss.Force(move,pl.ComponentBody);var trace=new List<string>();
                 foreach(var x in During(seconds,()=>{
                     if(!moved&&moveAway!=null&&moveAway()){moved=true;trace.Add($"moved at {boss.Boss.Now} from ({stand.X:0.0},{stand.Z:0.0})");var to=stand-boss.Body.Position;var side=Vector3.Normalize(Vector3.Cross(Vector3.UnitY,new Vector3(to.X,0,to.Z)));if(FlatD(stand-side*10,Home)>FlatD(stand+side*10,Home))side=-side;stand+=side*10;stand.Y=terrain.Terrain.GetTopHeight(Terrain.ToCell(stand.X),Terrain.ToCell(stand.Z))+1.1f;}
                     pl.ComponentBody.Position=stand;pl.ComponentBody.Velocity=Vector3.Zero;health.Health=1;}))yield return x;
@@ -101,9 +101,13 @@ public partial class Lab {
                 // the shells: the player in a ring stays (hit) / moves out when the rings appear (missed)
                 foreach(var x in During(3,()=>{}))yield return x;
                 bool stayHit=false,moveHit=true;
-                foreach(var x in Attack("barrage",null,5.5,h=>stayHit=h))yield return x;
+                // 14 m from the bird on its side of Home: shells skip anything within 8 m (that is the sweep's), and it had walked to 7.9 m
+                // of the usual spot once (1.9.3.1, 10-30)
+                Vector3 Off(){var v=Home+new Vector3(0,0,14)-boss.Body.Position;v.Y=0;if(v.LengthSquared()<1)v=Vector3.UnitZ;var q=boss.Body.Position+Vector3.Normalize(v)*14;
+                    q.Y=terrain.Terrain.GetTopHeight(Terrain.ToCell(q.X),Terrain.ToCell(q.Z))+1.1f;return q;}
+                foreach(var x in Attack("barrage",null,5.5,h=>stayHit=h,Off()))yield return x;
                 foreach(var x in During(2.5,()=>{}))yield return x;   // the first volley's rings gone
-                foreach(var x in Attack("barrage",()=>bird.Spots.Length>0,5.5,h=>moveHit=h))yield return x;   // once its own spots are picked (a sweep's ring may still be up)
+                foreach(var x in Attack("barrage",()=>bird.Spots.Length>0,5.5,h=>moveHit=h,Off()))yield return x;   // once its own spots are picked (a sweep's ring may still be up)
                 ans.Add($"back cannons: stayed in the ring -> hit {stayHit}, left the ring -> hit {moveHit}");
                 if(!stayHit||moveHit)bad.Add("RD13 shells: "+ans[^1]);
                 int st0=bird.Stomped;foreach(var x in Attack("leap",null,5,_=>{}))yield return x;ans.Add($"leap: {bird.Stomped-st0} bodies in the blast, {FlatD(boss.Body.Position,pl.ComponentBody.Position):0} m from the player after it");

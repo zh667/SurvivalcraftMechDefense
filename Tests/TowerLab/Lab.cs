@@ -186,6 +186,7 @@ public partial class Lab:ModLoader {
         if(mode=="enemies14")foreach(var x in Enemies14())yield return x;   // Tests/TowerLab/Enemies14.cs
         if(mode=="bosses14"||mode.StartsWith("bosses14-"))foreach(var x in Bosses14())yield return x;   // Tests/TowerLab/Bosses14.cs
         if(mode=="bench"||mode.StartsWith("bench-"))foreach(var x in Bench())yield return x;   // Tests/TowerLab/Bench.cs
+        if(mode=="combat15"||mode.StartsWith("combat15-"))foreach(var x in Combat15())yield return x;   // Tests/TowerLab/Combat15.cs
         if(mode=="fb13"||mode=="faction-mods")foreach(var x in Feedback13())yield return x;   // Tests/TowerLab/Feedback13.cs
         if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
         if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs

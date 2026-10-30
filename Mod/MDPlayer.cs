@@ -13,10 +13,10 @@ public class MDModLoader : ModLoader {
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
         skip=MDDrawBatches.Draw(modelData,modelShader,subsystemModelsRenderer);
     // A boss takes at most MDBoss.MaxHitShare of its armour per hit.
-    public override void CalculateCreatureInjuryAmount(Injury injury)=>MDBoss.CapInjury(injury);
+    public override void CalculateCreatureInjuryAmount(Injury injury){MDBoss.CapInjury(injury);MDTowerWorld.Injured(injury);}
     // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
-    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget)=>MDBossKills.Load(xElement);
-    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement)=>MDBossKills.Save(xElement);
+    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);}
+    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);}
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
     // The mod's settings (MDSettings) live in the game's ModSettings.xml, under this mod's own element; the engine calls these
     // directly (load: while loading, when the file has this mod; save: whenever it writes the file).
@@ -29,7 +29,7 @@ public class MDModLoader : ModLoader {
     // Creatures that hurt a player, a tower or the player's herd become tower targets (MDFaction).
     // A boss's own factor and armour phase scale the hit first (MDBoss).
     // A robot remembers a player (or the player's herd) that hits it and fights back (MDRobots.Provoked).
-    public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDMechArmour.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);}
+    public override void ProcessAttackment(Attackment attackment){MDRobots.Unstaggered(attackment);MDRobots.Armoured(attackment);MDBoss.Modify(attackment);MDMechArmour.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);MDRewards.Track(attackment);}
     // Right-click on a tower with robot scrap or an alloy plate (on a mech: iron or copper) repairs it (MDTowerMaintenance); the
     // engine's own use/place is skipped then.
     public override void OnPlayerInputInteract(ComponentPlayer componentPlayer,ref bool playerOperated,ref double timeIntervalLastActionTime,ref int priorityUse,ref int priorityInteract,ref int priorityPlace) {
@@ -64,7 +64,7 @@ public class MDDeploymentBlock : Block {
     public static int Value(MDTowerDef d,float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
     public static int MechValue(float hitpoints,int kit=0,MDMechType type=null)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,(type??MDMechType.Mercury).Data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8|Math.Clamp(kit,0,3)<<15);
     public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):MechType(v) is {} mt?MechName(mt)+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
-    public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
+    public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n{MDEncyclopedia.ElementText(d)}占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
         $"维修：手持机兵残骸或合金板右键炮塔（铁、铜只能修机甲）。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):MechType(v) is {} mt?MechNote(mt):RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
     public override IEnumerable<int> GetCreativeValues() {

@@ -34,7 +34,8 @@
     "range": 28,
     "interval": 2,
     "power": 64,
-    "speed": 110
+    "speed": 110,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -96,7 +97,8 @@
     "power": 110,
     "speed": 120,
     "enhancedEvery": 4,
-    "enhancedPower": 1.8
+    "enhancedPower": 1.8,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -159,7 +161,8 @@
     "speed": 130,
     "enhancedEvery": 6,
     "enhancedPower": 1.5,
-    "enhancedSplash": 2.5
+    "enhancedSplash": 2.5,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -212,7 +215,9 @@
     "speed": 26,
     "splash": 2.5,
     "burn": 2,
-    "needsSight": false
+    "needsSight": false,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -270,7 +275,9 @@
     "zone": 2.5,
     "zoneTime": 5,
     "zonePower": 40.0,
-    "needsSight": false
+    "needsSight": false,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -322,7 +329,9 @@
     "range": 48,
     "interval": 5,
     "power": 340,
-    "threatFirst": true
+    "threatFirst": true,
+    "element": "kinetic",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -461,7 +470,9 @@
     "power": 200,
     "speed": 36,
     "splash": 3,
-    "needsSight": false
+    "needsSight": false,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -510,7 +521,8 @@
     "splash": 3,
     "armorDown": 1.3,
     "armorTime": 15,
-    "needsSight": false
+    "needsSight": false,
+    "element": "corrosive"
    },
    "fx": {
     "color": [
@@ -567,7 +579,8 @@
     "slowTime": 5,
     "needsSight": false,
     "dot": 22,
-    "dotTime": 5
+    "dotTime": 5,
+    "element": "corrosive"
    },
    "fx": {
     "color": [
@@ -624,7 +637,8 @@
     "bossResilience": 500,
     "zone": 2.5,
     "zoneTime": 3,
-    "zonePower": 0
+    "zonePower": 0,
+    "element": "cold"
    },
    "fx": {
     "color": [
@@ -661,7 +675,7 @@
    "tools": "v5/tools",
    "data": 12,
    "hp": 1800,
-   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（10×4 格范围，朝向放置方向；犀牛这类大型敌人推不动），不造成伤害。",
+   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（10×4 格范围，朝向放置方向；双管步行机兵、无人机推得动，战车、精英和犀牛这类大型敌人推不动），不造成伤害。",
    "attack": {
     "type": "jet",
     "range": 10,
@@ -672,7 +686,8 @@
     "knockback": 9,
     "directional": true,
     "needsSight": false,
-    "pushMaxMass": 500
+    "pushMaxMass": 800,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -719,7 +734,9 @@
     "speed": 30,
     "splash": 4,
     "needsSight": false,
-    "highArc": true
+    "highArc": true,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -771,7 +788,8 @@
     "interval": 8,
     "power": 360,
     "charge": 0.9,
-    "duration": 0.6
+    "duration": 0.6,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -816,7 +834,8 @@
     "power": 520,
     "charge": 0.9,
     "duration": 0.7,
-    "threatFirst": true
+    "threatFirst": true,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -861,7 +880,8 @@
     "power": 150,
     "bounces": 2,
     "bounceRange": 5,
-    "duration": 0.25
+    "duration": 0.25,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -913,7 +933,8 @@
     "duration": 0.25,
     "zone": 2.5,
     "zoneTime": 5,
-    "zonePower": 32
+    "zonePower": 32,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -962,7 +983,8 @@
     "power": 0,
     "stun": 2,
     "needsSight": false,
-    "bossResilience": 500
+    "bossResilience": 500,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -1040,7 +1062,8 @@
     "duration": 1.5,
     "burn": 3,
     "directional": true,
-    "needsSight": false
+    "needsSight": false,
+    "element": "heat"
    },
    "fx": {
     "color": [
@@ -1077,7 +1100,8 @@
     "interval": 1,
     "power": 32,
     "speed": 140,
-    "soundEvery": 1
+    "soundEvery": 1,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1119,7 +1143,8 @@
     "interval": 1,
     "power": 54.4,
     "speed": 140,
-    "soundEvery": 1
+    "soundEvery": 1,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1162,7 +1187,8 @@
     "interval": 1,
     "power": 96,
     "speed": 140,
-    "soundEvery": 1
+    "soundEvery": 1,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1210,7 +1236,8 @@
     "power": 0,
     "knockback": 0,
     "slow": 0.7,
-    "slowTime": 1.5
+    "slowTime": 1.5,
+    "element": "cold"
    },
    "fx": {
     "color": [
@@ -1251,7 +1278,8 @@
     "power": 30,
     "knockback": 0,
     "slow": 0.6,
-    "slowTime": 1.5
+    "slowTime": 1.5,
+    "element": "cold"
    },
    "fx": {
     "color": [
@@ -1292,7 +1320,8 @@
     "power": 60,
     "knockback": 0,
     "slow": 0.5,
-    "slowTime": 1.5
+    "slowTime": 1.5,
+    "element": "cold"
    },
    "fx": {
     "color": [
@@ -1331,7 +1360,8 @@
     "interval": 2,
     "duration": 2,
     "power": 174,
-    "burn": 3
+    "burn": 3,
+    "element": "heat"
    },
    "fx": {
     "color": [
@@ -1370,7 +1400,8 @@
     "interval": 2,
     "duration": 2,
     "power": 294,
-    "burn": 3
+    "burn": 3,
+    "element": "heat"
    },
    "fx": {
     "color": [
@@ -1409,7 +1440,8 @@
     "interval": 2,
     "duration": 2,
     "power": 520,
-    "burn": 4
+    "burn": 4,
+    "element": "heat"
    },
    "fx": {
     "color": [
@@ -1447,7 +1479,8 @@
     "interval": 1.2,
     "power": 44,
     "speed": 40,
-    "splash": 1.5
+    "splash": 1.5,
+    "element": "explosive"
    },
    "fx": {
     "color": [
@@ -1484,7 +1517,8 @@
     "interval": 1.2,
     "power": 74,
     "speed": 40,
-    "splash": 1.5
+    "splash": 1.5,
+    "element": "explosive"
    },
    "fx": {
     "color": [
@@ -1521,7 +1555,8 @@
     "interval": 1.2,
     "power": 132,
     "speed": 40,
-    "splash": 1.5
+    "splash": 1.5,
+    "element": "explosive"
    },
    "fx": {
     "color": [
@@ -1560,7 +1595,9 @@
     "speed": 28,
     "splash": 3,
     "needsSight": false,
-    "groundOnly": true
+    "groundOnly": true,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -1607,7 +1644,9 @@
     "speed": 30,
     "splash": 3,
     "needsSight": false,
-    "groundOnly": true
+    "groundOnly": true,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -1656,7 +1695,9 @@
     "speed": 32,
     "splash": 3,
     "needsSight": false,
-    "groundOnly": true
+    "groundOnly": true,
+    "element": "explosive",
+    "stagger": true
    },
    "fx": {
     "color": [
@@ -1710,7 +1751,8 @@
     "speed": 90,
     "splash": 0.8,
     "airFirst": true,
-    "groundFactor": 0.5
+    "groundFactor": 0.5,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1758,7 +1800,8 @@
     "speed": 90,
     "splash": 0.8,
     "airFirst": true,
-    "groundFactor": 0.5
+    "groundFactor": 0.5,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1808,7 +1851,8 @@
     "speed": 90,
     "splash": 0.8,
     "airFirst": true,
-    "groundFactor": 0.5
+    "groundFactor": 0.5,
+    "element": "kinetic"
    },
    "fx": {
     "color": [
@@ -1974,7 +2018,8 @@
     "power": 150,
     "bounces": 0,
     "bounceRange": 5,
-    "duration": 0.25
+    "duration": 0.25,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -2010,7 +2055,8 @@
     "power": 255,
     "bounces": 1,
     "bounceRange": 5,
-    "duration": 0.25
+    "duration": 0.25,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -2046,7 +2092,8 @@
     "power": 450,
     "bounces": 2,
     "bounceRange": 5,
-    "duration": 0.25
+    "duration": 0.25,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -2082,7 +2129,8 @@
     "power": 0,
     "stun": 1.5,
     "needsSight": false,
-    "bossResilience": 500
+    "bossResilience": 500,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -2124,7 +2172,8 @@
     "power": 0,
     "stun": 2,
     "needsSight": false,
-    "bossResilience": 500
+    "bossResilience": 500,
+    "element": "electric"
    },
    "fx": {
     "color": [
@@ -2166,7 +2215,8 @@
     "power": 0,
     "stun": 2.5,
     "needsSight": false,
-    "bossResilience": 500
+    "bossResilience": 500,
+    "element": "electric"
    },
    "fx": {
     "color": [

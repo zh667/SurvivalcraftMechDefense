@@ -288,11 +288,16 @@ public static class MDTowerBrain {
     // Since 0.9.0 the non-bullet hits carry a damage channel (the devil mech takes full damage only from its current weak
     // channel, MDBoss): kinetic (bolts, sniper rounds, water jets, melee), explosion (shells, missiles, grenades, flames,
     // burning ground) or energy (beams, lightning, sonic pulses, poison and frost fields). Mercury's weapon kits multiply its damage.
-    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null) {
+    // 0.15.0: `element` (default: the tower's or mech weapon's damage type) goes through resistances, statuses and reactions
+    // (MDTowerWorld.Elemental); MDElement.None for the secondary hits of a reaction.
+    public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null,MDElement? element=null) {
         if(b==null||!MDCombat.IsEnemy(u,b)||power<=0)return;
         power*=World(u).DamageFactor(b);
         if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit)*u.Mech.Type.Damage;   // weapon kit x the mech's own factor
+        var el=element??MDElements.Of(u);int reactions=MDElements.Count;power=World(u).Elemental(u,b,el,power);
+        MDTowerWorld.HitElement=el;MDTowerWorld.HitReacted=MDElements.Count>reactions;   // for its damage number (MDDamageNumbers.cs)
         ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power){Channel=channel??Channel(u)});
+        MDTowerWorld.HitElement=MDElement.None;MDTowerWorld.HitReacted=false;
     }
     public static string Channel(ComponentMDUnit u)=>(u.Tower?.attack.type??(u.Mech?.Weapon==MDMechWeapon.Laser?"beam":"bolt")) switch{"shell" or "flame"=>"explosion","beam" or "chain" or "pulse" or "heal"=>"energy",_=>"kinetic"};
     public static void ShellLanded(ComponentMDUnit u,MDTowerDef d,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
@@ -326,7 +331,7 @@ public static class MDTowerBrain {
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||Vector3.DistanceSquared(b.Position,c)>r*r||Math.Abs(b.Position.Y-c.Y)>2.5f)continue;
             if(kind=="poison"&&a.dot>0)w.Poison(u,b,a.dot,a.dotTime);   // damage comes from the poison status, also after leaving
-            else Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY,false,kind=="burn"?"explosion":"energy");
+            else Hit(u,b,power,MDCombat.Center(b),Vector3.UnitY,false,kind=="burn"?"explosion":"energy",kind switch{"burn"=>MDElement.Heat,"ice"=>MDElement.Cold,"orb"=>MDElement.Electric,_=>null});
             if(slow<1)w.Slow(b,slow,Math.Max(1,a.slowTime),MDTowerWorldColor(fx.color2));
             if(kind=="orb"&&random.Next(2)==0)w.AddBeam(c+Vector3.UnitY*.9f,MDCombat.Center(b),.04f,MDTowerWorldColor(fx.color2),.1f,true);
         }

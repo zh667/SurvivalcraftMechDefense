@@ -76,6 +76,8 @@ public partial class Lab {
             else if(id=="RD08"&&(heights.Average()<3.5f||heights.Average()>9))bad.Add($"{id} height {heights.Average():0.0}");
             if(id=="RD19"&&(walked<10||boss.Boss.Moves.GetValueOrDefault("drive")==0))bad.Add($"{id} did not drive to another spot: {walked:0.0} m in 40 s");
             if(id=="RD13"&&walked<10)bad.Add($"{id} did not walk: {walked:0.0} m in 40 s");
+            // 0.15.0 (user, 2026-10-30: RD08 "要在塔的射程内"): on average within 30 m of the towers (tier-1 gun towers reach 28 m, anti-air 32 m)
+            if(id=="RD08"&&towerD.Count>0&&towerD.Average()>30)bad.Add($"{id} stays out of the towers' reach: {towerD.Average():0} m on average");
             f["walked"]=walked;
             // ---- the player's answers
             foreach(var x in proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(x=>x!=null&&x!=boss).ToList())proj.RemoveEntity(x.Entity,true);   // its escorts

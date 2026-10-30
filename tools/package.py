@@ -23,6 +23,7 @@ files=[(root/'Mod/bin/Release/net10.0/MechDefense.dll','MechDefense.dll'),(root/
 files.append((assets/'MechDefense.cr','Assets/MechDefense.cr'))   # crafting recipes (the API merges every .cr in the package)
 towers=json.loads((assets/'Towers/towers.json').read_text(encoding='utf-8'))['towers']
 files+=[(assets/'Towers/towers.json','Assets/Towers/towers.json'),(assets/'Towers/fx.png','Assets/Towers/fx.png')]
+files.append((assets/'Towers/status.png','Assets/Towers/status.png'))   # 0.15.0 damage-type and status icons (tools/build_status_icons.py, MDElements)
 for t in towers:
     # icon.png: the slot picture (tools/render_tower_icons.py, rerun after any tower rebuild); icon.bin: the dropped item
     for f in ['model.glb','atlas.png','icon.bin','icon.png']:

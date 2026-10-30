@@ -396,12 +396,12 @@ public partial class Lab {
         if(Part("encyclopedia")) {   // 0.11.0: towers and mechs in Help, the enemies in the game's bestiary (MDEncyclopedia)
             var e=new Dictionary<string,object>();r["encyclopedia"]=e;SettingsManager.ShowGuiInScreenshots=true;
             IEnumerable<bool> Shot2(string name){foreach(var x in During(.8,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");yield return true;}
-            // Help: five topics; every tower on exactly one tier page; its health and range as in towers.json
+            // Help: six topics (0.15.0: 伤害类型与元素反应); every tower on exactly one tier page; its health and range as in towers.json
             ScreensManager.SwitchScreen("Help");foreach(var x in During(.5,()=>{}))yield return x;
             var help=ScreensManager.FindScreen<HelpScreen>("Help");
             var ours=help.m_topics.Values.Where(t=>t.Name.StartsWith(MDEncyclopedia.Prefix)).OrderBy(t=>t.Index).ToList();
             e["helpTopics"]=ours.Select(t=>t.Title).ToList();
-            if(ours.Count!=5||!help.m_topicsList.Items.Contains(ours[0]))throw new Exception("help: "+string.Join(", ",ours.Select(t=>t.Title)));
+            if(ours.Count!=6||!help.m_topicsList.Items.Contains(ours[0])||ours[^1].Title!="机甲防线 · 伤害类型与元素反应")throw new Exception("help: "+string.Join(", ",ours.Select(t=>t.Title)));
             help.m_topicsList.ScrollToItem(ours[^1]);foreach(var x in Shot2("re_help_list"))yield return x;
             foreach(var t in ours)MDEncyclopedia.Fill(t);
             var tierPages=ours.Where(t=>t.Name.Contains("Tier")).ToList();var problems=new List<string>();
@@ -553,7 +553,8 @@ public partial class Lab {
             string first=rb2.Target==mech.Body?"Mercury":rb2.Target==t2.Body?"tower":"none";
             // players (decision only; switched to survival for these calls): not while the robot sees the tower, without towers
             // around only within the aggro range (0.12.0; 0 = not at all), yes within weapon range at the defences, yes when
-            // provoked, and then before Mercury and the tower (0.12.0)
+            // provoked, and then before Mercury and the tower (0.12.0). 0.15.0 (user, 2026-10-30): RD05 picks a player it sees at the
+            // defences (a tower within MDRobots.DefenceRange of the player) before the tower
             gameInfo.WorldSettings.GameMode=GameMode.Survival;var pb=pl.ComponentBody;var keepHunt=rb2.Hunt;
             pb.Position=rb2.Body.Position+new Vector3(10,0,0);bool atDefences=rb2.Valid(pb);var pick=rb2.FindTarget();
             rb2.Provoke(pb);var pickProvoked=rb2.FindTarget();
@@ -576,7 +577,7 @@ public partial class Lab {
             string then=rb2.Target==t2.Body?"tower":rb2.Target==null?"none":"other";
             string Who(ComponentBody b)=>b==mech.Body?"Mercury":b==t2.Body?"tower":b==pb?"player":"none";
             g["priority"]=$"with Mercury: {first}; without: {then}; player 10 m away at the defences valid {atDefences} (picked {Who(pick)}, after the player hit it {Who(pickProvoked)}), without towers: aggro off {noTowers}, aggro 16 m at 10 m {aggro10}, at 20 m {aggro20}; provoked {provoked}; lock: 60 m away still the player {lockedFar}, 120 m away released {released} (then {Who(afterLost)}); creative: before a hit {creativeBefore}, after {creativeProvoked} (picked {Who(creativePick)}); boarded {boarded}, lock passed to the mech {lockToMech}";
-            if(first!="Mercury"||then!="tower"||!atDefences||pick==pb||pickProvoked!=pb||noTowers||!aggro10||aggro20||!provoked||creativeBefore||!creativeProvoked||creativePick!=pb||!lockedFar||!released||!boarded||!lockToMech)throw new Exception("targets/priority: "+g["priority"]);
+            if(first!="Mercury"||then!="tower"||!atDefences||pick!=pb||pickProvoked!=pb||noTowers||!aggro10||aggro20||!provoked||creativeBefore||!creativeProvoked||creativePick!=pb||!lockedFar||!released||!boarded||!lockToMech)throw new Exception("targets/priority: "+g["priority"]);
             Kill([rb2]);Remove([t2]);while(Wait(.5))yield return true;
             // a tower behind another tower: the robot stands still in front of both
             float reach=Math.Min(gun.attack.range*.7f,20);var back=Place(gun,Home,0);var front=Place(gun,Home+new Vector3(0,0,-3.5f),0);

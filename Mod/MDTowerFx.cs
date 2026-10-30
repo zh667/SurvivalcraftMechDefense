@@ -9,7 +9,7 @@ namespace Game;
 // One shared simulation per world for tower effects, shells, lingering zones and status effects.
 // It rides on SubsystemParticles: simulated with game time (pauses with the game) and drawn into the
 // particle renderer's batches, which apply fog. Sprites come from the 8x8 pixel atlas Towers/fx.
-public sealed class MDTowerWorld : ParticleSystemBase {
+public sealed partial class MDTowerWorld : ParticleSystemBase {
     static readonly ConditionalWeakTable<Project,MDTowerWorld> worlds=new();
     public static MDTowerWorld For(Project project) {
         if(worlds.TryGetValue(project,out var w)&&w.SubsystemParticles!=null)return w;
@@ -35,6 +35,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     public void LaunchForeign(Foreign f){f.last=f.pos;foreign.Add(f);}
     sealed class Status {
         public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick,healBlockUntil,healedUntil;
+        public float heatUntil,coldUntil,elecUntil,acidUntil,brittleUntil,reactUntil; public readonly float[] reactAt=new float[9];   // 0.15.0 elements (MDElements.cs)
         public ComponentMDUnit poisonOwner; public Color slowColor=new(200,235,255),armorColor=new(220,255,110);
         public float walk,fly,swim,jump,turn,look; public bool saved;
     }
@@ -203,11 +204,13 @@ public sealed class MDTowerWorld : ParticleSystemBase {
     public bool IsFrozen(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.freezeUntil>time;
     public bool IsPoisoned(ComponentBody b)=>status.TryGetValue(b,out var s)&&s.poisonUntil>time;
     // Colour multiplier for a frozen (ice blue) or poisoned (the cloud's purple) creature; see MDStatusTint.
+    // 0.15.0: the repair drone (RP09) wears RD09's model, always tinted green
     public static Vector3? Tint(ComponentModel m) {
-        if(!worlds.TryGetValue(m.Project,out var w)||w.status.Count==0||m.Entity.FindComponent<ComponentBody>() is not {} b||!w.status.TryGetValue(b,out var s))return null;
+        Vector3? own=m is ComponentMDRobotModel rm&&rm.Robot?.Kind.Id=="RP09"?new Vector3(.5f,1f,.58f):null;
+        if(!worlds.TryGetValue(m.Project,out var w)||w.status.Count==0||m.Entity.FindComponent<ComponentBody>() is not {} b||!w.status.TryGetValue(b,out var s))return own;
         if(s.freezeUntil>w.time)return new Vector3(.55f,.78f,1f);
         if(s.poisonUntil>w.time&&s.poisonOwner?.Tower?.fx is {} fx)return Vector3.Lerp(Vector3.One,new Vector3(fx.color2[0],fx.color2[1],fx.color2[2]),.5f);
-        return null;
+        return own;
     }
     public float SpeedFactor(ComponentBody b)=>!status.TryGetValue(b,out var s)?1:s.freezeUntil>time||s.stunUntil>time?0:s.slowUntil>time?s.slowFactor:1;
 
@@ -235,7 +238,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
                 }
             }
             if(f>=1&&s.saved&&loc!=null){loc.WalkSpeed=s.walk;loc.FlySpeed=s.fly;loc.SwimSpeed=s.swim;loc.JumpSpeed=s.jump;loc.TurnSpeed=s.turn;loc.LookSpeed=s.look;s.saved=false;}
-            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&s.freezeUntil<=time&&s.poisonUntil<=time&&s.freezeImmuneUntil<=time&&s.healBlockUntil<=time&&s.healedUntil<=time&&!s.saved))(done??=[]).Add(b);
+            if(!alive||(s.slowUntil<=time&&s.stunUntil<=time&&s.armorUntil<=time&&s.freezeUntil<=time&&s.poisonUntil<=time&&s.freezeImmuneUntil<=time&&s.healBlockUntil<=time&&s.healedUntil<=time&&s.heatUntil<=time&&s.coldUntil<=time&&s.elecUntil<=time&&s.acidUntil<=time&&s.brittleUntil<=time&&s.reactUntil<=time&&s.reactAt.All(x=>x<=time)&&!s.saved))(done??=[]).Add(b);
         }
         if(done!=null)foreach(var b in done)status.Remove(b);
     }
@@ -286,7 +289,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
             ZoneVisual(z);
             if(z.tick<=0){z.tick=.5f;MDTowerBrain.ZoneTick(z.owner,z.kind,z.c,z.r,z.power*.5f,z.slow);}
         }
-        ApplyStatus(dt);
+        ApplyStatus(dt);SimulateLabels(dt);SimulateNumbers(dt);
         return false;
     }
     ComponentBody TraceForeign(Foreign f,Vector3 a,Vector3 b,out Vector3 point) {
@@ -381,6 +384,7 @@ public sealed class MDTowerWorld : ParticleSystemBase {
                 Quad(alpha,s.pos-dir*.45f*sc*k,side*.11f*sc,dir*.75f*sc*k,S.Bolt,Deep(c));Quad(add,s.pos-dir*.45f*sc*k,side*.05f*sc,dir*.6f*sc*k,S.Bolt,Color.White);Quad(add,s.pos,right*.3f*sc,up*.3f*sc,S.Glow,c*.9f);
             } else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
         }
+        DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
     }
     void Quad(TexturedBatch3D batch,Vector3 p,Vector3 x,Vector3 y,S slot,Color c) {
         int s=(int)slot;float u=s%8/8f,v=s/8/8f,d=1/8f;

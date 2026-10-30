@@ -94,6 +94,7 @@ public abstract class MDBossState {
     void Break() {
         LayersLeft--;Breaks++;Exposed=ExposedTime;Stagger=StaggerTime;Plate=LayersLeft>0?PlateShare*Armour:0;
         var w=MDTowerWorld.For(P);var c=MDCombat.Center(r.Body);w.Flash(c,3,new Color(255,230,160),.15f);w.Sparks(c,Vector3.UnitY,24,new Color(255,200,120),8,1,.6f,.07f);MDRobots.Sound(P,24,c,1);
+        MDRewards.LayerBroken(r);   // 0.15.0: scrap for each layer
         MDBoss.Announce(P,c,$"{Name}的第 {Layers-LayersLeft} 层装甲被击破了！{ExposedTime:0} 秒内它受到的伤害提高 {(ExposedFactor-1)*100:0}%。",new Color(255,230,140));
     }
     // a player's (or a mech's) own hit, not a tower's
@@ -543,14 +544,16 @@ public sealed class MDSabreState:MDBossState {
 // or in a mech), take out its drones, the long-range towers.
 // - It hovers 6 m over the ground and keeps 34 m from its target (most towers reach 28-36 m; sniper and missile towers 48 m).
 // - 双轨炮: the rails glow for 1.4 s, then two heavy shells at its target. Every 6 s.
-// - A player or mech within 20 m: it backs off to 32 m from that one, turning its three machine guns on it (bursts of 12).
+// - A player or mech within 16 m: it backs off to 26 m from that one, turning its three machine guns on it (bursts of 12).
 // - 导弹: a lock warning on the one it duels (else its target) for 1.2 s, then 4 homing missiles. Every 12 s.
 // - 2 small drones (RD09) every 30 s while fewer than 3 of its own are about; its escorts are drones too.
 // Model x3: 5.2 m wide, 8.6 m long.
 public sealed class MDGunboatState:MDBossState {
     static readonly MDRobotKind Rail=MDRobots.Weapon("gunboat_rail",90,3,150,splash:2,fire:11,hit:24,look:"shell",scale:1.3f),
         Missile=MDRobots.Weapon("gunboat_missile",14,2.5f,60,splash:2,fire:9,hit:14,look:"shell",type:"missile");
-    public const float Altitude=6,StandOff=34,Evade=20,RailTell=1.4f;
+    // 0.15.0 (user, 2026-10-30: RD08 "要在塔的射程内"): 22 m from what it fights (most towers reach that), backing off to 26 m from a
+    // player or mech that comes within 16 m (was 34 m and 32 m: only the sniper and missile towers reached it)
+    public const float Altitude=6,StandOff=22,Evade=16,Retreat=26,RailTell=1.4f;
     string move="";float t,rail=3,mg,missiles=6,drones=4,drift=1,driftTime;bool fired;ComponentBody lockOn;readonly List<ComponentMDRobot> fleet=[];
     public int DronesSent;   // lab
     public MDGunboatState(ComponentMDRobot robot,ValuesDictionary v):base(robot,v){}
@@ -565,7 +568,7 @@ public sealed class MDGunboatState:MDBossState {
         var threat=Duelist(Evade);
         Vector3 Away(ComponentBody b){var d=new Vector3(body.Position.X-b.Position.X,0,body.Position.Z-b.Position.Z);return d.LengthSquared()>.01f?Vector3.Normalize(d):-body.Matrix.Forward;}
         Vector3 want;
-        if(threat!=null)want=threat.Position+Away(threat)*(Evade+12)+Vector3.Cross(Vector3.UnitY,Away(threat))*drift*4;
+        if(threat!=null)want=threat.Position+Away(threat)*Retreat+Vector3.Cross(Vector3.UnitY,Away(threat))*drift*4;
         else if(tg!=null)want=tg.Position+Away(tg)*StandOff+Vector3.Cross(Vector3.UnitY,Away(tg))*drift*6;
         else want=Home??body.Position;
         Hover(want,Altitude,r.Kind.Speed);

@@ -2362,14 +2362,14 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Loot" Guid="7b933f99-21c9-5c8b-8a4e-ab6bb1b9060e">
         <ParameterSet Name="Loot" Guid="a3161387-d139-5614-996d-3147da191a04">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="da973cde-8bc7-50f2-9808-878924e05c1e" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="a39cb8af-382b-5caf-9364-6a8692291256" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="ba060cb9-51b1-5d1a-b874-0812f5dedec1" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="da973cde-8bc7-50f2-9808-878924e05c1e" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="a39cb8af-382b-5caf-9364-6a8692291256" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="ba060cb9-51b1-5d1a-b874-0812f5dedec1" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="61807ae8-0ee3-5401-ad7d-4fad7b9de470">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="a8fdaac0-24c7-59ad-b0c7-97ca9bfbfa07" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="040df213-d713-5a18-8c6f-e8a802c14409" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="c6bd5bcb-6601-578e-a2dc-7038aaa1f884" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="a8fdaac0-24c7-59ad-b0c7-97ca9bfbfa07" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="040df213-d713-5a18-8c6f-e8a802c14409" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="c6bd5bcb-6601-578e-a2dc-7038aaa1f884" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="c6a2b67c-14ad-55da-8a1f-6f48b14f1578" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -2428,14 +2428,14 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Loot" Guid="01029c9e-383e-5e29-b632-d278e188d8f7">
         <ParameterSet Name="Loot" Guid="868fd25f-dc2f-5e55-ae59-67dcf47d23c1">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="b7d7972b-a8f6-5f17-8fb5-6a489499acd9" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="2fb4ca81-ff94-5880-9b87-17779362843c" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="bdb5b10f-106b-53ac-b032-5dd662606fae" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="b7d7972b-a8f6-5f17-8fb5-6a489499acd9" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="2fb4ca81-ff94-5880-9b87-17779362843c" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="bdb5b10f-106b-53ac-b032-5dd662606fae" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="705c8dcb-b2a7-5d23-aba9-042a4993078c">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="1a073672-17ba-5db9-a684-e326d1a45cac" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="1cfb885b-acc8-52ad-8001-9af9be927a3a" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="63ec7b3d-1825-5947-9d65-a6d56c255e6f" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="1a073672-17ba-5db9-a684-e326d1a45cac" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="1cfb885b-acc8-52ad-8001-9af9be927a3a" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="63ec7b3d-1825-5947-9d65-a6d56c255e6f" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="ebb44ec3-e506-5499-b765-68def983e5c1" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -2488,14 +2488,14 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Loot" Guid="25550491-bcab-57e3-b49a-1c900e3d17db">
         <ParameterSet Name="Loot" Guid="52ee4703-2782-54b4-a4f6-43d28bfc13ac">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="81fb5d03-043e-5918-8794-3a6696dd3898" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="467df8b3-10ee-5bcc-a982-5788b2d060bb" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="ceb10f97-5780-5b63-99a8-22d6689a16f9" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="81fb5d03-043e-5918-8794-3a6696dd3898" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="467df8b3-10ee-5bcc-a982-5788b2d060bb" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="ceb10f97-5780-5b63-99a8-22d6689a16f9" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="55f69640-af6e-5cca-a3af-7f80cac75a52">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="cdacf22e-f098-5f3a-ae4d-5508769db323" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="e8519d12-e315-54b6-8de5-e5bfad58da08" />
-          <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="acc99d6e-1844-59b8-8eb9-819b47b1d3aa" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;4;6;1" Guid="cdacf22e-f098-5f3a-ae4d-5508769db323" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.1" Guid="e8519d12-e315-54b6-8de5-e5bfad58da08" />
+          <Parameter Name="3" Type="string" Value="ExperienceBlock;4;5;1" Guid="acc99d6e-1844-59b8-8eb9-819b47b1d3aa" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="5f11b18d-5892-50ff-b168-69a919dcd906" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -2548,13 +2548,13 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Loot" Guid="7ac659a5-ec34-5318-bb84-c96f7cba54c5">
         <ParameterSet Name="Loot" Guid="8e1d136c-49e2-5d48-856c-809c71981d5e">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="0242bba9-4705-5b57-9149-89145670105e" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="adde3bd1-a4fe-5bf2-828e-0337bc8919b7" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;1;2;1" Guid="0242bba9-4705-5b57-9149-89145670105e" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.15" Guid="adde3bd1-a4fe-5bf2-828e-0337bc8919b7" />
           <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="4c738ffa-4ddb-5db0-93f2-8fa71b3929f3" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="ce1d84a0-a81b-5df0-aae7-528b815a0acf">
-          <Parameter Name="1" Type="string" Value="MDPartBlock:0;2;4;1" Guid="88c636ce-1d1d-5d41-8858-ffb546c03462" />
-          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.05" Guid="c4dafb9d-bc56-5463-a41d-ce46a7498905" />
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;1;2;1" Guid="88c636ce-1d1d-5d41-8858-ffb546c03462" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.15" Guid="c4dafb9d-bc56-5463-a41d-ce46a7498905" />
           <Parameter Name="3" Type="string" Value="ExperienceBlock;2;3;1" Guid="d80e6eae-02b1-5512-b372-841944a2ceea" />
         </ParameterSet>
       </MemberComponentTemplate>
@@ -2574,6 +2574,73 @@
         <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="6010a7a4-7d89-52cb-9256-40ec46f2c4e4" />
         <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="a61600c7-7265-5ed3-a45c-e5bf3a34ec19" />
         <Parameter Name="DisplayName" Type="string" Value="旋翼机炮无人机" Guid="cd29bbd1-7260-553b-ba07-dfa11f45b6f9" />
+      </ParameterSet>
+    </EntityTemplate>
+    <EntityTemplate Name="MDRepair09" Guid="1f3e1285-62d6-5193-8b16-f8a77a204eda" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
+      <MemberComponentTemplate Name="Body" Guid="ee8a3001-5e87-5242-88e9-2dfed18d4b6f">
+        <Parameter Name="BoxSize" Type="Vector3" Value="3.8,2.5,3.8" Guid="766d4a94-92d7-5f66-9d3f-936e6701a501" />
+        <Parameter Name="Mass" Type="float" Value="300" Guid="57744025-4be8-5e55-ac0f-320dab23e0ba" />
+        <Parameter Name="Density" Type="float" Value="4" Guid="28ffdf34-db0f-5ec3-8d11-8a1474276ea1" />
+        <Parameter Name="MaxSmoothRiseHeight" Type="float" Value="1.05" Guid="2e22653f-e002-517c-a7ed-bb72bcc5978b" />
+        <Parameter Name="AirDrag" Type="Vector2" Value="0.1,0.1" Guid="222fb288-3402-5622-938c-91cfd4dc6cf6" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Health" Guid="fa1e687d-8c09-5762-83cf-e1c8f838ef98">
+        <Parameter Name="AttackResilience" Type="float" Value="800" Guid="b402496e-5014-5d44-9f8c-a739a16ac639" />
+        <Parameter Name="FallResilience" Type="float" Value="60" Guid="4f129dba-c95a-5879-881a-420d4b9c3181" />
+        <Parameter Name="FireResilience" Type="float" Value="500" Guid="1f976111-4e90-54fb-a5cb-372e5934c80e" />
+        <Parameter Name="ExplosionResilience" Type="float" Value="5" Guid="bc43c4ad-c784-5d8a-a185-c17873d591f7" />
+        <Parameter Name="CorpseDuration" Type="float" Value="3" Guid="685dec91-4411-5841-9480-c8e86cea7cc4" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Creature" Guid="b8c6b309-c720-5eff-a81b-be1b902a7924">
+        <Parameter Name="DisplayName" Type="string" Value="维修无人机" Guid="8626781f-a9b1-5370-9687-d8c44d2fcf4c" />
+        <Parameter Name="Description" Type="string" Value="维修无人机：不开火，飞在受伤的机兵上空用绿色光束给它们修复耐久（首领除外）。开始刷新后第 14 天起出现。优先打掉它。击毁后常掉火控芯片。" Guid="4ba274ea-a35d-5229-ae56-7626310916a7" />
+        <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="f47bf486-f8ab-517d-a486-0d89059cbc3c" />
+        <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="80696adf-8804-5114-ab15-6585a0b0e149" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Locomotion" Guid="30463066-fbb3-560f-a477-76ca494de7aa">
+        <Parameter Name="WalkSpeed" Type="float" Value="0" Guid="42a50c1a-dbb2-5d10-8a7b-17f3be86541e" />
+        <Parameter Name="FlySpeed" Type="float" Value="6" Guid="c3080690-8d94-50cd-a046-a4063f306610" />
+        <Parameter Name="SwimSpeed" Type="float" Value="0" Guid="11503783-932b-5406-8311-0fa7eefffad3" />
+        <Parameter Name="LadderSpeed" Type="float" Value="0" Guid="44dbcc23-d8b8-5178-beb1-3c91687b8ab0" />
+        <Parameter Name="JumpSpeed" Type="float" Value="0" Guid="7dfaccd9-a047-518f-9bdc-0c98e9acc174" />
+        <Parameter Name="TurnSpeed" Type="float" Value="2.5" Guid="8001a7ed-4719-53ad-852b-5a9bcc97b2a2" />
+        <Parameter Name="LookSpeed" Type="float" Value="3" Guid="5e530fef-c517-5921-8ad9-dd3983fbb421" />
+        <Parameter Name="AccelerationFactor" Type="float" Value="1.2" Guid="176194ac-b00b-5d66-af67-9ecfd373bb29" />
+        <Parameter Name="WalkSpeedWhenTurning" Type="float" Value="0.5" Guid="e8d46476-0a42-597e-b6b5-c138f486fee1" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Spawn" Guid="324ec81c-5993-516a-ab0e-1d7b5dee60bb">
+        <Parameter Name="AutoDespawn" Type="bool" Value="True" Guid="e1dcf803-7539-5178-93fe-95e245d6df0c" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Loot" Guid="927ca7d0-5d6b-5075-b1af-b53540ff3b32">
+        <ParameterSet Name="Loot" Guid="2b6d949d-a7a1-5548-99bc-2ffef0472b6c">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;1;2;1" Guid="b68a94a9-8d05-505f-a266-6dac8965d423" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.35" Guid="01756a33-a511-5e03-9d7c-da51a3736871" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.05" Guid="9c0774b0-005c-5373-88d6-2076d0314fc7" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;3;4;1" Guid="950bb1b9-77c6-52d8-ae19-0531702f012e" />
+        </ParameterSet>
+        <ParameterSet Name="LootOnFire" Guid="bc8967d0-4925-5f67-9a6e-6369b548fa1c">
+          <Parameter Name="1" Type="string" Value="MDPartBlock:0;1;2;1" Guid="97f5fbeb-80dd-513d-b92f-a62fc5ec45c1" />
+          <Parameter Name="2" Type="string" Value="MDPartBlock:2;1;1;0.35" Guid="343d0655-a64b-5b69-9b10-c0c4eb5634e7" />
+          <Parameter Name="3" Type="string" Value="MDPartBlock:3;1;1;0.05" Guid="70b37b8b-fedc-5a22-bb53-eebd5000142b" />
+          <Parameter Name="4" Type="string" Value="ExperienceBlock;3;4;1" Guid="f1f4517b-8f2f-5740-8a4c-7452127f6f12" />
+        </ParameterSet>
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="Model" Guid="5c305105-4808-53a0-89f9-f18b7dc828f0" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobotModel" Guid="cce71364-91e5-5e57-9afd-a37d2c2a3a89" />
+        <Parameter Name="ModelName" Type="string" Value="Imported/RD09/model" Guid="fb41e243-e126-5a91-b61f-ed9eef8fb1f6" />
+        <Parameter Name="TextureOverride" Type="string" Value="" Guid="2522c08a-15fc-532a-b3ef-d2dc19af729b" />
+        <Parameter Name="CastsShadow" Type="bool" Value="True" Guid="50e58b12-26bd-52f2-b4ee-ab29a49414c1" />
+        <Parameter Name="BoundingSphereRadius" Type="float" Value="3.04" Guid="a6e115a5-139b-507d-815f-8deed445496f" />
+      </MemberComponentTemplate>
+      <MemberComponentTemplate Name="MDRobot" Guid="8351d50a-56db-5aed-8c2b-781262a978d7" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+        <Parameter Name="Class" Type="string" Value="Game.ComponentMDRobot" Guid="479912f3-b9df-5a60-9fb5-28b396d8e456" />
+        <Parameter Name="Kind" Type="string" Value="RP09" Guid="eff4a5b9-9496-571d-be66-d68e0cac9e94" />
+      </MemberComponentTemplate>
+      <ParameterSet Name="CreatureEggData" Guid="95d5a837-af42-5b36-9d4a-86996215dd48">
+        <Parameter Name="EggTypeIndex" Type="int" Value="3911" Guid="23e12682-0579-556d-ba66-23ee94da7982" />
+        <Parameter Name="ShowEgg" Type="bool" Value="False" Guid="5426d0ba-88d2-5f10-b995-9fa1e5bc08f5" />
+        <Parameter Name="NutritionalValue" Type="float" Value="0" Guid="36464d34-753b-5d61-9feb-d0cb82e43c8a" />
+        <Parameter Name="DisplayName" Type="string" Value="维修无人机" Guid="a28a4b7a-7047-50d2-9649-a1fad07d06d7" />
       </ParameterSet>
     </EntityTemplate>
     <EntityTemplate Name="MDRobotEN02" Guid="d7d2f69f-f2fb-5b13-b920-214b9cbc242d" InheritanceParent="3f077159-f492-419b-859a-bb051de6339f">
@@ -2807,6 +2874,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="744471b4-fdf7-537c-b2c9-9e42b78636f1" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="32357ec2-3199-5b86-950b-6a1036be9532" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="ab5f7f3f-e52c-555a-9a51-5edfd93de54a" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="3f97d873-1c01-5689-9821-6ded746dde33" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="b48be94e-0a84-57eb-87d3-2f30cb110d71">
           <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="cdeb9c25-ca18-5ff9-8d80-cccb90458d9a" />
@@ -2814,6 +2882,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="7f0313c1-eb47-5336-95b9-d710cb804248" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="21ce78c8-c008-52d2-a358-3951f5eeae24" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="3750d396-5c66-540b-9117-4a4756ba684a" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="c64efb56-6cd8-589d-9ef7-30ee7f88aab9" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="fe9235e5-5b9c-5d9b-9fc6-9c9f9f74fe99" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -2876,6 +2945,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="f65ce32b-b9d7-5dbe-b042-c857306be248" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="91e4fb62-bcd2-560f-a064-44015500d38c" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="aa84cfea-d6cf-52b0-8b9b-f85ff747f0e6" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="f2d14e15-f2ff-55b6-8d96-fbe7f3e169c3" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="4182a5ea-d629-58f4-a1d4-db2a8283f9e8">
           <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="1266ebf0-8085-5a9f-902f-c37111b9e4ce" />
@@ -2883,6 +2953,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="a3d761b2-e14f-5c67-b193-66fa752e7737" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="0097e067-e211-5b3a-a3a5-558869774ffd" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="ab616848-7157-5050-af23-9f7c0d4b5021" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="aa8f93d8-b648-54ed-8b39-8c92c9d763e6" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="bfb00323-2a24-5585-89e4-d9d6d5aad54e" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -2945,6 +3016,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="6b6641ec-8080-5087-8db4-bcb3b0d84ece" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="9e1464f1-7284-5045-b841-27f8ef20f9cc" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="1659eb96-2f3a-5c3f-90fd-520f19dc82b8" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="2d845cc8-75ad-5d8b-9869-54e469ab504f" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="0764c493-153f-5bc1-a134-a52ad9e4a5ee">
           <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="ead5abb2-6df1-5d94-aaf1-4b54a9fa9509" />
@@ -2952,6 +3024,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="d2452bb9-4e11-5d8f-aa0c-b2554bf8fec9" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="cd156ac3-146b-5b4c-81f6-57203190506f" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="2fbd7756-7930-5512-8143-ac24dee7c7cb" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="25f04842-ff90-5b33-9640-b020bff9486f" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="e055c6fd-746f-5393-b734-822970a95675" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -3014,6 +3087,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="b263041e-d62b-509a-9ff0-136ccdaba00f" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="416d78bc-54ce-5562-b3d7-6bb777140848" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="df70cf58-e739-5602-a6d7-8d7db977b048" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="ec888f2d-73d5-533b-8a7a-364e160eb44d" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="e9f80d62-0110-57cd-9705-99697a3be365">
           <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="b2a4a34d-1e58-55b9-b91e-e7898a0dd33e" />
@@ -3021,6 +3095,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="1f03499d-acf7-5dba-a008-ba4f844e8ae0" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="a11bdd25-7b18-5b1d-9b80-97dff335d5ad" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="60bb4a59-e8c9-52c5-bcdf-631135911bbe" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="d13481fa-653d-5f35-8c60-125d58f1f362" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="a1f7b09b-55a9-5732-8043-d6da476f181e" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">
@@ -3083,6 +3158,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="1cb7795d-6138-576d-9ecd-1554b7961cbb" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="46220d14-7dfe-5f45-b8eb-9394e7ff7869" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="752b2618-f9f6-50fa-bcab-183c43732a21" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="40abb454-b3bd-5d7f-bdbe-ce92715c7e72" />
         </ParameterSet>
         <ParameterSet Name="LootOnFire" Guid="5b80b2b3-7a6f-594c-b26f-d1a34ee93363">
           <Parameter Name="1" Type="string" Value="MDPartBlock:4;1;1;1" Guid="34eb3cc3-a3f8-5ffc-9e3e-ff1622870bd6" />
@@ -3090,6 +3166,7 @@
           <Parameter Name="3" Type="string" Value="MDPartBlock:2;2;3;1" Guid="8c25132b-3414-57ac-a24c-3787ca38b60f" />
           <Parameter Name="4" Type="string" Value="MDPartBlock:0;8;12;1" Guid="4ed758b8-d96c-51b9-9e17-e527a86deb45" />
           <Parameter Name="5" Type="string" Value="ExperienceBlock;30;40;1" Guid="82e7ae92-8d36-5156-84e6-2ea03b28bd78" />
+          <Parameter Name="6" Type="string" Value="MDPartBlock:9;1;2;1" Guid="80b33b49-1a0c-50b8-9b95-4a81df6c89a2" />
         </ParameterSet>
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Model" Guid="8969ad42-0163-5c85-864f-3438b37bc5f8" InheritanceParent="681a5886-5bff-418a-bf5f-ac84f290a311">

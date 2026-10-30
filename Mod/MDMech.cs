@@ -78,14 +78,18 @@ public sealed class MDMechType {
     public string Id,Name,Root,Template; public int Data,Armour;
     public float Damage=1,EnergyMax=100000,Speed=1,ExplosionTaken=1,BossArmour=3000; public int Locks=3,Weight=4; public bool BurstRifle;
     public Vector3 Box=new(2.4f,4.8f,2.4f);
+    // 0.15.0 (user, 2026-10-30: "机甲也要做多种元素的炮弹……高级的可以做多一点支持的元素"): the ammo elements it can load (MDMechState.Ammo);
+    // Kinetic stands for the standard rounds (rifle kinetic, cannon / missiles / grenades explosive). The laser is always electric.
+    public MDElement[] Ammo=[MDElement.Kinetic,MDElement.Heat,MDElement.Cold];
     public string HoverClip="jump"; public float HoverTime=1;   // the pose held while hovering (轩辕十四: its gliding dash, whose feet stay off the ground)
     public MDMechDef Def=>MDMechLibrary.Load(Root,"mech");
     public MDTowerLibrary.IconData Icon=>MDTowerLibrary.IconMesh(Root+"icon.bin",Root+"icon");
     public static readonly MDMechType Mercury=new(){Id="Mercury",Name="水星",Root="Imported/Mercury/",Template="MDMech",Data=1,Armour=4000};
     public static readonly MDMechType Nemesis=new(){Id="Nemesis",Name="复仇女神",Root="Imported/Nemesis/",Template="MDMechNemesis",Data=30,Armour=6000,
-        Damage=1.25f,EnergyMax=130000,BurstRifle=true,ExplosionTaken=.8f,Weight=5,BossArmour=4000};
+        Damage=1.25f,EnergyMax=130000,BurstRifle=true,ExplosionTaken=.8f,Weight=5,BossArmour=4000,Ammo=[MDElement.Kinetic,MDElement.Heat,MDElement.Cold,MDElement.Electric]};
     public static readonly MDMechType Regulus=new(){Id="Regulus",Name="轩辕十四",Root="Imported/Regulus/",Template="MDMechRegulus",Data=31,Armour=8000,
-        Damage=1.5f,EnergyMax=160000,Speed=1.15f,Locks=2,Weight=6,BossArmour=5000,Box=new(2.8f,5.6f,2.8f),HoverClip="dash_forward",HoverTime=-1};
+        Damage=1.5f,EnergyMax=160000,Speed=1.15f,Locks=2,Weight=6,BossArmour=5000,Box=new(2.8f,5.6f,2.8f),HoverClip="dash_forward",HoverTime=-1,
+        Ammo=[MDElement.Kinetic,MDElement.Heat,MDElement.Cold,MDElement.Electric,MDElement.Corrosive]};
     public static readonly MDMechType[] All=[Mercury,Nemesis,Regulus];
     public static MDMechType ById(string id)=>All.FirstOrDefault(t=>t.Id==id)??Mercury;
     public static MDMechType ByData(int data)=>All.FirstOrDefault(t=>t.Data==data);
@@ -233,8 +237,11 @@ public sealed class MDMechState {
     // Weapon kits Mk1-Mk3 (MDPartBlock, installed one level after the other): every weapon's damage x1.15 / x1.3 / x1.5.
     public int Kit;
     public static float KitFactor(int kit)=>kit switch{1=>1.15f,2=>1.3f,3=>1.5f,_=>1};
-    public void Load(ValuesDictionary v){Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",Type.EnergyMax),0,Type.EnergyMax);Kit=Math.Clamp(v.GetValue("MechKit",0),0,3);}
-    public void Save(ValuesDictionary v){v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);v.SetValue("MechKit",Kit);}
+    public MDElement Ammo=MDElement.Kinetic;   // 0.15.0: the loaded ammo element (one of Type.Ammo)
+    public void NextAmmo(){int i=Array.IndexOf(Type.Ammo,Ammo);Ammo=Type.Ammo[(i+1)%Type.Ammo.Length];}
+    public static string AmmoName(MDElement e)=>e==MDElement.Kinetic?"标准弹":MDElements.Name(e)+"元素弹";
+    public void Load(ValuesDictionary v){Ammo=(MDElement)v.GetValue("MechAmmo",(int)MDElement.Kinetic);if(!Type.Ammo.Contains(Ammo))Ammo=MDElement.Kinetic;Weapon=(MDMechWeapon)Math.Clamp(v.GetValue("MechWeapon",0),0,4);Energy=Math.Clamp(v.GetValue("Energy",Type.EnergyMax),0,Type.EnergyMax);Kit=Math.Clamp(v.GetValue("MechKit",0),0,3);}
+    public void Save(ValuesDictionary v){v.SetValue("MechAmmo",(int)Ammo);v.SetValue("MechWeapon",(int)Weapon);v.SetValue("Energy",Energy);v.SetValue("MechKit",Kit);}
     public static string Name(MDMechWeapon w)=>w switch{MDMechWeapon.Missile=>"导弹",MDMechWeapon.Cannon=>"火炮",MDMechWeapon.Laser=>"激光",MDMechWeapon.Grenade=>"榴弹",_=>"步枪"};
     public string WeaponName=>Name(Weapon);
 }

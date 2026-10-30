@@ -50,7 +50,7 @@ public static class MDTowerMaintenance {
     }
     // Removes the tower (or Mercury) and drops its deploy item (with its health), thrown a little towards the player.
     public static int Dismantle(ComponentMDUnit u,Vector3? towards) {
-        int value=u.Tower!=null?MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints):MDDeploymentBlock.MechValue(u.Damage.Hitpoints,u.Mech?.Kit??0,u.Mech?.Type);
+        int value=u.Tower!=null?MDDeploymentBlock.Value(u.Tower,u.Damage.Hitpoints,MDMedic.Is(u)?MDMedic.UsedEighths(u):0):MDDeploymentBlock.MechValue(u.Damage.Hitpoints,u.Mech?.Kit??0,u.Mech?.Type);
         var at=Top(u);
         var push=towards.HasValue?Vector3.Normalize(new Vector3(towards.Value.X-at.X,0,towards.Value.Z-at.Z)+new Vector3(.001f,0,0))*2:Vector3.Zero;
         u.Project.FindSubsystem<SubsystemPickables>(true).AddPickable(value,1,at,push+Vector3.UnitY*3,null);

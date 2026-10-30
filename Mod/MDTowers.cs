@@ -27,6 +27,8 @@ public sealed class MDTowerAttack {
     public bool groundOnly;          // never targets flying creatures (加农炮, user 10-23)
     public float boost = 1; public int links = 3;          // radar: range x boost for up to `links` towers within range
     public float width;              // directional rectangle width (flame/jet)
+    public string element;           // 0.15.0 damage type: kinetic explosive heat cold electric corrosive (MDElements)
+    public bool stagger;             // 0.15.0: its hits still stun and push robots (heavy single shots, MDRobots.Unstaggered)
 }
 // A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
 public sealed class MDTowerLink { public string node, parent, on; public float[] hinge, at; public bool stretch; }

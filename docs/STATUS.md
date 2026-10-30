@@ -6,7 +6,35 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.14.0: new enemies (RD14 tank, RD09 / EN02 drones, four new bosses), armour phases, combat benchmark (branch feat/new-enemies on top of 0.13.0, 2026-10-30; not merged yet)
+## 0.15.0: combat rework — damage types and reactions, no stagger from ordinary towers, control stops fire, growth, rewards, damage numbers (branch feat/combat-015, 2026-10-30; not merged yet)
+
+The user's answers to the nine questions of docs/COMBAT_DESIGN.md section 10 and "二～五按你的建议"; design, numbers and evidence:
+docs/tasks/2026-10-30-combat-0.15.md, docs/COMBAT_DESIGN.md (2.5: benchmark before / after).
+- Damage types (Mod/MDElements.cs): each tower kinetic / explosive / heat / cold / electric / corrosive; heat, cold, electric and
+  corrosive leave a status; 8 reactions (thermal shock, overload, corrode, brittle, frost etch, electrolysis, spread, shatter)
+  with cooldowns (1.5 s per target, 6 s per reaction); resistances x 0.75-1.5 per robot kind; status icons over targets and the
+  damage type over towers (atlas Towers/status.png, tools/build_status_icons.py); reaction names rise over the target; mod
+  setting 元素反应. Damage numbers (Mod/MDDamageNumbers.cs): merged per target over 0.35 s, at most 14 / 8 / 4 at once by
+  特效数量, within 28 m; mod setting 伤害数字.
+- Towers no longer stun or push anything they hit, except the heavy single shots (attack.stagger); stun and freeze stop a robot's
+  fire; frost towers no longer push; the water jet pushes up to 800 mass (RD05, drones).
+- Enemies: RD05 steps aside when aimed at and backs off when hurt; RD14 armoured in front (x 0.75) and weak behind (x 1.4), slower
+  turret; RD07 rings where its shells land; RD05 and the drones go for players at the defences / alone; the repair drone (RP09,
+  RD09's model tinted green) from 14 days after the start day. RD21 armour x 1.1; RD08 stays 22 m from its target.
+- Same day, user follow-ups: medic towers hold a healing store (mod setting 医疗塔储能, default 50000 points, 0 = unlimited) that every heal draws on; empty they stop; the new item 医疗充能核心 (every boss drops 1-2, first kills one more) refills one; a bar over the medic (green left, grey used) and in the Neorxna info panel. Neorxna showed towers under their English template names: the rename patch was tried once at load and missed Neorxna when it loaded later; it now patches when Neorxna's assembly loads (lab on 1.9.4 now uses the user's Neorxna-v1.4.3). Mechs load ammo elements (key X): Mercury standard / heat / cold, Nemesis + electric, Regulus + corrosive. Four three-element reactions (x 3-3.5).
+- Growth by stage (every 7 days from the start day, mod setting 敌人成长 0 / 5 / 10 / 15 % per stage, at most 5 stages); rewards:
+  loot by toughness, extra for kills mostly by players / mechs, scrap per broken boss layer, the first kill of each boss kind,
+  a payout for a beaten raid.
+- Package dist/MechDefense-0.15.0.scmod, 35,115,621 bytes, SHA-256 6ba1e9ae8711f67909c2250a1a1ecad2b26ed4ebf3108ff7e80cd06c891a6da6.
+  Verified (PC): full run on 1.9.3.1 (all, robots, enemies14, bosses14, fb13, combat, mech, mech-view, phone, icons, special,
+  combat15, bench-rules, bench-towers) and 1.9.4 (all, robots, enemies14, bosses14, faction-mods, mech, phone, combat15,
+  bench-enemies, bench-bosses, bench-fortress). After the damage numbers and the knockback change: robots, combat15 (both),
+  combat, fb13, all (both), faction-mods, bench-rules again, all passed. After the medic charge, Neorxna, mech ammo and three-element
+  reactions: combat15, robots, mech, all (both), bosses14, enemies14, phone (both), combat, fb13, icons, special, mech-view, faction-mods,
+  bench-rules passed (bosses14 failed twice on RD08 keeping out of the towers' reach, fixed: it now stays on the towers' side). Not verified: a phone. Open: the flame towers' damage
+  against robots rose a lot (no more pushed out of the flame), RD19 held out longer in the fortress benchmark (cause not checked).
+
+## Delivered: 0.14.0: new enemies (RD14 tank, RD09 / EN02 drones, four new bosses), armour phases, combat benchmark (PR #13, merged 2026-10-30 on the user's approval, tag v0.14.0)
 
 The sixth 2026-10-29 report; decisions and evidence: docs/tasks/2026-10-29-new-enemies.md; combat numbers and open questions: docs/COMBAT_DESIGN.md.
 - Our own models (LOD1 in the package; high poly and LOD0 kept in E:/projects/dguns-enemy-models/v3_new): RD14 twin-barrel armoured tank,
@@ -26,7 +54,7 @@ The sixth 2026-10-29 report; decisions and evidence: docs/tasks/2026-10-29-new-e
   fixed (the pit, RD19 spot choice, the bosses14 shell test spot) and passed on both after the fix; the other labs ran on the package
   before those two boss fixes. Not verified: a phone.
 
-## 0.13.0: player feedback (silent weak point, Black Scorpion terrorists, medics, placement, phone heat) (branch feat/player-feedback-1029, 2026-10-29; not merged yet)
+## Delivered: 0.13.0: player feedback (silent weak point, Black Scorpion terrorists, medics, placement, phone heat) (PR #12, merged 2026-10-30 on the user's approval, tag v0.13.0)
 
 Five player reports forwarded by the user; decisions: docs/tasks/2026-10-29-player-feedback.md. The sixth (new enemies) follows as 0.14.0.
 - Devil mech: no chest flash and no "weak point changed" message; the weak channel still changes every 20 s, shown by its ring colour.

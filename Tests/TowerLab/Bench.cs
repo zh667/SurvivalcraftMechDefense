@@ -55,12 +55,14 @@ public partial class Lab {
             else{var at=Home+Dir(yaw)*start;at.Y=terrain.GetTopHeight(Terrain.ToCell(at.X),Terrain.ToCell(at.Z))+1.05f;rb=Spawn(template,at,yaw+MathF.PI);}   // on the surface (an RD07 put inside a hill was crushed)
             float hp=rb.Health.AttackResilience;rb.Health.AttackResilience=hp*Big;
             var thp=towers.Select(t=>t.Damage.AttackResilience).ToArray();foreach(var t in towers)t.Damage.AttackResilience*=Big;
-            string firstHitAt="";double t0=Time.RealTime,firstHit=-1,firstShot=-1,firstTowerHit=-1;float dmgOn=0,dmgBy=0,distAtShot=-1;int hitsBefore=0,frames=0,stunned=0,held=0,slowed=0;
+            string firstHitAt="";double t0=Time.RealTime,firstHit=-1,firstShot=-1,firstTowerHit=-1;float dmgOn=0,dmgBy=0,distAtShot=-1;int hitsBefore=0,frames=0,stunned=0,held=0,slowed=0;float distAtHit=-1,farthest=0;
             int breaks0=boss?rb.Boss.Breaks:0;double firstBreak=-1;float windowTaken=0,taken0=boss?rb.Boss.Taken:0,lastTaken=taken0;
             foreach(var x in During(seconds,()=>{
                 if(!rb.Entity.IsAddedToProject)return;
                 float d=(1-rb.Health.Health)*rb.Health.AttackResilience;rb.Health.Health=1;   // health lost x raised resilience = the attack power
                 if(d>0){dmgOn+=d;if(firstHit<0){firstHit=Time.RealTime;firstHitAt=$"{rb.Body.Position-Home} immersion {rb.Body.ImmersionFactor:0.00} crushed {rb.Body.CrushedTime:0.00} standing {rb.Body.StandingOnValue.HasValue} big {d:0}";}if(rb.ShotsFired==0)hitsBefore++;}
+                float near=towers.Min(t=>Vector3.Distance(t.Body.Position,rb.Body.Position));if(distAtHit<0&&(firstHit>=0||towers.Any(t=>near<=t.Tower.attack.range)))distAtHit=near;   // first hit or in reach
+                if(distAtHit>=0)farthest=Math.Max(farthest,near);
                 if(rb.ShotsFired>0&&firstShot<0){firstShot=Time.RealTime;distAtShot=towers.Min(t=>Vector3.Distance(t.Body.Position,rb.Body.Position));}
                 foreach(var t in towers){float td=(1-t.Damage.Hitpoints)*t.Damage.AttackResilience;if(td>0){dmgBy+=td;if(firstTowerHit<0)firstTowerHit=Time.RealTime;t.Damage.Hitpoints=1;}}
                 // control is counted from the first hit or once the robot is in a tower's reach (a control tower does no damage)
@@ -76,6 +78,7 @@ public partial class Lab {
             row["firstHit"]=firstHit<0?-1:Math.Round(firstHit-t0,1);row["firstShot"]=firstShot<0?-1:Math.Round(firstShot-t0,1);row["hitsBeforeShot"]=hitsBefore;row["distAtShot"]=MathF.Round(distAtShot,1);
             row["stunShare"]=frames>0?MathF.Round(stunned/(float)frames,2):0;row["heldShare"]=frames>0?MathF.Round(held/(float)frames,2):0;row["slowShare"]=frames>0?MathF.Round(slowed/(float)frames,2):0;
             if(dpsOn>5000)row["firstHitAt"]=firstHitAt.Replace(' ','_')+"_cause_"+(rb.Health.CauseOfDeath??"-").Replace(' ','_');   // not a tower's damage: what was it
+            row["pushedOut"]=distAtHit<0?0:MathF.Round(farthest-distAtHit,1);   // 0.15.0: how far the robot got beyond where it was first hit or came in reach (the water jet)
             row["robotShots"]=rb.ShotsFired;row["hp"]=hp;row["towerHp"]=thp.Sum();
             if(boss){row["armour"]=hp;row["firstBreak"]=firstBreak<0?-1:Math.Round(firstBreak,1);row["breaks"]=rb.Boss.Breaks-breaks0;row["through"]=MathF.Round(rb.Boss.Taken-taken0,0);row["inWindows"]=MathF.Round(windowTaken,0);row["moves"]=string.Join(" ",rb.Boss.Moves.Select(kv=>kv.Key+" "+kv.Value));}
             if(rb.Entity.IsAddedToProject)proj.RemoveEntity(rb.Entity,true);Remove(towers);Clear();
@@ -107,6 +110,23 @@ public partial class Lab {
                 var row=new Dictionary<string,object>{["boss"]=t,["towers"]=string.Join("+",four.Select(d=>d.id))};
                 foreach(var x in Duel(four,t,45,row,true))yield return x;rows.Add(Line(row));
             }
+        }
+        // bench-rules (0.15.0, user 2026-10-30): the new rules, checked. Tower hits do not stun a robot (gatling: the engine's hit stun
+        // kept RD05 stunned 39 % of the time) but the heavy single shots still do (cannon); a robot held by a control tower does not
+        // fire (EMP III: it fired 28 shots while held 100 %); the frost tower slows instead of pushing robots out of its own reach (21 %).
+        if(Part("rules")) {
+            var rows=new List<string>();r["rules"]=rows;var bad=new List<string>();
+            foreach(var (id,t) in new[]{("gatling_2","MDRobot05"),("cannon_2","MDRobot05"),("emp_3","MDRobot05"),("frost_2","MDRobot05"),("battle_jet_1","MDRobot05")}) {
+                var d=defs.First(x=>x.id==id);var row=new Dictionary<string,object>{["tower"]=id,["robot"]=t};
+                foreach(var x in Duel([d],t,Math.Max(12,3*d.attack.interval+3),row,inside:true))yield return x;rows.Add(Line(row));
+                float stun=Convert.ToSingle(row["stunShare"]),slow=Convert.ToSingle(row["slowShare"]);int shots=Convert.ToInt32(row["robotShots"]);
+                if(id=="gatling_2"&&stun>.03f)bad.Add($"gatling still stuns: {Line(row)}");
+                if(id=="cannon_2"&&stun<.02f)bad.Add($"cannon no longer staggers: {Line(row)}");
+                if(id=="emp_3"&&shots>4)bad.Add($"held by EMP III and still fired {shots}: {Line(row)}");
+                if(id=="frost_2"&&slow<.6f)bad.Add($"frost tower slows only {slow:0.00}: {Line(row)}");
+                if(id=="battle_jet_1"&&Convert.ToSingle(row["pushedOut"])<3)bad.Add($"the water jet does not push RD05 back: {Line(row)}");
+            }
+            if(bad.Count>0)throw new Exception("bench-rules: "+string.Join(" | ",bad));
         }
         // bench-trace: one RD07 against a gun tower, its position every half second (it fell 26 m into water in bench-enemies)
         if(mode=="bench-trace") {

@@ -13,7 +13,7 @@ public static class MDEncyclopedia {
     // ---- the bestiary lists templates with CreatureEggData (EggTypeIndex >= 0). tools/prepare_database.py gives these four one
     // (index 3900-3903, after the game's 0-49; ShowEgg false and no food value: a hidden egg type, no item, no recipe); skins B
     // and C stay out.
-    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14"),("MDRobot09","RD09"),("MDRobotEN02","EN02"),("MDBoss13","RD13"),("MDBoss21","RD21"),("MDBoss08","RD08"),("MDBoss19","RD19")];
+    public static readonly (string Template,string Kind)[] Bestiary=[("MDRobot05","RD05"),("MDRobot06","RD06"),("MDRobot07","RD07"),("MDDevilMech","RD17"),("MDRobot14","RD14"),("MDRobot09","RD09"),("MDRobotEN02","EN02"),("MDRepair09","RP09"),("MDBoss13","RD13"),("MDBoss21","RD21"),("MDBoss08","RD08"),("MDBoss19","RD19")];
     // the numbers for a bestiary entry of ours (null for any other creature). The list shows each creature's description in one
     // row, so the numbers go only on its own page (MDBestiaryPagePatch), computed when shown: the mod settings may have changed.
     public static string NumbersFor(BestiaryCreatureInfo info) {
@@ -41,10 +41,10 @@ public static class MDEncyclopedia {
         if(k.Boss)return $"用诱敌信标召唤，{MDBoss.Countdown:0} 秒后到来（从 {MDBoss.Bosses.Length} 种首领里随机来一台，这个存档下一台是{MDBoss.NextName}）"+(MDSettings.BossKills>0?$"；生存模式里每击毁 {MDSettings.BossKills} 台机兵也会自动出现（这个存档已击毁 {MDBossKills.Count} 台）":"");
         int d=MDSettings.StartDay;var parts=new List<string>();
         if(d>0&&MDSettings.SpawnTime!=MDSpawnTime.Off)parts.Add($"第 {d+(k.Elite?7:k.FromDay)} 天起出现在野外（{MDSettings.SpawnTimeName(MDSettings.SpawnTime)}）");
-        if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite||k.FromDay>0?$"第 {d+3} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
+        if(d>0&&MDSettings.RaidChance>0)parts.Add(k.Elite||k.FromDay>0?$"第 {d+(k.Elite?3:Math.Max(3,k.FromDay))} 天起混在夜袭里（{MDSettings.RaidChance:0}% 的夜晚有夜袭）":$"第 {d} 天起 {MDSettings.RaidChance:0}% 的夜晚成群来袭（附近有炮塔就打炮塔阵地，没有就冲着玩家来）");
         return parts.Count==0?"现在的模组设置不刷新敌方机兵":string.Join("；",parts)+"（模组设置里可改）";
     }
-    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","drone"=>"机炮点射（在空中绕着目标飞）","gunship"=>"两门机炮交替扫射（在空中绕着目标飞）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",
+    static string WeaponName(MDRobotKind k)=>k.Weapon switch{"repair"=>"不开火","twin"=>"双管机炮点射","missile"=>"追踪导弹齐射（锁定时目标身上有预警）","cannon"=>"曲射炮弹","tank"=>"双管战车炮（炮塔自己转向，炮弹小范围溅射）","drone"=>"机炮点射（在空中绕着目标飞）","gunship"=>"两门机炮交替扫射（在空中绕着目标飞）","devil"=>"导弹齐射、射线扫射、光剑冲刺三连斩",
         "bird"=>"双加特林压制（蹲下预警）、背炮覆盖（地上红圈标出落点）、近身机枪旋扫、跃击",
         "sabre"=>"机鼻机炮、双光剑冲刺（地上红线标出路线）、磁轨炮狙击（红色瞄准线）、导弹",
         "gunboat"=>"三挺机枪、双轨炮（炮口蓄光）、追踪导弹（锁定预警）、放出无人机",
@@ -59,8 +59,18 @@ public static class MDEncyclopedia {
         var s=new StringBuilder("【数值】");
         s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour*k.BossArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +{MDBoss.PerTier:0} / {MDBoss.PerTier*2:0} / {MDBoss.PerTier*3:0}，每台机甲 +{MDBoss.PerMech*3000:0}～{MDBoss.PerMech*5000:0}{(k.BossArmour!=1?$"，再乘 {k.BossArmour:0.##}":"")}，最高 {MDBoss.MaxArmour*k.BossArmour:0}）":$"{hp:0}")}");
         s.Append(k.Boss?"\n移动："+BossMove(k):k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
-        s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
-        s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
+        if(k.Weapon=="repair")s.Append("\n能力：不开火；飞在受伤的机兵上空，每秒修复它 4% 耐久（首领除外），所以要先打掉它");
+        else {
+            s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
+            s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
+        }
+        // 0.15.0 damage types (MDElements): what it takes more or less of
+        if(k.Id=="RD17")s.Append("\n受到伤害：按弱点（见下），伤害类型的抗性不适用");
+        else {var rl=MDElements.ResistList(k).ToList();s.Append("\n受到伤害："+(rl.Count==0?"各种伤害类型都是 ×1":string.Join("，",rl.Select(x=>$"{MDElements.Name(x.e)} ×{x.f:0.##}"))+"，其他 ×1"));}
+        if(k.Id is "RD06" or "RD07")s.Append("\n射程比一、二阶铳械塔远（它站在塔打不到的地方开火）：用哨戒塔、序章炮塔、重锤迫击炮，或者亲自去打");
+        if(!k.Boss)s.Append(MDSettings.Growth>0&&MDSettings.StartDay>0?$"\n成长：从开始天数起每 {MDGrowth.StageDays} 天一个阶段，耐久和伤害每阶段 +{MDSettings.Growth}%（最多 +{MDSettings.Growth*MDGrowth.MaxStages}%，模组设置“敌人成长”）":"\n成长：关闭（模组设置“敌人成长”）");
+        s.Append($"\n奖励：玩家或机甲打出至少 {MDRewards.PlayerShare*100:0}% 伤害的击杀，多掉一半残骸和经验"+(k.Boss?"；每打破一层装甲掉一批残骸，破甲窗口里击毁、或打中过弱点／打断过主炮再加经验；每个存档第一次击败它另有能量核心和火控芯片":""));
+        if(k.Boss)s.Append(MDRewards.Defeated.Contains(k.Id)?"\n这个存档：已击败":"\n这个存档：尚未击败");
         if(k.Boss)s.Append($"\n装甲：{MDBossState.Layers} 层，每层能吸收约 {MDBossState.PlateShare*100:0}% 耐久的伤害，装甲在时只有 {MDBossState.Through*100:0}% 伤害打进本体；击破一层它会硬直 {MDBossState.StaggerTime:0} 秒，之后 {MDBossState.ExposedTime:0} 秒内受到的伤害 +{(MDBossState.ExposedFactor-1)*100:0}%（留着机甲和重炮打这个时机）。每次受到攻击最多扣 {MDBoss.MaxHitShare*100:0}% 耐久");
         if(k.Id=="RD17")s.Append($"\n弱点：每 {MDDevilState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDDevilState.OtherFactor*100:0}%；脚下光环的颜色就是当前弱点（白 = 冲击，橙 = 爆炸，蓝 = 能量）");
         else if(k.Boss)s.Append("\n打法："+MDBossState.Hint(k.Id));
@@ -75,7 +85,7 @@ public static class MDEncyclopedia {
     // loads, maybe before the recipes and the mod settings: the titles go in then, each text is written when its topic opens.
     public const float FirstIndex=900;
     public const string Prefix="MechDefense.";
-    static readonly (string Name,string Title)[] topics=[("Towers","机甲防线 · 防御塔总览"),("Tier1","机甲防线 · 一阶防御塔"),("Tier2","机甲防线 · 二阶防御塔"),("Tier3","机甲防线 · 三阶防御塔"),("Mechs","机甲防线 · 主角机甲")];
+    static readonly (string Name,string Title)[] topics=[("Towers","机甲防线 · 防御塔总览"),("Tier1","机甲防线 · 一阶防御塔"),("Tier2","机甲防线 · 二阶防御塔"),("Tier3","机甲防线 · 三阶防御塔"),("Mechs","机甲防线 · 主角机甲"),("Elements","机甲防线 · 伤害类型与元素反应")];
     public static void AddHelp(HelpScreen help) {
         try {
             for(int i=0;i<topics.Length;i++){var t=new HelpTopic{Index=FirstIndex+i,Name=Prefix+topics[i].Name,Title=topics[i].Title,Text=""};if(help.m_topics.TryAdd(t.Name,t))help.m_topicsList.AddItem(t);}
@@ -90,7 +100,7 @@ public static class MDEncyclopedia {
         var tiers=towers.GroupBy(Tier).ToDictionary(g=>g.Key,g=>g.ToList());
         List<MDTowerDef> T(int tier)=>tiers.GetValueOrDefault(tier)??[];
         return name switch{"Towers"=>Overview(towers.Count,T(1).Count,T(2).Count,T(3).Count),"Tier1"=>string.Join("\n\n",T(1).Select(Tower)),
-            "Tier2"=>string.Join("\n\n",T(2).Select(Tower)),"Tier3"=>string.Join("\n\n",T(3).Select(Tower)),"Mechs"=>Mechs(),_=>""};
+            "Tier2"=>string.Join("\n\n",T(2).Select(Tower)),"Tier3"=>string.Join("\n\n",T(3).Select(Tower)),"Mechs"=>Mechs(),"Elements"=>Elements(),_=>""};
     }
     static string Overview(int all,int t1,int t2,int t3)=>
         $"共 {all} 座防御塔：一阶 {t1}、二阶 {t2}、三阶 {t3}。各阶的数值见后面三条。\n\n"+
@@ -152,7 +162,21 @@ public static class MDEncyclopedia {
     }
     public static string Tower(MDTowerDef d) {
         var a=d.attack;var t=Targets(a);
-        return $"{d.name}：{d.summary}\n血量 {d.hp:0}，射程 {a.range:0.#} 格，{AttackText(d)}{(t.Length>0?"，"+t:"")}；占地 {d.cells[0]}×{d.cells[2]} 格。\n{RecipeText(Recipe(d))}";
+        string medic=a.type=="heal"?(MDMedic.Unlimited?"储能：不限（模组设置“医疗塔储能”）。":$"储能 {MDMedic.Max:0} 点，治疗多少扣多少，用完停止；首领掉落的医疗充能核心右键充满（模组设置“医疗塔储能”）。"):"";
+        return $"{d.name}：{d.summary}\n{ElementText(d)}{medic}血量 {d.hp:0}，射程 {a.range:0.#} 格，{AttackText(d)}{(t.Length>0?"，"+t:"")}；占地 {d.cells[0]}×{d.cells[2]} 格。\n{RecipeText(Recipe(d))}";
+    }
+    // 0.15.0 damage types and reactions (MDElements)
+    public static string ElementText(MDTowerDef d){var e=MDElements.Of(d);return e==MDElement.None?"":$"伤害类型：{MDElements.Name(e)}"+(MDElements.Aura(e)?$"（命中留下“{MDElements.Statuses[(int)e]}”状态）":"")+"。";}
+    static string Elements() {
+        var s=new StringBuilder("每座炮塔造成一种伤害：动能、爆炸、热、冷、电、腐蚀（物品说明和各阶炮塔的条目里写着）。机甲的步枪和近战是动能，导弹、火炮、榴弹是爆炸，激光是电。\n\n");
+        s.Append($"状态：热、冷、电、腐蚀命中时给敌人挂上对应的状态（灼烧、冰寒、带电、腐蚀），持续 {MDElements.AuraTime:0} 秒，再次命中刷新；着火算灼烧，冻结算冰寒，中毒算腐蚀。敌人头顶的图标显示它现在的状态（还有冻结、瘫痪、减速、破甲、脆化），{MDTowerWorld.IconRange:0} 米内可见。\n\n");
+        s.Append("反应：另一种元素打中带状态的敌人时发生反应，敌人身上会出现两种颜色的光圈，头顶飘出反应的名字：");
+        for(int i=1;i<MDElements.Reactions.Length;i++){var r=MDElements.Reactions[i];if(i==(int)MDReaction.Storm)s.Append($"\n\n三元素反应：两种元素反应后 {MDElements.ResidueTime:0} 秒内（或敌人身上同时有两种状态时）用第三种元素打中，伤害倍率更高，同一种 {MDElements.TriadCooldown:0} 秒一次：");s.Append($"\n· {r.Name}（{MDElements.Combo((MDReaction)i)}）：{r.Effect}");}
+        s.Append($"\n\n冷却：同一个敌人发生反应后 {MDElements.GlobalCooldown:0.#} 秒内不再反应，同一种反应在同一个敌人身上 {MDElements.SameCooldown:0} 秒一次。两种元素反应后都会用掉（扩散、碎冰除外）。\n");
+        s.Append("抗性：每种敌人对各类伤害 ×0.75～×1.5，写在图鉴里各敌人的页面上。\n\n");
+        s.Append($"伤害数字：炮塔、机甲和玩家打出的伤害显示在敌人头上，颜色是伤害类型，发生反应的是大字；同一个敌人 {MDTowerWorld.MergeTime:0.##} 秒内的伤害合成一个数，同屏最多 {MDTowerWorld.MaxShown[1]} 个（特效数量“完整”{MDTowerWorld.MaxShown[0]} 个、“极简”{MDTowerWorld.MaxShown[2]} 个），模组设置里可以关掉。\n\n");
+        s.Append(MDSettings.Reactions?"模组设置“元素反应”现在是开着的；关掉后只保留伤害类型、抗性和状态。":"模组设置“元素反应”现在是关着的：只有伤害类型、抗性和状态，不发生反应。");
+        return s.ToString();
     }
     static string Mechs() {
         var s=new StringBuilder("可以驾驶的机甲：靠近后按骑乘键上车。装甲耗尽会被摧毁；驾驶时玩家不受伤害。五种武器：步枪、导弹（按住开火扫过目标锁定，松开发射追踪导弹）、火炮（开火时展开）、激光、榴弹。\n");
@@ -160,6 +184,7 @@ public static class MDEncyclopedia {
             s.Append($"\n{m.Name}：装甲 {m.Armour}，武器伤害 ×{m.Damage:0.##}，能量 {m.EnergyMax:0}，导弹最多锁定 {m.Locks} 个");
             if(m.BurstRifle)s.Append("，步枪三连发，受到爆炸伤害 ×"+m.ExplosionTaken.ToString("0.##"));
             if(m.Speed>1)s.Append($"，移动速度 ×{m.Speed:0.##}");
+            s.Append("，弹药元素："+string.Join("、",m.Ammo.Select(MDMechState.AmmoName)));   // 0.15.0
             s.Append($"。\n{RecipeText(Recipe(m.Data))}\n");
         }
         s.Append($"\n操作（当前按键，可在“模组设置 → 机甲防线 → 机甲按键”里改；手机用铃兰触控把屏幕按钮映射到这些键）：{MDMechPilot.KeyHints(true)}。");

@@ -67,7 +67,12 @@ CT=dict(CreatureModel='681a5886-5bff-418a-bf5f-ac84f290a311',Generic='b05700ed-7
 SCRAP,ALLOY,CHIP,CORE,PRINT='MDPartBlock:0','MDPartBlock:1','MDPartBlock:2','MDPartBlock:3','MDPartBlock:4'
 LOOT=dict(normal=[f'{SCRAP};2;4;1',f'{CHIP};1;1;0.05','ExperienceBlock;2;3;1'],
           elite=[f'{SCRAP};4;6;1',f'{CHIP};1;1;0.6',f'{CORE};1;1;0.15','ExperienceBlock;5;8;1'],
-          boss=[f'{PRINT};1;1;1',f'{CORE};3;5;1',f'{CHIP};2;3;1',f'{SCRAP};8;12;1','ExperienceBlock;30;40;1'])
+          boss=[f'{PRINT};1;1;1',f'{CORE};3;5;1',f'{CHIP};2;3;1',f'{SCRAP};8;12;1','ExperienceBlock;30;40;1','MDPartBlock:9;1;2;1'],   # 0.15.0: medic charge cells
+          # 0.15.0 (user, 2026-10-30): loot by toughness: the small drone (600) less scrap but more chips (hard to hit), the tank (2000)
+          # more, the repair drone chips and now and then a core
+          drone=[f'{SCRAP};1;2;1',f'{CHIP};1;1;0.15','ExperienceBlock;2;3;1'],
+          heavy=[f'{SCRAP};4;6;1',f'{CHIP};1;1;0.1','ExperienceBlock;4;5;1'],
+          repair=[f'{SCRAP};1;2;1',f'{CHIP};1;1;0.35',f'{CORE};1;1;0.05','ExperienceBlock;3;4;1'])
 ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mass, loot
     ('MDRobot05','RD05','model','双管步行机兵','双管机炮点射的步行机兵。夜里出没，也会成群来袭击炮塔。击毁后掉落机兵残骸。',1000,3.4,700,'normal'),
     ('MDRobot05B','RD05','model_b','双管步行机兵','双管机炮点射的步行机兵。夜里出没，也会成群来袭击炮塔。击毁后掉落机兵残骸。',1000,3.4,700,'normal'),
@@ -79,11 +84,13 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDRobot07B','RD07','model_b','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
     ('MDRobot07C','RD07','model_c','炮击步行机兵','精英机兵：远程曲射炮击，近身有盲区。常掉火控芯片，偶尔掉能量核心。',2800,2.8,1400,'elite'),
     # 0.14.0: the tank (our own model, tools/stage_v3_units.py), three paint schemes
-    ('MDRobot14','RD14','model','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
-    ('MDRobot14B','RD14','model_b','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
-    ('MDRobot14C','RD14','model_c','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'normal'),
+    ('MDRobot14','RD14','model','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'heavy'),
+    ('MDRobot14B','RD14','model_b','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'heavy'),
+    ('MDRobot14C','RD14','model_c','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2000,3.0,2500,'heavy'),
     # 0.14.0: the drones (our own models); they fly (FLY below)
-    ('MDRobot09','RD09','model','旋翼机炮无人机','旋翼无人机：在离地七米左右的空中绕着目标飞，机炮点射。防空炮优先打它，加农炮打不到。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',600,6,300,'normal'),
+    ('MDRobot09','RD09','model','旋翼机炮无人机','旋翼无人机：在离地七米左右的空中绕着目标飞，机炮点射。防空炮优先打它，加农炮打不到。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',600,6,300,'drone'),
+    # 0.15.0: the repair drone (RD09's model, tinted green: MDTowerWorld.Tint); it does not fire, it mends robots near it
+    ('MDRepair09','RP09','model','维修无人机','维修无人机：不开火，飞在受伤的机兵上空用绿色光束给它们修复耐久（首领除外）。开始刷新后第 14 天起出现。优先打掉它。击毁后常掉火控芯片。',800,6,300,'repair'),
     ('MDRobotEN02','EN02','model','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2200,5,900,'elite'),
     ('MDRobotEN02B','EN02','model_b','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2200,5,900,'elite'),
     ('MDRobotEN02C','EN02','model_c','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2200,5,900,'elite'),
@@ -95,14 +102,15 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDBoss19','RD19','model','重型装甲炮车','首领：从地下钻出的重型炮车，主炮和榴弹炮从远处轰击阵地，收回底座后会开到侧面另一处再升起。升起时绕到背后打，主炮蓄能时集中火力能打断，贴近它会逼它换位置。和其他首领随机出现，必掉机甲设计图。',30000,3,20000,'boss'),
 ]
 BESTIARY={'MDRobot05':3900,'MDRobot06':3901,'MDRobot07':3902,'MDDevilMech':3903,'MDRobot14':3904,'MDRobot09':3905,'MDRobotEN02':3906,
-          'MDBoss13':3907,'MDBoss21':3908,'MDBoss08':3909,'MDBoss19':3910}   # bestiary entries (EggTypeIndex), see below
-FLY={'RD09','EN02','RD17','RD21','RD08'}   # no walking: they fly through fly orders (the drones ComponentMDRobot.EngageAir, the bosses MDBossState.Fly)
+          'MDBoss13':3907,'MDBoss21':3908,'MDBoss08':3909,'MDBoss19':3910,'MDRepair09':3911}   # bestiary entries (EggTypeIndex), see below
+FLY={'RD09','EN02','RD17','RD21','RD08','RP09'}   # no walking: they fly through fly orders (the drones ComponentMDRobot.EngageAir, the bosses MDBossState.Fly)
+MODEL_KIND={'RP09':'RD09'}   # 0.15.0: a kind that wears another's model
 FLY_SPEED={'RD17':16,'RD21':24,'RD08':12}    # a boss's top fly speed (its dash); the drones fly at their speed
 # the bosses' body boxes (unit.json suggests the whole footprint; RD13's tail and beak, RD19's gun stick out of these)
 BOSS_BOX={'RD13':[3.2,5.0,3.2],'RD21':[4.0,3.6,4.0],'RD08':[4.2,2.9,4.2],'RD19':[5.0,3.6,5.0]}
 def unit_box(kind):
     if kind in BOSS_BOX:return BOSS_BOX[kind]
-    u=root/f'Mod/Assets/Imported/{kind}/unit.json'
+    u=root/f'Mod/Assets/Imported/{MODEL_KIND.get(kind,kind)}/unit.json'
     if u.exists():
         j=json.loads(u.read_text(encoding='utf-8'))
         if j.get('box'):return j['box']
@@ -127,7 +135,7 @@ for name,kind,skin,display,desc,hp,speed,mass,loot in ROBOTS:
                          ('TurnSpeed','float',2.5),('LookSpeed','float',3),('AccelerationFactor','float',1.2 if fly else .6),('WalkSpeedWhenTurning','float',.5)])
     member('Spawn',[('AutoDespawn','bool','False' if boss else 'True')])
     member('Loot',[],sets={'Loot':LOOT[loot],'LootOnFire':LOOT[loot]})
-    member('Model',[('Class','string','Game.ComponentMDRobotModel'),('ModelName','string',f'Imported/{kind}/{skin}'),('TextureOverride','string',''),
+    member('Model',[('Class','string','Game.ComponentMDRobotModel'),('ModelName','string',f'Imported/{MODEL_KIND.get(kind,kind)}/{skin}'),('TextureOverride','string',''),
                     ('CastsShadow','bool','True'),('BoundingSphereRadius','float',round(max(w,h,d)*(1.6 if boss else .8),2))],parent=CT['CreatureModel'])
     member('MDRobot',[('Class','string','Game.ComponentMDRobot'),('Kind','string',kind)],parent=CT['Generic'])
     if not fly and not boss:member('WalkAroundBehavior',[],parent=CT['WalkAround'])

@@ -5,7 +5,7 @@ using Engine.Input;
 namespace Game;
 
 // The mech's actions a player can put on other keys.
-public enum MDMechAction { Hover, Jump, Melee, Switch, View, Fire, Board }
+public enum MDMechAction { Hover, Jump, Melee, Switch, View, Fire, Board, Ammo }   // 0.15.0: Ammo (the ammo element, MDMechState.Ammo)
 
 // Rebindable mech keys (user, 2026-10-24: "机甲绑定按键编辑（类似于CS枪械适配铃兰触控那样）"). Keyboard keys only, kept per device in
 // MDSettings (ModSettings.xml, never in a world); the game's own key mapping is not touched. On phones a touch mapper such as
@@ -15,7 +15,7 @@ public enum MDMechAction { Hover, Jump, Melee, Switch, View, Fire, Board }
 public static class MDMechKeys {
     public static readonly MDMechAction[] All=Enum.GetValues<MDMechAction>();
     static readonly Dictionary<MDMechAction,Key> keys=[];
-    public static Key Default(MDMechAction a)=>a switch{MDMechAction.Hover=>Key.Shift,MDMechAction.Jump=>Key.Space,MDMechAction.Melee=>Key.F,MDMechAction.Switch=>Key.B,MDMechAction.View=>Key.V,_=>Key.Null};
+    public static Key Default(MDMechAction a)=>a switch{MDMechAction.Hover=>Key.Shift,MDMechAction.Jump=>Key.Space,MDMechAction.Melee=>Key.F,MDMechAction.Switch=>Key.B,MDMechAction.View=>Key.V,MDMechAction.Ammo=>Key.X,_=>Key.Null};
     public static Key Get(MDMechAction a)=>keys.TryGetValue(a,out var k)?k:Default(a);
     public static Dictionary<MDMechAction,Key> Current()=>All.ToDictionary(a=>a,Get);
     public static Dictionary<MDMechAction,Key> Defaults()=>All.ToDictionary(a=>a,Default);
@@ -42,7 +42,7 @@ public static class MDMechKeys {
     public static bool Pressed(WidgetInput input,MDMechAction a){var k=Get(a);return k!=Key.Null&&input.IsKeyDownOnce(k);}
 
     public static string ActionName(MDMechAction a)=>a switch{MDMechAction.Hover=>"悬浮（按住）",MDMechAction.Jump=>"跳跃",MDMechAction.Melee=>"近战",
-        MDMechAction.Switch=>"切换武器",MDMechAction.View=>"切换视角",MDMechAction.Fire=>"开火（额外键）",_=>"上／下车（额外键）"};
+        MDMechAction.Switch=>"切换武器",MDMechAction.View=>"切换视角",MDMechAction.Fire=>"开火（额外键）",MDMechAction.Ammo=>"切换弹药元素",_=>"上／下车（额外键）"};
     public static string KeyName(Key k)=>k switch{Key.Null=>"未设置",Key.Space=>"空格",Key.Control=>"Ctrl",Key.Enter=>"回车",Key.BackSpace=>"退格",
         Key.LeftArrow=>"←",Key.RightArrow=>"→",Key.UpArrow=>"↑",Key.DownArrow=>"↓",Key.Tilde=>"~",Key.Minus=>"-",Key.Plus=>"=",Key.LeftBracket=>"[",
         Key.RightBracket=>"]",Key.Semicolon=>";",Key.Quote=>"'",Key.Comma=>",",Key.Period=>".",Key.Slash=>"/",Key.BackSlash=>"\\",

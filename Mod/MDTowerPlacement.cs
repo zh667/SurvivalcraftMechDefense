@@ -104,15 +104,23 @@ public static class MDTowerPlacement {
 // Optional integration: patch only the mod's existing info presentation method.
 // Does not alter its archive, entity identity, faction or creature components.
 public static class MDNeorxnaCompatibility {
-    static bool installed;
+    static bool installed,listening;
     public static bool Installed=>installed;
+    // 0.15.0 (user, 2026-10-30: "炮塔都是英文的命名在那个信息显示模组里"): Neorxna 1.4.3 shows a non-creature entity under its
+    // template name (MDTurret...), our postfix renames it. Install ran once at OnLoadingFinished and gave up when Neorxna's assembly
+    // was not loaded yet; it now also patches as soon as that assembly loads and on every world load.
     public static void Install() {
         if(installed)return;
-        var type=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)).FirstOrDefault(t=>t!=null);
-        var method=type?.GetMethod("SetInfo_Entity",[typeof(Entity)]);
-        if(method==null)return;
-        new Harmony("local.mechdefense.neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
-        installed=true;
+        if(!listening){listening=true;AppDomain.CurrentDomain.AssemblyLoad+=(_,e)=>{if(!installed&&e.LoadedAssembly.GetName().Name?.Contains("eorxna",StringComparison.OrdinalIgnoreCase)==true)TryPatch(e.LoadedAssembly);};}
+        foreach(var a in AppDomain.CurrentDomain.GetAssemblies())if(TryPatch(a))return;
+    }
+    static bool TryPatch(System.Reflection.Assembly a) {
+        try {
+            var method=a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)?.GetMethod("SetInfo_Entity",[typeof(Entity)]);
+            if(method==null||installed)return installed;
+            new Harmony("local.mechdefense.neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
+            installed=true;Log.Information("[MechDefense] Neorxna info panel: names and status of towers and mechs");return true;
+        } catch(Exception x){Log.Warning("[MechDefense] Neorxna patch: "+x.Message);return false;}
     }
     // Mercury (since 0.8.0) lives on the template of the 0.5.0 sample mech (Kind "Mech"); only the removed enemy (Kind "Enemy")
     // is a removed unit. Until 0.9.0 round 4 every unit that was not a tower read 已移除的旧单位 here, Mercury too (user report).
@@ -126,6 +134,18 @@ public static class MDNeorxnaCompatibility {
         if(unit.Kind=="Turret") {
             label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
             label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
+            if(MDElements.Of(unit.Tower) is var e&&e!=MDElement.None)label?.Invoke(__instance,["MDTowerElement",$"伤害类型：{MDElements.Name(e)}"]);
+            if(MDMedic.Is(unit)) {   // 0.15.0: the medic's store, as text and as a bar (green left, grey used up)
+                label?.Invoke(__instance,["MDMedicCharge",MDMedic.Text(unit)]);
+                if(!MDMedic.Unlimited&&type.GetMethod("SetAdditionalWidget",[typeof(string),typeof(Widget)]) is {} widget) {
+                    const float W=180,H=10;var bar=new CanvasWidget{Size=new Vector2(W+4,H+4),Margin=new Vector2(10,2),IsHitTestVisible=false};
+                    bar.Children.Add(new RectangleWidget{Size=new Vector2(W+4,H+4),FillColor=new Color(12,14,18),OutlineColor=Color.Transparent});
+                    var grey=new RectangleWidget{Size=new Vector2(W,H),FillColor=new Color(95,98,104),OutlineColor=Color.Transparent};bar.Children.Add(grey);CanvasWidget.SetPosition(grey,new Vector2(2,2));
+                    float share=MDMedic.Share(unit);
+                    if(share>0){var left=new RectangleWidget{Size=new Vector2(W*share,H),FillColor=share>.25f?new Color(110,232,150):new Color(255,190,90),OutlineColor=Color.Transparent};bar.Children.Add(left);CanvasWidget.SetPosition(left,new Vector2(2,2));}
+                    widget.Invoke(__instance,["MDMedicBar",bar]);
+                }
+            }
         }
         else if(unit.Mech!=null) {
             label?.Invoke(__instance,["MDMechArmour",unit.Destroyed?"已损毁":$"装甲 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);

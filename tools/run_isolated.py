@@ -22,6 +22,9 @@ TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-r
 COMBAT_MODS = [SOURCE / 'Mods' / '[API1.9.2.1]Ghoul尸鬼-v2.0.scmod', Path(r'D:\下载\[API1.9.3]美好时代V1.9.3a.scmod'),
                SOURCE / 'Mods' / '[API1.9]服饰配件V1.2.1.scmod', SOURCE / 'Mods' / '[API1.9]构千形V1.2.1.scmod']
 
+# lab --mode faction-mods (0.13.0): the user's gun mod with terrorists and the recipe mod it needs, API 1.9.4 builds
+FACTION_MODS = [Path(r'D:\下载\[API1.9.4]SiyahAkrep黑蝎枪械v2.8.3-需求前置[Neo1.4.3][RecipaediaEX-2.0.0.2].scmod'), Path(r'D:\下载\RecipaediaEX-2.0.0.2.scmod')]
+
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('test', choices=TESTS); ap.add_argument('--mode', default='all')
     ap.add_argument('--package'); ap.add_argument('--label', default=''); ap.add_argument('--limit', type=int, default=1500)
@@ -42,6 +45,10 @@ def main():
         found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if ('[API1.9.4' in f.name) == (a.source == '1.9.4')]
         if found: shutil.copy2(found[0], mods / 'Neorxna.scmod')
         print('neorxna:', found[0] if found else 'none')
+        if a.mode == 'faction-mods':
+            for m in FACTION_MODS:
+                if m.exists(): shutil.copy2(m, mods / m.name)
+                print('faction mod:', m.name, 'copied' if m.exists() else 'MISSING')
         if a.mode == 'combat':
             for m in COMBAT_MODS:
                 if m.exists(): shutil.copy2(m, mods / m.name)

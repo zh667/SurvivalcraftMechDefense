@@ -95,10 +95,10 @@ public sealed class MDSettingsScreen:Screen {
     }
     public static void Open(){EnsureScreens();ScreensManager.SwitchScreen(ScreenName);}
     // the robot options being edited
-    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills;
-        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills};
-        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=75,Size=1,StartDay=3,Aggro=16,BossKills=50};
-        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.Normalize();} }
+    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills,Fx;
+        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills,Fx=MDSettings.FxLevel};
+        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=75,Size=1,StartDay=3,Aggro=16,BossKills=50,Fx=1};
+        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.FxLevel=Fx;MDSettings.Normalize();} }
     public Robots Working;
     // the mech's keys being edited (MDMechKeys); capturing: the action waiting for a key press
     public Dictionary<MDMechAction,Key> WorkingKeys;public MDMechAction? Capturing;
@@ -112,7 +112,7 @@ public sealed class MDSettingsScreen:Screen {
     readonly StackPanelWidget content=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Stretch};
     readonly StackPanelWidget bar;readonly LabelWidget status=MDUi.Note("");
     readonly ButtonWidget defaults=MDUi.Button("恢复默认",150),cancel=MDUi.Button("取消",130),save=MDUi.Button("保存",130),editHud=MDUi.Button("调整机甲面板（位置、大小、旋转）",360);
-    ButtonWidget less,more,input,time;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills;
+    ButtonWidget less,more,input,time,fx;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills;
     public MDSettingsScreen() {
         Children.Add(background);Children.Add(MDUi.Frame());
         scroll.Children.Add(content);scrollHost.Children.Add(scroll);
@@ -147,6 +147,9 @@ public sealed class MDSettingsScreen:Screen {
         pickKey=MDUi.Button("从列表选择按键",200);keysDefault=MDUi.Button("按键恢复默认",180);content.Children.Add(MDUi.Bar(pickKey,keysDefault));
         content.Children.Add(MDUi.Note("点一个动作的按钮，再按下新按键（Esc 取消，Delete 清空）；没有键盘时点「从列表选择按键」。手机：用铃兰触控在屏幕上加按钮，映射到这些键。"+
             "开火、上下车另外照常可以用鼠标左键／点屏、游戏的骑乘键。只对机甲有效，不改游戏原来的按键；驾驶机甲时，和游戏共用的键只做机甲动作。"));
+        content.Children.Add(MDUi.Heading("画面"));
+        fx=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("特效数量"),fx,n));
+        content.Children.Add(MDUi.Note("炮塔和机兵的烟雾、火花、碎屑数量。手机发热时选“极简”；“完整”是 0.12.0 及以前的效果。"));
         content.Children.Add(MDUi.Heading("敌方机兵"));
         less=MDUi.Button("−",64);more=MDUi.Button("+",64);input=MDUi.Button("输入",96);startLabel=MDUi.Label("");
         content.Children.Add(MDUi.Row(startLabel,MDUi.Bar(less,more,input),n));
@@ -167,6 +170,7 @@ public sealed class MDSettingsScreen:Screen {
     void Refresh() {
         var r=Working;startLabel.Text=MDSettings.StartDayText(r.StartDay);time.Text=MDSettings.SpawnTimeName(r.Time);
         interval.Text=$"{r.Interval:0} 秒";density.Text=$"{r.Density:0.##} 倍";chance.Text=r.Chance<=0?"不夜袭":$"{r.Chance:0}%";size.Text=$"{r.Size:0.##} 倍";
+        fx.Text=MDSettings.FxNames[Math.Clamp(r.Fx,0,2)];
         aggro.Text=MDSettings.AggroText(r.Aggro);bossKills.Text=MDSettings.BossKillsText(r.BossKills);
         int cap=Math.Max(1,(int)MathF.Round(4*r.Density)),lo=Math.Max(1,(int)MathF.Round(r.Density)),hi=Math.Clamp((int)MathF.Round(2.5f*r.Density),1,cap);
         densityNote.Text=$"每批 {lo}～{hi} 台，玩家 80 米内最多 {cap} 台。";
@@ -211,6 +215,7 @@ public sealed class MDSettingsScreen:Screen {
             if(!int.TryParse(text,out int d)||d<0||d>MDSettings.MaxStartDay){status.Text=$"请输入 0～{MDSettings.MaxStartDay} 的整数。";return;}
             Working.StartDay=d;status.Text="";}));
         if(time.IsClicked)Working.Time=(MDSpawnTime)(((int)Working.Time+1)%3);
+        if(fx.IsClicked)Working.Fx=(Working.Fx+1)%3;
         if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;SyncSliders();status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
         if(editHud.IsClicked){OpenEditor();return;}
         Refresh();

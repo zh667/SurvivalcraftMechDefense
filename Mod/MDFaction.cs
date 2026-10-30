@@ -13,9 +13,14 @@ namespace Game;
 // target is a player or the player's herd; a land or water predator; one whose chase behaviour hunts players on sight (chase range
 // above 4 m and, where the behaviour has one, a chase-player probability above 0). The 4 m keeps bulls, bisons and boars
 // (1.5-4 m, they only butt what stands next to them) out until they actually attack.
+// 0.13.0 (players via the user, 2026-10-29: "这炮塔不攻击黑蝎枪械模组的黑蝎恐怖分子"): NPCs of other mods that fight through an attack
+// target object of their own (not a chase target) and start out neutral were never seen as hostile. Now also a target: a
+// creature in a herd named in HostileHerds ("Terrorist"), and any creature holding an attack target object (a member whose type
+// has a TargetBody, with Purpose Attack if it has one) that points at the player's side; one that only follows a player is not.
 public static class MDFaction {
     const float Memory=30,HuntRange=4,Recheck=.5f;
-    sealed class Probe { public PropertyInfo herd; public FieldInfo herdField,day,night,playerChance,chaseTarget,attackTarget; }
+    sealed class Probe { public PropertyInfo herd; public FieldInfo herdField,day,night,playerChance,chaseTarget,attackTarget; public List<(FieldInfo field,MemberInfo body,MemberInfo purpose)> aiTargets=[]; }
+    public static readonly string[] HostileHerds=["Terrorist"];
     static readonly Dictionary<Type,Probe> probes=[];
     // Which fields name an attack target. m_target only in a chase behaviour (the type also has day/night chase ranges:
     // vanilla ComponentChaseBehavior, Wonderful Era's clone): stare, avoid, find-player and move-away behaviours keep the
@@ -35,12 +40,27 @@ public static class MDFaction {
                 else if(refType&&n is "targetbody" or "m_targetbody")p.attackTarget??=f;
                 else if(f.FieldType==typeof(float))switch(n){case "m_daychaserange":p.day??=f;break;case "m_nightchaserange":p.night??=f;break;case "m_chaseplayerprobability":p.playerChance??=f;break;}
                 else if(f.FieldType==typeof(string)&&n is "herdname" or "m_herdname")p.herdField??=f;
+                else if(!f.FieldType.IsPrimitive&&f.FieldType!=typeof(string)&&TargetBodyOf(f.FieldType) is {} tb)p.aiTargets.Add((f,tb,(MemberInfo)f.FieldType.GetField("Purpose")??f.FieldType.GetProperty("Purpose")));
             }
         if(p.day==null||p.night==null)p.chaseTarget=null;
         var hp=type.GetProperty("HerdName",BindingFlags.Instance|BindingFlags.Public);if(hp?.PropertyType==typeof(string)&&hp.GetIndexParameters().Length==0)p.herd=hp;
         probes[type]=p;return p;
     }
     static Entity EntityOf(object o)=>o switch{Component c=>c.Entity,Entity e=>e,_=>null};
+    // a public TargetBody field or property of a ComponentBody type (another mod's attack target object)
+    static MemberInfo TargetBodyOf(Type t) {
+        if(t.GetField("TargetBody") is {} f&&typeof(ComponentBody).IsAssignableFrom(f.FieldType))return f;
+        if(t.GetProperty("TargetBody") is {} p&&typeof(ComponentBody).IsAssignableFrom(p.PropertyType)&&p.GetIndexParameters().Length==0)return p;
+        return null;
+    }
+    static object Get(MemberInfo m,object o)=>m switch{FieldInfo f=>f.GetValue(o),PropertyInfo p=>p.GetValue(o),_=>null};
+    public static string HerdOf(Entity e) {
+        foreach(var c in e.Components) {
+            var p=ProbeOf(c.GetType());if(p.herd==null&&p.herdField==null)continue;
+            if((p.herd!=null?p.herd.GetValue(c):p.herdField.GetValue(c)) is string name&&name.Length>0)return name;
+        }
+        return null;
+    }
 
     public static bool InPlayerHerd(Entity e) {
         foreach(var c in e.Components) {
@@ -65,12 +85,22 @@ public static class MDFaction {
     public static bool Hostile(ComponentCreature creature,double now) {
         var e=creature.Entity;var m=memos.GetOrCreateValue(e);
         if(now-m.checkedAt<Recheck&&now>=m.checkedAt)return m.hostile;
-        m.checkedAt=now;return m.hostile=!Friendly(e)&&(m.aggressiveUntil>now||Predator(creature)||Targeting(e)||Hunts(e));
+        m.checkedAt=now;return m.hostile=!Friendly(e)&&(m.aggressiveUntil>now||Predator(creature)||HostileHerd(e)||Targeting(e)||Hunts(e));
     }
+    // the same rules without the 0.5 s memo (tests)
+    public static bool HostileNow(ComponentCreature creature,double now)=>!Friendly(creature.Entity)&&(memos.GetOrCreateValue(creature.Entity).aggressiveUntil>now||Predator(creature)||HostileHerd(creature.Entity)||Targeting(creature.Entity)||Hunts(creature.Entity));
     static bool Predator(ComponentCreature c)=>c.Category.HasFlag(CreatureCategory.LandPredator)||c.Category.HasFlag(CreatureCategory.WaterPredator);
+    static bool HostileHerd(Entity e)=>HerdOf(e) is {} h&&HostileHerds.Any(x=>string.Equals(x,h,StringComparison.OrdinalIgnoreCase));
     static bool Targeting(Entity e) {
         bool At(FieldInfo f,Component c)=>f!=null&&EntityOf(f.GetValue(c)) is {} t&&t!=e&&PlayerSide(t);
-        foreach(var c in e.Components){var p=ProbeOf(c.GetType());if(At(p.chaseTarget,c)||At(p.attackTarget,c))return true;}
+        foreach(var c in e.Components) {
+            var p=ProbeOf(c.GetType());if(At(p.chaseTarget,c)||At(p.attackTarget,c))return true;
+            foreach(var (field,body,purpose) in p.aiTargets) {
+                var target=field.GetValue(c);if(target==null)continue;
+                if(purpose!=null&&Get(purpose,target)?.ToString()!="Attack")continue;   // following or escorting the player is not hostile
+                if(EntityOf(Get(body,target)) is {} t&&t!=e&&PlayerSide(t))return true;
+            }
+        }
         return false;
     }
     static bool Hunts(Entity e) {

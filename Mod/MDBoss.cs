@@ -555,6 +555,7 @@ public sealed class MDGunboatState:MDBossState {
     // player or mech that comes within 16 m (was 34 m and 32 m: only the sniper and missile towers reached it)
     public const float Altitude=6,StandOff=22,Evade=16,Retreat=26,RailTell=1.4f;
     string move="";float t,rail=3,mg,missiles=6,drones=4,drift=1,driftTime;bool fired;ComponentBody lockOn;readonly List<ComponentMDRobot> fleet=[];
+    ComponentBody sideFor;double sideAt;Vector3? sideTower;   // 0.15.0: the tower nearest to whom it duels (Act)
     public int DronesSent;   // lab
     public MDGunboatState(ComponentMDRobot robot,ValuesDictionary v):base(robot,v){}
     public override string EscortTemplate(int i,System.Random rng,Project p)=>i%3==2?MDRobots.Gunships[rng.Next(MDRobots.Gunships.Length)]:MDRobots.Drones[rng.Next(MDRobots.Drones.Length)];
@@ -567,9 +568,20 @@ public sealed class MDGunboatState:MDBossState {
         var body=r.Body;var tg=r.Target;rail-=dt;mg-=dt;missiles-=dt;drones-=dt;driftTime-=dt;if(driftTime<=0){driftTime=MDRobots.R(5,8);drift=-drift;}
         var threat=Duelist(Evade);
         Vector3 Away(ComponentBody b){var d=new Vector3(body.Position.X-b.Position.X,0,body.Position.Z-b.Position.Z);return d.LengthSquared()>.01f?Vector3.Normalize(d):-body.Matrix.Forward;}
+        // 0.15.0: round a player (or mech) with towers within 40 m it stays in the towers' reach (bosses14: duelling the player it once
+        // hovered 34 m from the towers on the player's far side): facing them from the towers' side, and backing off from one that
+        // comes close at most Retreat m from the nearest tower
+        Vector3? Tower(ComponentBody b) {
+            if(sideFor!=b||Time.FrameStartTime>=sideAt){sideFor=b;sideAt=Time.FrameStartTime+1;sideTower=null;
+                var list=new DynamicArray<ComponentBody>();P.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(b.Position.X,b.Position.Z),40,list);float bd=1600;
+                foreach(var o in list)if(o.Entity.FindComponent<ComponentMDUnit>() is {Tower:not null} u&&!u.Destroyed){float d=Vector2.DistanceSquared(new(o.Position.X,o.Position.Z),new(b.Position.X,b.Position.Z));if(d<bd&&d>1){bd=d;sideTower=o.Position;}}}
+            return ComponentMDRobot.Rank(b)==1?null:sideTower;
+        }
+        Vector3 Side(ComponentBody b)=>Tower(b) is {} t?Vector3.Normalize(new Vector3(t.X-b.Position.X,0,t.Z-b.Position.Z)):Away(b);
+        Vector3 Keep(Vector3 p,ComponentBody b){if(Tower(b) is not {} t)return p;var d=new Vector3(p.X-t.X,0,p.Z-t.Z);float l=d.Length();return l>Retreat?new Vector3(t.X,p.Y,t.Z)+d/l*Retreat:p;}
         Vector3 want;
-        if(threat!=null)want=threat.Position+Away(threat)*Retreat+Vector3.Cross(Vector3.UnitY,Away(threat))*drift*4;
-        else if(tg!=null)want=tg.Position+Away(tg)*StandOff+Vector3.Cross(Vector3.UnitY,Away(tg))*drift*6;
+        if(threat!=null)want=Keep(threat.Position+Away(threat)*Retreat+Vector3.Cross(Vector3.UnitY,Away(threat))*drift*4,threat);
+        else if(tg!=null)want=tg.Position+Side(tg)*StandOff+Vector3.Cross(Vector3.UnitY,Side(tg))*drift*6;
         else want=Home??body.Position;
         Hover(want,Altitude,r.Kind.Speed);
         var facing=threat??tg;if(facing!=null)r.Face(MDCombat.Center(facing),dt,1.4f);

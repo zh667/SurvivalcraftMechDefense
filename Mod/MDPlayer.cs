@@ -15,7 +15,7 @@ public class MDModLoader : ModLoader {
     // A boss takes at most MDBoss.MaxHitShare of its armour per hit.
     public override void CalculateCreatureInjuryAmount(Injury injury){MDBoss.CapInjury(injury);MDTowerWorld.Injured(injury);}
     // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
-    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);}
+    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);MDNeorxnaCompatibility.Install();}
     public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);}
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
     // The mod's settings (MDSettings) live in the game's ModSettings.xml, under this mod's own element; the engine calls these
@@ -33,7 +33,7 @@ public class MDModLoader : ModLoader {
     // Right-click on a tower with robot scrap or an alloy plate (on a mech: iron or copper) repairs it (MDTowerMaintenance); the
     // engine's own use/place is skipped then.
     public override void OnPlayerInputInteract(ComponentPlayer componentPlayer,ref bool playerOperated,ref double timeIntervalLastActionTime,ref int priorityUse,ref int priorityInteract,ref int priorityPlace) {
-        if(!playerOperated&&(MDKits.TryInstall(componentPlayer)||MDTowerMaintenance.TryRepair(componentPlayer)))playerOperated=true;
+        if(!playerOperated&&(MDKits.TryInstall(componentPlayer)||MDMedic.TryCharge(componentPlayer)||MDTowerMaintenance.TryRepair(componentPlayer)))playerOperated=true;
     }
 }
 
@@ -61,9 +61,11 @@ public class MDDeploymentBlock : Block {
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);
     public static int Wear(int value)=>(Terrain.ExtractData(value)>>8)&0x7F;
     public static float Hitpoints(int value)=>1-Wear(value)/100f;
-    public static int Value(MDTowerDef d,float hitpoints)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8);
+    public static int Value(MDTowerDef d,float hitpoints,int medicUsed=0)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,d.data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8|Math.Clamp(medicUsed,0,7)<<15);
+    // 0.15.0: a medic tower's charge used up, in eighths, in bits 15-17 (0 = full; Mercury's kit bits are only read for mechs)
+    public static int MedicUsed(int value)=>(Terrain.ExtractData(value)>>15)&7;
     public static int MechValue(float hitpoints,int kit=0,MDMechType type=null)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,(type??MDMechType.Mercury).Data|Math.Clamp((int)MathF.Round((1-hitpoints)*100),0,99)<<8|Math.Clamp(kit,0,3)<<15);
-    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):MechType(v) is {} mt?MechName(mt)+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
+    public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":"")+(d.attack.type=="heal"&&MedicUsed(v)>0?$"（储能约 {(7-MedicUsed(v))*100/7}%）":""):MechType(v) is {} mt?MechName(mt)+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
     public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n{MDEncyclopedia.ElementText(d)}占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
         $"维修：手持机兵残骸或合金板右键炮塔（铁、铜只能修机甲）。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):MechType(v) is {} mt?MechNote(mt):RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
@@ -157,6 +159,7 @@ public static class MDDeployPatch {
             var fixedBody=entity.FindComponent<ComponentMDTowerBody>(true);var rot=MDTowerPlacement.SnapRotation(__instance.ComponentCreature.ComponentBody.Rotation);
             fixedBody.FixAt(pos,rot);var state=entity.FindComponent<ComponentMDUnit>();state.Yaw=state.AimYaw=MathF.Atan2(-fixedBody.Matrix.Forward.X,-fixedBody.Matrix.Forward.Z);
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)state.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // a dismantled tower keeps its health
+            if(tower.attack.type=="heal"&&MDDeploymentBlock.MedicUsed(__instance.ActiveBlockValue)>0&&!MDMedic.Unlimited)state.HealCharge=MDMedic.FromEighths(MDDeploymentBlock.MedicUsed(__instance.ActiveBlockValue));   // and its charge
             entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
         }
         if(hit.Value.CellFace.Face!=4&&MDDeploymentBlock.MechType(__instance.ActiveBlockValue)!=null)return false;   // a mech: top faces only, as before

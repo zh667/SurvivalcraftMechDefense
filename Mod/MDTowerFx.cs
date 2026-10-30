@@ -35,7 +35,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     public void LaunchForeign(Foreign f){f.last=f.pos;foreign.Add(f);}
     sealed class Status {
         public float slowUntil,slowFactor=1,stunUntil,armorUntil,armorFactor=1,freezeUntil,freezeImmuneUntil,poisonUntil,poisonDps,poisonTick,healBlockUntil,healedUntil;
-        public float heatUntil,coldUntil,elecUntil,acidUntil,brittleUntil,reactUntil; public readonly float[] reactAt=new float[9];   // 0.15.0 elements (MDElements.cs)
+        public float heatUntil,coldUntil,elecUntil,acidUntil,brittleUntil,reactUntil,residueUntil; public int residueMask; public readonly float[] reactAt=new float[13];   // 0.15.0 elements (MDElements.cs)
         public ComponentMDUnit poisonOwner; public Color slowColor=new(200,235,255),armorColor=new(220,255,110);
         public float walk,fly,swim,jump,turn,look; public bool saved;
     }

@@ -15,7 +15,7 @@ SOURCE = Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1')
 SOURCES = {'1.9.3.1': SOURCE, '1.9.4': Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.4')}
 # The user's Neorxna info mod (exercises the optional compatibility patch). Builds for API 1.9.4 do not run on this 1.9.3.1
 # runtime (2026-10-11: v1.4.3 throws MissingMethodException at start and the lab never reaches the main menu).
-NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods')]
+NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods'), Path(r'D:\下载')]   # 0.15.0: the 1.9.4 build the user plays with (Neorxna-v1.4.3) is in D:\下载
 TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json'), 'smoke': ('RuntimeSmoke', 'smoke-result.json')}
 # lab --mode combat: the user's ghoul mod and Wonderful Era (pirates; with the two mods it depends on), copied into the
 # isolated runtime only.

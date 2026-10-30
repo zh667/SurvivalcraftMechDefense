@@ -53,8 +53,8 @@ public static class MDRewards {
             if(b is MDBirdState{EyeHits:>0}||b is MDSiegeState{Interrupts:>0}){bonus+=6;notes.Add("weak point / interrupt");}
             Drop(p,at,Terrain.MakeBlockValue(Xp),bonus);
             if(Defeated.Add(k.Id)) {   // the first of its kind in this world
-                Drop(p,at,Value(3),2);Drop(p,at,Value(2),2);Drop(p,at,Terrain.MakeBlockValue(Xp),20);notes.Add("first kill");
-                MDBoss.Announce(p,r.Body.Position,$"第一次击败{k.Name}！额外奖励：能量核心、火控芯片和经验。",new Color(255,220,120));
+                Drop(p,at,Value(3),2);Drop(p,at,Value(2),2);Drop(p,at,Value(9),1);Drop(p,at,Terrain.MakeBlockValue(Xp),20);notes.Add("first kill");
+                MDBoss.Announce(p,r.Body.Position,$"第一次击败{k.Name}！额外奖励：能量核心、火控芯片、医疗充能核心和经验。",new Color(255,220,120));
             }
         }
         if(notes.Count>0){if(Log.Count>=100)Log.RemoveAt(0);Log.Add($"{k.Id}: "+string.Join(", ",notes));}

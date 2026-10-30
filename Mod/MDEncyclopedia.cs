@@ -162,7 +162,8 @@ public static class MDEncyclopedia {
     }
     public static string Tower(MDTowerDef d) {
         var a=d.attack;var t=Targets(a);
-        return $"{d.name}：{d.summary}\n{ElementText(d)}血量 {d.hp:0}，射程 {a.range:0.#} 格，{AttackText(d)}{(t.Length>0?"，"+t:"")}；占地 {d.cells[0]}×{d.cells[2]} 格。\n{RecipeText(Recipe(d))}";
+        string medic=a.type=="heal"?(MDMedic.Unlimited?"储能：不限（模组设置“医疗塔储能”）。":$"储能 {MDMedic.Max:0} 点，治疗多少扣多少，用完停止；首领掉落的医疗充能核心右键充满（模组设置“医疗塔储能”）。"):"";
+        return $"{d.name}：{d.summary}\n{ElementText(d)}{medic}血量 {d.hp:0}，射程 {a.range:0.#} 格，{AttackText(d)}{(t.Length>0?"，"+t:"")}；占地 {d.cells[0]}×{d.cells[2]} 格。\n{RecipeText(Recipe(d))}";
     }
     // 0.15.0 damage types and reactions (MDElements)
     public static string ElementText(MDTowerDef d){var e=MDElements.Of(d);return e==MDElement.None?"":$"伤害类型：{MDElements.Name(e)}"+(MDElements.Aura(e)?$"（命中留下“{MDElements.Statuses[(int)e]}”状态）":"")+"。";}
@@ -170,7 +171,7 @@ public static class MDEncyclopedia {
         var s=new StringBuilder("每座炮塔造成一种伤害：动能、爆炸、热、冷、电、腐蚀（物品说明和各阶炮塔的条目里写着）。机甲的步枪和近战是动能，导弹、火炮、榴弹是爆炸，激光是电。\n\n");
         s.Append($"状态：热、冷、电、腐蚀命中时给敌人挂上对应的状态（灼烧、冰寒、带电、腐蚀），持续 {MDElements.AuraTime:0} 秒，再次命中刷新；着火算灼烧，冻结算冰寒，中毒算腐蚀。敌人头顶的图标显示它现在的状态（还有冻结、瘫痪、减速、破甲、脆化），{MDTowerWorld.IconRange:0} 米内可见。\n\n");
         s.Append("反应：另一种元素打中带状态的敌人时发生反应，敌人身上会出现两种颜色的光圈，头顶飘出反应的名字：");
-        foreach(var r in MDElements.Reactions.Skip(1))s.Append($"\n· {r.Name}（{(r.B==MDElement.None?MDElements.Name(r.A)+" + 任一状态":MDElements.Name(r.A)+" + "+MDElements.Name(r.B))}）：{r.Effect}");
+        for(int i=1;i<MDElements.Reactions.Length;i++){var r=MDElements.Reactions[i];if(i==(int)MDReaction.Storm)s.Append($"\n\n三元素反应：两种元素反应后 {MDElements.ResidueTime:0} 秒内（或敌人身上同时有两种状态时）用第三种元素打中，伤害倍率更高，同一种 {MDElements.TriadCooldown:0} 秒一次：");s.Append($"\n· {r.Name}（{MDElements.Combo((MDReaction)i)}）：{r.Effect}");}
         s.Append($"\n\n冷却：同一个敌人发生反应后 {MDElements.GlobalCooldown:0.#} 秒内不再反应，同一种反应在同一个敌人身上 {MDElements.SameCooldown:0} 秒一次。两种元素反应后都会用掉（扩散、碎冰除外）。\n");
         s.Append("抗性：每种敌人对各类伤害 ×0.75～×1.5，写在图鉴里各敌人的页面上。\n\n");
         s.Append($"伤害数字：炮塔、机甲和玩家打出的伤害显示在敌人头上，颜色是伤害类型，发生反应的是大字；同一个敌人 {MDTowerWorld.MergeTime:0.##} 秒内的伤害合成一个数，同屏最多 {MDTowerWorld.MaxShown[1]} 个（特效数量“完整”{MDTowerWorld.MaxShown[0]} 个、“极简”{MDTowerWorld.MaxShown[2]} 个），模组设置里可以关掉。\n\n");
@@ -183,6 +184,7 @@ public static class MDEncyclopedia {
             s.Append($"\n{m.Name}：装甲 {m.Armour}，武器伤害 ×{m.Damage:0.##}，能量 {m.EnergyMax:0}，导弹最多锁定 {m.Locks} 个");
             if(m.BurstRifle)s.Append("，步枪三连发，受到爆炸伤害 ×"+m.ExplosionTaken.ToString("0.##"));
             if(m.Speed>1)s.Append($"，移动速度 ×{m.Speed:0.##}");
+            s.Append("，弹药元素："+string.Join("、",m.Ammo.Select(MDMechState.AmmoName)));   // 0.15.0
             s.Append($"。\n{RecipeText(Recipe(m.Data))}\n");
         }
         s.Append($"\n操作（当前按键，可在“模组设置 → 机甲防线 → 机甲按键”里改；手机用铃兰触控把屏幕按钮映射到这些键）：{MDMechPilot.KeyHints(true)}。");

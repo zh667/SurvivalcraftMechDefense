@@ -59,6 +59,18 @@ public partial class Lab {
             foreach(var x in Case("electrolysis","electric","corrosive",(c,d)=>Last("电解")??(!w.HasStatus(c[1].Body,MDElement.Corrosive)?"no corrosive passed on":null)??(c[1].Health.Health>=1?"no arc damage":null)))yield return x;
             foreach(var x in Case("spread","heat","explosive",(c,d)=>Last("扩散")??(!w.HasStatus(c[1].Body,MDElement.Heat)?"heat not passed on":null)))yield return x;
             foreach(var x in Case("shatter","cold","kinetic",(c,d)=>Last("碎冰")??(d<150||d>170?$"{d:0} (want 160)":null)??(w.HasStatus(c[0].Body,MDElement.Cold)?"still cold":null)))yield return x;
+            // three elements (user, 2026-10-30): a two-element reaction, then 1.6 s later a third element
+            IEnumerable<bool> Triad(string name,string first,string second,string third,Func<List<ComponentMDRobot>,float,string> check) {
+                var c=Cluster(spot);while(Wait(.4))yield return true;int n0=MDElements.Count;
+                Deal(first,c[0],100);Deal(second,c[0],100);while(Wait(1.6))yield return true;float d3=Deal(third,c[0],100);
+                var at=c[0].Body.Position;Cam(at+new Vector3(-5,3.5f,6),at+Vector3.UnitY*2.5f);for(int i=0;i<6;i++)yield return true;Shot("c15_"+name);yield return true;
+                string why=check(c,d3);rr[name]=$"third hit {d3:0}, reactions +{MDElements.Count-n0}, {string.Join(" | ",MDElements.Log.TakeLast(2))}"+(why!=null?" | "+why:"");
+                if(why!=null)bad.Add($"{name}: {rr[name]}");
+                Kill();ClearPickables();while(Wait(.4))yield return true;
+            }
+            foreach(var x in Triad("storm","heat","cold","electric",(c,d)=>Last("雷暴")??(d<300?"no x3":null)??(c[1].Health.Health>=1?"no blast on the others":null)??(!w.IsStunned(c[0].Body)?"not paralysed":null)))yield return x;
+            foreach(var x in Triad("crystal","cold","electric","corrosive",(c,d)=>Last("晶化")??(d<300?"no x3":null)??(!w.IsFrozen(c[0].Body)?"not frozen":null)))yield return x;
+            foreach(var x in Triad("meltdown","heat","corrosive","cold",(c,d)=>Last("熔解")??(d<350?"no x3.5":null)??(w.DamageFactor(c[0].Body)<1.45f?"no armour down":null)))yield return x;
             // cooldowns: right after a reaction no other one (1.5 s); after 2 s the same reaction still waits (6 s), another one goes
             {
                 var c=Cluster(spot);while(Wait(.4))yield return true;
@@ -237,6 +249,59 @@ public partial class Lab {
             nm["knockback"]=$"wolf pushed by the gun tower {gun:0.00} m/s, by the sniper tower {sniper:0.00} m/s";
             if(one!=1||merged<9||alive>cap||alive<cap-1||off!=0)bad.Add("numbers: "+nm["numbers"]);
             if(gun>.05f||sniper<=.05f)bad.Add("knockback: "+nm["knockback"]);
+        }
+        // the mechs' ammo elements (user, 2026-10-30: "机甲也要做多种元素的炮弹……高级的可以做多一点支持的元素"): Mercury 3, Nemesis 4,
+        // Regulus 5; the ammo key cycles through them; what each weapon then deals
+        if(Part("mechammo")) {
+            var ma=new Dictionary<string,object>();r["mechammo"]=ma;var counts=new List<string>();
+            foreach(var t in MDMechType.All) {
+                var e=DatabaseManager.CreateEntity(proj,t.Template,true);e.FindComponent<ComponentBody>(true).Position=Ground(Home+new Vector3(-12,0,-12));e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;proj.AddEntity(e);
+                var u=e.FindComponent<ComponentMDUnit>(true);var m=u.Mech;var cycle=new List<string>();
+                for(int i=0;i<=t.Ammo.Length;i++){cycle.Add(MDMechState.AmmoName(m.Ammo));m.NextAmmo();}
+                m.Ammo=MDElement.Heat;m.Weapon=MDMechWeapon.Rifle;var rifleHeat=MDElements.Of(u);m.Weapon=MDMechWeapon.Laser;var laser=MDElements.Of(u);
+                m.Ammo=MDElement.Kinetic;m.Weapon=MDMechWeapon.Cannon;var cannon=MDElements.Of(u);m.Weapon=MDMechWeapon.Rifle;var rifle=MDElements.Of(u);
+                counts.Add($"{t.Name}: {t.Ammo.Length} [{string.Join(" > ",cycle)}]; heat rifle {rifleHeat}, laser {laser}, standard cannon {cannon}, standard rifle {rifle}");
+                int want=t==MDMechType.Mercury?3:t==MDMechType.Nemesis?4:5;
+                if(t.Ammo.Length!=want||cycle[0]!=cycle[^1]||rifleHeat!=MDElement.Heat||laser!=MDElement.Electric||cannon!=MDElement.Explosive||rifle!=MDElement.Kinetic)bad.Add("mech ammo: "+counts[^1]);
+                proj.RemoveEntity(e,true);while(Wait(.3))yield return true;
+            }
+            ma["types"]=counts;string mechs=MDEncyclopedia.Text("Mechs");ma["key"]=$"{MDMechKeys.KeyName(MDMechKeys.Get(MDMechAction.Ammo))}, {MDMechKeys.ActionName(MDMechAction.Ammo)}";
+            if(MDMechKeys.Get(MDMechAction.Ammo)!=Engine.Input.Key.X||!mechs.Contains("弹药元素：标准弹、热元素弹、冷元素弹"))bad.Add($"mech ammo key / help: {ma["key"]}");
+        }
+        // medic charge (user, 2026-10-30): the store runs out and the medic stops; a charge cell fills it; taken down it keeps its charge;
+        // the bar over it; the Neorxna info panel (when loaded) shows the tower's name in Chinese, the charge and its bar, patched on
+        // its own (not by this lab calling Install)
+        if(Part("medic")) {
+            var md=new Dictionary<string,object>();r["medic"]=md;float cap0=MDSettings.MedicCapacity;
+            var panelType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)).FirstOrDefault(t=>t!=null);
+            md["neorxna"]=panelType==null?"not loaded":$"{panelType.Assembly.GetName().Name} {panelType.Assembly.GetName().Version}, patched on its own {MDNeorxnaCompatibility.Installed}";
+            if(panelType!=null&&!MDNeorxnaCompatibility.Installed)bad.Add("neorxna not patched: "+md["neorxna"]);
+            MDSettings.MedicCapacity=600;var mdef=D("battle_medic_1");
+            var medic=Place(mdef,Home+new Vector3(0,0,-4),0);var tw=Place(D("battle_turret_1"),Home+new Vector3(5,0,-4),0);while(Wait(.6))yield return true;
+            tw.Damage.Hitpoints=.1f;var hp=new List<string>();double t0=Time.RealTime;int n=0;
+            foreach(var x in During(20,()=>{if(Time.RealTime-t0>=n*2){n++;hp.Add($"{tw.Damage.Hitpoints:0.00}/{MDMedic.Left(medic):0}");}}))yield return x;
+            float after=tw.Damage.Hitpoints,left=MDMedic.Left(medic);foreach(var x in During(6,()=>{}))yield return x;float later=tw.Damage.Hitpoints;
+            md["drain"]=$"tower hp / charge every 2 s: {string.Join(" ",hp)}; empty {left:0}, then {after:0.00} -> {later:0.00} in 6 s";
+            if(left>0||MathF.Abs(after-(.1f+600f/D("battle_turret_1").hp))>.03f||later>after+.005f)bad.Add("drain: "+md["drain"]);
+            var c=medic.Body.Position;Cam(c+new Vector3(-5,4,6),c+Vector3.UnitY*2.5f);for(int i=0;i<4;i++)yield return true;int bars=MDTowerWorld.BarsDrawn;Shot("c15_medic_empty");yield return true;
+            string msg=MDMedic.Charge(null,medic);for(int i=0;i<4;i++)yield return true;Shot("c15_medic_full");yield return true;
+            medic.HealCharge=MDMedic.Max*.4f;for(int i=0;i<4;i++)yield return true;Shot("c15_medic_part");yield return true;
+            md["charge"]=$"\"{msg}\" -> {MDMedic.Text(medic)}; bars drawn {bars}";
+            if(!msg.StartsWith("医疗塔已充满")||bars<1)bad.Add("charge: "+md["charge"]);
+            medic.HealCharge=MDMedic.Max*.5f;int used=MDMedic.UsedEighths(medic);int value=MDDeploymentBlock.Value(mdef,1,used);
+            string itemName=BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDDeploymentBlock>()].GetDisplayName(null,value);
+            md["item"]=$"used {used}/7 -> item {itemName}, back to {MDMedic.FromEighths(MDDeploymentBlock.MedicUsed(value)):0}";
+            if(MDDeploymentBlock.MedicUsed(value)!=used||used!=4||!itemName.Contains("储能约"))bad.Add("item: "+md["item"]);
+            if(panelType!=null) {
+                var panel=Activator.CreateInstance(panelType);var set=panelType.GetMethod("SetInfo_Entity");
+                set.Invoke(panel,[tw.Entity]);string twName=((LabelWidget)panelType.GetField("m_name").GetValue(panel)).Text;
+                set.Invoke(panel,[medic.Entity]);string mName=((LabelWidget)panelType.GetField("m_name").GetValue(panel)).Text;
+                var all=(panel as ContainerWidget)?.AllChildren.ToList()??[];var texts=all.OfType<LabelWidget>().Select(l=>l.Text).Where(x=>!string.IsNullOrWhiteSpace(x)).ToList();
+                bool bar=all.Any(wd=>wd.Name=="MDMedicBar");
+                md["panel"]=$"gun tower: {twName}; medic: {mName}; labels {string.Join(" | ",texts)}; bar {bar}";
+                if(twName!="铳械塔"||mName!=mdef.name||!texts.Any(x=>x.StartsWith("储能"))||!bar)bad.Add("panel: "+md["panel"]);
+            }
+            MDSettings.MedicCapacity=cap0;Remove([medic,tw]);while(Wait(.5))yield return true;
         }
         // views for the user (decisions 14, 15, 17 of 10-30): drones shot down falling and on the ground, RD19's nose close up, EN02's
         // open ducts close up

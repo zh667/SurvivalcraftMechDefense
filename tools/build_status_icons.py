@@ -5,7 +5,7 @@ python tools/build_status_icons.py
 A 4 x 4 atlas of 64 px icons (256 x 256), drawn here with PIL shapes at 4x and scaled down (smooth edges). Each icon is a dark
 round badge with a ring and a glyph in the element's colour, readable over sky, grass and robots. The slots match MDIcon
 (Mod/MDElements.cs): 0 kinetic, 1 explosive, 2 heat, 3 cold, 4 electric, 5 corrosive, 6 slowed, 7 frozen, 8 paralysed,
-9 armour down, 10 brittle. Colours match MDElements.Colors.
+9 armour down, 10 brittle; 15 is solid white (bars, MDTowerWorld.Bar). Colours match MDElements.Colors.
 """
 import math, pathlib, sys
 from PIL import Image, ImageDraw
@@ -115,6 +115,7 @@ def main():
     atlas = Image.new('RGBA', (CELL * 4, CELL * 4), (0, 0, 0, 0))
     for i, n in enumerate(ORDER):
         atlas.paste(icon(n), ((i % 4) * CELL, (i // 4) * CELL))
+    atlas.paste(Image.new('RGBA', (CELL, CELL), (255, 255, 255, 255)), (3 * CELL, 3 * CELL))   # slot 15: solid, for bars
     out = ROOT / 'Mod/Assets/Towers/status.png'
     if len(sys.argv) > 1:
         out = pathlib.Path(sys.argv[1])

@@ -21,14 +21,17 @@ docs/tasks/2026-10-30-combat-0.15.md, docs/COMBAT_DESIGN.md (2.5: benchmark befo
 - Enemies: RD05 steps aside when aimed at and backs off when hurt; RD14 armoured in front (x 0.75) and weak behind (x 1.4), slower
   turret; RD07 rings where its shells land; RD05 and the drones go for players at the defences / alone; the repair drone (RP09,
   RD09's model tinted green) from 14 days after the start day. RD21 armour x 1.1; RD08 stays 22 m from its target.
+- Same day, user follow-ups: medic towers hold a healing store (mod setting 医疗塔储能, default 50000 points, 0 = unlimited) that every heal draws on; empty they stop; the new item 医疗充能核心 (every boss drops 1-2, first kills one more) refills one; a bar over the medic (green left, grey used) and in the Neorxna info panel. Neorxna showed towers under their English template names: the rename patch was tried once at load and missed Neorxna when it loaded later; it now patches when Neorxna's assembly loads (lab on 1.9.4 now uses the user's Neorxna-v1.4.3). Mechs load ammo elements (key X): Mercury standard / heat / cold, Nemesis + electric, Regulus + corrosive. Four three-element reactions (x 3-3.5).
 - Growth by stage (every 7 days from the start day, mod setting 敌人成长 0 / 5 / 10 / 15 % per stage, at most 5 stages); rewards:
   loot by toughness, extra for kills mostly by players / mechs, scrap per broken boss layer, the first kill of each boss kind,
   a payout for a beaten raid.
-- Package dist/MechDefense-0.15.0.scmod, 35,109,966 bytes, SHA-256 ef3606eef607b0c3695e64a6b3fe7ec50e3c8b59d7c7cf6892114787af98f5fb.
+- Package dist/MechDefense-0.15.0.scmod, 35,115,621 bytes, SHA-256 6ba1e9ae8711f67909c2250a1a1ecad2b26ed4ebf3108ff7e80cd06c891a6da6.
   Verified (PC): full run on 1.9.3.1 (all, robots, enemies14, bosses14, fb13, combat, mech, mech-view, phone, icons, special,
   combat15, bench-rules, bench-towers) and 1.9.4 (all, robots, enemies14, bosses14, faction-mods, mech, phone, combat15,
   bench-enemies, bench-bosses, bench-fortress). After the damage numbers and the knockback change: robots, combat15 (both),
-  combat, fb13, all (both), faction-mods, bench-rules again, all passed. Not verified: a phone. Open: the flame towers' damage
+  combat, fb13, all (both), faction-mods, bench-rules again, all passed. After the medic charge, Neorxna, mech ammo and three-element
+  reactions: combat15, robots, mech, all (both), bosses14, enemies14, phone (both), combat, fb13, icons, special, mech-view, faction-mods,
+  bench-rules passed (bosses14 failed twice on RD08 keeping out of the towers' reach, fixed: it now stays on the towers' side). Not verified: a phone. Open: the flame towers' damage
   against robots rose a lot (no more pushed out of the flame), RD19 held out longer in the fortress benchmark (cause not checked).
 
 ## Delivered: 0.14.0: new enemies (RD14 tank, RD09 / EN02 drones, four new bosses), armour phases, combat benchmark (PR #13, merged 2026-10-30 on the user's approval, tag v0.14.0)

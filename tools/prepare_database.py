@@ -67,7 +67,7 @@ CT=dict(CreatureModel='681a5886-5bff-418a-bf5f-ac84f290a311',Generic='b05700ed-7
 SCRAP,ALLOY,CHIP,CORE,PRINT='MDPartBlock:0','MDPartBlock:1','MDPartBlock:2','MDPartBlock:3','MDPartBlock:4'
 LOOT=dict(normal=[f'{SCRAP};2;4;1',f'{CHIP};1;1;0.05','ExperienceBlock;2;3;1'],
           elite=[f'{SCRAP};4;6;1',f'{CHIP};1;1;0.6',f'{CORE};1;1;0.15','ExperienceBlock;5;8;1'],
-          boss=[f'{PRINT};1;1;1',f'{CORE};3;5;1',f'{CHIP};2;3;1',f'{SCRAP};8;12;1','ExperienceBlock;30;40;1'],
+          boss=[f'{PRINT};1;1;1',f'{CORE};3;5;1',f'{CHIP};2;3;1',f'{SCRAP};8;12;1','ExperienceBlock;30;40;1','MDPartBlock:9;1;2;1'],   # 0.15.0: medic charge cells
           # 0.15.0 (user, 2026-10-30): loot by toughness: the small drone (600) less scrap but more chips (hard to hit), the tank (2000)
           # more, the repair drone chips and now and then a core
           drone=[f'{SCRAP};1;2;1',f'{CHIP};1;1;0.15','ExperienceBlock;2;3;1'],

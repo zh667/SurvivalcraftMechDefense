@@ -13,8 +13,8 @@ namespace Game;
 // data), face shading baked into Assets/Parts/part<N>.bin; the energy core's band, the beacon's lamp and the Mk3 kit's
 // connector are emissive (they stay lit in the dark). The same model in slots, in the hand and on the ground.
 public class MDPartBlock : Block {
-    public enum Kind { Scrap, Alloy, Chip, Core, Blueprint, Beacon, Kit1, Kit2, Kit3 }
-    public const int Count=9;
+    public enum Kind { Scrap, Alloy, Chip, Core, Blueprint, Beacon, Kit1, Kit2, Kit3, Charge }   // 0.15.0: Charge (MDMedic)
+    public const int Count=10;
     static readonly (string name,string text,int stack)[] info=[
         ("机兵残骸",$"敌方机兵被击毁后留下的装甲碎片和零件。两块残骸加一个铁锭在熔炉里炼成一块合金板。手持右键炮塔可维修（每块 {MDTowerMaintenance.ScrapPoints:0} 点耐久）。",40),
         ("合金板",$"二阶、三阶炮塔和机甲的结构材料。熔炉：机兵残骸×2 + 铁锭。不打机兵也能在工作台用铁块、铁锭、铜锭硬做（贵 5 倍）。手持右键炮塔可维修（每块 {MDTowerMaintenance.AlloyPoints:0} 点耐久）。",40),
@@ -25,6 +25,7 @@ public class MDPartBlock : Block {
         ("武器改装件 Mk1","手持对着机甲右键安装：机甲全部武器伤害 ×1.15。改装件按级别依次安装（Mk1 → Mk2 → Mk3），收起机甲后仍保留。",8),
         ("武器改装件 Mk2","在已装 Mk1 的机甲上安装：全部武器伤害 ×1.3。",8),
         ("武器改装件 Mk3","在已装 Mk2 的机甲上安装：全部武器伤害 ×1.5。",8),
+        ("医疗充能核心","首领机甲的特殊掉落（每台必掉 1～2 个）。手持右键医疗塔，把它的储能充满（储能上限在模组设置“医疗塔储能”里改）。",16),
     ];
     public static int Value(Kind k)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDPartBlock>(),0,(int)k);
     public static Kind? Of(int value)=>Terrain.ExtractContents(value)==BlocksManager.GetBlockIndex<MDPartBlock>()&&Terrain.ExtractData(value) is int d&&d<Count?(Kind)d:null;
@@ -38,11 +39,11 @@ public class MDPartBlock : Block {
     public override IEnumerable<int> GetCreativeValues(){for(int i=0;i<Count;i++)yield return Terrain.MakeBlockValue(BlockIndex,0,i);}
     public override bool IsUseable_(int value)=>(Kind)Data(value)==Kind.Beacon;   // right-click on the ground (MDDeployPatch -> MDBoss.PlaceBeacon)
     public override int GetTextureSlotCount(int value)=>4;
-    public override int GetFaceTextureSlot(int face,int value)=>Data(value);
+    public override int GetFaceTextureSlot(int face,int value)=>(Kind)Data(value)==Kind.Charge?(int)Kind.Core:Data(value);
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
     // held like the vanilla iron ingot (first person 0.4, (0.5, -0.5, -0.6), 40 degrees; in hand 0.3, tilted 60 degrees);
     // the upright core and beacon stand upright in the hand like the battery
-    static bool Upright(int v)=>(Kind)Data(v) is Kind.Core or Kind.Beacon;
+    static bool Upright(int v)=>(Kind)Data(v) is Kind.Core or Kind.Beacon or Kind.Charge;
     public override float GetFirstPersonScale(int value)=>.4f;
     public override Vector3 GetFirstPersonOffset(int value)=>new(.5f,-.5f,-.6f);
     public override Vector3 GetFirstPersonRotation(int value)=>new(0,40,0);
@@ -69,9 +70,10 @@ public class MDPartBlock : Block {
         for(int i=0;i<ni;i++)mesh.Indices.Add(r.ReadInt32());
         var made=(mesh,Math.Clamp(1.36f/(2*half*DrawScale),.8f,1.4f));meshes[data]=made;return made;
     }
+    // the medic charge cell (0.15.0) wears the energy core's model, tinted teal (no model of its own yet)
     public override void DrawBlock(PrimitivesRenderer3D r,int value,Color color,float size,ref Matrix matrix,DrawBlockEnvironmentData e) {
-        var (mesh,ui)=Mesh(Data(value));
-        BlocksManager.DrawMeshBlock(r,mesh,Texture,color,size*DrawScale*(e?.DrawBlockMode==DrawBlockMode.UI?ui:1),ref matrix,e);
+        bool charge=(Kind)Data(value)==Kind.Charge;var (mesh,ui)=Mesh(charge?(int)Kind.Core:Data(value));
+        BlocksManager.DrawMeshBlock(r,mesh,Texture,charge?color*new Color(120,255,205):color,size*DrawScale*(e?.DrawBlockMode==DrawBlockMode.UI?ui:1),ref matrix,e);
     }
 }
 

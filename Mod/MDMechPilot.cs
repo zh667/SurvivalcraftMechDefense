@@ -42,8 +42,8 @@ public static class MDMechPilot {
     }
     // the bound keys (MDMechKeys), for the boarding message (long) and the panel's key line (short)
     public static string KeyHints(bool full)=>full
-        ?$"鼠标转向瞄准，WASD 移动，按住 {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮，{MDMechKeys.Hint(MDMechAction.Jump)} 跳，{MDMechKeys.Hint(MDMechAction.Fire)} 开火，{MDMechKeys.Hint(MDMechAction.Switch)} 换武器，{MDMechKeys.Hint(MDMechAction.Melee)} 近战，{MDMechKeys.Hint(MDMechAction.View)} 视角，{MDMechKeys.Hint(MDMechAction.Board)} 下车"
-        :$"{MDMechKeys.Hint(MDMechAction.Board)} 下车  {MDMechKeys.Hint(MDMechAction.View)} 视角  {MDMechKeys.Hint(MDMechAction.Switch)} 武器  {MDMechKeys.Hint(MDMechAction.Melee)} 近战  {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮  {MDMechKeys.Hint(MDMechAction.Jump)} 跳";
+        ?$"鼠标转向瞄准，WASD 移动，按住 {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮，{MDMechKeys.Hint(MDMechAction.Jump)} 跳，{MDMechKeys.Hint(MDMechAction.Fire)} 开火，{MDMechKeys.Hint(MDMechAction.Switch)} 换武器，{MDMechKeys.Hint(MDMechAction.Ammo)} 换弹药元素，{MDMechKeys.Hint(MDMechAction.Melee)} 近战，{MDMechKeys.Hint(MDMechAction.View)} 视角，{MDMechKeys.Hint(MDMechAction.Board)} 下车"
+        :$"{MDMechKeys.Hint(MDMechAction.Board)} 下车  {MDMechKeys.Hint(MDMechAction.View)} 视角  {MDMechKeys.Hint(MDMechAction.Switch)} 武器  {MDMechKeys.Hint(MDMechAction.Ammo)} 弹药  {MDMechKeys.Hint(MDMechAction.Melee)} 近战  {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮  {MDMechKeys.Hint(MDMechAction.Jump)} 跳";
     public static bool Exit(ComponentPlayer p,ComponentMDUnit u,bool force=false) {
         var t=u.Project.FindSubsystem<SubsystemTerrain>(true);var bodies=u.Project.FindSubsystem<SubsystemBodies>(true);Vector3? destination=null;
         for(int radius=3;radius<=6&&destination==null;radius++)for(int i=0;i<8&&destination==null;i++) {
@@ -78,6 +78,7 @@ public static class MDMechPilot {
             m.Move=new Vector2(input.Move.X,input.Move.Z);m.Hover=MDMechKeys.Down(gi,MDMechAction.Hover);   // bound keys (MDMechKeys)
             if(input.Jump||MDMechKeys.Pressed(gi,MDMechAction.Jump))m.Jump=true;
             if(MDMechKeys.Pressed(gi,MDMechAction.Melee))m.Melee=true;
+            if(MDMechKeys.Pressed(gi,MDMechAction.Ammo)){m.NextAmmo();MDPlayer.Message(p,"弹药："+MDMechState.AmmoName(m.Ammo)+(m.Ammo==MDElement.Kinetic?"（步枪动能，火炮、导弹、榴弹爆炸）":$"（除激光外的武器都造成{MDElements.Name(m.Ammo)}伤害，命中留下“{MDElements.Statuses[(int)m.Ammo]}”）"));}   // 0.15.0
             if(MDMechKeys.Pressed(gi,MDMechAction.Switch)){m.Switch=true;var next=(MDMechWeapon)(((int)m.Weapon+1)%5);if(MDSettings.HudKeys||!MDSettings.HudShow)MDPlayer.Message(p,"武器："+MDMechState.Name(next)+(MDSettings.HudKeys?next switch{MDMechWeapon.Missile=>"（按住开火扫过目标锁定，松开发射）",MDMechWeapon.Cannon=>"（开火时展开）",MDMechWeapon.Laser=>"（照射 1 秒）",_=>""}:""));}   // the panel shows the weapon
             m.Trigger=gi.IsMouseButtonDown(MouseButton.Left)||input.Dig.HasValue||input.Hit.HasValue||MDMechKeys.Down(gi,MDMechAction.Fire);
             u.AimYaw-=input.Look.X*p.ComponentLocomotion.LookSpeed*dt;
@@ -130,7 +131,7 @@ public class MDStatusWidget:CanvasWidget {
     // the speed is smoothed (about 0.3 s) and shown in whole km/h, so the number does not flicker with the physics steps
     public void Refresh(ComponentMDUnit u) {
         var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
-        Show($"{m.Type.Name}  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}",u.Damage.Hitpoints,m.Energy/m.Type.EnergyMax,m.EnergyLock>0);
+        Show($"{m.Type.Name}  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}"+(m.Weapon==MDMechWeapon.Laser?"":"   "+MDMechState.AmmoName(m.Ammo)),u.Damage.Hitpoints,m.Energy/m.Type.EnergyMax,m.EnergyLock>0);
         if(ShowKeys!=MDSettings.HudKeys)ShowKeys=MDSettings.HudKeys;
         if(ShowKeys){var k=MDMechPilot.KeyHints(false);if(keys.Text!=k)keys.Text=k;}   // the bound keys, also right after a change on the settings page
     }

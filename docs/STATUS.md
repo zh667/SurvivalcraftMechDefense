@@ -1,10 +1,30 @@
-# Status — 2026-10-29
+# Status — 2026-10-30
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
 below no longer exist; the numbers recorded here stand. Kept: `local/claude-work/bug1023` (the player's log and video),
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
+
+## 0.14.0: new enemies (RD14 tank, RD09 / EN02 drones, four new bosses), armour phases, combat benchmark (branch feat/new-enemies on top of 0.13.0, 2026-10-30; not merged yet)
+
+The sixth 2026-10-29 report; decisions and evidence: docs/tasks/2026-10-29-new-enemies.md; combat numbers and open questions: docs/COMBAT_DESIGN.md.
+- Our own models (LOD1 in the package; high poly and LOD0 kept in E:/projects/dguns-enemy-models/v3_new): RD14 twin-barrel armoured tank,
+  RD09 rotor gun drone, EN02 twin-rotor drone (regulars / elites from start day + 3), and the bosses RD13 bird-shaped heavy mech, RD21
+  twin-sabre flying mech, RD08 heavy hover gunboat, RD19 heavy armoured gun carriage. Each boss comes at random with the devil mech
+  (kills and beacon), every attack telegraphed (crouch, red rings, red lines, aim beams), each with one answer only a player or mech has.
+- Boss damage cap: the 2 % per-hit cap became armour phases (two layers of 10 %, 20 % through, a break = 3 s stagger and 10 s at x 1.5,
+  8 % per hit at most). Armour 30000 + 3000 per tower tier + mechs, at most 300000.
+- User 10-30 "很多的炮塔和医疗塔配合，敌方boss还是不堪一击": a tower a boss hit cannot be healed for 8 s, medics no longer stack, fire goes
+  through the armour phases; RD19 drives to a new spot while sunk ("不能移动").
+- Fixed: control towers (EMP, shockwave, frost, liquid nitrogen) never held any robot (the boss resilience threshold); a boss coming down
+  dug a pit (block clearing ahead of a downward velocity); RD08 hovered under water at sea.
+- Lab: `bosses14`, `enemies14`, combat benchmark `bench` (towers / enemies / bosses / fortress / sample), `run_isolated.py --no-build`.
+- Package dist/MechDefense-0.14.0.scmod, 35,027,049 bytes, SHA-256 d53e8da31e6aca8e54f3a77a5adc8550eb0929879660652e96203c046984e7c0.
+  Verified (PC), full run 10-30 on 1.9.3.1 and 1.9.4 side by side: 1.9.3.1 all, robots, enemies14, bosses14, fb13, combat, mech, mech-view,
+  phone, icons, special; 1.9.4 all, robots, enemies14, bosses14, faction-mods, mech, phone. robots and bosses14 failed once and were
+  fixed (the pit, RD19 spot choice, the bosses14 shell test spot) and passed on both after the fix; the other labs ran on the package
+  before those two boss fixes. Not verified: a phone.
 
 ## 0.13.0: player feedback (silent weak point, Black Scorpion terrorists, medics, placement, phone heat) (branch feat/player-feedback-1029, 2026-10-29; not merged yet)
 

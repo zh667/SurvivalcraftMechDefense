@@ -12,9 +12,9 @@ public class MDModLoader : ModLoader {
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
         skip=MDDrawBatches.Draw(modelData,modelShader,subsystemModelsRenderer);
-    // The devil mech takes at most MDBoss.MaxHitShare of its armour per hit.
+    // A boss takes at most MDBoss.MaxHitShare of its armour per hit.
     public override void CalculateCreatureInjuryAmount(Injury injury)=>MDBoss.CapInjury(injury);
-    // The world's count of destroyed robots towards the next devil mech (MDBossKills) is an attribute of Project.xml.
+    // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
     public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget)=>MDBossKills.Load(xElement);
     public override void ProjectXmlSave(System.Xml.Linq.XElement xElement)=>MDBossKills.Save(xElement);
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
@@ -27,7 +27,7 @@ public class MDModLoader : ModLoader {
         if(placementNotAllowed)MDPlayer.Message(miner.ComponentPlayer,"此格属于炮塔固定占地区域。");
     }
     // Creatures that hurt a player, a tower or the player's herd become tower targets (MDFaction).
-    // The devil mech's weak channel scales the hit first (MDBoss).
+    // A boss's own factor and armour phase scale the hit first (MDBoss).
     // A robot remembers a player (or the player's herd) that hits it and fights back (MDRobots.Provoked).
     public override void ProcessAttackment(Attackment attackment){MDBoss.Modify(attackment);MDMechArmour.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);}
     // Right-click on a tower with robot scrap or an alloy plate (on a mech: iron or copper) repairs it (MDTowerMaintenance); the

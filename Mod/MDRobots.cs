@@ -15,7 +15,7 @@ namespace Game;
 // simulated by MDTowerWorld (Foreign shots). Damage is set separately against creatures (a player has 1.0 health, power /
 // resilience) and against structures (towers, Mercury: hit points x armour).
 // Where they come from: wild spawns (MDWildSpawns: at night from game day 3, elites from day 10, adjustable in the mod
-// settings), night raids on the player's tower clusters (MDRaids) and the devil mech, summoned with the decoy beacon (MDBoss).
+// settings), night raids on the player's tower clusters (MDRaids) and the bosses, summoned with the decoy beacon (MDBoss).
 // Drops: MDPartBlock materials.
 public sealed class MDRobotKind {
     public string Id,Name,Root; public bool Elite,Boss;
@@ -25,11 +25,17 @@ public sealed class MDRobotKind {
     public float VsCreature,VsStructure;          // damage per hit against creatures (players: 1.0 health) and against towers / Mercury
     public string[] Muzzles; public int FireSe,HitSe;
     public MDTowerDef Look;
+    // 0.14.0 procedural aim (the original tank's clips move no joint): a turret joint that yaws within ±YawLimit (rad) of the body
+    // and a cradle joint that pitches between PitchMin and PitchMax, both turning at AimRate rad/s; joint name prefixes
+    public string AimYaw,AimPitch; public float YawLimit,PitchMin,PitchMax,AimRate=1.6f;
+    public float Fly;                             // 0.14.0 drones: flies this many metres over the ground (0: walks)
+    public int FromDay;                           // a normal enemy that appears this many days after the start day
+    public float BossArmour=1;                    // 0.14.0 bosses: their armour at arrival times this (MDBoss.Spawn)
 }
 
 public static class MDRobots {
     public const string Root="Imported/";
-    static MDTowerDef Look(string id,string type,float[] c,float[] c2,float scale,string kind="heavy")=>new(){id="robot_"+id,name=id,attack=new MDTowerAttack{type=type},fx=new MDTowerFx{color=c,color2=c2,scale=scale,kind=kind},muzzles=[],nodes=[]};
+    public static MDTowerDef Look(string id,string type,float[] c,float[] c2,float scale,string kind="heavy")=>new(){id="robot_"+id,name=id,attack=new MDTowerAttack{type=type},fx=new MDTowerFx{color=c,color2=c2,scale=scale,kind=kind},muzzles=[],nodes=[]};
     // Numbers (starting values; raised 2026-10-21, user: "难度需要提高，因为玩家一般会放置很多炮塔"): a normal walker (1000)
     // beats one tier-1 gun tower (it deals 4 x 14 per 1.8 s = 31/s to the tower's 650; the tower 32/s to its 1000) and loses
     // to two; elites (2400 / 2800) take a tier-3 tower to stop. Raids and the boss grow with the defence (MDRaids, MDBoss).
@@ -41,14 +47,59 @@ public static class MDRobots {
               VsCreature=3f,VsStructure=60,Muzzles=["podL","podR"],FireSe=9,HitSe=14,Speed=3f,Look=Look("missile","shell",[1,.6f,.25f],[1,.4f,.15f],1.1f)},
         new(){Id="RD07",Name="炮击步行机兵",Root=Root+"RD07/",Elite=true,Weapon="cannon",Sight=48,Range=44,MinRange=7,Interval=5.5f,Shots=1,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
               VsCreature=4f,VsStructure=140,Muzzles=["cannonL","cannonR"],FireSe=11,HitSe=24,Speed=2.8f,Look=Look("shell","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f)},
+        // 0.14.0 (players via the user, 2026-10-29; our own model, E:/projects/dguns-enemy-models/v3_new/rd14): twin-barrel tank, a
+        // heavier normal enemy from 3 days after the start day; its turret aims on its own (±135°, -5°..30°), so it fires on the move
+        new(){Id="RD14",Name="双管装甲战车",Root=Root+"RD14/",Weapon="tank",Sight=40,Range=30,MinRange=4,Interval=3.2f,Shots=2,ShotGap=.35f,ShotSpeed=55,Spread=.02f,Splash=1.5f,Windup=.3f,
+              VsCreature=2.5f,VsStructure=45,Muzzles=["gunL","gunR"],FireSe=11,HitSe=13,Speed=3f,Look=Look("tank","shell",[1,.55f,.25f],[1,.35f,.15f],1f),
+              AimYaw="04_",AimPitch="05_",YawLimit=135*MathF.PI/180,PitchMin=-5*MathF.PI/180,PitchMax=30*MathF.PI/180,FromDay=3},
+        // 0.14.0 drones (our own models, v3_new/rd09 and en02): they fly Fly m over the ground, the treetops and the towers, circle
+        // what they fight and fire from the air. Anti-air towers pick them first; the cannon towers (groundOnly) cannot reach them.
+        new(){Id="RD09",Name="旋翼机炮无人机",Root=Root+"RD09/",Weapon="drone",Sight=40,Range=24,Interval=1.6f,Shots=3,ShotGap=.12f,ShotSpeed=70,Spread=.04f,Windup=.2f,
+              VsCreature=1.2f,VsStructure=10,Muzzles=["gun"],FireSe=8,HitSe=13,Speed=6,Fly=7,FromDay=3,Look=Look("drone","bolt",[1,.45f,.2f],[1,.3f,.15f],.7f)},
+        new(){Id="EN02",Name="双旋翼无人机",Root=Root+"EN02/",Elite=true,Weapon="gunship",Sight=44,Range=30,Interval=2.4f,Shots=6,ShotGap=.1f,ShotSpeed=75,Spread=.03f,Windup=.3f,
+              VsCreature=1.5f,VsStructure=14,Muzzles=["gunL","gunR"],FireSe=8,HitSe=13,Speed=5,Fly=9,Look=Look("gunship","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
         new(){Id="RD17",Name="恶魔机甲",Root=Root+"RD17/",Boss=true,Weapon="devil",Sight=64,Range=40,MinRange=0,Interval=8,Shots=10,ShotGap=.2f,ShotSpeed=16,Splash=2.5f,Windup=1,
               VsCreature=3f,VsStructure=80,Muzzles=["armL","armR"],FireSe=9,HitSe=14,Speed=7,Look=Look("devil","shell",[1,.3f,.35f],[1,.2f,.25f],1.3f)},
+        // 0.14.0 bosses, our own models (v3_new/rd13, rd21, rd08, rd19); their attacks are in Mod/MDBoss.cs. The numbers here are their
+        // main guns: RD13's gatlings, RD21's nose guns, RD08's machine guns, RD19's howitzers.
+        new(){Id="RD13",Name="鸟形重装机甲",Root=Root+"RD13/",Boss=true,Weapon="bird",Sight=60,Range=34,Interval=5,Shots=16,ShotGap=.08f,ShotSpeed=80,Spread=.05f,Windup=.8f,
+              VsCreature=.6f,VsStructure=12,Muzzles=["gatlingL","gatlingR"],FireSe=8,HitSe=13,Speed=2.6f,BossArmour=1.2f,Look=Look("bird","bolt",[1,.5f,.2f],[1,.32f,.14f],1f),
+              AimYaw="02_",YawLimit=100*MathF.PI/180,AimRate=1.2f},
+        new(){Id="RD21",Name="双光剑飞行机甲",Root=Root+"RD21/",Boss=true,Weapon="sabre",Sight=64,Range=30,Interval=3,Shots=8,ShotGap=.1f,ShotSpeed=80,Spread=.03f,Windup=.3f,
+              VsCreature=.6f,VsStructure=10,Muzzles=["gun1","gun2","gun3","gun4"],FireSe=8,HitSe=13,Speed=9,BossArmour=.85f,Look=Look("sabre","bolt",[1,.35f,.4f],[1,.2f,.3f],.9f)},
+        new(){Id="RD08",Name="重装悬浮炮艇",Root=Root+"RD08/",Boss=true,Weapon="gunboat",Sight=64,Range=40,Interval=2.5f,Shots=12,ShotGap=.09f,ShotSpeed=70,Spread=.05f,Windup=.3f,
+              VsCreature=.5f,VsStructure=8,Muzzles=["mgC","mgL","mgR"],FireSe=8,HitSe=13,Speed=4,BossArmour=.9f,Look=Look("gunboat","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
+        new(){Id="RD19",Name="重型装甲炮车",Root=Root+"RD19/",Boss=true,Weapon="siege",Sight=72,Range=60,MinRange=12,Interval=7,Shots=6,ShotGap=.35f,ShotSpeed=30,Gravity=12,Splash=3,Windup=.5f,
+              VsCreature=3f,VsStructure=90,Muzzles=["hou1","hou2","hou3","hou4"],FireSe=11,HitSe=24,Speed=3,BossArmour=1.1f,Look=Look("siege","shell",[1,.5f,.2f],[1,.32f,.12f],1.5f),
+              AimYaw="10_",AimPitch="11_",YawLimit=150*MathF.PI/180,PitchMin=-5*MathF.PI/180,PitchMax=35*MathF.PI/180,AimRate=.5f},
     ];
+    // a boss's other weapons (Mod/MDBoss.cs): type "missile" homes, Gravity > 0 flies an arc, anything else straight
+    public static MDRobotKind Weapon(string id,float speed,float vsCreature,float vsStructure,float splash=0,float spread=0,float gravity=0,int fire=8,int hit=13,string look="bolt",float scale=1,string type="shot")=>
+        new(){Id=id,Name=id,Weapon=type,ShotSpeed=speed,VsCreature=vsCreature,VsStructure=vsStructure,Splash=splash,Spread=spread,Gravity=gravity,FireSe=fire,HitSe=hit,Muzzles=[],
+              Look=Look(id,look,look=="shell"?new[]{1,.5f,.22f}:new[]{1,.45f,.2f},look=="shell"?new[]{1,.32f,.12f}:new[]{1,.3f,.15f},scale)};
     public static MDRobotKind Kind(string id)=>Kinds.FirstOrDefault(k=>k.Id==id)??throw new KeyNotFoundException("robot kind "+id);
+    // the kind of an entity template (its ComponentMDRobot Kind)
+    static readonly Dictionary<string,string> templateKinds=[];
+    public static MDRobotKind KindOf(string template) {
+        if(!templateKinds.TryGetValue(template,out var id)) {
+            var vd=DatabaseManager.FindEntityValuesDictionary(template,true);
+            templateKinds[template]=id=DatabaseManager.FindValuesDictionaryForComponent(vd,typeof(ComponentMDRobot)).GetValue<string>("Kind");
+        }
+        return Kind(id);
+    }
     // Entity templates (tools/prepare_database.py): one per skin; elites and the boss as below.
     public static readonly string[] Normal=["MDRobot05","MDRobot05B","MDRobot05C"];
     public static readonly string[] Elites=["MDRobot06","MDRobot06B","MDRobot06C","MDRobot07","MDRobot07B","MDRobot07C"];
-    public const string Boss="MDDevilMech";
+    public const string Boss="MDDevilMech";                // the devil mech; all the bosses: MDBoss.Bosses
+    public static readonly string[] Tanks=["MDRobot14","MDRobot14B","MDRobot14C"];   // 0.14.0
+    public static readonly string[] Drones=["MDRobot09"],Gunships=["MDRobotEN02","MDRobotEN02B","MDRobotEN02C"];   // 0.14.0
+    // a normal enemy: from 3 days after the start day 15 % tanks and 15 % small drones (lab: always allowed)
+    public static string PickNormal(Project p,System.Random rng,bool lab=false) {
+        if(lab||MDSettings.StartDay>0&&MDWildSpawns.Day(p)>=MDSettings.StartDay+3){double x=rng.NextDouble();if(x<.15)return Tanks[rng.Next(Tanks.Length)];if(x<.3)return Drones[rng.Next(Drones.Length)];}
+        return Normal[rng.Next(Normal.Length)];
+    }
+    // an elite: a third of them the twin-rotor drone
+    public static string PickElite(System.Random rng)=>rng.NextDouble()<1/3.0?Gunships[rng.Next(Gunships.Length)]:Elites[rng.Next(Elites.Length)];
     public const float HuntRange=96;                       // a robot walks to the nearest tower or Mercury this close
     // A robot that a player, the player's herd or a mech hits locks on to it and fights it until it dies, leaves the world or is
     // this far away (user, 2026-10-25: "玩家攻击了就一直攻击玩家，不要一会被炮塔拉仇恨，一会被玩家拉仇恨，拉来拉去的"; was 30 s
@@ -110,8 +161,11 @@ public static class MDRobots {
         if(b==null||IsRobot(b.Entity)||!MDCombat.Living(b))return;
         bool structure=b.Entity.FindComponent<ComponentHealth>()==null;
         float power=(structure?k.VsStructure:k.VsCreature)*scale;if(power<=0)return;
+        if(b.Entity.FindComponent<ComponentPlayer>()!=null){PlayerHits++;if(PlayerHitLog.Count<200)PlayerHitLog.Add($"{k.Id} x{scale:0.00} at {Vector3.Distance(point,b.Position):0.0} m");}
         ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power){Explosive=k.Splash>0});
+        if(structure&&attacker?.FindComponent<ComponentMDRobot>()?.Kind.Boss==true)MDTowerWorld.For(attacker.Project).BlockHeal(b,MDBoss.HealBlock);   // 0.14.0: no healing for a while
     }
+    public static int PlayerHits; public static readonly List<string> PlayerHitLog=[];   // tests: robot hits on players
     public static void Splash(Entity attacker,MDRobotKind k,Vector3 point,float r,ComponentBody skip) {
         var bodies=new DynamicArray<ComponentBody>();attacker.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1.5f,bodies);
         foreach(var b in bodies) {
@@ -122,10 +176,12 @@ public static class MDRobots {
     public static void Sound(Project p,int se,Vector3 at,float volume)=>p.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(se),volume,R(-.05f,.05f),at,20,false);
     // The robots' own pose: the clip's local transforms composed down the joint tree (row form, like MDMechPose without the
     // pilot's aim): Bone[j] is the engine's bone transform T(p) L T(-p), Model[j] takes a rest point of joint j to model space.
-    public static MDMechPose Pose(MDMechDef d,MDXf[] local) {
+    public static MDMechPose Pose(MDMechDef d,MDXf[] local,int yawJoint=-1,float yaw=0,int pitchJoint=-1,float pitch=0) {
         int n=d.joints.Length;var p=new MDMechPose{Bone=new Matrix[n],Model=new Matrix[n]};
         for(int j=0;j<n;j++) {
-            var L=local[j].Row;var pv=d.pivots[j];int pj=d.joints[j].parent;var M=pj>=0?L*p.Model[pj]:L;
+            var L=local[j].Row;
+            if(j==yawJoint&&yaw!=0)L=Matrix.CreateRotationY(yaw)*L;          // in the joint's own frame, about its pivot (row form)
+            if(j==pitchJoint&&pitch!=0)L=Matrix.CreateRotationX(pitch)*L;var pv=d.pivots[j];int pj=d.joints[j].parent;var M=pj>=0?L*p.Model[pj]:L;
             p.Bone[j]=Matrix.CreateTranslation(pv)*L*Matrix.CreateTranslation(-pv);p.Model[j]=M;
         }
         return p;
@@ -150,11 +206,13 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
     float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
-    public MDBossState Boss;                       // the devil mech only
+    public MDBossState Boss;                       // the bosses only (Mod/MDBoss.cs)
+    public MDDevilState Devil=>Boss as MDDevilState;
+    public ComponentPathfinding Path=>path;
     public string ForceClip; public float ForceTime; // lab: show one clip at one time, no behaviour
     public UpdateOrder UpdateOrder=>UpdateOrder.Default;
     // Above wandering (0-2) while it has something to fight, a raid to reach or a tower to walk to; else it wanders.
-    public override float ImportanceLevel=>Health.Health>0&&(Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;
+    public override float ImportanceLevel=>Health.Health>0&&(Kind.Fly>0||Kind.Boss||Target!=null||RaidGoal.HasValue||Hunt!=null||Chasing)?50:0;   // a drone always flies on its own
     public bool Chasing=>Chase!=null&&time.GameTime<ChaseUntil;
     // A hit locks it on to the hitter. The lock stays on the first hitter while that one is valid (a second player's hit does not
     // pull it away), except from a mech nobody drives.
@@ -178,12 +236,31 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         time=Project.FindSubsystem<SubsystemTime>(true);bodies=Project.FindSubsystem<SubsystemBodies>(true);terrain=Project.FindSubsystem<SubsystemTerrain>(true);
         Raider=v.GetValue("Raider",false);if(v.GetValue("HasRaidGoal",false))RaidGoal=v.GetValue("RaidGoal",Vector3.Zero);
         Cooldown=MDRobots.R(.5f,1.5f);lastHealth=Health.Health;
-        if(Kind.Boss)Boss=new MDBossState(this,v);
+        if(Kind.Boss)Boss=MDBossState.For(this,v);
     }
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         v.SetValue("Raider",Raider);v.SetValue("HasRaidGoal",RaidGoal.HasValue);if(RaidGoal.HasValue)v.SetValue("RaidGoal",RaidGoal.Value);Boss?.Save(v);
     }
-    public MDMechPose Pose()=>pose??=MDRobots.Pose(Def,Anim.Evaluate());
+    public MDMechPose Pose()=>pose??=MDRobots.Pose(Def,Anim.Evaluate(),yawJoint,AimYawNow,pitchJoint,AimPitchNow);
+    // 0.14.0 turret aim (Kind.AimYaw / AimPitch): relative to the body, eased towards the target
+    public float AimYawNow,AimPitchNow; int yawJoint=-2,pitchJoint=-2;
+    void Aim(float dt) {
+        if(yawJoint==-2){yawJoint=Kind.AimYaw!=null?Def.Joint(Kind.AimYaw):-1;pitchJoint=Kind.AimPitch!=null?Def.Joint(Kind.AimPitch):-1;}
+        if(yawJoint<0)return;
+        float wantYaw=0,wantPitch=0;
+        if(Target!=null) {
+            var c=MDCombat.Center(Target);var inv=Matrix.Invert(Body.Matrix);var local=Vector3.Transform(c,inv);
+            var from=Def.pivots[pitchJoint>=0?pitchJoint:yawJoint];var d=local-from;
+            wantYaw=Math.Clamp(MathF.Atan2(-d.X,-d.Z),-Kind.YawLimit,Kind.YawLimit);
+            wantPitch=Math.Clamp(MathF.Atan2(d.Y,new Vector2(d.X,d.Z).Length()),Kind.PitchMin,Kind.PitchMax);
+        }
+        float step=Kind.AimRate*dt;AimYawNow+=Math.Clamp(wantYaw-AimYawNow,-step,step);AimPitchNow+=Math.Clamp(wantPitch-AimPitchNow,-step,step);pose=null;
+    }
+    // aimed at the target: the turret (when it has one) or the body within 0.35 rad
+    bool Aligned(Vector2 flat) {
+        float want=MathF.Atan2(-flat.X,-flat.Y);
+        return yawJoint>=0?MathF.Abs(MDCombat.AngleDelta(Yaw+AimYawNow,want))<.12f:MathF.Abs(MDCombat.AngleDelta(Yaw,want))<.35f;
+    }
     public float Yaw=>MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);
     public Vector3 Point(string muzzle,out Vector3 dir) {
         if(!Def.muzzles.TryGetValue(muzzle,out var m)&&!Def.muzzles.TryGetValue("core",out m)){dir=Body.Matrix.Forward;return Body.Position+Vector3.UnitY*Body.BoxSize.Y*.6f;}
@@ -196,8 +273,9 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(ForceClip!=null){Anim.PlayBase(ForceClip,1,.01f);Anim.BaseTime=ForceTime;Anim.Fade=1;Anim.Action=null;Anim.Update(0);pose=null;return;}
         if(Health.Health<=0) {
             Target=null;
-            if(!Exploded){Exploded=true;MDBossKills.Killed(this);var c=MDCombat.Center(Body);w.Explosion(c,Kind.Boss?4.5f:Kind.Elite?3.5f:2.5f,"heavy",new Color(255,200,120),new Color(255,120,40));MDRobots.Sound(Project,Kind.Boss?20:24,c,1);Boss?.Died();}
-            if(Def.Has("death"))Anim.PlayBase("death",1,.1f);else Anim.PlayBase("idle",0,.1f);
+            FlyWanted=null;
+            if(!Exploded){Exploded=true;if(Kind.Fly>0)Body.Velocity=new(Body.Velocity.X*.5f,-2,Body.Velocity.Z*.5f);MDBossKills.Killed(this);var c=MDCombat.Center(Body);w.Explosion(c,Kind.Boss?4.5f:Kind.Elite?3.5f:2.5f,"heavy",new Color(255,200,120),new Color(255,120,40));MDRobots.Sound(Project,Kind.Boss?20:24,c,1);Boss?.Died();}
+            if(Boss?.DeathPose(dt)==true){}else if(Def.Has("death"))Anim.PlayBase("death",1,.1f);else if(Kind.Fly>0&&Def.Has("down"))Anim.PlayBase("down",1,.1f);else Anim.PlayBase("idle",0,.1f);   // drones: tilted, falling
             Anim.Update(dt);w.Wreck(MDCombat.Center(Body),Kind.Boss?3:1.4f);return;
         }
         hitAge+=dt;
@@ -214,7 +292,9 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(Chase!=null&&(!Chasing||!Chase.Entity.IsAddedToProject))Chase=null;
         leafCheck-=dt;if(leafCheck<=0){leafCheck=.3f;MDRobots.LeavesBroken+=MDRobots.BreakLeavesAround(Body);}
         if(Target!=null&&!Valid(Target))Target=null;
+        Aim(dt);
         if(Boss!=null)Boss.Update(dt);
+        else if(Kind.Fly>0)EngageAir(dt);
         else if(IsActive)Engage(dt);
         else if(ShotsLeft>0||Windup>=0){ShotsLeft=0;Windup=-1;}
         if(Boss==null)BaseClip();
@@ -222,9 +302,11 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     // walk / idle from the body's own movement; the clip's foot speed sets the playback rate (no sliding feet)
     void BaseClip() {
+        if(Kind.Fly>0){Anim.PlayBase(Target==null&&Def.Has("hover")?"hover":"idle",1,.4f);return;}   // EN02: idle = the attack stance, hover = level
         var v=Body.Velocity;v.Y=0;float sp=v.Length();var f=Body.Matrix.Forward;
         if(sp>.35f) {
-            string clip=Vector3.Dot(v,f)<-.3f*sp&&Def.Has("walk_backward")?"walk_backward":Def.Has("walk_forward")?"walk_forward":"idle";
+            bool back=Vector3.Dot(v,f)<-.3f*sp;   // walkers: walk_*; the tank: move_* (0.14.0)
+            string clip=back&&Def.Has("walk_backward")?"walk_backward":back&&Def.Has("move_backward")?"move_backward":Def.Has("walk_forward")?"walk_forward":Def.Has("move_forward")?"move_forward":"idle";
             float foot=Def.Clip(clip).footSpeed is float fs&&fs>.2f?fs:Kind.Speed;Anim.PlayBase(clip,Math.Clamp(sp/foot,.5f,2f),.2f);
         }
         else Anim.PlayBase("idle",1,.3f);
@@ -294,7 +376,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             else if(dist<Kind.MinRange){var away=Body.Position-new Vector3(flat.X,0,flat.Y)/Math.Max(dist,.1f)*6;path.SetDestination(away,1,1.5f,100,true,true,false,null);}
             else path.Stop();
             if(sight&&dist<=Kind.Range&&path.Destination==null)Face(tc,dt);
-            bool aligned=MathF.Abs(MDCombat.AngleDelta(Yaw,MathF.Atan2(-flat.X,-flat.Y)))<.35f;
+            bool aligned=Aligned(flat);
             Fire(dt,sight&&dist<=Kind.Range&&dist>=Kind.MinRange*.7f&&aligned);
         }
         else {
@@ -309,6 +391,38 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             }
         }
     }
+    // 0.14.0 drones (Kind.Fly > 0): fly orders like the devil mech's (MDBossFlyOrder), Fly m over the highest of the ground, the
+    // treetops and the towers under them, ahead of them and at the goal; they circle what they fight at 60 % of their range and
+    // fire when facing it. Pressed against a wall or a cliff they climb.
+    public Vector3? FlyWanted; float orbit=MDRobots.R(0,6.28f),stuckAir; readonly DynamicArray<ComponentBody> under=new();
+    void EngageAir(float dt) {
+        var p=Body.Position;Vector3? goal=null;float near=0;
+        if(Target!=null){orbit+=dt*Kind.Speed*.5f/Math.Max(4,Kind.Range*.6f);goal=Target.Position+new Vector3(MathF.Sin(orbit),0,MathF.Cos(orbit))*Kind.Range*.6f;}
+        else if(Hunt!=null){goal=Hunt.Position;near=Kind.Sight*.5f;}
+        else if(Chasing&&Valid(Chase)){goal=Chase.Position;near=Kind.Range*.6f;}
+        else if(RaidGoal.HasValue){if(Vector2.Distance(new(RaidGoal.Value.X,RaidGoal.Value.Z),new(p.X,p.Z))<8)RaidGoal=null;else goal=RaidGoal;}
+        var want=goal??p;var flat=new Vector2(want.X-p.X,want.Z-p.Z);float fd=flat.Length();
+        if(fd<near){want.X=p.X;want.Z=p.Z;fd=0;}
+        var ahead=fd>.1f?p+new Vector3(flat.X,0,flat.Y)/fd*Math.Min(fd,6):p;
+        float floor=Math.Max(Top(p),Math.Max(Top(ahead),Top(want)));
+        under.Clear();bodies.FindBodiesAroundPoint(new(p.X,p.Z),Body.BoxSize.X*.5f+3,under);
+        foreach(var b in under)   // the lookup returns whole grid cells: only towers whose box is really under or next to the drone
+            if(b!=Body&&b.Entity.FindComponent<ComponentMDUnit>()!=null&&Vector2.Distance(new(b.Position.X,b.Position.Z),new(p.X,p.Z))<(Body.BoxSize.X+b.BoxSize.X)*.5f+1)floor=Math.Max(floor,b.BoundingBox.Max.Y+1);
+        want.Y=floor+Kind.Fly;
+        // height first: climbing at up to the full speed, and slower sideways while far below its height
+        float dy=want.Y-p.Y;var side=fd>.1f?new Vector3(flat.X,0,flat.Y)/fd*Math.Min(Kind.Speed,fd*.8f)*Math.Clamp(1-(dy-2)/Kind.Fly,.25f,1):Vector3.Zero;
+        var v=side+Vector3.UnitY*Math.Clamp(dy*1.2f,-Kind.Speed*.6f,Kind.Speed);
+        stuckAir=new Vector2(v.X,v.Z).Length()>1&&new Vector2(Body.Velocity.X,Body.Velocity.Z).Length()<.3f?stuckAir+dt:0;
+        if(stuckAir>1)v.Y=Math.Max(v.Y,Kind.Speed*.8f);
+        var l=Creature.ComponentLocomotion;FlyWanted=l.FlySpeed>0?v/l.FlySpeed:Vector3.Zero;l.FlyOrder=FlyWanted;path.Stop();
+        if(Target!=null) {
+            var tc=MDCombat.Center(Target);Face(tc,dt,2.5f);
+            Fire(dt,Sight(Eye,Target)&&Vector3.Distance(tc,p)<=Kind.Range&&Aligned(new Vector2(tc.X-p.X,tc.Z-p.Z)));
+        }
+        else {ShotsLeft=0;Windup=-1;if(fd>1)Face(want,dt,1.5f);}
+    }
+    // the top of the column (blocks, trees, water); unloaded: where the drone flies now
+    float Top(Vector3 at){int x=Terrain.ToCell(at.X),z=Terrain.ToCell(at.Z);return terrain.Terrain.GetChunkAtCell(x,z)!=null?terrain.Terrain.GetTopHeight(x,z)+1:Body.Position.Y-Kind.Fly;}
     // A wind-up (the missile lock is a visible warning on the target), then a burst of Shots, Gap apart, then Interval.
     void Fire(float dt,bool ready) {
         var w=MDTowerWorld.For(Project);
@@ -325,7 +439,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         var f=new MDTowerWorld.Foreign{owner=Entity,look=k.Look,pos=from,pass=b=>b==Body||MDRobots.IsRobot(b.Entity)};
         f.landed=(p,d,b)=>Landed(p,d,b);ShotsFired++;
         switch(k.Weapon) {
-            case "twin": {
+            case "twin": case "tank": case "drone": case "gunship": {   // straight shots (the tank's shells burst: Splash)
                 float t=Vector3.Distance(from,tc)/k.ShotSpeed;var aim=tc+target.Velocity*t;
                 var dir=Vector3.Normalize(Vector3.Normalize(aim-from)+new Vector3(MDRobots.R(-1,1),MDRobots.R(-1,1),MDRobots.R(-1,1))*k.Spread);
                 f.vel=dir*k.ShotSpeed;f.life=2;w.Muzzle(k.Look,from,dir,false);break;
@@ -350,7 +464,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         MDRobots.Hit(Entity,b,k,1,p,d);MDRobots.Splash(Entity,k,p,k.Splash,b);
     }
     // the flatter of the two arcs that reach the point at this speed; out of reach: 45 degrees
-    static Vector3 Ballistic(Vector3 from,Vector3 to,float v,float g) {
+    public static Vector3 Ballistic(Vector3 from,Vector3 to,float v,float g) {
         var flat=new Vector3(to.X-from.X,0,to.Z-from.Z);float x=flat.Length(),y=to.Y-from.Y;var h=x>1e-3f?flat/x:Vector3.UnitX;
         float disc=v*v*v*v-g*(g*x*x+2*y*v*v);float a=disc<0?MathF.PI/4:MathF.Atan((v*v-MathF.Sqrt(disc))/(g*Math.Max(x,.1f)));
         return h*v*MathF.Cos(a)+Vector3.UnitY*v*MathF.Sin(a);
@@ -419,7 +533,7 @@ public static class MDWildSpawns {
             if(centre==null){LastReason="no open ground";continue;}
             for(int i=0;i<group;i++) {
                 var spot=i==0?centre:MDRaids.Ground(terrain,centre.Value,(float)(rng.NextDouble()*Math.PI*2),3+(float)rng.NextDouble()*3,rng);if(spot==null)continue;
-                var e=DatabaseManager.CreateEntity(p,elites&&rng.NextDouble()<.25?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+                var e=DatabaseManager.CreateEntity(p,elites&&rng.NextDouble()<.25?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng,lab),true);
                 var b=e.FindComponent<ComponentBody>(true);b.Position=spot.Value;b.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,(float)(rng.NextDouble()*Math.PI*2));
                 e.FindComponent<ComponentCreature>(true).ConstantSpawn=true;p.AddEntity(e);sent++;
             }
@@ -491,7 +605,7 @@ public static class MDRaids {
         var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;double now=p.FindSubsystem<SubsystemTime>(true).GameTime;
         for(int i=0;i<size;i++) {
             var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.Pick(MDRobots.Elites):MDRobots.Pick(MDRobots.Normal),true);
+            var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng),true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;   // see ComponentMDRobot.Update
             if(chase!=null){r.Chase=chase.ComponentBody;r.ChaseUntil=now+MDRobots.ChaseTime;}
             p.AddEntity(e);sent++;

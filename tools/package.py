@@ -48,11 +48,16 @@ for n in range(9):p=parts/f'part{n}.bin';assert p.exists(),p;files.append((p,f'A
 settings=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8')).get('Settings')
 assert settings and settings[0]['Items'][0]['Widget']=='Game.MDSettingsEntryWidget','modinfo.json Settings'
 # robot enemies (Mod/MDRobots.cs, tools/build_unit_assets.py): same checks as Mercury's assets
-for unit in ['RD05','RD06','RD07','RD17']:
+# 0.14.0: our own v3 units (tools/stage_v3_units.py from E:/projects/dguns-enemy-models/v3_new) carry their own checks
+# (checks/SUMMARY.json all_ok, or gates missed and accepted in stage_v3_units.ACCEPTED) instead of the re-pose numbers of
+# build_unit_assets.py
+for unit in ['RD05','RD06','RD07','RD17','RD14','RD09','EN02','RD13','RD21','RD08','RD19']:
     d=assets/'Imported'/unit;u=json.loads((d/'unit.json').read_text(encoding='utf-8'))
     assert (d/'clips.bin').stat().st_size==4*8*len(u['joints'])*sum(c['samples'] for c in u['clips']),f'{unit} clips.bin does not match unit.json'
-    checks=u.get('check') or []
-    assert checks and max(c['p99_m'] for c in checks)<1e-3,f'{unit} assets failed their re-pose check'
+    if (d/'v3_checks.json').exists():v3=json.loads((d/'v3_checks.json').read_text(encoding='utf-8'));assert v3.get('all_ok') is True or v3.get('accepted'),f'{unit} v3 checks failed'
+    else:
+        checks=u.get('check') or []
+        assert checks and max(c['p99_m'] for c in checks)<1e-3,f'{unit} assets failed their re-pose check'
     for s in u.get('skins') or ['model']:files.append((d/f'{s}.glb',f'Assets/Imported/{unit}/{s}.glb'))
     for f in ['unit.json','clips.bin','icon.bin','icon.png']:files.append((d/f,f'Assets/Imported/{unit}/{f}'))   # icon: the creative summon item (MDSummon.cs)
 # the robots' and the boss's sounds are Mercury's (MDRobots.Sound -> MDMechBrain.Se): already in the package above

@@ -6,7 +6,16 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.15.0: combat rework — damage types and reactions, no stagger from ordinary towers, control stops fire, growth, rewards, damage numbers (branch feat/combat-015, 2026-10-30; not merged yet)
+## 0.15.1: medic charge cell fix (branch fix/medic-charge-0151, 2026-10-30; not merged yet)
+
+User: "现在医疗塔好像不能用那个核心充能（提示只能用于机甲）". The weapon-kit handler took every part from Mk1 on as a kit, and the charge
+cell comes after the kits, so it answered "武器改装件只能装在机甲上". It now takes only Mk1-Mk3. The right-click chain is MDModLoader.Interact;
+combat15 (medic) now clicks through it: a cell in hand fills the medic, a kit in hand still goes on Mercury. The 0.15.0 test had called
+MDMedic.Charge directly and missed it.
+- Package dist/MechDefense-0.15.1.scmod, 35,115,675 bytes, SHA-256 52434049c9080abb854b10660deea61981b07cf43a2a0b8a25cc58d5383a1fd3.
+  Verified (PC): combat15 (1.9.3.1, 1.9.4), robots (1.9.3.1), all (1.9.4). Not verified: a phone.
+
+## Delivered: 0.15.0: combat rework — damage types and reactions, no stagger from ordinary towers, control stops fire, growth, rewards, damage numbers (PR #14, merged 2026-10-30 on the user's approval, tag v0.15.0)
 
 The user's answers to the nine questions of docs/COMBAT_DESIGN.md section 10 and "二～五按你的建议"; design, numbers and evidence:
 docs/tasks/2026-10-30-combat-0.15.md, docs/COMBAT_DESIGN.md (2.5: benchmark before / after).

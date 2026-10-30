@@ -301,6 +301,22 @@ public partial class Lab {
                 md["panel"]=$"gun tower: {twName}; medic: {mName}; labels {string.Join(" | ",texts)}; bar {bar}";
                 if(twName!="铳械塔"||mName!=mdef.name||!texts.Any(x=>x.StartsWith("储能"))||!bar)bad.Add("panel: "+md["panel"]);
             }
+            // 0.15.1 (user: "医疗塔好像不能用那个核心充能（提示只能用于机甲）"): through the real right-click chain (MDModLoader.Interact, as
+            // OnPlayerInputInteract calls it): a charge cell in hand on the medic fills it; a kit in hand on a mech still installs
+            {
+                var inv=pl.ComponentMiner.Inventory;var input=typeof(ComponentInput).GetField("m_playerInput");
+                bool Click(ComponentBody at){var eye=pl.ComponentCreatureModel.EyePosition;var pi=(PlayerInput)input.GetValue(pl.ComponentInput);pi.Interact=new Ray3(eye,Vector3.Normalize(MDCombat.Center(at)-eye));input.SetValue(pl.ComponentInput,pi);return MDModLoader.Interact(pl);}
+                medic.HealCharge=MDMedic.Max*.25f;pl.ComponentBody.Position=Ground(medic.Body.Position+new Vector3(0,0,3.5f));pl.ComponentBody.Velocity=Vector3.Zero;while(Wait(.4))yield return true;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Charge),2);inv.ActiveSlotIndex=0;
+                bool took=Click(medic.Body);int cellsLeft=inv.GetSlotCount(0);string charged=MDMedic.Text(medic);
+                var me=DatabaseManager.CreateEntity(proj,MDMechType.Mercury.Template,true);me.FindComponent<ComponentBody>(true).Position=Ground(Home+new Vector3(-10,0,-6));me.FindComponent<ComponentSpawn>(true).SpawnDuration=0;proj.AddEntity(me);
+                var mu=me.FindComponent<ComponentMDUnit>(true);pl.ComponentBody.Position=Ground(mu.Body.Position+new Vector3(0,0,4));while(Wait(.6))yield return true;
+                inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDPartBlock.Value(MDPartBlock.Kind.Kit1),1);inv.ActiveSlotIndex=0;bool kit=Click(mu.Body);
+                md["click"]=$"charge cell on the medic: handled {took}, {charged}, cells left {cellsLeft}; kit on Mercury: handled {kit}, kit {mu.Mech.Kit}";
+                bool creative=gameInfo.WorldSettings.GameMode==GameMode.Creative;   // Creative: the slot counts as endless
+                if(!took||MDMedic.Left(medic)<MDMedic.Max||(creative?cellsLeft<1:cellsLeft!=1)||!kit||mu.Mech.Kit!=1)bad.Add("click: "+md["click"]);
+                proj.RemoveEntity(me,true);inv.RemoveSlotItems(0,inv.GetSlotCount(0));
+            }
             MDSettings.MedicCapacity=cap0;Remove([medic,tw]);while(Wait(.5))yield return true;
         }
         // views for the user (decisions 14, 15, 17 of 10-30): drones shot down falling and on the ground, RD19's nose close up, EN02's

@@ -82,7 +82,8 @@ public static class MDKits {
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ComponentPlayer,System.Runtime.CompilerServices.StrongBox<double>> last=new();
     public static bool TryInstall(ComponentPlayer p) {
         var ray=p.ComponentInput.PlayerInput.Interact;var miner=p.ComponentMiner;
-        if(!ray.HasValue||MDPartBlock.Of(miner.ActiveBlockValue) is not {} k||k<MDPartBlock.Kind.Kit1)return false;
+        // only the three kits (0.15.1: "k < Kit1" also took the medic charge cell, added after them, for a kit: "只能装在机甲上")
+        if(!ray.HasValue||MDPartBlock.Of(miner.ActiveBlockValue) is not {} k||k is not (MDPartBlock.Kind.Kit1 or MDPartBlock.Kind.Kit2 or MDPartBlock.Kind.Kit3))return false;
         var u=miner.Raycast<BodyRaycastResult>(ray.Value,RaycastMode.Interaction)?.ComponentBody.Entity.FindComponent<ComponentMDUnit>();
         if(u==null||u.Legacy)return false;
         var clock=u.Clock.GameTime;var l=last.GetValue(p,_=>new(double.MinValue));if(clock-l.Value<.4&&clock>=l.Value)return true;l.Value=clock;   // a held button repeats

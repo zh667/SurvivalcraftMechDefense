@@ -74,7 +74,7 @@ public static class MDSettings {
     public static bool DamageNumbers=true;
     public static float MedicCapacity=50000;
     public static int ThreatDifficulty=1; public static bool Endless;   // 0.16.0 threat raids at the defence core (MDThreat): 简单 / 普通 / 困难 / 噩梦, endless waves   // 0.15.0: a medic tower's healing store in points, 0 = unlimited (MDMedic)
-    public const float MaxMedicCapacity=200000;   // 0.15.0: damage numbers over what the player's side hits (MDDamageNumbers.cs)
+    public const float MaxMedicCapacity=200000;   // 0.15.0: damage numbers over what this mod's towers and mechs hit (MDDamageNumbers.cs)
     public static int Growth=10;
     public static readonly int[] GrowthSteps=[0,5,10,15];
     public const float MaxAggroRange=48;

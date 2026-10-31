@@ -17,14 +17,16 @@ public static class MDTowerBrain {
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
+        if(!float.IsFinite(u.AimYaw)||!float.IsFinite(u.AimPitch)||!float.IsFinite(u.Yaw))Unstick(u);
         if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
         if(a.type=="heal"){Heal(u,dt);return;}
+        if(a.type=="core")return;   // 0.16.0 the defence core does not fight (MDThreat)
         if(a.type=="radar"){Radar(u);return;}
         u.ScanTimer-=dt;
         if(u.ScanTimer<=0){u.ScanTimer=.25f;u.Target=FindTarget(u);}
         var target=u.Target;
-        if(target!=null&&!MDCombat.Living(target))target=u.Target=null;
+        if(target!=null&&(!MDCombat.Living(target)||!Sane(target)))target=u.Target=null;
         if(u.Channel>0){if(TurningSprayer(d)&&target!=null)Steer(u,target,dt,out _);Channel(u,dt);return;}   // a turning sprayer keeps following while it sprays
         if(target==null){if(d.HasYaw)u.AimPitch=MathUtils.Lerp(u.AimPitch,d.restPitch,dt*1.5f);return;}
         var tc=Steer(u,target,dt,out float wantPitch);
@@ -41,6 +43,25 @@ public static class MDTowerBrain {
         var f=u.Body.Matrix.Forward;f.Y=0;f=Vector3.Normalize(f);var r=new Vector3(-f.Z,0,f.X);
         float along=Vector3.Dot(d,f),side=Vector3.Dot(d,r);return along>0&&along<=a.range&&Math.Abs(side)<=a.width*.5f;
     }
+    // 0.16.0 (user, 10-31): a creature whose position is NaN or infinite passed InArea (every comparison with NaN is false), so
+    // the towers that need no line of sight (shells) could take it, and their aim turned NaN for good: only the base was drawn,
+    // the turret above it was gone, also after a reload. Such a creature is never a target; the first of each kind is logged.
+    static readonly HashSet<string> insane=[];
+    static bool Sane(ComponentBody b) {
+        if(MDCombat.Finite(MDCombat.Center(b)))return true;
+        if(insane.Add(Name(b)))Log.Warning($"[MechDefense] towers skip {Name(b)}: position {b.Position}, velocity {b.Velocity}");
+        return false;
+    }
+    static string Name(ComponentBody b)=>b?.Entity.ValuesDictionary?.DatabaseObject?.Name??"-";
+    // An aim angle that is NaN never recovers (AngleTowards keeps it) and is saved with the world: back to rest, logged once a tower.
+    public static bool UnstickEnabled=true;   // lab switch: show the failure
+    static readonly HashSet<string> stuck=[];
+    static void Unstick(ComponentMDUnit u) {
+        if(!UnstickEnabled)return;
+        if(stuck.Add(u.TowerId))Log.Warning($"[MechDefense] {u.TowerId}: aim {u.AimYaw}/{u.AimPitch} yaw {u.Yaw}, target {Name(u.Target)} at {u.Target?.Position}, tracked velocity {u.TrackedVelocity}; reset");
+        if(!float.IsFinite(u.Yaw))u.Yaw=MDCombat.Finite(MathF.Atan2(-u.Body.Matrix.Forward.X,-u.Body.Matrix.Forward.Z),0);
+        u.AimYaw=MDCombat.Finite(u.AimYaw,u.Yaw);u.AimPitch=MDCombat.Finite(u.AimPitch,u.Tower.restPitch);u.Tracked=null;u.TrackedVelocity=Vector3.Zero;
+    }
     public static bool Sight(ComponentMDUnit u,Vector3 from,ComponentBody target)=>MDCombat.Trace(u,from,MDCombat.Center(target),out _)==target;
     // The nearest enemy in the area (or the most threatening one) that the tower can see. Candidates are ranked first and
     // traced in that order, so the longer ranges do not cost a line-of-sight trace per creature in the area.
@@ -49,7 +70,7 @@ public static class MDTowerBrain {
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),u.Range+2,bodies);
         var found=new List<(float score,ComponentBody body)>();
         foreach(var b in bodies)
-            if(MDCombat.IsEnemy(u,b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
+            if(MDCombat.IsEnemy(u,b)&&Sane(b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
         found.Sort((x,y)=>x.score.CompareTo(y.score));
         var from=Aim(u);
         foreach(var (_,b) in found)if(!a.needsSight||Sight(u,from,b))return b;
@@ -80,7 +101,7 @@ public static class MDTowerBrain {
     // nozzles point, not a fixed rectangle in front of the block like the fixed sprayers.
     static bool TurningSprayer(MDTowerDef d)=>d.HasYaw&&!d.attack.directional&&d.attack.type is "flame" or "jet";
     static void Track(ComponentMDUnit u,ComponentBody target,float dt) {
-        if(u.Tracked!=target){u.Tracked=target;u.TrackedAt=target.Position;u.TrackedVelocity=target.Velocity;return;}
+        if(u.Tracked!=target){u.Tracked=target;u.TrackedAt=target.Position;u.TrackedVelocity=MDCombat.Finite(target.Velocity)?target.Velocity:Vector3.Zero;return;}
         if(dt<=0)return;
         var v=(target.Position-u.TrackedAt)/dt;u.TrackedAt=target.Position;
         if(v.LengthSquared()<900)u.TrackedVelocity=Vector3.Lerp(u.TrackedVelocity,v,Math.Min(1,dt*10));   // a jump of 30 m/s+ is a teleport
@@ -92,11 +113,11 @@ public static class MDTowerBrain {
         var a=u.Tower.attack;
         var p=Bullet(a)&&HeadIsWeak(target)&&target.Entity.FindComponent<ComponentCreatureModel>() is {} model?model.EyePosition:MDCombat.Center(target);
         if(!LeadEnabled||a.type is not ("bolt" or "shell"))return p;
-        var v=u.Tracked==target?u.TrackedVelocity:target.Velocity;if(target.StandingOnValue.HasValue||target.StandingOnBody!=null)v.Y=0;   // on the ground: no vertical lead
+        var v=u.Tracked==target?u.TrackedVelocity:target.Velocity;if(!MDCombat.Finite(v))v=Vector3.Zero;if(target.StandingOnValue.HasValue||target.StandingOnBody!=null)v.Y=0;   // on the ground: no vertical lead
         if(v.LengthSquared()>400)v=Vector3.Normalize(v)*20;
         var from=Aim(u);var q=p;
         for(int i=0;i<3;i++)q=p+v*FlightTime(u,from,q);
-        return q;
+        return MDCombat.Finite(q)?q:p;
     }
     static float FlightTime(ComponentMDUnit u,Vector3 from,Vector3 to) {
         var a=u.Tower.attack;var d=to-from;if(a.type!="shell")return d.Length()/Math.Max(1,a.speed);
@@ -232,7 +253,7 @@ public static class MDTowerBrain {
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+2,bodies);
         var f=u.Body.Matrix.Forward;bool turning=TurningSprayer(d);
         if(turning&&d.muzzles.Length>0)f=MDTowerLibrary.MuzzleForward(d,Pose(u),0);
-        f.Y=0;f=Vector3.Normalize(f);var side=new Vector3(-f.Z,0,f.X);
+        f.Y=0;if(f.LengthSquared()<1e-6f){f=u.Body.Matrix.Forward;f.Y=0;}f=Vector3.Normalize(f);var side=new Vector3(-f.Z,0,f.X);   // a nozzle straight up: no NaN push
         foreach(var b in bodies) {
             var c=MDCombat.Center(b);
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,c))continue;
@@ -262,7 +283,8 @@ public static class MDTowerBrain {
         var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
-            if(Holdable(b,a))w.Stun(b,a.stun);if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
+            if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);   // 0.16.0: a boss shrugs it off, shaken
+            if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
         }
     }
     static void Heal(ComponentMDUnit u,float dt) {
@@ -322,7 +344,7 @@ public static class MDTowerBrain {
             var start=point+Vector3.UnitY*.3f;if(MDCombat.Trace(u,start,c,out _)!=b&&dist>.8f)continue;
             if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f),false,"explosion");
             if(a.slow>0&&fx.kind!="poison")w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(fx.color2));   // poison slows through its cloud
-            if(a.freeze>0&&Holdable(b,a))w.Freeze(b,a.freeze,a.freezeImmune);
+            if(a.freeze>0){if(Holdable(b,a))w.Freeze(b,a.freeze,a.freezeImmune);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);}
             if(a.armorDown>0)w.ArmorDown(b,a.armorDown,a.armorTime,MDTowerWorldColor(fx.color));
             if(a.burn>0)b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);
         }

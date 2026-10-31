@@ -33,7 +33,7 @@ public sealed partial class MDTowerWorld {
         float amount=injury.Amount*h.AttackResilience;if(amount<.5f)return;
         var e=attacker.FindComponent<ComponentMDUnit>()!=null?HitElement:MDElement.Kinetic;
         if(w.pending.TryGetValue(b,out var p)){p.amount+=amount;p.reaction|=HitReacted;if(HitReacted||p.element==MDElement.None)p.element=e;NumbersMerged++;}
-        else w.pending[b]=new Pending{amount=amount,element=e,reaction=HitReacted,at=b.Position+Vector3.UnitY*(b.BoxSize.Y+.3f)};
+        else w.pending[b]=new Pending{amount=amount,element=e,reaction=HitReacted,at=b.Position+Vector3.UnitY*(b.BoxSize.Y+NumbersAt)};
     }
     void SimulateNumbers(float dt) {
         for(int i=numbers.Count-1;i>=0;i--){var n=numbers[i];n.age+=dt;n.pos+=(Vector3.UnitY*1.1f+n.drift)*dt*(1-n.age/NumberLife);if(n.age>=NumberLife)numbers.RemoveAt(i);}

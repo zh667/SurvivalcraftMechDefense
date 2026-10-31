@@ -15,8 +15,8 @@ public class MDModLoader : ModLoader {
     // A boss takes at most MDBoss.MaxHitShare of its armour per hit.
     public override void CalculateCreatureInjuryAmount(Injury injury){MDBoss.CapInjury(injury);MDTowerWorld.Injured(injury);}
     // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
-    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);MDNeorxnaCompatibility.Install();}
-    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);}
+    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);MDThreat.Load(xElement);MDNeorxnaCompatibility.Install();}
+    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);MDThreat.Save(xElement);}
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
     // The mod's settings (MDSettings) live in the game's ModSettings.xml, under this mod's own element; the engine calls these
     // directly (load: while loading, when the file has this mod; save: whenever it writes the file).
@@ -149,6 +149,7 @@ public static class MDPlayer {
 public static class MDDeployPatch {
     public static bool Prefix(ComponentMiner __instance,Ray3 ray,ref bool __result) {
         if(MDPartBlock.Of(__instance.ActiveBlockValue)==MDPartBlock.Kind.Beacon){__result=true;MDBoss.PlaceBeacon(__instance,ray);return false;}   // the devil mech's beacon
+        if(MDPartBlock.Of(__instance.ActiveBlockValue)==MDPartBlock.Kind.Manual){__result=true;if(__instance.ComponentPlayer!=null)MDManualScreen.Open();return false;}   // 0.16.0 the handbook
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)==BlocksManager.GetBlockIndex<MDSummonBlock>()){__result=true;MDSummonBlock.Place(__instance,ray);return false;}   // creative robot summons
         if(Terrain.ExtractContents(__instance.ActiveBlockValue)!=BlocksManager.GetBlockIndex<MDDeploymentBlock>())return true;
         __result=true;var hit=__instance.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue)return false;
@@ -162,7 +163,9 @@ public static class MDDeployPatch {
             fixedBody.FixAt(pos,rot);var state=entity.FindComponent<ComponentMDUnit>();state.Yaw=state.AimYaw=MathF.Atan2(-fixedBody.Matrix.Forward.X,-fixedBody.Matrix.Forward.Z);
             if(MDDeploymentBlock.Wear(__instance.ActiveBlockValue)>0)state.SetHitpoints(MDDeploymentBlock.Hitpoints(__instance.ActiveBlockValue));   // a dismantled tower keeps its health
             if(tower.attack.type=="heal"&&MDDeploymentBlock.MedicUsed(__instance.ActiveBlockValue)>0&&!MDMedic.Unlimited)state.HealCharge=MDMedic.FromEighths(MDDeploymentBlock.MedicUsed(__instance.ActiveBlockValue));   // and its charge
-            entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);return false;
+            entity.FindComponent<ComponentSpawn>(true).SpawnDuration=0;__instance.Project.AddEntity(entity);__instance.RemoveActiveTool(1);
+            if(tower.attack.type=="core")MDThreat.Placed(state,__instance.ComponentPlayer);   // 0.16.0 one live core per world
+            return false;
         }
         if(hit.Value.CellFace.Face!=4&&MDDeploymentBlock.MechType(__instance.ActiveBlockValue)!=null)return false;   // a mech: top faces only, as before
         if(MDDeploymentBlock.MechType(__instance.ActiveBlockValue) is {} mechType) {   // the mech stands on the hit point, facing like the player

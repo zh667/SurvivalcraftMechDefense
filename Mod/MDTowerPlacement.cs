@@ -126,8 +126,23 @@ public static class MDNeorxnaCompatibility {
     // is a removed unit. Until 0.9.0 round 4 every unit that was not a tower read 已移除的旧单位 here, Mercury too (user report).
     public static string Name(ComponentMDUnit unit)=>unit.Kind=="Turret"?unit.Tower.name:unit.Mech!=null?unit.Mech.Type.Name+"机甲":"已移除的旧单位";
     public static void AfterEntityInfo(object __instance,Entity __0) {
-        var unit=__0.FindComponent<ComponentMDUnit>();if(unit==null)return;
         var type=__instance.GetType();
+        // 0.16.0: a boss's armour layers and poise, with a poise bar
+        if(__0.FindComponent<ComponentMDRobot>()?.Boss is {} bs) {
+            var add=type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)]);
+            add?.Invoke(__instance,["MDBossArmour",bs.LayersLeft>0?$"装甲 {bs.LayersLeft}/{MDBossState.Layers} 层":"装甲已全部击破"]);
+            add?.Invoke(__instance,["MDBossPoise",bs.Unbalanced>0?$"失衡中（还有 {bs.Unbalanced:0} 秒）":bs.PoiseLockLeft>0?$"失衡冷却（{bs.PoiseLockLeft:0} 秒）":$"失衡 {bs.Poise:0} / {bs.PoiseNeeded:0}"]);
+            if(type.GetMethod("SetAdditionalWidget",[typeof(string),typeof(Widget)]) is {} wid) {
+                const float W=180,H=8;var bar=new CanvasWidget{Size=new Vector2(W+4,H+4),Margin=new Vector2(10,2),IsHitTestVisible=false};
+                bar.Children.Add(new RectangleWidget{Size=new Vector2(W+4,H+4),FillColor=new Color(12,14,18),OutlineColor=Color.Transparent});
+                var back=new RectangleWidget{Size=new Vector2(W,H),FillColor=new Color(70,66,40),OutlineColor=Color.Transparent};bar.Children.Add(back);CanvasWidget.SetPosition(back,new Vector2(2,2));
+                float share=bs.Unbalanced>0?1:bs.PoiseLockLeft>0?0:bs.Poise/bs.PoiseNeeded;
+                if(share>0){var fill=new RectangleWidget{Size=new Vector2(W*share,H),FillColor=bs.Unbalanced>0?new Color(255,150,60):new Color(255,220,90),OutlineColor=Color.Transparent};bar.Children.Add(fill);CanvasWidget.SetPosition(fill,new Vector2(2,2));}
+                wid.Invoke(__instance,["MDBossPoiseBar",bar]);
+            }
+            return;
+        }
+        var unit=__0.FindComponent<ComponentMDUnit>();if(unit==null)return;
         if(type.GetField("m_name")?.GetValue(__instance) is LabelWidget title)title.Text=Name(unit);
         if(type.GetField("m_details")?.GetValue(__instance) is LabelWidget details)details.Text=unit.Mech!=null?"机甲防线 · 机甲":"机甲防线 · 防御塔";
         var label=type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)]);
@@ -135,6 +150,7 @@ public static class MDNeorxnaCompatibility {
             label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
             label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
             if(MDElements.Of(unit.Tower) is var e&&e!=MDElement.None)label?.Invoke(__instance,["MDTowerElement",$"伤害类型：{MDElements.Name(e)}"]);
+            if(unit.Tower.attack.type=="core")label?.Invoke(__instance,["MDCoreStatus",MDThreat.Status(unit)]);   // 0.16.0
             if(MDMedic.Is(unit)) {   // 0.15.0: the medic's store, as text and as a bar (green left, grey used up)
                 label?.Invoke(__instance,["MDMedicCharge",MDMedic.Text(unit)]);
                 if(!MDMedic.Unlimited&&type.GetMethod("SetAdditionalWidget",[typeof(string),typeof(Widget)]) is {} widget) {

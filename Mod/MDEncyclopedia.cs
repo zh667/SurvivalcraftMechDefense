@@ -75,6 +75,7 @@ public static class MDEncyclopedia {
         if(k.Id=="RD17")s.Append($"\n弱点：每 {MDDevilState.WeakPeriod:0} 秒在冲击、爆炸、能量之间变化，打中弱点的伤害全额，其他只有 {MDDevilState.OtherFactor*100:0}%；脚下光环的颜色就是当前弱点（白 = 冲击，橙 = 爆炸，蓝 = 能量）");
         else if(k.Boss)s.Append("\n打法："+MDBossState.Hint(k.Id));
         if(k.Boss)s.Append($"\n压制：被它打中的炮塔和机甲 {MDBoss.HealBlock:0} 秒内不能被医疗塔治疗");
+        if(k.Boss)s.Append($"\n失衡：头上的黄色槽（满 {MDBossState.PoiseMax:0}，每失衡一次下次 ×{MDBossState.PoiseGrowth:0.#}）。元素反应（双元素 +{MDBossState.PoisePair:0}、三元素 +{MDBossState.PoiseTriad:0}）、它免疫的控制（+{MDBossState.PoiseControl:0}）、重炮（+{MDBossState.PoiseHeavy:0}）和机甲火炮（+{MDBossState.PoiseMechCannon:0}）都会填它，但炮塔造成的每秒最多 {MDBossState.TowerPoiseRate:0} 点，机甲触发的不受限；满了它失衡 {MDBossState.PoiseStagger:0} 秒，之后 {MDBossState.PoiseWindow:0} 秒受到的伤害 ×{MDBossState.ExposedFactor:0.#} 并无视装甲层，然后 {MDBossState.PoiseLock:0} 秒内不会再失衡。反应打首领的额外伤害只有 {MDElements.BossShare*100:0}%");
         s.Append("\n出现："+Appear(k));
         s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
         s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");
@@ -110,7 +111,9 @@ public static class MDEncyclopedia {
         "雷达：范围内所有防御塔射程变长。医疗塔：治疗附近的玩家、机甲和炮塔。\n\n"+
         "数值说明：射程和占地以格（米）计；“每秒伤害”是持续开火时对单个目标的平均值，溅射、喷射、闪电弹射另外再伤附近的敌人。";
     // the tier from the recipe: fire-control chips -> 3, alloy plates -> 2, else 1 (the same rule the lab checks)
-    static int Tier(MDTowerDef d){var ing=Recipe(d)?.Ingredients??[];return ing.Contains("mdpart:2")?3:ing.Contains("mdpart:1")?2:1;}
+    public static int TierOf(MDTowerDef d)=>Tier(d);   // 0.16.0: the handbook (MDManual)
+    static int Tier(MDTowerDef d){if(d.attack.type=="core")return 0;   // 0.16.0 the defence core is no tier (handbook chapter 防线核心)
+        var ing=Recipe(d)?.Ingredients??[];return ing.Contains("mdpart:2")?3:ing.Contains("mdpart:1")?2:1;}
     static CraftingRecipe Recipe(MDTowerDef d)=>Recipe(d.data);
     static CraftingRecipe Recipe(int data) {
         int block=BlocksManager.GetBlockIndex<MDDeploymentBlock>();
@@ -174,6 +177,7 @@ public static class MDEncyclopedia {
         for(int i=1;i<MDElements.Reactions.Length;i++){var r=MDElements.Reactions[i];if(i==(int)MDReaction.Storm)s.Append($"\n\n三元素反应：两种元素反应后 {MDElements.ResidueTime:0} 秒内（或敌人身上同时有两种状态时）用第三种元素打中，伤害倍率更高，同一种 {MDElements.TriadCooldown:0} 秒一次：");s.Append($"\n· {r.Name}（{MDElements.Combo((MDReaction)i)}）：{r.Effect}");}
         s.Append($"\n\n冷却：同一个敌人发生反应后 {MDElements.GlobalCooldown:0.#} 秒内不再反应，同一种反应在同一个敌人身上 {MDElements.SameCooldown:0} 秒一次。两种元素反应后都会用掉（扩散、碎冰除外）。\n");
         s.Append("抗性：每种敌人对各类伤害 ×0.75～×1.5，写在图鉴里各敌人的页面上。\n\n");
+        s.Append($"首领：反应的额外伤害打首领只算 {MDElements.BossShare*100:0}%，但每次反应都会填首领头上的失衡槽，满了首领失衡、露出破绽（见图鉴里各首领的页面）。\n\n");
         s.Append($"伤害数字：炮塔、机甲和玩家打出的伤害显示在敌人头上，颜色是伤害类型，发生反应的是大字；同一个敌人 {MDTowerWorld.MergeTime:0.##} 秒内的伤害合成一个数，同屏最多 {MDTowerWorld.MaxShown[1]} 个（特效数量“完整”{MDTowerWorld.MaxShown[0]} 个、“极简”{MDTowerWorld.MaxShown[2]} 个），模组设置里可以关掉。\n\n");
         s.Append(MDSettings.Reactions?"模组设置“元素反应”现在是开着的；关掉后只保留伤害类型、抗性和状态。":"模组设置“元素反应”现在是关着的：只有伤害类型、抗性和状态，不发生反应。");
         return s.ToString();

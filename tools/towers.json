@@ -2242,6 +2242,42 @@
     "Imported/SoG/Audio/sonar"
    ],
    "hitSounds": []
+  },
+  {
+   "id": "defense_core",
+   "name": "防线核心",
+   "modelOf": "radar_3",
+   "data": 59,
+   "template": "MDTower_defense_core",
+   "hp": 20000,
+   "summary": "防线的中枢，不攻击。每个存档只有一个有效的核心：放下后，附近击毁机兵会让威胁度上涨，满了引来多波次袭击（详见《机甲防线手册》）。机兵会优先攻击它。",
+   "attack": {
+    "type": "core",
+    "range": 120,
+    "interval": 1
+   },
+   "fx": {
+    "color": [
+     0.45,
+     0.85,
+     1
+    ],
+    "color2": [
+     0.3,
+     0.6,
+     1
+    ],
+    "scale": 1
+   },
+   "pitchFixed": true,
+   "spinParts": [
+    "spin"
+   ],
+   "spinAxis": "y",
+   "spinIdle": true,
+   "spinSpeed": 45,
+   "fireSounds": [],
+   "hitSounds": []
   }
  ]
 }

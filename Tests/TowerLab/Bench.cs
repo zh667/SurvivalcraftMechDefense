@@ -91,7 +91,7 @@ public partial class Lab {
             // not measured (known to be 0): medic and radar towers (no damage); a drone for towers that cannot reach the air (cannon) or
             // do no damage (pure control towers: against a walker their stun / hold share is the point)
             foreach(var d in defs)foreach(var t in new[]{"MDRobot05","MDRobot09"}) {
-                if(d.attack.type is "heal" or "radar")continue;
+                if(d.attack.type is "heal" or "radar" or "core")continue;
                 if(t=="MDRobot09"&&(d.attack.groundOnly||d.attack.power<=0))continue;
                 var row=new Dictionary<string,object>{["tower"]=d.id,["type"]=d.attack.type,["range"]=d.attack.range,["robot"]=t};
                 foreach(var x in Duel([d],t,Math.Max(12,3*d.attack.interval+3),row,inside:true))yield return x;rows.Add(Line(row));   // three shots at least
@@ -172,6 +172,39 @@ public partial class Lab {
                 Shot($"bench_fortress_{t}");yield return true;
                 Kill(boss);Remove(towers.Concat(medics));Clear();ClearPickables();while(Wait(.5))yield return true;
             }
+        }
+        // bench-mix (0.16.0, user 2026-10-30: "加了元素反应之后，敌方机兵以及boss更好对付了"): a mixed tier-2 defence (two each of flame,
+        // frost, tesla, acid, gun and cannon towers; kept at full health) against a wave of 12 regulars (6 RD05, 3 RD14, 3 RD09) and
+        // against each boss for 90 s, with reactions on and off: the wave's clear time, the boss's health left, reactions and the power
+        // they added. Real enemy health (nothing reset on them).
+        if(Part("mix")) {
+            var rows=new List<string>();r["mix"]=rows;bool re0=MDSettings.Reactions;
+            var ids=new[]{"flame_2","frost_2","tesla_2","battle_debuff_1","battle_turret_2","cannon_2"};
+            foreach(bool on in new[]{true,false})foreach(var what in new[]{"wave"}.Concat(MDBoss.Bosses)) {
+                MDSettings.Reactions=on;Clear();while(Wait(.3))yield return true;
+                var towers=ids.SelectMany(id=>new[]{id,id}).Select((id,i)=>Place(defs.First(x=>x.id==id),Home+new Vector3(MathF.Sin(i*MathF.Tau/12),0,MathF.Cos(i*MathF.Tau/12))*7,i*MathF.Tau/12)).ToList();
+                while(Wait(.5))yield return true;
+                var foes=new List<ComponentMDRobot>();
+                if(what=="wave") {
+                    float Land(float a){int k=1;while(k<40&&Dry(Home+Dir(a)*k))k++;return k-1;}
+                    float yaw=new[]{0f,MathF.PI*.5f,-MathF.PI*.5f,MathF.PI}.OrderByDescending(Land).First();float dist=Math.Min(26,Land(yaw)-2);
+                    var kinds=Enumerable.Repeat("MDRobot05",6).Concat(Enumerable.Repeat("MDRobot14",3)).Concat(Enumerable.Repeat("MDRobot09",3)).ToList();
+                    for(int i=0;i<kinds.Count;i++){var at=Home+Dir(yaw+(i-5.5f)*.09f)*dist;at.Y=terrain.GetTopHeight(Terrain.ToCell(at.X),Terrain.ToCell(at.Z))+1.05f;foes.Add(Spawn(kinds[i],at,yaw+MathF.PI));}
+                }
+                else foes.Add(MDBoss.Spawn(proj,Home+new Vector3(0,0,-16),null,what));
+                int n0=MDElements.Count;float b0=MDElements.Bonus;double t0=Time.RealTime,cleared=-1;float hp0=foes.Sum(f=>f.Health.AttackResilience);
+                foreach(var x in During(what=="wave"?120:90,()=>{
+                    foreach(var t in towers)t.Damage.Hitpoints=1;
+                    if(cleared<0&&foes.All(f=>f.Health.Health<=0||!f.Entity.IsAddedToProject))cleared=Time.RealTime-t0;
+                    Cam(Home+new Vector3(-22,16,18),Home);
+                })){if(cleared>=0)break;yield return x;}
+                float left=foes.Where(f=>f.Entity.IsAddedToProject).Sum(f=>Math.Max(0,f.Health.Health)*f.Health.AttackResilience);
+                var row=new Dictionary<string,object>{["what"]=what,["reactions"]=on?"on":"off",["clearedAfter"]=cleared<0?-1:Math.Round(cleared,1),["healthLeft"]=MathF.Round(hp0>0?left/hp0:0,2),
+                    ["reactionCount"]=MDElements.Count-n0,["reactionPower"]=MathF.Round(MDElements.Bonus-b0,0),["totalHealth"]=hp0,["drops"]=proj.FindSubsystem<SubsystemPickables>(true).Pickables.Count};
+                rows.Add(Line(row));
+                foreach(var f in foes)Kill(f);Remove(towers);Clear();ClearPickables();while(Wait(.5))yield return true;
+            }
+            MDSettings.Reactions=re0;
         }
         pl.ComponentBody.Position=Home;
     }

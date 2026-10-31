@@ -232,6 +232,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
     public float Growth=1; bool grown;                     // 0.15.0: health and damage x this (MDGrowth, saved)
+    public bool ThreatRaid;                                // 0.16.0: sent by a threat raid (MDThreat; its kills add no threat; not saved)
     public float DamageShare,PlayerDamageShare;            // 0.15.0: the damage taken so far as a share of its health, all / by players and mechs (MDRewards)
     float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
     public MDBossState Boss;                       // the bosses only (Mod/MDBoss.cs)
@@ -373,7 +374,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         var list=new DynamicArray<ComponentBody>();bodies.FindBodiesAroundPoint(new(b.Position.X,b.Position.Z),r,list);
         return list.Any(o=>o.Entity.FindComponent<ComponentMDUnit>() is {} u&&!u.Destroyed&&Vector3.DistanceSquared(o.Position,b.Position)<=r*r);
     }
-    public static int Rank(ComponentBody b)=>b.Entity.FindComponent<ComponentMDUnit>() is {} u?(u.Mech!=null?0:1):2;
+    public static int Rank(ComponentBody b)=>b.Entity.FindComponent<ComponentMDUnit>() is {} u?(u.Mech!=null||u.Tower?.attack.type=="core"?0:1):2;   // 0.16.0: the defence core like a mech
     // The locked-on hitter first, wherever it is (0.12.0, players 2026-10-25: "旁边有炮台的话 玩家打敌对机器人 机器人也不打玩家 只打炮台去了
     // 应该给玩家拉仇恨"; user: no switching back and forth). Else within sight range, in this order: Mercury in sight, a tower in sight,
     // Mercury or a tower out of sight (it walks around to it), a player or the herd in sight, then out of sight. Nearest first
@@ -631,7 +632,7 @@ public static class MDWildSpawns {
     }
 }
 [HarmonyPatch(typeof(SubsystemCreatureSpawn),nameof(SubsystemCreatureSpawn.Update))]
-public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDBossKills.Tick(__instance.Project);MDBoss.Tick(__instance.Project,dt);}}
+public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDThreat.Update(__instance.Project,dt);MDBossKills.Tick(__instance.Project);MDBoss.Tick(__instance.Project,dt);}}
 
 // Night raids: shortly after nightfall (from game day StartDay, on RaidChance % of the nights, decided per day and world; mod
 // settings, default day 3 and 75 %) a group of robots comes for the strongest cluster of the player's towers near a player

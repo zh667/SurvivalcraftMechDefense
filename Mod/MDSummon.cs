@@ -46,7 +46,6 @@ public class MDSummonBlock : Block {
         var hit=miner.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4){MDPlayer.Message(pl,"对着地面右键放出机兵。");return false;}
         var at=hit.Value.HitPoint()+Vector3.UnitY*.05f;var kind=KindOf(value);
         if(kind.Boss) {
-            if(MDBoss.Alive(p) is {} boss){MDPlayer.Message(pl,$"已经有一台首领（{boss.Kind.Name}）在附近了。");return false;}
             MDBoss.Spawn(p,at,at+Vector3.UnitY*3,Template(value));miner.RemoveActiveTool(1);return true;
         }
         var e=DatabaseManager.CreateEntity(p,Template(value),true);var body=e.FindComponent<ComponentBody>(true);

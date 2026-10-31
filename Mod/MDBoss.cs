@@ -30,8 +30,29 @@ public abstract class MDBossState {
     public int EscortsSent,Breaks; public readonly Dictionary<string,int> Moves=[];   // lab: escorts sent, layers broken, attacks started
     public readonly Dictionary<string,float> Injuries=[]; public Attackment LastAttack;  // lab: health lost by source (in armour points), the last hit through Damage
     public Vector3 LastWant,LastFly;                                            // lab: where it wanted to be, the velocity it asked for
+    // 0.16.0 poise (user, 2026-10-30: "可以首领失衡，但是反应也不能降到特别低的伤害，失衡也要有进度条，玩家可直观查看"): reactions,
+    // control hits it shrugs off and heavy shots fill it (AddPoise); full, it is thrown off balance: a PoiseStagger s stagger, then
+    // PoiseWindow s taking ExposedFactor damage past its armour plate; then the gauge is locked PoiseLock s. It drains after PoiseIdle s
+    // without gain. A bar over the boss (MDTowerWorld.DrawBossBars) and the Neorxna panel show it.
+    // Retuned the same day (user: "boss失衡值掉的太快了，炮塔一多，反应一多，boss根本没有还手之力"): what towers cause fills at most
+    // TowerPoiseRate a second, a mech's reactions and cannon count in full; each break raises the next threshold x PoiseGrowth; the
+    // lock after a break is longer and the gauge drains faster. Towers alone break a boss about once or twice in two minutes.
+    public const float PoiseMax=100,PoiseGrowth=1.5f,PoiseIdle=2,PoiseDecay=8,PoiseStagger=4,PoiseWindow=8,PoiseLock=30,TowerPoiseRate=4;
+    public const float PoisePair=12,PoiseTriad=30,PoiseControl=6,PoiseHeavy=2,PoiseMechCannon=5;
+    public float Poise,Unbalanced,PoiseLockLeft; float poiseIdle,towerPoiseLeft=TowerPoiseRate; public int PoiseBreaks;
+    public float PoiseNeeded=>PoiseMax*MathF.Pow(PoiseGrowth,PoiseBreaks);
+    public static readonly List<MDBossState> Live=[];
+    public ComponentMDRobot Robot=>r;
+    public void AddPoise(float amount,bool byMech=false) {
+        if(amount<=0||PoiseLockLeft>0||r.Health.Health<=0)return;
+        if(!byMech){amount=Math.Min(amount,towerPoiseLeft);towerPoiseLeft-=amount;if(amount<=0)return;}   // towers: TowerPoiseRate a second at most
+        Poise+=amount;poiseIdle=0;if(Poise<PoiseNeeded)return;
+        Poise=0;PoiseLockLeft=PoiseLock+PoiseWindow;Unbalanced=PoiseWindow;Stagger=Math.Max(Stagger,PoiseStagger);PoiseBreaks++;
+        var w=MDTowerWorld.For(P);var c=MDCombat.Center(r.Body);w.Flash(c,3.4f,new Color(255,220,90),.2f);w.Ring(r.Body.Position,5,new Color(255,220,90),.8f);MDRobots.Sound(P,24,c,1);
+        MDBoss.Announce(P,c,$"{Name}失衡了！{PoiseWindow:0} 秒内它受到的伤害提高 {(ExposedFactor-1)*100:0}%，并且无视装甲层。",new Color(255,225,110));
+    }
     protected MDBossState(ComponentMDRobot robot,ValuesDictionary v) {
-        r=robot;if(v.GetValue("BossHasHome",false))Home=v.GetValue("BossHome",Vector3.Zero);
+        r=robot;Live.RemoveAll(b=>!b.r.Entity.IsAddedToProject&&b.r.Health.Health<=0);Live.Add(this);if(v.GetValue("BossHasHome",false))Home=v.GetValue("BossHome",Vector3.Zero);
         Armour=v.GetValue("BossArmour",0f);Escorts=v.GetValue("BossEscorts",0);EscortSize=v.GetValue("BossEscortSize",2);
         LayersLeft=Math.Clamp(v.GetValue("BossLayers",Layers),0,Layers);Plate=v.GetValue("BossPlate",-1f);
         if(Armour>0){r.Health.AttackResilience=Armour;if(Plate<0)Plate=PlateShare*Armour;}
@@ -65,6 +86,7 @@ public abstract class MDBossState {
         dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(r.Body);}
         foreach(var (bit,at) in new[]{(1,.7f),(2,.35f)})if((Escorts&bit)==0&&r.Health.Health<at){Escorts|=bit;MDBoss.Escort(r,EscortSize);}
         if(Exposed>0){Exposed-=dt;if(Exposed<=0&&LayersLeft>0)MDBoss.Announce(P,r.Body.Position,$"{Name}换上了下一层装甲。",new Color(255,170,120));}
+        poiseIdle+=dt;if(poiseIdle>PoiseIdle)Poise=Math.Max(0,Poise-PoiseDecay*dt);towerPoiseLeft=Math.Min(TowerPoiseRate,towerPoiseLeft+TowerPoiseRate*dt);if(PoiseLockLeft>0)PoiseLockLeft-=dt;if(Unbalanced>0)Unbalanced-=dt;   // 0.16.0 poise
         WalkWanted=null;
         Marks(dt,w);Volleys(dt);
         if(Stagger>0){Stagger-=dt;Staggered(dt,w);return;}
@@ -79,7 +101,7 @@ public abstract class MDBossState {
     // ---- damage (MDBoss.Modify): the boss's own factor (weak channel, weak spot, facing), then the armour phase
     public void Damage(Attackment a) {
         float p=a.AttackPower*Factor(a);
-        if(Exposed>0)p*=ExposedFactor;
+        if(Exposed>0||Unbalanced>0)p*=ExposedFactor;   // a broken layer's window, or off balance (0.16.0)
         else if(LayersLeft>0){Plate-=p;p*=Through;if(Plate<=0)Break();}
         a.AttackPower=p;Taken+=p;LastAttack=a;Hurt();
     }
@@ -87,7 +109,7 @@ public abstract class MDBossState {
     // an injury that did not come through an attack (fire, mostly): the armour phase the same way (MDBoss.CapInjury); it burned
     // RD19 for 22 % of its armour past both layers (bench, 2026-10-30)
     public float Phase(float amount) {
-        if(Exposed>0)return amount*ExposedFactor;
+        if(Exposed>0||Unbalanced>0)return amount*ExposedFactor;
         if(LayersLeft<=0)return amount;
         Plate-=amount*Armour;if(Plate<=0)Break();return amount*Through;
     }
@@ -757,12 +779,13 @@ public static class MDBoss {
         }
         return n;
     }
-    // armour at arrival: 30000 + PerTier x the towers' tiers (1 / 2 / 3) + PerMech x the mechs' BossArmour within 48 m, at most
+    // armour at arrival: BaseArmour + PerTier x the towers' tiers (1 / 2 / 3) + PerMech x the mechs' BossArmour within 48 m, at most
     // MaxArmour, times the boss's factor (MDRobotKind.BossArmour) (user, 2026-10-21, round 5: early players only have tier-1 towers;
     // was 40000 + 2000 per tower + 4000 per Mercury)
     // 0.14.0 (user, 2026-10-30: "我有很多的炮塔和医疗塔配合，敌方boss还是不堪一击"; bench-fortress: ten tier-2 / 3 towers and three medics
     // killed the devil mech in 70 s and RD21 in 28 s, none of them lost a tower): x 3 per tower, x 2 per mech, the cap 160000 -> 300000
-    public const float BaseArmour=30000,MaxArmour=300000,PerTier=3000,PerMech=2;   // per mech: PerMech x Mercury 3000, 复仇女神 4000, 轩辕十四 5000 (MDMechType.BossArmour)
+    public const float BaseArmour=36000,MaxArmour=360000,PerTier=3600,   // 0.16.0: +20 % (bench-mix, poise windows)
+        PerMech=2;   // per mech: PerMech x Mercury 3000, 复仇女神 4000, 轩辕十四 5000 (MDMechType.BossArmour)
     // 0.14.0 (user, 2026-10-29, "和恶魔机甲轮换": "击杀数到了随机来 5 个 boss 里的一个；诱敌信标也随机"): the beacon and the kill
     // count bring one of these at random. The next one is drawn when the last one arrives, so the countdown and the kill-count
     // warning can name it; it is an attribute of the world's Project.xml (MDBossKills.Load / Save).
@@ -771,11 +794,12 @@ public static class MDBoss {
     public static int Draw()=>new System.Random().Next(Bosses.Length);
     public static string NextTemplate=>Bosses[(Next%Bosses.Length+Bosses.Length)%Bosses.Length];
     public static string NextName=>MDRobots.KindOf(NextTemplate).Name;
-    sealed class Pending { public Vector3 at; public float left=-1,blink; public string template; }
-    static readonly ConditionalWeakTable<Project,Pending> pending=new();
+    // 0.16.0: any number at once (user, 10-31: "可以取消同一个地方只能出现一个boss的限制"); each draws its boss when it starts
+    sealed class Pending { public Vector3 at; public float left=-1,blink; public string template; public Action<ComponentMDRobot> arrived; }
+    static readonly ConditionalWeakTable<Project,List<Pending>> pending=new();
     public static ComponentMDRobot Alive(Project p)=>p.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).FirstOrDefault(x=>x?.Kind.Boss==true&&x.Health.Health>0);
-    public static bool Counting(Project p)=>pending.TryGetValue(p,out var c)&&c.left>=0;
-    public static void Hurry(Project p,float left){if(pending.TryGetValue(p,out var c)&&c.left>left)c.left=left;}   // tests: a shorter countdown
+    public static bool Counting(Project p)=>pending.TryGetValue(p,out var l)&&l.Count>0;
+    public static void Hurry(Project p,float left){if(pending.TryGetValue(p,out var l))foreach(var c in l)if(c.left>left)c.left=left;}   // tests: a shorter countdown
     public static void Announce(Project p,Vector3 at,string text,Color c) {
         foreach(var pl in p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers)if(Vector3.Distance(pl.ComponentBody.Position,at)<150)pl.ComponentGui.DisplaySmallMessage(text,c,true,true);
     }
@@ -783,24 +807,26 @@ public static class MDBoss {
     public static bool PlaceBeacon(ComponentMiner miner,Ray3 ray) {
         var p=miner.Project;var pl=miner.ComponentPlayer;
         var hit=miner.Raycast<TerrainRaycastResult>(ray,RaycastMode.Digging);if(!hit.HasValue||hit.Value.CellFace.Face!=4){MDPlayer.Message(pl,"对着地面右键放下信标。");return false;}
-        if(Alive(p) is {} boss){MDPlayer.Message(pl,$"已经有一台首领（{boss.Kind.Name}）在附近了。");return false;}
-        if(Counting(p)){MDPlayer.Message(pl,"已有一个信标在倒计时。");return false;}
         miner.RemoveActiveTool(1);Start(p,hit.Value.HitPoint()+Vector3.UnitY*.05f,$"诱敌信标已启动：{Countdown:0} 秒后{{0}}会来到这里。");return true;
     }
     // the countdown (a blinking red light at `at`), then the next boss (MDBoss.Next) arrives there: from a beacon or after
     // MDBossKills. `text` names it with {0}.
-    public static void Start(Project p,Vector3 at,string text) {
-        var c=pending.GetOrCreateValue(p);c.at=at;c.left=Countdown;c.template=NextTemplate;
+    // `template`: a boss already drawn (a raid's, named by its countdown); otherwise the next one, and the one after is drawn
+    public static void Start(Project p,Vector3 at,string text,Action<ComponentMDRobot> arrived=null,string template=null) {
+        var c=new Pending{at=at,left=Countdown,template=template??NextTemplate,arrived=arrived};pending.GetOrCreateValue(p).Add(c);if(template==null)Next=Draw();
         Announce(p,c.at,string.Format(text,MDRobots.KindOf(c.template).Name),new Color(255,120,100));
         p.FindSubsystem<SubsystemAudio>(true).PlaySound(MDMechBrain.Se(7),1,0,c.at,20,false);
     }
     public static void Tick(Project p,float dt) {
-        if(!pending.TryGetValue(p,out var c)||c.left<0)return;
-        var w=MDTowerWorld.For(p);float before=c.left;c.left-=dt;c.blink-=dt;
-        if(c.blink<=0){c.blink=c.left<10?.25f:.6f;w.Flash(c.at+Vector3.UnitY*.6f,.8f,new Color(255,50,40),.15f);w.Ring(c.at,2.5f,new Color(255,60,50),.5f);}
-        foreach(int s in new[]{20,10,5,3,2,1})if(before>s&&c.left<=s)Announce(p,c.at,$"{MDRobots.KindOf(c.template).Name}还有 {s} 秒到达。",new Color(255,120,100));
-        if(c.left>0)return;
-        c.left=-1;Next=Draw();Spawn(p,c.at,null,c.template);
+        if(!pending.TryGetValue(p,out var l)||l.Count==0)return;
+        var w=MDTowerWorld.For(p);
+        foreach(var c in l.ToList()) {
+            float before=c.left;c.left-=dt;c.blink-=dt;
+            if(c.blink<=0){c.blink=c.left<10?.25f:.6f;w.Flash(c.at+Vector3.UnitY*.6f,.8f,new Color(255,50,40),.15f);w.Ring(c.at,2.5f,new Color(255,60,50),.5f);}
+            foreach(int s in new[]{20,10,5,3,2,1})if(before>s&&c.left<=s)Announce(p,c.at,$"{MDRobots.KindOf(c.template).Name}还有 {s} 秒到达。",new Color(255,120,100));
+            if(c.left>0)continue;
+            l.Remove(c);ComponentMDRobot b=null;try{b=Spawn(p,c.at,null,c.template);}finally{c.arrived?.Invoke(b);}
+        }
     }
     // Arrives and fights around `at`: a flyer from `arrive` (default 40 m away, 18 m up), RD13 on the ground 40 m away (it walks
     // in), RD19 out of the ground 34-40 m away facing `at`; a creative summon (`arrive` given) right there.
@@ -838,6 +864,8 @@ public static class MDBoss {
     public static void Modify(Attackment a) {
         if(a.Target?.FindComponent<ComponentMDRobot>() is not {} r||r.Boss==null&&r.Kind.Fly<=0)return;
         a.ImpulseFactor=0;a.StunTimeSet=null;a.StunTimeAdd=0;
+        if(r.Boss!=null&&a.Attacker?.FindComponent<ComponentMDUnit>() is {} u)   // 0.16.0: heavy shots shake it (poise)
+            r.Boss.AddPoise(u.Tower?.attack.stagger==true?MDBossState.PoiseHeavy:u.Mech?.Weapon==MDMechWeapon.Cannon?MDBossState.PoiseMechCannon:0,u.Mech!=null);
         r.Boss?.Damage(a);
     }
 }
@@ -864,7 +892,7 @@ public static class MDBossKills {
     }
     public static void Tick(Project p) {
         int need=MDSettings.BossKills;
-        if(need<=0||Count<need||!MDRobots.Spawns(p)||MDBoss.Alive(p)!=null||MDBoss.Counting(p))return;
+        if(need<=0||Count<need||!MDRobots.Spawns(p))return;   // 0.16.0: also while another boss is about (user: one boss at a time lifted)
         var player=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers.Where(pl=>pl.ComponentHealth.Health>0).OrderBy(pl=>Vector3.Distance(pl.ComponentBody.Position,last)).FirstOrDefault();
         if(player==null)return;
         var pos=player.ComponentBody.Position;

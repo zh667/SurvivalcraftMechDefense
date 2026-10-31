@@ -33,10 +33,14 @@ public class MDPartBlock : Block {
     public static Kind? Of(int value)=>Terrain.ExtractContents(value)==BlocksManager.GetBlockIndex<MDPartBlock>()&&Terrain.ExtractData(value) is int d&&d<Count?(Kind)d:null;
     public static string Name(Kind k)=>info[(int)k].name;
     static int Data(int value)=>Math.Clamp(Terrain.ExtractData(value),0,Count-1);
-    public override void Initialize(){DefaultDisplayName="机兵零件";DefaultDescription=info[0].text;DefaultCategory="Items";CraftingId="mdpart";IsPlaceable=false;MaxStacking=40;base.Initialize();}
+    public override void Initialize(){DefaultDisplayName="机兵零件";DefaultDescription=info[0].text;DefaultCategory="Items";CraftingId="mdpart";IsPlaceable=false;MaxStacking=BaseStacking;base.Initialize();}
     public override string GetDisplayName(SubsystemTerrain t,int v)=>info[Data(v)].name;
     public override string GetDescription(int v)=>info[Data(v)].text;
-    public override int GetMaxStacking(int v)=>info[Data(v)].stack;
+    // 0.16.2 (user 2026-10-31: 配件最高只能40个, a stack-size mod's setting did not reach them): such mods raise each block's
+    // MaxStacking when a world loads, which the per-kind sizes ignored. The kinds above 4 now take a raised MaxStacking, as a
+    // vanilla block of 40 would; at the default 40 each keeps its own; the blueprint, the beacon (4) and the manual (1) always do.
+    const int BaseStacking=40;
+    public override int GetMaxStacking(int v){int s=info[Data(v)].stack;return s>4&&MaxStacking>BaseStacking?MaxStacking:s;}
     public override string GetCategory(int v)=>(Kind)Data(v) is Kind.Beacon or Kind.Kit1 or Kind.Kit2 or Kind.Kit3 or Kind.Manual?"Tools":"Items";
     public override IEnumerable<int> GetCreativeValues(){for(int i=0;i<Count;i++)yield return Terrain.MakeBlockValue(BlockIndex,0,i);}
     public override bool IsUseable_(int value)=>(Kind)Data(value) is Kind.Beacon or Kind.Manual;   // the manual opens MDManualScreen   // right-click on the ground (MDDeployPatch -> MDBoss.PlaceBeacon)

@@ -124,8 +124,32 @@ public partial class Lab {
             foreach(var x in Tap(Key.E,.6))yield return x;bool invOpen=pl.ComponentGui.ModalPanelWidget!=null;var still=u.Body.Position;
             foreach(var x in During(.4,()=>{}))yield return x;k["E opens the inventory, mech stays"]=invOpen&&Vector3.Distance(still,u.Body.Position)<.05f;
             foreach(var x in Tap(Key.E,.6))yield return x;k["E closes it"]=pl.ComponentGui.ModalPanelWidget==null;
+            // 0.16.2: a key the mech used is not seen again later in the frame (Keys16.cs: what the GuiUpdate hooks and other mods'
+            // keyboard reads see); X switches the ammo; a mech key on a number keeps the hotbar slot; R (leaving) is taken too
+            var kx=new Dictionary<string,object>();k["keys after the mech"]=kx;
+            {
+                var vd=new TemplatesDatabase.ValuesDictionary();vd.SetValue(LabGuiKeys.Mapping,Key.X);ModSettingsManager.ModKeyboardMapSettings[LabGuiKeys.Package]=vd;
+                kx["X shared with"]=MDMechKeys.SharedWith(Key.X);
+                LabGuiKeys.Reset();LabGuiKeys.On=true;
+                var ammo=new List<string>{MDMechState.AmmoName(m.Ammo)};
+                for(int i=0;i<2;i++){foreach(var x in Tap(Key.X,.5))yield return x;ammo.Add(MDMechState.AmmoName(m.Ammo));}
+                kx["X cycles the ammo"]=string.Join(" > ",ammo);kx["X changed it"]=m.Type.Ammo.Count()<2||ammo[1]!=ammo[0];
+                foreach(var x in Tap(Key.B,.5))yield return x;foreach(var x in Tap(Key.V))yield return x;foreach(var x in Tap(Key.V))yield return x;
+                bool fx=false;foreach(var x in Tap(Key.F,.1))yield return x;foreach(var x in During(.6,()=>fx|=m.Anim.Action?.name=="melee"))yield return x;kx["F strikes"]=fx;
+                var hotbar=pl.ComponentMiner.Inventory;hotbar.ActiveSlotIndex=0;MDMechKeys.Apply(new Dictionary<MDMechAction,Key>{[MDMechAction.Melee]=Key.Number3});
+                bool n3=false;foreach(var x in Tap(Key.Number3,.1))yield return x;foreach(var x in During(.6,()=>n3|=m.Anim.Action?.name=="melee"))yield return x;
+                kx["3 (bound to melee) strikes"]=n3;kx["3 keeps the hotbar slot"]=hotbar.ActiveSlotIndex==0;MDMechKeys.Apply(MDMechKeys.Defaults());
+            }
             foreach(var x in Tap(Key.R,.8))yield return x;k["R leaves"]=MDMechPilot.Mounted(pl)==null&&pl.ComponentBody.ParentBody==null;
             foreach(var x in During(.5,()=>{}))yield return x;
+            {   // the control: on foot the same X reaches what reads after ComponentInput, once from the keyboard and once by the mapping
+                kx["seen later while driving"]=LabGuiKeys.Text();bool clean=LabGuiKeys.Seen.Count==0&&LabGuiKeys.Mapped==0;
+                LabGuiKeys.Reset();foreach(var x in Tap(Key.X,.5))yield return x;kx["seen on foot after X"]=LabGuiKeys.Text();
+                bool control=LabGuiKeys.Seen.GetValueOrDefault(Key.X)==1&&LabGuiKeys.Mapped==1;
+                LabGuiKeys.On=false;ModSettingsManager.ModKeyboardMapSettings.Remove(LabGuiKeys.Package);
+                if(!clean||!control||kx.Values.OfType<bool>().Any(b=>!b)||!((string)kx["X shared with"]).Contains(LabGuiKeys.Mapping))
+                    throw new Exception("keys after the mech: "+string.Join(", ",kx.Select(x=>$"{x.Key} {x.Value}")));
+            }
             {   // 0.11.0 bound keys (MDMechKeys): K boards and leaves (extra key), G strikes, N switches weapons, C hovers; the old F and B do nothing
                 MDMechKeys.Apply(new Dictionary<MDMechAction,Key>{[MDMechAction.Board]=Key.K,[MDMechAction.Melee]=Key.G,[MDMechAction.Switch]=Key.N,[MDMechAction.Hover]=Key.C});
                 var kb=new Dictionary<string,object>();k["bound keys"]=kb;LabBoardWatch.On=true;

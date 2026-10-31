@@ -70,8 +70,13 @@ public static class MDMechKeys {
         ("ToggleCrouch","ToggleCrouch","潜行"),("SwitchCameraMode","SwitchCameraMode","切换视角"),("Jump","Jump","跳跃")];
     static readonly Dictionary<string,FieldInfo> fields=[];
     static FieldInfo Field(string name){if(!fields.TryGetValue(name,out var f))fields[name]=f=typeof(PlayerInput).GetField(name) is {} x&&x.FieldType==typeof(bool)?x:null;return f;}
-    // the game's actions that use this key ("衣服、降水"), for the settings page
-    public static string SharedWith(Key k)=>k==Key.Null?"":string.Join("、",gameActions.Where(g=>GameKey(g.Mapping)==k).Select(g=>g.Name));
+    // the game's actions and other mods' keyboard mappings that use this key ("衣服、降水、Recipaedia"), for the settings page
+    public static string SharedWith(Key k)=>k==Key.Null?"":string.Join("、",gameActions.Where(g=>GameKey(g.Mapping)==k).Select(g=>g.Name).Concat(ModMappings(k)));
+    // mappings other mods add through their GetKeyboardMappings hook (kept per package by ModSettingsManager), by mapping name
+    static List<string> ModMappings(Key k) {
+        try{return ModSettingsManager.ModKeyboardMapSettings.Values.SelectMany(d=>d).Where(p=>p.Value is Key x&&x==k).Select(p=>p.Key).Distinct().ToList();}
+        catch{return [];}
+    }
     public static void Suppress(WidgetInput input,ref PlayerInput v,params MDMechAction[] actions) {
         HashSet<Key> down=null;
         foreach(var a in actions){var k=Get(a);if(k!=Key.Null&&(input.IsKeyDown(k)||input.IsKeyDownOnce(k)))(down??=[]).Add(k);}
@@ -80,7 +85,15 @@ public static class MDMechKeys {
         foreach(var g in gameActions)
             if(down.Contains(GameKey(g.Mapping))&&Field(g.Field) is {} f&&(bool)f.GetValue(boxed)){f.SetValue(boxed,false);changed=true;}
         if(changed)v=(PlayerInput)boxed;
+        if(down.Any(k=>k is >=Key.Number0 and <=Key.Number9))v.SelectInventorySlot=null;   // the hotbar's number keys (ComponentInput, not mapped)
     }
+    // A key the mech used is also taken off the keyboard for the rest of the frame (Keyboard's pressed-once flags; held state is
+    // left alone, the mech reads it again next frame). What reads keys after ComponentInput then does not act on it too: the GUI
+    // hooks (ComponentGui, UpdateOrder.Default) and mods that read the keyboard directly. User 2026-10-31: X for the ammo also
+    // opened the recipe book of RecipaediaEX, whose mapping "Recipaedia" is X and which polls Keyboard.IsKeyDownOnce in GuiUpdate.
+    static readonly FieldInfo downOnce=typeof(Keyboard).GetField("m_keysDownOnceArray",BindingFlags.Static|BindingFlags.NonPublic);
+    public static void Consume(Key k){if(k!=Key.Null&&downOnce?.GetValue(null) is bool[] a&&(int)k>=0&&(int)k<a.Length)a[(int)k]=false;}
+    public static void ConsumePressed(WidgetInput input,params MDMechAction[] actions){foreach(var a in actions)if(Get(a) is var k&&k!=Key.Null&&input.IsKeyDownOnce(k))Consume(k);}
     // hint texts: "Shift", or the key plus the extra one for fire / board, or "未设置"
     public static string Hint(MDMechAction a) {
         var k=Get(a);

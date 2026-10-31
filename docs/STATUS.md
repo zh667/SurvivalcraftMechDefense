@@ -11,7 +11,7 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 - User (10-31): "那些配件最高只能40个堆叠，不能和铃兰适配自己改变 ，希望配件能和玲兰辅助设置的堆叠一致". Stack-size mods set each
   block's MaxStacking when a world loads (the vanilla rule, inventories ask GetMaxStacking(value)); MDPartBlock overrode
   GetMaxStacking with fixed per-kind sizes, so the raised value never reached the parts. Now the kinds above 4 (scrap, alloy,
-  chip, core 40; kits 8; charge cell 16) return max(own, MaxStacking); the blueprint and the beacon (4) and the handbook (1) keep
+  chip, core 40; kits 8; charge cell 16) take MaxStacking once it is raised above 40 (at 40 each keeps its own); the blueprint and the beacon (4) and the handbook (1) keep
   theirs, as that mod's 普通堆叠 tier covers blocks above 4 only (Mod/MDParts.cs). Tower deploy items never overrode it.
 - Lab: stacking (Tests/TowerLab/Stack16.cs): default sizes, MaxStacking raised to 99 / 999 / 10,000,000, restored.
 - User (10-31): "切换机甲的弹药类型（X键）会触发原版游戏的操作" (it opened the recipe book). Vanilla binds nothing to X in 1.9.3.1 or

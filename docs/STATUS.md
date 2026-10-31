@@ -32,12 +32,23 @@ docs/tasks/2026-10-31-threat-core-0.16.md.
   lab's Creative world. "可以取消同一个地方只能出现一个boss的限制" -> beacons, Creative summons, the boss by kills and raids no
   longer wait for a boss to be gone; several beacons count down at once. A raid's last wave now waits for its boss, and the boss
   named by the countdown is the one that comes (it was redrawn when it set off).
+- The user's second play (10-31, 1.9.3.1, screenshot): 液氮塔, “毒沼” and “酸洗” showed only their base, from the first one placed.
+  A tower whose aim angle turned NaN loses everything above the base (yaw and pitch bones NaN) and never recovered: AngleTowards
+  keeps NaN, and it was saved with the world. Shell towers need no line of sight, so they can take a creature the others never
+  see; one with a NaN / infinite position passed InArea (every comparison with NaN is false), and a NaN velocity poisoned the
+  lead point. Now: such creatures are never targets, a NaN velocity leads nothing, a NaN aim returns to rest on the next update
+  (also on load), and the first of each is logged ("[MechDefense] towers skip ..." / "<tower>: aim NaN ... target ..."), so the
+  creature behind it in the user's world can be named from Game.log. The user's Game.log (read-only, with their OK) had no
+  error of this mod; one tower is drawn with 4 bones there, far below the 64 per draw the GPU allows, so it is not the
+  per-draw bone limit. Lab mode aimnan (Tests/TowerLab/AimNan16.cs): NaN aim with the repair off shows the base alone (as in
+  the screenshot), on: the turret is back within a frame; a target with a NaN velocity keeps the lead point a number.
 - Lab: a result that does not serialize still writes lab-result.json (Lab.Save).
-- Package dist/MechDefense-0.16.0.scmod, 35,575,189 bytes, SHA-256 c9edd3631351b4f23a0b5b91906d9704db0ef0e588a29fccf39c11525590acf4.
+- Package dist/MechDefense-0.16.0.scmod, 35,575,693 bytes, SHA-256 d694e3b8e697a8dcfa22b6419a9262cfb00f7ae79fbb6ded03f3456a3d98a369.
   Verified (PC, isolated runtime): before the play feedback, the full set on both APIs (r16: all, bosses14, enemies14, phone,
   robots, combat15 on 1.9.3.1 and 1.9.4; combat, fb13, icons, special, mech-view on 1.9.3.1; faction-mods, bench-rules on
   1.9.4: 19 passed); after it, combat15 (both), robots (both), bosses14 (both). The handbook model seen in game on both APIs
-  (hand, ground, night, hotbar). Not verified: a phone; bench-mix with the +20 % health not rerun.
+  (hand, ground, night, hotbar). After the NaN-aim fix: aimnan (both), all (both), combat (1.9.3.1), combat15 (1.9.4)
+  passed, none of them logged a skipped creature or a reset aim. Not verified: the creature behind it in the user's world; a phone; bench-mix with the +20 % health not rerun.
 
 ## 0.15.1: medic charge cell fix (branch fix/medic-charge-0151, PR #15, 2026-10-30; not merged yet)
 

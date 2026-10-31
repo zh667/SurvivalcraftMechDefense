@@ -170,7 +170,8 @@ public partial class Lab {
             int stage=MDGrowth.Stage(proj);var rd=Spawn("MDRobot05",Home+new Vector3(0,0,-10));while(Wait(.5))yield return true;
             r["growth"]=$"day {MDWildSpawns.Day(proj)}, stage {stage}, growth {rd.Growth:0.00}, resilience {rd.Health.AttackResilience:0}";
             tod.TimeOfDayOffset=off0;MDSettings.StartDay=sd0;MDSettings.Growth=g0;
-            if(stage!=3||MathF.Abs(rd.Health.AttackResilience-1300)>1)bad.Add("growth: "+r["growth"]);
+            if(stage!=3||MathF.Abs(rd.Health.AttackResilience-1200*1.3f)>1)   // RD05 1200 since 0.16.0
+               bad.Add("growth: "+r["growth"]);
             Kill();while(Wait(.5))yield return true;
         }
         if(Part("rewards")) {
@@ -318,6 +319,72 @@ public partial class Lab {
                 proj.RemoveEntity(me,true);inv.RemoveSlotItems(0,inv.GetSlotCount(0));
             }
             MDSettings.MedicCapacity=cap0;Remove([medic,tw]);while(Wait(.5))yield return true;
+        }
+        // 0.16.0 boss poise (user, 2026-10-30): poise fills and breaks it (stagger, a window past its armour, then locked); a reaction on
+        // a boss adds 70 % of its extra damage and 12 poise; the bars over it; the Neorxna panel line
+        if(Part("poise")) {
+            var po=new Dictionary<string,object>();r["poise"]=po;
+            var boss=MDBoss.Spawn(proj,Home+new Vector3(0,0,-14),null,"MDBoss13");while(Wait(1.5))yield return true;var bs=boss.Boss;bs.SetArmour(1e5f);
+            boss.ForceClip="idle";
+            float h0=boss.Health.Health;Deal("heat",boss,100);float p1=bs.Poise;float h1=boss.Health.Health;float thermal=Deal("cold",boss,100);float p2=bs.Poise;
+            bs.AddPoise(50);bs.AddPoise(50);float towerOnly=bs.Poise;   // towers: TowerPoiseRate a second at most
+            bs.AddPoise(MDBossState.PoiseMax,true);bool broke=bs.Unbalanced>0&&bs.Stagger>0&&bs.PoiseBreaks==1;float plate0=bs.Plate;Deal("kinetic",boss,500,MDElement.None);bool past=bs.Plate==plate0;
+            bs.AddPoise(MDBossState.PoiseMax,true);bool locked=bs.PoiseBreaks==1&&MathF.Abs(bs.PoiseNeeded-MDBossState.PoiseMax*MDBossState.PoiseGrowth)<1;
+            var c=boss.Body.Position;Cam(c+new Vector3(-12,7,12),c+Vector3.UnitY*5);for(int i=0;i<5;i++)yield return true;int bars=MDTowerWorld.BossBarsDrawn;Shot("c15_boss_bars");yield return true;
+            string panel="-";var panelType=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)).FirstOrDefault(t=>t!=null);
+            if(panelType!=null){var pw=Activator.CreateInstance(panelType);panelType.GetMethod("SetInfo_Entity").Invoke(pw,[boss.Entity]);panel=string.Join(" | ",((ContainerWidget)pw).AllChildren.OfType<LabelWidget>().Select(l=>l.Text).Where(x=>!string.IsNullOrWhiteSpace(x)));}
+            po["poise"]=$"heat hit poise {p1:0}, thermal {thermal:0} (x0.7 of the bonus), poise then {p2:0}, two 50s from towers {towerOnly:0}; full: broke {broke}, a hit past the plate {past}, locked after {locked}; bars {bars}; panel {panel}";
+            float wantThermal=(100+(100+.03f*.5f*1e5f)*MDElements.BossShare)*MDBossState.Through;   // x2 and half the 3 % on a boss, 70 % of that extra; 20 % through its plate
+            if(p1!=0||p2<1||p2>MDBossState.TowerPoiseRate+.5f||towerOnly>MDBossState.TowerPoiseRate*1.5f||!broke||!past||!locked||bars<1||MathF.Abs(thermal-wantThermal)>wantThermal*.15f||panelType!=null&&!panel.Contains("失衡"))bad.Add("poise: "+po["poise"]+$" (want thermal ~{wantThermal:0})");
+            Kill();while(Wait(.5))yield return true;
+        }
+        // 0.16.0 the handbook: given once in this world; every chapter builds with entries (screenshots of two)
+        if(Part("manual")) {
+            var mn=new Dictionary<string,object>();r["manual"]=mn;var inv=pl.ComponentMiner.Inventory;int manual=MDPartBlock.Value(MDPartBlock.Kind.Manual);
+            bool has=Enumerable.Range(0,inv.SlotsCount).Any(i=>inv.GetSlotValue(i)==manual&&inv.GetSlotCount(i)>0);
+            MDManualScreen.Open();var screen=(MDManualScreen)ScreensManager.CurrentScreen;var counts=new List<string>();while(Wait(1))yield return true;   // the screen switch takes a few frames
+            for(int c=0;c<MDManualScreen.Chapters.Length;c++){screen.Chapter=c;for(int i=0;i<4;i++)yield return true;counts.Add($"{MDManualScreen.Chapters[c]} {MDManualScreen.Entries}");
+                if(c is 1 or 3){ScreenCaptureManager.Capture(1280,720,$"c15_manual_{c}.png");yield return true;}}
+            ScreensManager.SwitchScreen("Game");for(int i=0;i<4;i++)yield return true;
+            mn["manual"]=$"given {MDThreat.ManualGiven}, in the inventory {has}; chapters: {string.Join(", ",counts)}";
+            if(!MDThreat.ManualGiven||counts.Any(x=>x.EndsWith(" 0")))bad.Add("manual: "+mn["manual"]);
+        }
+        // 0.16.0 the defence core, in the lab's Creative world (the user's: threat filled to 30 there and no raid came, while this part
+        // ran in Survival): a second core puts the first out; robots and bosses killed near it add threat; full: a countdown, waves
+        // named ahead, beaten waves, the last one's boss waited for, the payout; endless keeps going; the core destroyed ends the raid
+        if(Part("core")) {
+            var cr=new Dictionary<string,object>();r["core"]=cr;var mode0=gameInfo.WorldSettings.GameMode;
+            float t0=MDThreat.Threat;int r0=MDThreat.RaidsDone;MDThreat.RaidsDone=1;bool e0=MDSettings.Endless;MDSettings.Endless=false;pl.ComponentHealth.AttackResilience=1e6f;   // raids done odd: this raid ends with a boss
+            var cdef=D("defense_core");var c1=Place(cdef,Home+new Vector3(10,0,8),0);MDThreat.Placed(c1,null);var c2=Place(cdef,Home+new Vector3(0,0,6),0);MDThreat.Placed(c2,null);while(Wait(.6))yield return true;
+            bool oneLive=!c1.CoreLive&&c2.CoreLive&&MDThreat.Core(proj)==c2;
+            MDThreat.Threat=0;var killedBoss=MDBoss.Spawn(proj,Home+new Vector3(0,0,-14),Home+new Vector3(0,0,-14),"MDBoss13");while(Wait(1))yield return true;
+            for(int i=0;i<80&&killedBoss.Health.Health>0;i++){ComponentMiner.AttackBody(new MeleeAttackment(killedBoss.Entity,pl.Entity,MDCombat.Center(killedBoss.Body),Vector3.UnitZ,600));while(Wait(.1))yield return true;}
+            while(Wait(1))yield return true;float bossThreat=MDThreat.Threat;
+            // two beacons at once: two bosses (user, 10-31: the one-boss limit lifted)
+            Kill();int alive0=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Count(x=>x?.Kind.Boss==true&&x.Health.Health>0);MDBoss.Start(proj,Home+new Vector3(-12,0,-20),"{0}");MDBoss.Start(proj,Home+new Vector3(12,0,-20),"{0}");
+            MDBoss.Hurry(proj,.5f);while(Wait(2))yield return true;int twoBosses=proj.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Count(x=>x?.Kind.Boss==true&&x.Health.Health>0)-alive0;Kill();while(Wait(1))yield return true;
+            MDThreat.Threat=MDThreat.Cap-1;var victim=Spawn("MDRobot05",Home+new Vector3(0,0,-12));while(Wait(.4))yield return true;victim.Health.Injure(2,null,true,"lab");while(Wait(1))yield return true;
+            bool started=MDThreat.Now==MDThreat.Phase.Countdown;string first=MDThreat.LastAnnounce;MDThreat.Waves=2;
+            var log=new List<string>{first};bool bossHeld=false,bossFlagged=false,bossNamed=false;ComponentMDRobot raidBoss=null;
+            for(int wave=0;wave<2;wave++) {
+                MDThreat.Timer=.5f;while(Wait(1.5))yield return true;log.Add($"wave {wave+1}: {MDThreat.Now}, {MDThreat.Fighting.Count} robots");
+                if(wave==0){var c=c2.Body.Position;Cam(c+new Vector3(-8,6,9),c+Vector3.UnitY*3);for(int i=0;i<4;i++)yield return true;Shot("c15_core");yield return true;}
+                foreach(var f in MDThreat.Fighting.ToList())f.Health.Injure(2,null,true,"lab");while(Wait(1.5))yield return true;log.Add(MDThreat.LastAnnounce);
+                if(wave==1) {   // the robots are down, the boss is still on its way: the wave goes on until it is down too
+                    bossHeld=MDThreat.Now==MDThreat.Phase.Wave&&MDThreat.BossesComing==1;MDBoss.Hurry(proj,.5f);while(Wait(1.5))yield return true;
+                    raidBoss=MDThreat.Fighting.FirstOrDefault(f=>f.Kind.Boss);bossFlagged=raidBoss?.ThreatRaid==true;
+                    bossNamed=raidBoss!=null&&log.Any(x=>x.Contains("第 2 波 40 秒后到")&&x.Contains("首领"+raidBoss.Kind.Name))&&log.Any(x=>x.Contains("第 2 波来了")&&x.Contains("首领"+raidBoss.Kind.Name));   // announced = came
+                    foreach(var f in MDThreat.Fighting.ToList()){f.Health.Injure(2,null,true,"lab");if(f.Health.Health>0)f.Health.Health=0;}while(Wait(1.5))yield return true;log.Add(MDThreat.LastAnnounce);
+                }
+            }
+            bool done=MDThreat.Now==MDThreat.Phase.Idle&&MDThreat.Threat==0&&MDThreat.RaidsDone==2;
+            MDSettings.Endless=true;MDThreat.Threat=MDThreat.Cap;while(Wait(1))yield return true;MDThreat.Timer=.5f;while(Wait(1.5))yield return true;
+            foreach(var f in MDThreat.Fighting.ToList())f.Health.Injure(2,null,true,"lab");while(Wait(1.5))yield return true;bool endlessGoes=MDThreat.Now==MDThreat.Phase.Countdown&&MDThreat.Wave==1;
+            c2.Damage.Hitpoints=0;while(Wait(2))yield return true;bool ended=MDThreat.Now==MDThreat.Phase.Idle&&MDThreat.Core(proj)==null;
+            bool paid=MDRewards.Log.Any(x=>x.StartsWith("raid beaten"));
+            cr["core"]=$"mode {mode0}; one live {oneLive}; a boss killed: threat {bossThreat} (want {MDThreat.BossThreat}); two beacons: {twoBosses} bosses; raid started {started}; raid boss held the last wave {bossHeld}, came {raidBoss?.Kind.Id}, flagged {bossFlagged}, as announced {bossNamed}; done {done}; paid {paid} (log {MDRewards.Log.Count}: {string.Join(" | ",MDRewards.Log.TakeLast(3))}); endless kept going {endlessGoes}; core destroyed ended it {ended}; raids {r0} -> {MDThreat.RaidsDone}; {string.Join(" || ",log)}; last: {MDThreat.LastAnnounce}";
+            if(mode0!=GameMode.Creative||!oneLive||bossThreat!=MDThreat.BossThreat||twoBosses!=2||!bossHeld||!bossFlagged||!bossNamed||!started||!first.Contains("第 1 波：")||!done||!endlessGoes||!ended||!log.Any(x=>x.Contains("第 2 波"))||!paid)bad.Add("core: "+cr["core"]);
+            Kill();Remove([c1,c2]);ClearPickables();MDSettings.Endless=e0;MDThreat.Threat=t0;MDThreat.RaidsDone=r0;while(Wait(.5))yield return true;
         }
         // views for the user (decisions 14, 15, 17 of 10-30): drones shot down falling and on the ground, RD19's nose close up, EN02's
         // open ducts close up

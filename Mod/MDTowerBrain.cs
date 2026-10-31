@@ -20,6 +20,7 @@ public static class MDTowerBrain {
         if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
         if(a.type=="heal"){Heal(u,dt);return;}
+        if(a.type=="core")return;   // 0.16.0 the defence core does not fight (MDThreat)
         if(a.type=="radar"){Radar(u);return;}
         u.ScanTimer-=dt;
         if(u.ScanTimer<=0){u.ScanTimer=.25f;u.Target=FindTarget(u);}
@@ -262,7 +263,8 @@ public static class MDTowerBrain {
         var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
-            if(Holdable(b,a))w.Stun(b,a.stun);if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
+            if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);   // 0.16.0: a boss shrugs it off, shaken
+            if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
         }
     }
     static void Heal(ComponentMDUnit u,float dt) {
@@ -322,7 +324,7 @@ public static class MDTowerBrain {
             var start=point+Vector3.UnitY*.3f;if(MDCombat.Trace(u,start,c,out _)!=b&&dist>.8f)continue;
             if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f),false,"explosion");
             if(a.slow>0&&fx.kind!="poison")w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(fx.color2));   // poison slows through its cloud
-            if(a.freeze>0&&Holdable(b,a))w.Freeze(b,a.freeze,a.freezeImmune);
+            if(a.freeze>0){if(Holdable(b,a))w.Freeze(b,a.freeze,a.freezeImmune);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);}
             if(a.armorDown>0)w.ArmorDown(b,a.armorDown,a.armorTime,MDTowerWorldColor(fx.color));
             if(a.burn>0)b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);
         }

@@ -295,6 +295,17 @@
     "dkd"
     " d "
   </Recipe>
+  <!-- 0.16.0: the handbook (MDManualScreen): planks and a lump of coal for ink -->
+  <Recipe Result="MDPartBlock:10" ResultCount="1" RequiredHeatLevel="0" c="coalchunk" p="planks" Description="机甲防线手册：防御塔、元素反应、机甲和敌人的图文说明">
+    "c"
+    "p"
+  </Recipe>
+  <!-- 0.16.0: the defence core (MDThreat) -->
+  <Recipe Result="MDDeploymentBlock:59" ResultCount="1" RequiredHeatLevel="0" i="ironingot" a="mdpart:1" c="copperingot" x="mdpart:2" Description="防线核心：开启威胁度和多波次袭击（每个存档一个有效）">
+    "iai"
+    "cxc"
+    "iai"
+  </Recipe>
   <!-- the boss's beacon and the mech's weapon kits -->
   <Recipe Result="MDPartBlock:5" ResultCount="1" RequiredHeatLevel="0" l="lightbulb" w="wire" a="mdpart:1" x="mdpart:2" e="mdpart:3" Description="诱敌信标：把恶魔机甲引出来">
     "lwl"

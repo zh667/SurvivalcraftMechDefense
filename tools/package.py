@@ -44,7 +44,7 @@ for hero in ['Nemesis','Regulus']:
     for f in ['model.glb','mech.json','clips.bin','icon.bin','icon.png']:files.append((d/f,f'Assets/Imported/{hero}/{f}'))
 # progression items (Mod/MDParts.cs): texture atlas and 3D models (tools/build_part_models.py, committed)
 parts=assets/'Parts';files.append((parts/'parts.png','Assets/Parts/parts.png'))
-for n in range(9):p=parts/f'part{n}.bin';assert p.exists(),p;files.append((p,f'Assets/Parts/part{n}.bin'))
+for n in [*range(9),10]:p=parts/f'part{n}.bin';assert p.exists(),p;files.append((p,f'Assets/Parts/part{n}.bin'))   # 9 (medic charge) wears part3
 # mod settings (Mod/MDSettingsScreen.cs): one entry in the game's list that opens the mod's own page
 settings=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8')).get('Settings')
 assert settings and settings[0]['Items'][0]['Widget']=='Game.MDSettingsEntryWidget','modinfo.json Settings'

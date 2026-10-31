@@ -41,6 +41,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public float WreckTime=>wreck;
     public float Cooldown; float wreck,lastHitpoints;
     public float HealCharge=-1;   // 0.15.0 medic towers: healing points left (-1 = full; MDMedic)
+    public bool CoreLive=true;    // 0.16.0 the defence core: the world's live one (MDThreat)
     // Health set from outside (a redeployed tower, a repair): no hit reaction.
     public void SetHitpoints(float hitpoints){Damage.Hitpoints=lastHitpoints=Math.Clamp(hitpoints,0,1);}
     public UpdateOrder UpdateOrder=>(UpdateOrder)1;
@@ -59,7 +60,7 @@ public class ComponentMDUnit : Component,IUpdateable {
             return;
         }
         TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);ShotCount=v.GetValue("TurretShotCount",0);
-        HealCharge=v.GetValue("HealCharge",-1f);TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
+        HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
         Tower=MDTowerLibrary.Get(TowerId)??throw new InvalidOperationException("Unknown tower "+TowerId);
         recoilAge=Enumerable.Repeat(10f,Tower.recoilParts.Length).ToArray();
         Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=v.GetValue("AimYaw",Yaw);AimPitch=v.GetValue("AimPitch",0f);Cooldown=Math.Clamp(v.GetValue("Cooldown",0f),0,2);lastHitpoints=Damage.Hitpoints;PlayEvent("Deploy",.8f);
@@ -68,7 +69,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         if(Legacy)return;
         if(Mech!=null){v.SetValue("AimYaw",AimYaw);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Mech.Save(v);return;}
-        v.SetValue("HealCharge",HealCharge);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("Cooldown",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
+        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("Cooldown",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
     public void PlayEvent(string name,float duration) {
         if(Destroyed)return;
         Animation=name;AnimationTime=0;

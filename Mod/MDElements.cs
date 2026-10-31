@@ -22,6 +22,7 @@ public enum MDIcon{Kinetic,Explosive,Heat,Cold,Electric,Corrosive,Slowed,Frozen,
 
 public static class MDElements {
     public const float AuraTime=6,GlobalCooldown=1.5f,SameCooldown=6,ResidueTime=4,TriadCooldown=10;
+    public const float BossShare=.7f;   // 0.16.0: a reaction adds this share of its extra damage on a boss (and fills its poise, MDBossState)
     public static readonly string[] Names=["","动能","爆炸","热","冷","电","腐蚀"];
     public static readonly Color[] Colors=[Color.White,new(226,226,232),new(255,150,40),new(255,84,48),new(110,215,255),new(186,120,255),new(120,228,80)];
     public static readonly string[] Statuses=["","","","灼烧","冰寒","带电","腐蚀"];   // the status each element leaves
@@ -81,6 +82,7 @@ public static class MDElements {
         MDElement.Corrosive=>has(MDElement.Heat)?MDReaction.Corrode:has(MDElement.Cold)?MDReaction.FrostEtch:has(MDElement.Electric)?MDReaction.Electrolysis:MDReaction.None,
         _=>MDReaction.None};
     public static int Count;                                         // tests: reactions so far
+    public static float Bonus;                                       // tests: power reactions added to the hits that made them
     public static readonly List<string> Log=[];                      // tests: the last reactions (name, target, power before / after)
 }
 
@@ -113,7 +115,7 @@ public sealed partial class MDTowerWorld {
             for(var x=MDElement.Heat;x<=MDElement.Corrosive;x++)if(x!=e&&(Has(b,s,x)||time<s.residueUntil&&(s.residueMask&1<<(int)x)!=0))others.Add(x);
             var tr=MDElements.Triad(e,others);
             if(tr!=MDReaction.None&&time>=s.reactAt[(int)tr]) {
-                float before3=power;power=React(u,b,s,e,tr,power,robot);
+                float before3=power;power=React(u,b,s,e,tr,power,robot);if(robot?.Boss!=null){power=before3+(power-before3)*MDElements.BossShare;robot.Boss.AddPoise(MDBossState.PoiseTriad,u.Mech!=null);}MDElements.Bonus+=power-before3;
                 s.reactUntil=time+MDElements.GlobalCooldown;s.reactAt[(int)tr]=time+MDElements.TriadCooldown;s.residueUntil=time;
                 MDElements.Count++;if(MDElements.Log.Count>=200)MDElements.Log.RemoveAt(0);
                 MDElements.Log.Add($"{MDElements.Reactions[(int)tr].Name} {robot?.Kind.Id??"-"} {MDElements.Name(e)} {before3:0}->{power:0}");
@@ -124,7 +126,7 @@ public sealed partial class MDTowerWorld {
         if(r!=MDReaction.None&&time>=s.reactUntil&&time>=s.reactAt[(int)r]) {
             float before=power;var info0=MDElements.Reactions[(int)r];
             if(r is not (MDReaction.Spread or MDReaction.Shatter)){s.residueMask=1<<(int)info0.A|1<<(int)info0.B;s.residueUntil=time+MDElements.ResidueTime;}   // for a third element
-            power=React(u,b,s,e,r,power,robot);
+            power=React(u,b,s,e,r,power,robot);if(robot?.Boss!=null){power=before+(power-before)*MDElements.BossShare;robot.Boss.AddPoise(MDBossState.PoisePair+(r==MDReaction.Overload?MDBossState.PoiseControl:0),u.Mech!=null);}MDElements.Bonus+=power-before;
             s.reactUntil=time+MDElements.GlobalCooldown;s.reactAt[(int)r]=time+MDElements.SameCooldown;
             MDElements.Count++;if(MDElements.Log.Count>=200)MDElements.Log.RemoveAt(0);
             MDElements.Log.Add($"{MDElements.Reactions[(int)r].Name} {robot?.Kind.Id??b.Entity.ValuesDictionary?.DatabaseObject?.Name} {MDElements.Name(e)} {before:0}->{power:0}");
@@ -140,7 +142,7 @@ public sealed partial class MDTowerWorld {
         if(MDElements.Triads.TryGetValue(r,out var used))foreach(var x in used)ClearAura(b,s,x);   // three elements: all used up, before the effect (晶化 freezes)
         switch(r) {
             case MDReaction.Thermal:{   // x 2, and 3 % of its full health on top (armour phases cap a boss as usual)
-                var h=b.Entity.FindComponent<ComponentHealth>();power=power*2+(h!=null?.03f*h.AttackResilience:0);
+                var h=b.Entity.FindComponent<ComponentHealth>();power=power*2+(h!=null?.03f*h.AttackResilience*(robot?.Boss!=null?.5f:1):0);   // a boss: half the share of its health
                 ClearAura(b,s,MDElement.Heat);ClearAura(b,s,MDElement.Cold);
                 for(int i=0;i<8;i++)Emit(S.Smoke,c+RDir()*.4f,RDir()*R(1,2.5f)+Vector3.UnitY,R(.6f,1),.4f,1.2f,new Color(235,235,240,150),new Color(235,235,240,0),false,0,1.5f);
                 break;}
@@ -195,7 +197,7 @@ public sealed partial class MDTowerWorld {
         int cap=MaxLabels[Math.Clamp(MDSettings.FxLevel,0,2)];while(labels.Count>=cap)labels.RemoveAt(0);   // many reactions at once: the newest names only
         bool triad=MDElements.Triads.TryGetValue(r,out var three);
         if(triad){Ring(b.Position,Math.Max(2.4f,b.BoxSize.X*1.4f),MDElements.Colors[(int)three[2]],.8f,.18f);Flash(c,1.6f,Color.White,.2f);}   // all three used up, a bigger look
-        labels.Add(new ReactionLabel{pos=b.Position+Vector3.UnitY*(b.BoxSize.Y+2.1f),text=info.Name,c=triad?new Color(255,236,140):Color.Lerp(c1,Color.White,.35f),c2=c2,life=triad?2:1.6f,big=triad});   // above the status icons
+        labels.Add(new ReactionLabel{pos=b.Position+Vector3.UnitY*(b.BoxSize.Y+LabelsAt),text=info.Name,c=triad?new Color(255,236,140):Color.Lerp(c1,Color.White,.35f),c2=c2,life=triad?2:1.6f,big=triad});   // above the status icons
         return power;
     }
     IEnumerable<ComponentBody> Near(ComponentMDUnit u,ComponentBody b,float r) {
@@ -208,6 +210,9 @@ public sealed partial class MDTowerWorld {
     readonly List<ReactionLabel> labels=[];
     Texture2D iconTexture;TexturedBatch3D iconBatch;FontBatch3D labelBatch;
     public const float IconRange=32,TowerIconRange=14;
+    // 0.16.0 one stack over a target, from the top of its box (user, 2026-10-31: "元素图标和敌人状态条会有重叠部分"): status icons, then
+    // damage numbers, then reaction names (they rise), then a boss's bars; the bars also climb with distance as the icons grow
+    public const float IconsAt=1f,NumbersAt=2f,LabelsAt=2.8f,BarsAt=4.4f;
     public static int IconsDrawn;   // tests: icons queued in the last frame
     public List<MDIcon> Icons(ComponentBody b){var l=new List<MDIcon>();if(status.TryGetValue(b,out var s))Icons(b,s,l);return l;}
     void Icons(ComponentBody b,Status s,List<MDIcon> l) {
@@ -221,13 +226,15 @@ public sealed partial class MDTowerWorld {
         iconTexture??=ContentManager.Get<Texture2D>("Towers/status");
         iconBatch??=SubsystemParticles.PrimitivesRenderer.TexturedBatch(iconTexture,true,2,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
         DrawNumbers(eye,right,up);   // MDDamageNumbers.cs
+        DrawBossBars(eye,right,up);  // MDMedic.cs (0.16.0)
+        DrawCore(eye,right,up);      // MDThreat.cs (0.16.0)
         IconsDrawn=0;BarsDrawn=0;var l=new List<MDIcon>(6);
         foreach(var (b,s) in status) {
             if(!b.Entity.IsAddedToProject||!MDCombat.Living(b))continue;
             float d=Vector3.Distance(b.Position,eye);if(d>IconRange)continue;
             l.Clear();Icons(b,s,l);if(l.Count==0)continue;
             float size=.32f+.012f*d;                                     // a little bigger far off, so they stay readable
-            var top=b.Position+Vector3.UnitY*(b.BoxSize.Y+.45f+size);
+            var top=b.Position+Vector3.UnitY*(b.BoxSize.Y+IconsAt+size);
             for(int i=0;i<l.Count&&i<5;i++) {
                 var p=top+right*((i-(Math.Min(l.Count,5)-1)*.5f)*size*2.1f);int k=(int)l[i];float u=k%4/4f,v=k/4/4f,q=1/4f;
                 var x=right*size;var y=up*size;

@@ -11,21 +11,23 @@ namespace Game;
 // Models: tools/build_part_models.py (plan confirmed by the user 2026-10-21; Blender files and checks in
 // E:/projects/md-item-models): low-poly in the vanilla items' style, 32 px pixel textures in Assets/Parts/parts.png (cell =
 // data), face shading baked into Assets/Parts/part<N>.bin; the energy core's band, the beacon's lamp and the Mk3 kit's
-// connector are emissive (they stay lit in the dark). The same model in slots, in the hand and on the ground.
+// connector are emissive (they stay lit in the dark). The same model in slots, in the hand and on the ground. The manual
+// (0.16.0) is a hardcover book of its own (part10.bin, round 2 confirmed 2026-10-31); the charge cell borrows the core's.
 public class MDPartBlock : Block {
-    public enum Kind { Scrap, Alloy, Chip, Core, Blueprint, Beacon, Kit1, Kit2, Kit3, Charge }   // 0.15.0: Charge (MDMedic)
-    public const int Count=10;
+    public enum Kind { Scrap, Alloy, Chip, Core, Blueprint, Beacon, Kit1, Kit2, Kit3, Charge, Manual }   // 0.15.0: Charge (MDMedic); 0.16.0: Manual (MDManualScreen)
+    public const int Count=11;
     static readonly (string name,string text,int stack)[] info=[
         ("机兵残骸",$"敌方机兵被击毁后留下的装甲碎片和零件。两块残骸加一个铁锭在熔炉里炼成一块合金板。手持右键炮塔可维修（每块 {MDTowerMaintenance.ScrapPoints:0} 点耐久）。",40),
         ("合金板",$"二阶、三阶炮塔和机甲的结构材料。熔炉：机兵残骸×2 + 铁锭。不打机兵也能在工作台用铁块、铁锭、铜锭硬做（贵 5 倍）。手持右键炮塔可维修（每块 {MDTowerMaintenance.AlloyPoints:0} 点耐久）。",40),
         ("火控芯片","三阶炮塔、机甲和诱敌信标要用的火控电路。精英机兵掉落较多，普通机兵偶尔掉。也能用半导体块、锗和铜锭在工作台做（贵 5 倍）。",40),
         ("能量核心","射线类、电荷类三阶炮塔，机甲和诱敌信标的能源。精英机兵偶尔掉，首领机甲必掉。也能用钻石和铜在工作台做（贵 5 倍）。",40),
         ("机甲设计图","合成机甲必需，合成时消耗：水星和复仇女神各一张，轩辕十四两张。只能从首领机甲身上得到：用诱敌信标把它们引出来。",4),
-        ("诱敌信标","右键放在地面上：信号会在 30 秒后引来一台首领机甲（从恶魔机甲和另外四种首领里随机来一台）。首领很强，先布好炮塔再放。白天、夜里都能用；同一时间只能有一台首领。",4),
+        ("诱敌信标","右键放在地面上：信号会在 30 秒后引来一台首领机甲（从恶魔机甲和另外四种首领里随机来一台）。首领很强，先布好炮塔再放。白天、夜里都能用；可以同时放几个，来几台首领。",4),
         ("武器改装件 Mk1","手持对着机甲右键安装：机甲全部武器伤害 ×1.15。改装件按级别依次安装（Mk1 → Mk2 → Mk3），收起机甲后仍保留。",8),
         ("武器改装件 Mk2","在已装 Mk1 的机甲上安装：全部武器伤害 ×1.3。",8),
         ("武器改装件 Mk3","在已装 Mk2 的机甲上安装：全部武器伤害 ×1.5。",8),
         ("医疗充能核心","首领机甲的特殊掉落（每台必掉 1～2 个）。手持右键医疗塔，把它的储能充满（储能上限在模组设置“医疗塔储能”里改）。",16),
+        ("机甲防线手册","右键打开：防御塔、伤害类型、元素反应、机甲、敌人、首领和防线核心的图文说明。木板 + 煤块合成；每个存档第一次进入时送一本。",1),
     ];
     public static int Value(Kind k)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDPartBlock>(),0,(int)k);
     public static Kind? Of(int value)=>Terrain.ExtractContents(value)==BlocksManager.GetBlockIndex<MDPartBlock>()&&Terrain.ExtractData(value) is int d&&d<Count?(Kind)d:null;
@@ -35,11 +37,11 @@ public class MDPartBlock : Block {
     public override string GetDisplayName(SubsystemTerrain t,int v)=>info[Data(v)].name;
     public override string GetDescription(int v)=>info[Data(v)].text;
     public override int GetMaxStacking(int v)=>info[Data(v)].stack;
-    public override string GetCategory(int v)=>(Kind)Data(v) is Kind.Beacon or Kind.Kit1 or Kind.Kit2 or Kind.Kit3?"Tools":"Items";
+    public override string GetCategory(int v)=>(Kind)Data(v) is Kind.Beacon or Kind.Kit1 or Kind.Kit2 or Kind.Kit3 or Kind.Manual?"Tools":"Items";
     public override IEnumerable<int> GetCreativeValues(){for(int i=0;i<Count;i++)yield return Terrain.MakeBlockValue(BlockIndex,0,i);}
-    public override bool IsUseable_(int value)=>(Kind)Data(value)==Kind.Beacon;   // right-click on the ground (MDDeployPatch -> MDBoss.PlaceBeacon)
+    public override bool IsUseable_(int value)=>(Kind)Data(value) is Kind.Beacon or Kind.Manual;   // the manual opens MDManualScreen   // right-click on the ground (MDDeployPatch -> MDBoss.PlaceBeacon)
     public override int GetTextureSlotCount(int value)=>4;
-    public override int GetFaceTextureSlot(int face,int value)=>(Kind)Data(value)==Kind.Charge?(int)Kind.Core:Data(value);
+    public override int GetFaceTextureSlot(int face,int value)=>(Kind)Data(value) switch{Kind.Charge=>(int)Kind.Core,var k=>(int)k};
     public override void GenerateTerrainVertices(BlockGeometryGenerator g,TerrainGeometry t,int v,int x,int y,int z){}
     // held like the vanilla iron ingot (first person 0.4, (0.5, -0.5, -0.6), 40 degrees; in hand 0.3, tilted 60 degrees);
     // the upright core and beacon stand upright in the hand like the battery

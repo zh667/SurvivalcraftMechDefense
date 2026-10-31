@@ -1,7 +1,9 @@
 """3D models of the progression items (MDPartBlock, Mod/MDParts.cs): scrap, alloy plate, fire-control chip, energy core,
-mech blueprint, decoy beacon, weapon kits Mk1-Mk3. Plan confirmed by the user on 2026-10-21: vanilla item style, low-poly
-geometry with 32 px pixel textures in one 128 px atlas, face shading baked, each model <= 300 triangles, built by script in
-Blender, scale checked against the vanilla iron ingot and battery. Project folder (blend, renders, checks):
+mech blueprint, decoy beacon, weapon kits Mk1-Mk3, and (0.16.0, item 10) the mech-defence manual. Plan confirmed by the user
+on 2026-10-21: vanilla item style, low-poly geometry with 32 px pixel textures in one 128 px atlas, face shading baked, each
+model <= 300 triangles, built by script in Blender, scale checked against the vanilla iron ingot and battery. The manual
+(round 2, confirmed 2026-10-31: a hardcover book, deep blue-grey cover with steel corner caps, <= 150 triangles) replaced the
+blueprint it borrowed. The medic charge cell (item 9) still wears the energy core's model, so it has no entry here. Project folder (blend, renders, checks):
 E:/projects/md-item-models.
 
 python tools/build_part_models.py [--review <dir>] [--blender <blender.exe>] [--selftest]
@@ -29,7 +31,7 @@ CELL, GRID, ATLAS = 32, 4, 128
 # alloy plate is exactly as long as an iron ingot and the energy core (1.28) a little taller than a battery.
 DRAW_SCALE = 8 / 3
 VANILLA = {'IronIngot': (0.8, 1.6, 0.4), 'Battery': (0.75, 0.75, 1.0)}   # drawn size in blocks: x, depth, height (Blender axes)
-NAMES = ['scrap', 'alloy', 'chip', 'core', 'blueprint', 'beacon', 'kit1', 'kit2', 'kit3']
+NAMES = {0: 'scrap', 1: 'alloy', 2: 'chip', 3: 'core', 4: 'blueprint', 5: 'beacon', 6: 'kit1', 7: 'kit2', 8: 'kit3', 10: 'manual'}   # item data -> name; 9 (charge) borrows 3
 
 # ----------------------------------------------------------------------------------------------- palette (sprites' colours)
 K = (26, 28, 33); M0, M1, M2, M3 = (62, 66, 74), (104, 110, 120), (156, 162, 172), (212, 216, 222)
@@ -38,6 +40,8 @@ C0, C1, C2 = (150, 84, 44), (196, 118, 66), (236, 168, 112)
 G0, G1, G2 = (18, 58, 34), (34, 104, 60), (60, 150, 86); AU, AU2 = (220, 176, 64), (246, 214, 120)
 RED, RED2 = (210, 44, 36), (255, 120, 100); E0, E1, E2 = (20, 110, 160), (80, 210, 250), (220, 250, 255)
 B0, B1, B2 = (22, 52, 110), (40, 86, 164), (186, 214, 255); W = (214, 232, 255); OR = (240, 140, 40)
+N0, N1, N2, N3 = (26, 33, 44), (40, 51, 66), (58, 73, 92), (86, 104, 126)      # the manual's deep blue-grey cover
+P0, P1, P2 = (234, 224, 196), (204, 190, 156), (168, 152, 118); RB0 = (140, 26, 24)   # its cream pages, the ribbon's shadow
 
 # ----------------------------------------------------------------------------------------------- tiles: (x, y, w, h) in the cell
 TILES = {
@@ -52,6 +56,12 @@ TILES = {
 for n in (6, 7, 8):
     TILES[n] = dict(bodySide=(0, 0, 20, 10), bodyTop=(0, 10, 20, 10), bodyEnd=(20, 0, 10, 10), barrel=(0, 20, 16, 6), muzzle=(16, 20, 8, 8),
                     mount=(24, 20, 8, 6), connector=(20, 10, 6, 6), under=(0, 26, 16, 6))
+# 10 manual: cover (front cover's top; badge and spine cover its middle and its left edge), back of the book, board edges,
+# page block sides, the spine (sides: u along the length; its flat top: v along it; the hazard band sits mid-length on both,
+# so the axes' signs do not matter), steel corner caps, the hexagonal badge, the ribbon
+TILES[10] = dict(coverTop=(0, 0, 18, 24), coverPlain=(18, 0, 8, 8), coverEdge=(18, 8, 8, 2), corner=(26, 0, 4, 4), cornerSide=(26, 4, 4, 2),
+                 ribbon=(26, 6, 4, 4), spineTop=(30, 0, 2, 22), badge=(18, 10, 12, 12), badgeSide=(18, 22, 8, 2), spineEnd=(26, 22, 4, 2),
+                 pages=(0, 24, 24, 4), spineSide=(0, 28, 24, 4))
 EMISSIVE = {(3, 'glow'), (5, 'lamp'), (8, 'connector')}
 
 
@@ -161,6 +171,24 @@ def models():
                 prism(.052, .045, (.2575, .025, 0), (0, 0, -90), n=8, tiles=dict(side='mount', top='muzzle', bottom='muzzle')),
                 slab((.09, .07, .10), (-.12, -.11, 0), tiles=dict(all='mount'), skip=('top',)),
                 slab((.07, .07, .012), (-.13, .0, .096), tiles=dict(front='connector', side='mount'), skip=('back',))]
+    # 10 manual: a hardcover book lying flat (0.34 wide x 0.07 thick x 0.44 long; drawn x8/3 about 0.9 x 0.2 x 1.2 blocks, the
+    # ingot is 1.6 long). Spine on the left (-X), its top towards -Z. Boards 12 mm overhang the page block by 12 mm on the three
+    # open sides; the rounded spine (octagon) stands 2 mm proud of the boards and wraps 3.7 cm over them like a cloth hinge;
+    # steel caps on the four fore-edge corners; a raised yellow badge on the front board; a red ribbon out of the bottom edge.
+    cov = dict(top='coverTop', bottom='coverPlain', side='coverEdge')
+    # (the boards start under the spine's flat top: further left their edge would poke out of its slanted face)
+    M[10] = [slab((.315, .012, .44), (.0125, -.029, 0), tiles=dict(cov, top='coverPlain', bottom='coverPlain')),   # back board
+             slab((.308, .048, .416), (.004, 0, 0), tiles=dict(all='pages'), skip=('top', 'bottom', 'left')),        # page block, 1 mm into each board
+             slab((.315, .012, .44), (.0125, .029, 0), tiles=cov),                                                    # front board
+             prism(.040, .436, (-.133, 0, 0), (90, 0, 0), n=8, tiles=dict(side='spineSide', top='spineEnd', bottom='spineEnd'))]
+    # the octagon's flat top and bottom faces (normal +-Y) take the narrow tile laid along the length
+    M[10][3] = [(q, 'spineTop' if tl == 'spineSide' and abs(face_normal(q)[1]) > .99 else tl, nm) for q, tl, nm in M[10][3]]
+    for y in (.029, -.029):
+        for z in (.2015, -.2015):
+            M[10].append(slab((.038, .016, .045), (.156, y, z), tiles=dict(top='corner', bottom='corner', side='cornerSide')))
+    M[10].append(prism(.058, .006, (.03, .036, -.03), n=6, tiles=dict(top='badge', side='badgeSide'), skip=('bottom',)))
+    rib = slab((.022, .003, .09), (0, 0, 0), (30, 0, 0), dict(all='ribbon'), skip=('back',))
+    M[10].append([([(x - .095, y - .001, z + .222) for x, y, z in q], tl, nm) for q, tl, nm in rib])
     return M
 
 
@@ -259,7 +287,7 @@ def _inside(p, tris, tol=1e-4):
 def check(item, tris, readback=None):
     """budget, winding, readback, floating / near gaps, coplanar overlapping faces of different parts"""
     r = dict(item=NAMES[item], triangles=len(tris))
-    r['budgetOk'] = len(tris) <= 300 and 3 * len(tris) < 65536
+    r['budgetOk'] = len(tris) <= (150 if item == 10 else 300) and 3 * len(tris) < 65536
     if readback is not None:
         V, I = readback; err = 0; flips = 0; uverr = 0; serr = 0
         for k, (_, ps, uv, s, em) in enumerate(tris):
@@ -414,6 +442,31 @@ def paint_atlas(path):
         x, y, w, h = T(n, 'mount'); R(x, y, w, h, M0); R(x, y, w, 1, M1)
         x, y, w, h = T(n, 'connector'); R(x, y, w, h, K); R(x + 1, y + 1, w - 2, h - 2, E1 if n == 8 else C1); P(x + 2, y + 2, E2 if n == 8 else C2)
         x, y, w, h = T(n, 'under'); R(x, y, w, h, M0)
+    # 10 manual. Front board: blue-grey cloth, an inset rule, a title block under the badge (the badge is its own part)
+    x, y, w, h = T(10, 'coverTop'); R(x, y, w, h, N2); frame(x, y, w, h, N3, N0)
+    d.rectangle([x + 3, y + 2, x + w - 3, y + h - 3], outline=N1)
+    for k in range(3, w - 1):   # a hazard band across the bottom (diagonal, like the spine's)
+        for r in range(3): P(x + k, y + h - 6 + r, Y1 if ((k + r) // 2) % 2 == 0 else K)
+    R(x + 6, y + 15, 9, 1, N3); R(x + 7, y + 17, 7, 1, N3); R(x + 6, y + 19, 5, 1, N1)
+    for px, py in ((5, 5), (13, 9), (9, 13), (14, 20)): P(x + px, y + py, N1)
+    x, y, w, h = T(10, 'coverPlain'); R(x, y, w, h, N1); frame(x, y, w, h, N2, N0)
+    x, y, w, h = T(10, 'coverEdge'); R(x, y, w, h, N0); R(x, y, w, 1, N1)
+    x, y, w, h = T(10, 'corner'); R(x, y, w, h, M2); R(x, y, w, 1, M3); R(x, y, 1, h, M3); P(x + 2, y + 2, M1); R(x + w - 1, y, 1, h, M1)
+    x, y, w, h = T(10, 'cornerSide'); R(x, y, w, h, M1); R(x, y, w, 1, M2)
+    x, y, w, h = T(10, 'ribbon'); R(x, y, w, h, RED); R(x + 1, y, 1, h, RED2); R(x, y + h - 1, w, 1, RB0)
+    x, y, w, h = T(10, 'badge'); R(x, y, w, h, Y1); frame(x, y, w, h, AU2, Y0)
+    # a turret seen from the side: base, body, barrel to the right, a sensor on top
+    R(x + 2, y + 9, 8, 1, K); R(x + 3, y + 8, 6, 1, K); R(x + 4, y + 5, 4, 3, K); R(x + 8, y + 6, 3, 1, K); R(x + 5, y + 4, 1, 1, K); P(x + 6, y + 6, Y0)
+    x, y, w, h = T(10, 'badgeSide'); R(x, y, w, h, Y0)
+    x, y, w, h = T(10, 'spineEnd'); R(x, y, w, h, N1)
+    x, y, w, h = T(10, 'pages'); R(x, y, w, h, P0); R(x, y + 1, w, 1, P1); R(x, y + 3, w, 1, P2)
+    # the spine: darker cloth, two gold rules near each end, a yellow and black hazard band in the middle
+    x, y, w, h = T(10, 'spineSide'); R(x, y, w, h, N1); R(x, y, w, 1, N2)
+    for k in (2, w - 3): R(x + k, y, 1, h, AU)
+    for k in range(9, 15): R(x + k, y, 1, h, Y1 if (k // 2) % 2 == 0 else K)
+    x, y, w, h = T(10, 'spineTop'); R(x, y, w, h, N1); R(x, y, 1, h, N2)
+    for k in (2, h - 3): R(x, y + k, w, 1, AU)
+    for k in range(8, 14): R(x, y + k, w, 1, Y1 if (k // 2) % 2 == 0 else K)
     im.save(path)
 
 
@@ -522,7 +575,7 @@ def _review(bpy, objs, review, report):
         shoot(ob, (1, -1, 1), 0.85, review / ('%d_%s_iso.png' % (n, NAMES[n])))
         shoot(ob, (0, -1, .35), 0.85, review / ('%d_%s_front.png' % (n, NAMES[n])))
     # overlays: our model and the vanilla one side by side, same scale (1 block = the frame's 1.6 width / 1.6)
-    pairs = [(1, 'vanilla_IronIngot'), (2, 'vanilla_IronIngot'), (3, 'vanilla_Battery'), (5, 'vanilla_Battery'), (0, 'vanilla_IronIngot'), (6, 'vanilla_IronIngot')]
+    pairs = [(1, 'vanilla_IronIngot'), (2, 'vanilla_IronIngot'), (3, 'vanilla_Battery'), (5, 'vanilla_Battery'), (0, 'vanilla_IronIngot'), (6, 'vanilla_IronIngot'), (10, 'vanilla_IronIngot')]
     for n, rname in pairs:
         r = next((o for o in refs if o.name == rname), None); ob = next(o for o in objs if o.name.startswith('item%d_' % n))
         if r is None: continue
@@ -555,7 +608,7 @@ def main():
         print(p.stdout[-4000:], p.stderr[-4000:]); sys.exit('blender step failed')
     rep = json.loads((out / '_report.json').read_text()); checks = {}
     M = models()
-    for item in range(len(NAMES)):
+    for item in NAMES:
         # the .bin exported from Blender against what the script meant (pure Python): positions, UVs, shade, winding
         expected, _ = triangles(item, M[item])
         checks[NAMES[item]] = check(item, expected, read_bin(out / ('part%d.bin' % item)))
@@ -564,7 +617,7 @@ def main():
     if review:
         Path(review, 'checks.json').write_text(json.dumps(result, ensure_ascii=False, indent=1))
         from PIL import Image, ImageDraw
-        shots = sorted(Path(review).glob('[0-9]_*.png')) + sorted(Path(review).glob('overlay_*.png'))
+        shots = sorted(Path(review).glob('[0-9]*_*.png'), key=lambda f: (int(f.stem.split('_')[0]), f.stem)) + sorted(Path(review).glob('overlay_*.png'))
         if shots:
             cols = 6; s = 240; sheet = Image.new('RGB', (cols * s, ((len(shots) + cols - 1) // cols) * s), (30, 30, 30)); dr = ImageDraw.Draw(sheet)
             for i, f in enumerate(shots):

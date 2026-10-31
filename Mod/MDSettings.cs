@@ -72,7 +72,8 @@ public static class MDSettings {
     // growth per stage in % (stages every 7 days from StartDay, at most MaxGrowthStages: MDGrowth); 0 = off
     public static bool Reactions=true;
     public static bool DamageNumbers=true;
-    public static float MedicCapacity=50000;   // 0.15.0: a medic tower's healing store in points, 0 = unlimited (MDMedic)
+    public static float MedicCapacity=50000;
+    public static int ThreatDifficulty=1; public static bool Endless;   // 0.16.0 threat raids at the defence core (MDThreat): 简单 / 普通 / 困难 / 噩梦, endless waves   // 0.15.0: a medic tower's healing store in points, 0 = unlimited (MDMedic)
     public const float MaxMedicCapacity=200000;   // 0.15.0: damage numbers over what the player's side hits (MDDamageNumbers.cs)
     public static int Growth=10;
     public static readonly int[] GrowthSteps=[0,5,10,15];
@@ -82,12 +83,12 @@ public static class MDSettings {
 
     public static void Defaults() {
         HudShow=HudKeys=true;Hud=new();MDMechKeys.Apply(MDMechKeys.Defaults());
-        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;AggroRange=16;BossKills=50;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;
+        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;AggroRange=16;BossKills=50;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;ThreatDifficulty=1;Endless=false;
     }
     public static void Normalize() {
         Hud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
         StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,75),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
-        AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);FxLevel=Math.Clamp(FxLevel,0,2);Growth=Math.Clamp(Growth,0,15);MedicCapacity=Math.Clamp(Finite(MedicCapacity,50000),0,MaxMedicCapacity);
+        AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);FxLevel=Math.Clamp(FxLevel,0,2);Growth=Math.Clamp(Growth,0,15);MedicCapacity=Math.Clamp(Finite(MedicCapacity,50000),0,MaxMedicCapacity);ThreatDifficulty=Math.Clamp(ThreatDifficulty,0,3);
         if(!Enum.IsDefined(SpawnTime))SpawnTime=MDSpawnTime.Night;
     }
     static float Finite(float v,float d)=>float.IsFinite(v)?v:d;
@@ -99,7 +100,7 @@ public static class MDSettings {
             new XAttribute("HudX",F(Hud.X)),new XAttribute("HudY",F(Hud.Y)),new XAttribute("HudScale",F(Hud.Scale)),new XAttribute("HudRotation",F(Hud.Rotation)),
             new XAttribute("SpawnTime",SpawnTime),new XAttribute("SpawnInterval",F(SpawnInterval)),new XAttribute("SpawnDensity",F(SpawnDensity)),
             new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize)),
-            new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),new XAttribute("FxLevel",FxLevel),new XAttribute("Reactions",Reactions),new XAttribute("DamageNumbers",DamageNumbers),new XAttribute("MedicCapacity",F(MedicCapacity)),new XAttribute("Growth",Growth),   // 0.12.0, 0.15.0
+            new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),new XAttribute("FxLevel",FxLevel),new XAttribute("Reactions",Reactions),new XAttribute("DamageNumbers",DamageNumbers),new XAttribute("MedicCapacity",F(MedicCapacity)),new XAttribute("ThreatDifficulty",ThreatDifficulty),new XAttribute("Endless",Endless),new XAttribute("Growth",Growth),   // 0.12.0, 0.15.0
             new XAttribute("MechKeys",MDMechKeys.ToText(MDMechKeys.Current()))));   // 0.11.0: the mech's bound keys (MDMechKeys)
     }
     // a missing or unreadable value keeps the default
@@ -112,7 +113,7 @@ public static class MDSettings {
             Hud=new MDHudPlacement{Custom=B("HudCustom",false),X=N("HudX",.85f),Y=N("HudY",.8f),Scale=N("HudScale",1),Rotation=N("HudRotation",0)};
             SpawnTime=Enum.TryParse<MDSpawnTime>((string)e.Attribute("SpawnTime"),out var st)?st:MDSpawnTime.Night;
             SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",75);RaidSize=N("RaidSize",1);
-            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",50));FxLevel=(int)MathF.Round(N("FxLevel",1));Reactions=B("Reactions",true);DamageNumbers=B("DamageNumbers",true);MedicCapacity=N("MedicCapacity",50000);Growth=(int)MathF.Round(N("Growth",10));
+            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",50));FxLevel=(int)MathF.Round(N("FxLevel",1));Reactions=B("Reactions",true);DamageNumbers=B("DamageNumbers",true);MedicCapacity=N("MedicCapacity",50000);ThreatDifficulty=(int)MathF.Round(N("ThreatDifficulty",1));Endless=B("Endless",false);Growth=(int)MathF.Round(N("Growth",10));
             MDMechKeys.Apply(MDMechKeys.FromText((string)e.Attribute("MechKeys")));
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}

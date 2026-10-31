@@ -35,7 +35,7 @@ public partial class Lab {
             int d=Terrain.ExtractData(r.ResultValue);
             if(tier2.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:1")!=3)bad.Add($"tier 2 tower {d}: not 3 alloy plates");
             if(tier3.Contains(d)&&r.Ingredients.Count(s=>s=="mdpart:2")!=2)bad.Add($"tier 3 tower {d}: not 2 chips");
-            if(!tier2.Contains(d)&&!tier3.Contains(d)&&MDMechType.ByData(d)==null&&r.Ingredients.Any(s=>s?.StartsWith("mdpart")==true))bad.Add($"tier 1 tower {d} uses a progression item");
+            if(!tier2.Contains(d)&&!tier3.Contains(d)&&MDMechType.ByData(d)==null&&MDTowerLibrary.ByData(d)?.attack.type!="core"&&r.Ingredients.Any(s=>s?.StartsWith("mdpart")==true))bad.Add($"tier 1 tower {d} uses a progression item");   // 0.16.0: the defence core is no tier
             // 0.12.0: every tier-2 / tier-3 tower is made from the lower tower of its kind, except 射线塔 14 and 医疗塔 19
             if(tier2.Contains(d)||tier3.Contains(d)) {
                 var from=r.Ingredients.Where(s=>s?.StartsWith("mddeploy:")==true).ToList();
@@ -55,7 +55,7 @@ public partial class Lab {
             var below=CraftingRecipesManager.FindMatchingRecipe(terrain,Grid(hr),0,level-1);
             if(hr.RequiredPlayerLevel!=level||below==hr||!hr.Ingredients.Contains(from)||hr.Ingredients.Count(s=>s=="mdpart:4")!=prints)bad.Add($"hero {data}: level {hr.RequiredPlayerLevel}, below {(below==hr?"craftable":below?.Message)}");
         }
-        int expect=towers.Count+MDMechType.All.Length+8;
+        int expect=towers.Count+MDMechType.All.Length+9;   // + the parts: plate, chip, core x2, beacon, kits x3; 0.16.0 the handbook
         if(mine.Count!=expect)bad.Add($"{mine.Count} recipes, want {expect}");
         if(bad.Count>0)throw new Exception("recipes: "+string.Join("; ",bad));
         return new{count=mine.Count,mercuryAtLevel7=at7?.Message,rec};
@@ -90,7 +90,7 @@ public partial class Lab {
             // 3D item models (tools/build_part_models.py): on the ground by day and by night (the core band, beacon lamp and Mk3
             // connector glow), every item in the first-person hand, a few in third person, the hotbar with GUI (slot icons)
             var pick=proj.FindSubsystem<SubsystemPickables>(true);var gi=proj.FindSubsystem<SubsystemGameInfo>(true);
-            for(int i=0;i<MDPartBlock.Count;i++)pick.AddPickable(Terrain.MakeBlockValue(block.BlockIndex,0,i),1,Home+new Vector3(i*.9f-3.6f,.2f,-3),Vector3.Zero,null);
+            for(int i=0;i<MDPartBlock.Count;i++)pick.AddPickable(Terrain.MakeBlockValue(block.BlockIndex,0,i),1,Home+new Vector3(i*.8f-4f,.2f,-3),Vector3.Zero,null);
             while(Wait(1.5))yield return true;
             foreach(var x in Hold(Home+new Vector3(0,2.4f,-.2f),Home+new Vector3(0,0,-3)))yield return x;Shot("ri_ground");yield return true;
             foreach(var x in Hold(Home+new Vector3(-1.5f,1.2f,-1.2f),Home+new Vector3(.5f,0,-3)))yield return x;Shot("ri_ground_low");yield return true;
@@ -107,10 +107,10 @@ public partial class Lab {
                 foreach(var x in During(1.2,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_hand_vanilla_{name}.png");yield return true;
             }
             pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<TppCamera>();
-            foreach(int i in new[]{1,3,5}){inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,i),1);foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_third_{i}.png");yield return true;}
+            foreach(int i in new[]{1,3,5,10}){inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,Terrain.MakeBlockValue(block.BlockIndex,0,i),1);foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,$"ri_third_{i}.png");yield return true;}
             pl.GameWidget.ActiveCamera=pl.GameWidget.FindCamera<FppCamera>();inv.RemoveSlotItems(0,inv.GetSlotCount(0));
             SettingsManager.ShowGuiInScreenshots=true;var cinv=pl.Entity.FindComponent<ComponentCreativeInventory>(true);
-            var pages=new[]{block.GetCreativeValues().ToList(),((MDSummonBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDSummonBlock>()]).GetCreativeValues().Take(9).ToList()};
+            var pages=new[]{block.GetCreativeValues().Take(9).ToList(),block.GetCreativeValues().Skip(9).ToList(),((MDSummonBlock)BlocksManager.Blocks[BlocksManager.GetBlockIndex<MDSummonBlock>()]).GetCreativeValues().Take(9).ToList()};
             for(int page=0;page<pages.Length;page++) {
                 for(int i=0;i<9;i++){cinv.RemoveSlotItems(i,cinv.GetSlotCount(i));if(i<pages[page].Count)cinv.AddSlotItems(i,pages[page][i],1);}
                 foreach(var x in Hold(Home+new Vector3(-8,7,-12),Home+new Vector3(3,1,-1)))yield return x;Shot($"ri_hotbar_{page}");yield return true;
@@ -407,6 +407,7 @@ public partial class Lab {
             var tierPages=ours.Where(t=>t.Name.Contains("Tier")).ToList();var problems=new List<string>();
             var paragraphs=tierPages.SelectMany(t=>t.Text.Split("\n\n")).ToList();
             foreach(var d in MDTowerLibrary.All) {
+                if(d.attack.type=="core")continue;   // 0.16.0: the defence core is in the handbook, not on a tier page
                 var mine=paragraphs.Where(x=>x.StartsWith(d.name+"：")).ToList();
                 if(mine.Count!=1)problems.Add($"{d.id} in {mine.Count} paragraphs");
                 else if(!mine[0].Contains($"血量 {d.hp:0}，")||!mine[0].Contains($"射程 {d.attack.range:0.#} 格")||!mine[0].Contains($"占地 {d.cells[0]}×{d.cells[2]} 格")||!(mine[0].Contains("合成：")||mine[0].Contains("升级，另加："))||mine[0].Contains("没有配方"))

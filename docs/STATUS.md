@@ -1,4 +1,4 @@
-# Status — 2026-10-30
+# Status — 2026-10-31
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
@@ -6,7 +6,40 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.15.1: medic charge cell fix (branch fix/medic-charge-0151, 2026-10-30; not merged yet)
+## 0.16.0: defence core and threat raids, boss poise, the handbook, element balance (branch feat/threat-core-016 on top of 0.15.1, 2026-10-31; not merged yet)
+
+The user's answers of 10-30 evening and follow-ups; design, numbers and what of the earlier breakdown is still not done:
+docs/tasks/2026-10-31-threat-core-0.16.md.
+- Balance (bench-mix, same mixed tower set, reactions on / off): a 12-robot wave 18 / 19.8 s, the devil mech 62 / 68 % left after
+  120 s, RD08 39 / 67 %, RD21 86 / 85 s: reactions were not what made robots easy, so ordinary robots and boss armour get +20 %
+  (RD05 1200, RD06 2900, RD07 3400, RD14 2400, RD09 720, EN02 2640, RP09 960; boss armour 36000 base, 3600 per tier).
+  Reactions hit bosses at 70 % (the max-health part halved).
+- Boss poise (Mod/MDBoss.cs): reactions, control hits, heavy shots and the mech cannon fill a poise bar; full = 4 s stagger and
+  8 s of x 1.5 damage, then locked 30 s. After the user's "失衡值掉的太快了": towers add at most 4 a second, the mech counts in
+  full, each break raises the next threshold x 1.5, decay 8/s after 2 s. Bars over each boss within 72 m (plate, health, poise
+  with 失衡 / 失衡冷却) and in the Neorxna panel.
+- Overhead layout: element icons, damage numbers, reaction names and boss bars sit at fixed heights and no longer overlap.
+- Defence core (Mod/MDThreat.cs, tower defense_core, data 59, recipe iai/cxc/iai; the radar III's model for now): one live per
+  world, a new one puts the old out; robots destroyed within 120 m raise threat (elites 3); full (30 / difficulty) starts a raid:
+  30 s countdown, 3-6 waves 40 s apart, each countdown names the next wave, every second raid ends with a boss; endless mode;
+  mod settings 防线难度 (简单 / 普通 / 困难 / 噩梦) and 无尽模式. Night raids and the boss by kills stay (their own settings).
+- The handbook 机甲防线手册 (Mod/MDManual.cs): crafted from planks and coal, one given per player on a world's first load; chapters
+  towers (damage-type icons, range, DPS), damage and status, reactions, mechs, enemies, bosses, the core. Its own model: a
+  hardcover book (tools/build_part_models.py item 10, 132 triangles; E:/projects/md-item-models V2).
+- The user's first play (10-31): "boss被击败好像不会增加威胁度" -> a boss destroyed near the core adds 10; "威胁度满30了但是没效果"
+  -> the raid was skipped in Creative (the wild-spawn rule) while threat still rose: raids now run in every mode but Harmless
+  (Harmless: no threat, said on the core); the core test had switched the world to Survival and missed it, it now runs in the
+  lab's Creative world. "可以取消同一个地方只能出现一个boss的限制" -> beacons, Creative summons, the boss by kills and raids no
+  longer wait for a boss to be gone; several beacons count down at once. A raid's last wave now waits for its boss, and the boss
+  named by the countdown is the one that comes (it was redrawn when it set off).
+- Lab: a result that does not serialize still writes lab-result.json (Lab.Save).
+- Package dist/MechDefense-0.16.0.scmod, 35,575,189 bytes, SHA-256 c9edd3631351b4f23a0b5b91906d9704db0ef0e588a29fccf39c11525590acf4.
+  Verified (PC, isolated runtime): before the play feedback, the full set on both APIs (r16: all, bosses14, enemies14, phone,
+  robots, combat15 on 1.9.3.1 and 1.9.4; combat, fb13, icons, special, mech-view on 1.9.3.1; faction-mods, bench-rules on
+  1.9.4: 19 passed); after it, combat15 (both), robots (both), bosses14 (both). The handbook model seen in game on both APIs
+  (hand, ground, night, hotbar). Not verified: a phone; bench-mix with the +20 % health not rerun.
+
+## 0.15.1: medic charge cell fix (branch fix/medic-charge-0151, PR #15, 2026-10-30; not merged yet)
 
 User: "现在医疗塔好像不能用那个核心充能（提示只能用于机甲）". The weapon-kit handler took every part from Mk1 on as a kit, and the charge
 cell comes after the kits, so it answered "武器改装件只能装在机甲上". It now takes only Mk1-Mk3. The right-click chain is MDModLoader.Interact;

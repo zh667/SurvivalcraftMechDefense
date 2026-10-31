@@ -41,7 +41,7 @@ public static class MDRewards {
     }
     // a robot just destroyed (ComponentMDRobot.Update, once)
     public static void Killed(ComponentMDRobot r) {
-        var p=r.Project;var at=MDCombat.Center(r.Body);var k=r.Kind;var notes=new List<string>();
+        var p=r.Project;var at=MDCombat.Center(r.Body);var k=r.Kind;var notes=new List<string>();MDThreat.Killed(r);   // 0.16.0 threat at the core
         bool played=r.DamageShare>0&&r.PlayerDamageShare/r.DamageShare>=PlayerShare;
         if(played) {   // half the scrap and experience of its loot again
             var (scrap,xp)=k.Boss?(5,18):k.Elite?(3,3):k.Id=="RD14"?(3,2):k.Fly>0?(1,1):(2,1);
@@ -60,12 +60,13 @@ public static class MDRewards {
         if(notes.Count>0){if(Log.Count>=100)Log.RemoveAt(0);Log.Add($"{k.Id}: "+string.Join(", ",notes));}
     }
     // a boss armour layer broken (MDBossState.Break)
-    public static void LayerBroken(ComponentMDRobot r){Drop(r.Project,MDCombat.Center(r.Body),Value(0),3+(int)MDRobots.R(0,2.99f));if(Log.Count<100)Log.Add($"{r.Kind.Id}: layer broken");}
+    static void Note(string s){if(Log.Count>=100)Log.RemoveAt(0);Log.Add(s);}   // the newest 100 (tests)
+    public static void LayerBroken(ComponentMDRobot r){Drop(r.Project,MDCombat.Center(r.Body),Value(0),3+(int)MDRobots.R(0,2.99f));Note($"{r.Kind.Id}: layer broken");}
     // a night raid with most of it destroyed (MDRaids)
     public static void RaidBeaten(Project p,Vector3 at,int size) {
         Drop(p,at,Value(0),size);Drop(p,at,Terrain.MakeBlockValue(Xp),size*2);
         MDBoss.Announce(p,at,$"夜袭已击退！炮塔旁掉落了 {size} 个机兵残骸和经验。",new Color(160,255,160));
-        if(Log.Count<100)Log.Add($"raid beaten: {size}");
+        Note($"raid beaten: {size}");
     }
     public static void Load(System.Xml.Linq.XElement project){Defeated.Clear();foreach(var id in ((string)project?.Attribute(DefeatedAttribute)??"").Split(',',StringSplitOptions.RemoveEmptyEntries))Defeated.Add(id);}
     public static void Save(System.Xml.Linq.XElement project){if(project!=null)project.SetAttributeValue(DefeatedAttribute,string.Join(",",Defeated));}

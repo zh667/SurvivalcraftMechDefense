@@ -25,7 +25,13 @@ public partial class Lab:ModLoader {
     public override IEnumerable<KeyValuePair<string,object>> GetKeyboardMappings(){yield return new("NUIConsle",(Engine.Input.Key)(-1));}
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
     static void Log(string s){log.Add($"{Time.RealTime-began:F1}s {s}");}
-    static void Save(bool passed,string error=null){results["passed"]=passed;results["camlog"]=camlog;results["modelError"]=ComponentMDTowerModel.LastError;results["drawErrors"]=DrawProbe.Errors;results["log"]=log;if(error!=null)results["error"]=error;File.WriteAllText(Out,JsonSerializer.Serialize(results,new JsonSerializerOptions{WriteIndented=true}));}
+    static void Save(bool passed,string error=null){results["passed"]=passed;results["camlog"]=camlog;results["modelError"]=ComponentMDTowerModel.LastError;results["drawErrors"]=DrawProbe.Errors;results["log"]=log;if(error!=null)results["error"]=error;
+        // NaN / infinity allowed; anything else that does not serialize still leaves a result (bosses14 once quit with none)
+        var o=new JsonSerializerOptions{WriteIndented=true,NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals};
+        try{File.WriteAllText(Out,JsonSerializer.Serialize(results,o));}
+        catch(Exception e){var flat=results.ToDictionary(kv=>kv.Key,kv=>kv.Value is string or bool or int?kv.Value:(object)$"{kv.Value}");flat["passed"]=false;flat["saveError"]=e.ToString();
+            try{File.WriteAllText(Out,JsonSerializer.Serialize(flat,o));}catch(Exception e2){File.WriteAllText(Out,JsonSerializer.Serialize(new Dictionary<string,object>{["passed"]=false,["saveError"]=e2.ToString()}));}}
+    }
     static Vector3 lastEye,lastFocus;
     static FixedCamera Cam(Vector3 eye,Vector3 focus) {
         lastEye=eye;lastFocus=focus;var p=player.ComponentPlayer;var c=p.GameWidget.FindCamera<FixedCamera>();p.GameWidget.ActiveCamera=c;

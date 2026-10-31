@@ -673,7 +673,7 @@ def spec_parent(spec, name):
 
 def runtime_entry(spec, meta):
     """Design fields from tools/towers.json + generated geometry -> one Assets/Towers/towers.json record."""
-    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim', 'poly', 'polyOnly', 'pitchCap')}
+    d = {k: v for k, v in spec.items() if k not in ('source', 'version', 'tools', 'subparts', 'minCells', 'reassign', 'trim', 'poly', 'polyOnly', 'pitchCap', 'modelOf')}
     d.update(nodes=meta['nodes'], muzzles=[{k: m[k] for k in ('name', 'part', 'local')} for m in meta['muzzles']],
              bounds=meta['bounds'], radius=meta['radius'], cells=meta['cells'])
     if 'pitch' in meta['clearance']:
@@ -686,13 +686,13 @@ def runtime_entry(spec, meta):
     return d
 
 def main(ids):
-    towers = [t for t in SPEC['towers'] if not ids or t['id'] in ids]
+    towers = [t for t in SPEC['towers'] if (not ids or t['id'] in ids) and not t.get('modelOf')]   # modelOf: copied below
     metas = {}
     old = OUT / 'towers.generated.json'
     if old.exists(): metas = {m['id']: m for m in json.loads(old.read_text(encoding='utf-8'))['towers']}
     for spec in SPEC['towers']:                    # per-tower metadata from earlier subset builds, if it matches the source now
         p = META / f"{spec['id']}.json"
-        if not p.exists() or spec.get('polyOnly'): continue
+        if not p.exists() or spec.get('polyOnly') or spec.get('modelOf'): continue
         m = json.loads(p.read_text(encoding='utf-8')); src = AUTHOR / spec['source']
         geo = src / f"{spec['id']}_{spec['version']}.geo.json"; png = src / f"{spec['id']}_{spec['version']}.png"
         poly_ok = not spec.get('poly') and 'poly' not in m['source'] or spec.get('poly') and m['source'].get('poly', {}).get('glbSha256') == sha(AUTHOR / spec['poly'] / 'model.glb') \
@@ -704,6 +704,12 @@ def main(ids):
     for spec in SPEC['towers']:                    # polygon-only towers are rebuilt every time (no cube build to cache)
         if spec.get('polyOnly') and spec['id'] not in built: metas[spec['id']] = build_poly_only(spec)
     OUT.mkdir(parents=True, exist_ok=True)
+    for spec in SPEC['towers']:                    # 0.16.0: a kind that wears another tower's model and geometry (the defence core)
+        if spec.get('modelOf') in metas:
+            m = json.loads(json.dumps(metas[spec['modelOf']])); m['id'] = spec['id']; metas[spec['id']] = m
+            (OUT / spec['id']).mkdir(parents=True, exist_ok=True)
+            for f in ('model.glb', 'atlas.png', 'icon.bin', 'icon.png'):
+                if (OUT / spec['modelOf'] / f).exists(): shutil.copy2(OUT / spec['modelOf'] / f, OUT / spec['id'] / f)
     order = [t['id'] for t in SPEC['towers'] if t['id'] in metas]
     old.write_text(json.dumps(dict(towers=[metas[i] for i in order]), ensure_ascii=False, indent=1), encoding='utf-8')
     runtime = [runtime_entry(t, metas[t['id']]) for t in SPEC['towers'] if t['id'] in metas]

@@ -202,7 +202,7 @@ public sealed class MDSettingsScreen:Screen {
         if(MDMechKeys.Holder(WorkingKeys,a,k) is {} other){status.Text=$"「{MDMechKeys.KeyName(k)}」已用于「{MDMechKeys.ActionName(other)}」，换一个键，或先改那个动作。";return false;}
         if(k!=Key.Null&&MDMechKeys.GameKey("ToggleMount")==k){status.Text=$"「{MDMechKeys.KeyName(k)}」是游戏的骑乘键，已经用来上下机甲，换一个键。";return false;}
         WorkingKeys[a]=k;Capturing=null;var shared=MDMechKeys.SharedWith(k);
-        status.Text=$"「{MDMechKeys.ActionName(a)}」改为 {MDMechKeys.KeyName(k)}（保存后生效）。"+(shared.Length>0?$"这个键在游戏里也是「{shared}」，驾驶机甲时只做机甲动作。":"");return true;
+        status.Text=$"「{MDMechKeys.ActionName(a)}」改为 {MDMechKeys.KeyName(k)}（保存后生效）。"+(shared.Length>0?$"这个键在游戏或其他模组里也是「{shared}」，驾驶机甲时只做机甲动作。":"");return true;
     }
     void Close()=>ScreensManager.SwitchScreen(back??ScreensManager.FindScreen<Screen>("ModSettings")??ScreensManager.FindScreen<Screen>("MainMenu"));
     public override void Update() {

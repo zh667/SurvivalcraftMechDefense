@@ -6,6 +6,29 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
+## 0.16.2: parts follow a stack-size mod; mech keys no longer reach other readers (branch fix/stacking-0162, PR pending)
+
+- User (10-31): "那些配件最高只能40个堆叠，不能和铃兰适配自己改变 ，希望配件能和玲兰辅助设置的堆叠一致". Stack-size mods set each
+  block's MaxStacking when a world loads (the vanilla rule, inventories ask GetMaxStacking(value)); MDPartBlock overrode
+  GetMaxStacking with fixed per-kind sizes, so the raised value never reached the parts. Now the kinds above 4 (scrap, alloy,
+  chip, core 40; kits 8; charge cell 16) return max(own, MaxStacking); the blueprint and the beacon (4) and the handbook (1) keep
+  theirs, as that mod's 普通堆叠 tier covers blocks above 4 only (Mod/MDParts.cs). Tower deploy items never overrode it.
+- Lab: stacking (Tests/TowerLab/Stack16.cs): default sizes, MaxStacking raised to 99 / 999 / 10,000,000, restored.
+- User (10-31): "切换机甲的弹药类型（X键）会触发原版游戏的操作" (it opened the recipe book). Vanilla binds nothing to X in 1.9.3.1 or
+  1.9.4; RecipaediaEX registers the mapping "Recipaedia" = X and polls Keyboard.IsKeyDownOnce in its GuiUpdate hook, which the
+  PlayerInput clearing (MDMechKeys.Suppress) cannot reach. Now a key the mech used is taken off the keyboard's pressed-once flags for
+  the rest of the frame (MDMechKeys.Consume, after ComponentInput, before ComponentGui and the Default-order components), also the
+  mount key when it boards or leaves. Key audit of the same change: the middle button no longer picks a block while driving
+  (PickBlockType), a mech action on a number key no longer also selects a hotbar slot, and the settings page names other mods'
+  mappings on a key (ModSettingsManager.ModKeyboardMapSettings) next to the game's. Of the user's other mods, BF2042 TOR's
+  "模式" is also X (its vehicle only). Readers that run before ComponentInput in a frame would still see a press.
+- Lab: mech, "keys after the mech" (Tests/TowerLab/Keys16.cs watches ComponentGui's update, with a mapping on X registered as a
+  mod's): while driving X x2, B, V x2, F, 3 bound to melee, R leaving: nothing seen there; on foot the same X is seen once from
+  the keyboard and once by the mapping (the control).
+- Package dist/MechDefense-0.16.2.scmod, 35,576,506 bytes, SHA-256 7d67864ab91f21cff20044fcebd1d99d4b163ac2e990b9d6f0c25191d77c8fb0.
+  Verified (PC, isolated runtime): stacking and mech on 1.9.3.1 and 1.9.4, all on 1.9.3.1 (and all on 1.9.4 with the stacking
+  change alone). Not verified: the user's game with the helper mod and RecipaediaEX installed; a phone.
+
 ## Delivered: 0.16.1: damage numbers for this mod's damage only (PR #17, merged 2026-10-31 on the user's approval, tag v0.16.1)
 
 - User (10-31): "那个伤害数字显示，只是我们的模组物品有这个就可以，现在用别的模组或者原版物品造成伤害，都有这个伤害显示".

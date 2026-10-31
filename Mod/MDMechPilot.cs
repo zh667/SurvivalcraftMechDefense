@@ -59,6 +59,8 @@ public static class MDMechPilot {
         p.ComponentRider.m_isAnimating=false;p.ComponentBody.ParentBody=null;p.ComponentBody.Position=destination.Value;p.ComponentBody.Velocity=Vector3.Zero;
         p.GameWidget.ActiveCamera=p.GameWidget.FindCamera<FppCamera>();Idle(u.Mech);RemoveHud(u);return true;
     }
+    // boarding or leaving took the mount key (or the extra board key) for the rest of the frame (MDMechKeys.Consume)
+    static void Consumed(WidgetInput gi){MDMechKeys.Consume(MDMechKeys.GameKey("ToggleMount"));MDMechKeys.ConsumePressed(gi,MDMechAction.Board);}
     public static void Idle(MDMechState m){m.Move=Vector2.Zero;m.Hover=m.Trigger=false;m.AimPoint=null;}
     static ComponentMDUnit Nearest(ComponentPlayer p) {
         var near=new DynamicArray<ComponentBody>();p.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.ComponentBody.Position.X,p.ComponentBody.Position.Z),5,near);
@@ -69,8 +71,8 @@ public static class MDMechPilot {
         var u=Mounted(p);var gi=p.GameWidget.Input;ref var v=ref p.ComponentInput.m_playerInput;
         bool blocked=p.ComponentHealth.Health<=0||DialogsManager.HasDialogs(p.GuiWidget)||p.ComponentGui.ModalPanelWidget!=null;
         if((v.ToggleMount||MDMechKeys.Pressed(gi,MDMechAction.Board))&&!blocked) {   // the game's mount key, or the mech's own extra key
-            if(u!=null){Exit(p,u);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);}
-            else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found){Board(p,found);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);}
+            if(u!=null){Exit(p,u);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);Consumed(gi);}
+            else if(p.ComponentRider.Mount==null&&Nearest(p) is {} found){Board(p,found);v.ToggleMount=false;MDMechKeys.Suppress(gi,ref v,MDMechAction.Board);Consumed(gi);}
         }
         u=Mounted(p);if(u==null||ExternalControls)return;var m=u.Mech;var input=v;
         if(blocked)Idle(m);
@@ -86,8 +88,9 @@ public static class MDMechPilot {
             if(MDMechKeys.Pressed(gi,MDMechAction.View))p.GameWidget.ActiveCamera=p.GameWidget.ActiveCamera is FppCamera?p.GameWidget.FindCamera<TppCamera>():p.GameWidget.FindCamera<FppCamera>();
             m.AimPoint=AimPoint(p,u);
             MDMechKeys.Suppress(gi,ref v,MDMechKeys.All);   // a mech key does only the mech's action (not also the game's on that key)
+            MDMechKeys.ConsumePressed(gi,MDMechKeys.All);   // nor another mod's that reads the keyboard later in the frame
         }
-        v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
+        v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=v.PickBlockType=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
     }
     // The crosshair's point: the camera ray, past the mech itself, against terrain and other bodies.
     static Vector3 AimPoint(ComponentPlayer p,ComponentMDUnit u) {

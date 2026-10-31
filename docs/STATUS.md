@@ -6,7 +6,7 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.16.0: defence core and threat raids, boss poise, the handbook, element balance (branch feat/threat-core-016 on top of 0.15.1, 2026-10-31; not merged yet)
+## Delivered: 0.16.0: defence core and threat raids, boss poise, the handbook, element balance (PR #16, merged 2026-10-31 on the user's approval, tag v0.16.0)
 
 The user's answers of 10-30 evening and follow-ups; design, numbers and what of the earlier breakdown is still not done:
 docs/tasks/2026-10-31-threat-core-0.16.md.
@@ -50,7 +50,7 @@ docs/tasks/2026-10-31-threat-core-0.16.md.
   (hand, ground, night, hotbar). After the NaN-aim fix: aimnan (both), all (both), combat (1.9.3.1), combat15 (1.9.4)
   passed, none of them logged a skipped creature or a reset aim. Not verified: the creature behind it in the user's world; a phone; bench-mix with the +20 % health not rerun.
 
-## 0.15.1: medic charge cell fix (branch fix/medic-charge-0151, PR #15, 2026-10-30; not merged yet)
+## Delivered: 0.15.1: medic charge cell fix (PR #15, merged 2026-10-31 on the user's approval, tag v0.15.1)
 
 User: "现在医疗塔好像不能用那个核心充能（提示只能用于机甲）". The weapon-kit handler took every part from Mk1 on as a kit, and the charge
 cell comes after the kits, so it answered "武器改装件只能装在机甲上". It now takes only Mk1-Mk3. The right-click chain is MDModLoader.Interact;

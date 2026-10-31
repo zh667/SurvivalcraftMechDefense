@@ -6,7 +6,7 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.16.2: parts follow a stack-size mod; mech keys no longer reach other readers (branch fix/stacking-0162, PR pending)
+## Delivered: 0.16.2: parts follow a stack-size mod; mech keys no longer reach other readers (PR #18, merged 2026-10-31 on the user's approval, tag v0.16.2)
 
 - User (10-31): "那些配件最高只能40个堆叠，不能和铃兰适配自己改变 ，希望配件能和玲兰辅助设置的堆叠一致". Stack-size mods set each
   block's MaxStacking when a world loads (the vanilla rule, inventories ask GetMaxStacking(value)); MDPartBlock overrode

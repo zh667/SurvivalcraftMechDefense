@@ -6,7 +6,7 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
-## 0.16.1: damage numbers for this mod's damage only (branch fix/damage-numbers-ours-0161, 2026-10-31; not merged yet)
+## Delivered: 0.16.1: damage numbers for this mod's damage only (PR #17, merged 2026-10-31 on the user's approval, tag v0.16.1)
 
 - User (10-31): "那个伤害数字显示，只是我们的模组物品有这个就可以，现在用别的模组或者原版物品造成伤害，都有这个伤害显示".
   Numbers were shown for every hit by a tower, a mech or a player, so a player's vanilla sword or another mod's gun showed them

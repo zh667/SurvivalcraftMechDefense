@@ -6,6 +6,16 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
+## 0.16.1: damage numbers for this mod's damage only (branch fix/damage-numbers-ours-0161, 2026-10-31; not merged yet)
+
+- User (10-31): "那个伤害数字显示，只是我们的模组物品有这个就可以，现在用别的模组或者原版物品造成伤害，都有这个伤害显示".
+  Numbers were shown for every hit by a tower, a mech or a player, so a player's vanilla sword or another mod's gun showed them
+  too. Now only hits whose attacker is a tower or a mech of this mod (Mod/MDDamageNumbers.cs); the handbook text says so.
+- Lab: combat15 numbers part adds a player's projectile hit (no number) and then a tower's (one number).
+- Package dist/MechDefense-0.16.1.scmod, 35,575,704 bytes, SHA-256 774a2b2d8ed10b7c8548db38f730b5324eff8684e2bd801449a3f6f638caaf0d.
+  Verified (PC, isolated runtime): combat15 on 1.9.3.1 and 1.9.4 (a player's hit 0 numbers, a tower's 1), all on 1.9.3.1.
+  Not verified: a phone.
+
 ## Delivered: 0.16.0: defence core and threat raids, boss poise, the handbook, element balance (PR #16, merged 2026-10-31 on the user's approval, tag v0.16.0)
 
 The user's answers of 10-30 evening and follow-ups; design, numbers and what of the earlier breakdown is still not done:

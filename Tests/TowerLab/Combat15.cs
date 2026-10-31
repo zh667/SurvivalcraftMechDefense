@@ -237,6 +237,11 @@ public partial class Lab {
             Kill();while(Wait(.4))yield return true;
             MDSettings.DamageNumbers=false;var q=Cluster(Home+new Vector3(0,0,-6));while(Wait(.4))yield return true;int s2=MDTowerWorld.NumbersShown;Deal("kinetic",q[0],100);
             foreach(var x in During(.6,()=>{}))yield return x;int off=MDTowerWorld.NumbersShown-s2;MDSettings.DamageNumbers=true;Kill();while(Wait(.4))yield return true;
+            // 0.16.1 (user, 10-31): numbers for this mod's damage only; a player's hit (vanilla or another mod's weapon) shows none
+            var o=Cluster(Home+new Vector3(0,0,-6));while(Wait(.4))yield return true;int s3=MDTowerWorld.NumbersShown;
+            ComponentMiner.AttackBody(new ProjectileAttackment(o[0].Entity,pl.Entity,MDCombat.Center(o[0].Body),Vector3.UnitZ,100,null));
+            foreach(var x in During(.6,()=>{}))yield return x;int byPlayer=MDTowerWorld.NumbersShown-s3;Deal("kinetic",o[0],100);
+            foreach(var x in During(.6,()=>{}))yield return x;int byTower=MDTowerWorld.NumbersShown-s3-byPlayer;Kill();while(Wait(.4))yield return true;
             var wolf=Dummy(Home+new Vector3(4,0,-6));wolf.C.ComponentHealth.AttackResilience=1e4f;while(Wait(.6))yield return true;
             // the engine applies a hit's impulse on the body's next update: the fastest sideways speed over 0.3 s after the hit
             float gun=0,sniper=0;
@@ -246,9 +251,9 @@ public partial class Lab {
                 if(el=="kinetic")gun=top;else sniper=top;
             }
             Remove([wolf]);
-            nm["numbers"]=$"10 hits on one: {one} number ({merged} merged); 30 targets: {alive} shown at once (cap {cap}), {MDTowerWorld.NumbersShown-s1} made; setting off: {off}";
+            nm["numbers"]=$"10 hits on one: {one} number ({merged} merged); 30 targets: {alive} shown at once (cap {cap}), {MDTowerWorld.NumbersShown-s1} made; setting off: {off}; a player's hit: {byPlayer}, then a tower's: {byTower}";
             nm["knockback"]=$"wolf pushed by the gun tower {gun:0.00} m/s, by the sniper tower {sniper:0.00} m/s";
-            if(one!=1||merged<9||alive>cap||alive<cap-1||off!=0)bad.Add("numbers: "+nm["numbers"]);
+            if(one!=1||merged<9||alive>cap||alive<cap-1||off!=0||byPlayer!=0||byTower!=1)bad.Add("numbers: "+nm["numbers"]);
             if(gun>.05f||sniper<=.05f)bad.Add("knockback: "+nm["knockback"]);
         }
         // the mechs' ammo elements (user, 2026-10-30: "机甲也要做多种元素的炮弹……高级的可以做多一点支持的元素"): Mercury 3, Nemesis 4,

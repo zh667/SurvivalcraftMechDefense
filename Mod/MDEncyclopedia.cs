@@ -178,7 +178,7 @@ public static class MDEncyclopedia {
         s.Append($"\n\n冷却：同一个敌人发生反应后 {MDElements.GlobalCooldown:0.#} 秒内不再反应，同一种反应在同一个敌人身上 {MDElements.SameCooldown:0} 秒一次。两种元素反应后都会用掉（扩散、碎冰除外）。\n");
         s.Append("抗性：每种敌人对各类伤害 ×0.75～×1.5，写在图鉴里各敌人的页面上。\n\n");
         s.Append($"首领：反应的额外伤害打首领只算 {MDElements.BossShare*100:0}%，但每次反应都会填首领头上的失衡槽，满了首领失衡、露出破绽（见图鉴里各首领的页面）。\n\n");
-        s.Append($"伤害数字：炮塔、机甲和玩家打出的伤害显示在敌人头上，颜色是伤害类型，发生反应的是大字；同一个敌人 {MDTowerWorld.MergeTime:0.##} 秒内的伤害合成一个数，同屏最多 {MDTowerWorld.MaxShown[1]} 个（特效数量“完整”{MDTowerWorld.MaxShown[0]} 个、“极简”{MDTowerWorld.MaxShown[2]} 个），模组设置里可以关掉。\n\n");
+        s.Append($"伤害数字：本模组的炮塔和机甲打出的伤害显示在敌人头上（原版和其他模组的武器不显示），颜色是伤害类型，发生反应的是大字；同一个敌人 {MDTowerWorld.MergeTime:0.##} 秒内的伤害合成一个数，同屏最多 {MDTowerWorld.MaxShown[1]} 个（特效数量“完整”{MDTowerWorld.MaxShown[0]} 个、“极简”{MDTowerWorld.MaxShown[2]} 个），模组设置里可以关掉。\n\n");
         s.Append(MDSettings.Reactions?"模组设置“元素反应”现在是开着的；关掉后只保留伤害类型、抗性和状态。":"模组设置“元素反应”现在是关着的：只有伤害类型、抗性和状态，不发生反应。");
         return s.ToString();
     }

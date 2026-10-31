@@ -4,7 +4,7 @@ using Engine.Graphics;
 namespace Game;
 
 // 0.15.0 damage numbers (user, 2026-10-30: "伤害数字显示……但是海量敌兵（不止我们这个模组有很多小兵）要处理得当，不要整得满屏数字，
-// 也要注意手机设备性能问题，包括之前的元素反应"). What the player's side (towers, mechs, players) really took off a creature — read
+// 也要注意手机设备性能问题，包括之前的元素反应"). What this mod's towers and mechs really took off a creature — read
 // after every multiplier (armour phases, resistances, other mods), from the ModLoader hook CalculateCreatureInjuryAmount — in its
 // element's colour, rising and fading over the target.
 // Against clutter and for phones:
@@ -13,6 +13,8 @@ namespace Game;
 // - at most MaxShown numbers at once, fewer at a lower 特效数量 (精简 8, 极简 4): a new one replaces the faintest, smaller ones
 //   give way to bigger ones and to reactions; reaction names are capped the same way (MaxLabels);
 // - a reaction's number is bigger and in both colours' blend; numbers can be turned off (模组设置“伤害数字”).
+// 0.16.1 (user, 10-31: "只是我们的模组物品有这个就可以，现在用别的模组或者原版物品造成伤害，都有这个伤害显示"): only hits whose
+// attacker is a tower or a mech of this mod; a player's own hits (vanilla items, other mods' weapons) show none.
 public sealed partial class MDTowerWorld {
     public const float MergeTime=.35f,NumberRange=28,NumberLife=.9f;
     public static readonly int[] MaxShown=[14,8,4],MaxLabels=[6,4,2];
@@ -28,10 +30,9 @@ public sealed partial class MDTowerWorld {
     public static void Injured(Injury injury) {
         if(!MDSettings.DamageNumbers||injury?.ComponentHealth is not {} h||injury.Amount<=0||injury.Attackment?.Attacker is not {} attacker)return;
         if(h.Entity.FindComponent<ComponentPlayer>()!=null||h.Entity.FindComponent<ComponentBody>() is not {} b)return;
-        bool ours=attacker.FindComponent<ComponentMDUnit>()!=null||attacker.FindComponent<ComponentPlayer>()!=null;
-        if(!ours||!worlds.TryGetValue(h.Project,out var w))return;
+        if(attacker.FindComponent<ComponentMDUnit>()==null||!worlds.TryGetValue(h.Project,out var w))return;
         float amount=injury.Amount*h.AttackResilience;if(amount<.5f)return;
-        var e=attacker.FindComponent<ComponentMDUnit>()!=null?HitElement:MDElement.Kinetic;
+        var e=HitElement;
         if(w.pending.TryGetValue(b,out var p)){p.amount+=amount;p.reaction|=HitReacted;if(HitReacted||p.element==MDElement.None)p.element=e;NumbersMerged++;}
         else w.pending[b]=new Pending{amount=amount,element=e,reaction=HitReacted,at=b.Position+Vector3.UnitY*(b.BoxSize.Y+NumbersAt)};
     }

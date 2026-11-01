@@ -1,9 +1,13 @@
-# Status — 2026-10-31
+# Status — 2026-11-01
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
 below no longer exist; the numbers recorded here stand. Kept: `local/claude-work/bug1023` (the player's log and video),
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
+Housekeeping 2026-11-01 (user: "中间产物都可以删掉了"), same rule: all `local/runtime-*` again (the 0.14.0-0.16.3 lab runs) and
+the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.json, loose shots, PR drafts), plus the build output
+(`Mod`/`Tests/*` bin and obj, `tools/__pycache__`): 357 items, 44.4 GB. Kept as before, and `local/claude-work/r-0.14.0`
+(0.14.0 comparison shots) and `engine-src-194`; `dist/` untouched. Results recorded below stand.
 
 
 ## 0.16.3: the handbook is given once per world, not on every load (branch fix/manual-0163, PR pending)

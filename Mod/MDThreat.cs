@@ -116,7 +116,9 @@ public static class MDThreat {
     public static void Load(System.Xml.Linq.XElement project) {
         Threat=float.TryParse((string)project?.Attribute(ThreatAttribute),System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var t)?t:0;
         RaidsDone=int.TryParse((string)project?.Attribute(RaidsAttribute),out var n)?n:0;
-        ManualGiven=(string)project?.Attribute(ManualAttribute)=="True";
+        // 0.16.3 (user 2026-11-01: 每次重新进游戏都会给一本驾驶手册): SetAttributeValue writes a bool as "true" and this compared "True",
+        // so every world opened as not given yet; bool.TryParse takes either
+        ManualGiven=bool.TryParse((string)project?.Attribute(ManualAttribute),out var given)&&given;
         Now=Phase.Idle;Fighting.Clear();BossesComing=0;cached=null;cachedAt=-1;
     }
     public static void Save(System.Xml.Linq.XElement project) {

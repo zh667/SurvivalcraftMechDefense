@@ -6,6 +6,20 @@ below no longer exist; the numbers recorded here stand. Kept: `local/claude-work
 `local/claude-work/r-0.12.0` (0.12.0 phone comparison), `local/claude-work/engine-src`, and every other folder of `local/`.
 
 
+## 0.16.3: the handbook is given once per world, not on every load (branch fix/manual-0163, PR pending)
+
+- User (11-01): "我发现每次重新进游戏都会给一本驾驶手册". The world keeps "MechDefenseManualGiven" in Project.xml
+  (MDThreat.Save); XElement.SetAttributeValue writes a bool as "true", and MDThreat.Load compared it with "True", so every world
+  opened as not given and the next update gave another copy. Load now uses bool.TryParse (either case); worlds saved by 0.16.0 to
+  0.16.2 already hold "true" and stop getting copies with no migration (Mod/MDThreat.cs).
+- Lab: combat15-manual now saves the world for real, reads its Project.xml back as a world load does and updates a second: still
+  given, no second copy (Tests/TowerLab/Combat15.cs). Run first on the unfixed 0.16.2 package it failed with "saved flag true ->
+  loaded given False" (the cause above); the copy count alone cannot show it in the lab's Creative world (unlimited counts), so it
+  counts slots.
+- Package dist/MechDefense-0.16.3.scmod, 35,576,502 bytes, SHA-256 b2789a2c7ceacf0fe727b2e47d32b094e9b3cabb8f98a345698a0318022d2330.
+  Verified (PC, isolated runtime): combat15 (all parts) on 1.9.3.1; combat15-manual and combat15-core on 1.9.4. Not verified:
+  the user's own world; a phone. Copies already given stay in the inventory (they can be thrown away or kept).
+
 ## Delivered: 0.16.2: parts follow a stack-size mod; mech keys no longer reach other readers (PR #18, merged 2026-10-31 on the user's approval, tag v0.16.2)
 
 - User (10-31): "那些配件最高只能40个堆叠，不能和铃兰适配自己改变 ，希望配件能和玲兰辅助设置的堆叠一致". Stack-size mods set each

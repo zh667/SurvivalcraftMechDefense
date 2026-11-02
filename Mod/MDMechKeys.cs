@@ -46,7 +46,7 @@ public static class MDMechKeys {
 
     public static string ActionName(MDMechAction a)=>a switch{MDMechAction.Hover=>"悬浮（按住）",MDMechAction.Jump=>"跳跃",MDMechAction.Melee=>"近战",
         MDMechAction.Switch=>"切换武器",MDMechAction.View=>"切换视角",MDMechAction.Fire=>"开火（额外键）",MDMechAction.Ammo=>"切换弹药元素",
-        MDMechAction.Ranges=>"显示全部攻击范围（开／关）",MDMechAction.MoveTower=>"移动炮塔（对着炮塔按）",MDMechAction.RotateTower=>"移动时旋转 90°",_=>"上／下车（额外键）"};
+        MDMechAction.Ranges=>"显示对准炮塔的攻击范围",MDMechAction.MoveTower=>"移动炮塔（对着炮塔按）",MDMechAction.RotateTower=>"移动时旋转 90°",_=>"上／下车（额外键）"};
     public static string KeyName(Key k)=>k switch{Key.Null=>"未设置",Key.Space=>"空格",Key.Control=>"Ctrl",Key.Enter=>"回车",Key.BackSpace=>"退格",
         Key.LeftArrow=>"←",Key.RightArrow=>"→",Key.UpArrow=>"↑",Key.DownArrow=>"↓",Key.Tilde=>"~",Key.Minus=>"-",Key.Plus=>"=",Key.LeftBracket=>"[",
         Key.RightBracket=>"]",Key.Semicolon=>";",Key.Quote=>"'",Key.Comma=>",",Key.Period=>".",Key.Slash=>"/",Key.BackSlash=>"\\",

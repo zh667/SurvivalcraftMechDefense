@@ -3,27 +3,21 @@ using Engine.Graphics;
 
 namespace Game;
 
-// 0.17.0 the towers' areas of attack on the ground (MDTowerTools): a ring at the tower's reach (u.Range, a radar's boost included;
+// 0.17.0 the towers' areas of attack on the ground (MDTowerTools; the towers marked with Z, and the ghost): a ring at the tower's reach (u.Range, a radar's boost included;
 // the inner ring of a minimum range; a long-range tower's band (directional) as its rectangle), laid on the terrain surface near the
 // tower's own height, a faint fill inside. The ghost of a tower being placed or moved adds its footprint box, green or red, and an
 // arrow for its facing. Colour: the tower's own (fx.color).
 public sealed partial class MDTowerWorld {
     FlatBatch3D rangeBatch;
-    readonly List<ComponentMDUnit> rangeTowers=[];double rangeListAt=-10;
     readonly Dictionary<(int,int,int),float> surface=[];double surfaceAt;
     public static int RingsDrawn,GhostsDrawn;   // tests (this frame)
     void DrawRanges() {
         RingsDrawn=GhostsDrawn=0;
-        var g=MDTowerTools.Current;bool all=MDTowerTools.ShowAll;
-        if(!all&&g==null)return;
+        var g=MDTowerTools.Current;var shown=MDTowerTools.Shown;
+        if(shown.Count==0&&g==null)return;
         rangeBatch??=SubsystemParticles.PrimitivesRenderer.FlatBatch(3,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend);
-        if(time-rangeListAt>.5||time<rangeListAt) {
-            rangeListAt=time;rangeTowers.Clear();
-            foreach(var e in SubsystemParticles.Project.Entities)if(e.FindComponent<ComponentMDUnit>() is {Kind:"Turret",Tower:not null} u)rangeTowers.Add(u);
-        }
         if(time-surfaceAt>2||time<surfaceAt){surfaceAt=time;surface.Clear();}
-        float others=all?1:.45f;
-        foreach(var u in rangeTowers)if(u.Entity.IsAddedToProject&&!u.Destroyed)RangeArea(u.Tower,u.Body.Position,u.Body.Matrix.Forward,u.Range,others*(u==g?.Moving?.5f:1));
+        foreach(var u in shown)if(u.Entity.IsAddedToProject&&!u.Destroyed&&u.Project==SubsystemParticles.Project&&u!=g?.Moving)RangeArea(u.Tower,u.Body.Position,u.Body.Matrix.Forward,u.Range,1);
         if(g!=null&&g.Has) {
             var f=Matrix.CreateFromQuaternion(g.Rotation).Forward;RangeArea(g.Def,g.At,f,g.Def.attack.range,1);RangeFootprint(g,f);GhostsDrawn++;
         }

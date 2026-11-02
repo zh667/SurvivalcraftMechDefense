@@ -70,7 +70,7 @@ public class MDDeploymentBlock : Block {
     public override string GetDisplayName(SubsystemTerrain t,int v)=>Tower(v) is {} d?d.name+" · 部署"+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":"")+(d.attack.type=="heal"&&MedicUsed(v)>0?$"（储能约 {(7-MedicUsed(v))*100/7}%）":""):MechType(v) is {} mt?MechName(mt)+KitText(v)+(Wear(v)>0?$"（耐久 {100-Wear(v)}%）":""):RemovedName;
     public override string GetDescription(int v)=>Tower(v) is {} d?$"{d.summary}\n{MDEncyclopedia.ElementText(d)}占地：{MDTowerPlacement.SizeText(d)}。右键选择的方块是占地西南角。\n"+
         $"维修：手持机兵残骸或合金板右键炮塔（铁、铜只能修机甲）。拆卸：用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，拆下的炮塔保留耐久。\n"+
-        $"手持时准星处显示占地和攻击范围；放下后对着炮塔按 {MDMechKeys.Hint(MDMechAction.MoveTower)} 可以移动（{MDMechKeys.Hint(MDMechAction.RotateTower)} 旋转），{MDMechKeys.Hint(MDMechAction.Ranges)} 开关全部攻击范围。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):MechType(v) is {} mt?MechNote(mt):RemovedNote;
+        $"手持时准星处显示占地和攻击范围；放下后对着炮塔按 {MDMechKeys.Hint(MDMechAction.MoveTower)} 可以移动（{MDMechKeys.Hint(MDMechAction.RotateTower)} 旋转），对准炮塔按 {MDMechKeys.Hint(MDMechAction.Ranges)} 显示它的攻击范围。"+(Wear(v)>0?"\n受损的炮塔要部署修好后才能用作升级材料。":""):MechType(v) is {} mt?MechNote(mt):RemovedNote;
     public override float GetBlockHealth(int value)=>Wear(value)>0?Hitpoints(value):-1;   // the slot's health bar for a worn tower only
     public override IEnumerable<int> GetCreativeValues() {
         foreach(var d in MDTowerLibrary.All)yield return Terrain.MakeBlockValue(BlockIndex,0,d.data);

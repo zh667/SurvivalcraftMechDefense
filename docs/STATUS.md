@@ -10,17 +10,20 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
 (0.14.0 comparison shots) and `engine-src-194`; `dist/` untouched. Results recorded below stand.
 
 
-## 0.17.0: tower ranges and moving towers; the mech's cannon and grenade can break terrain; less blast smoke (branch feat/range-terrain-0170, PR pending)
+## 0.17.0: tower ranges and moving towers; the mech's cannon and grenade can break terrain; less blast smoke; the mech panel fits its text (PR #20, pending)
 
 - User (11-02): "希望加个工具，可以开关一键显示所有防御塔攻击范围……在放置塔的时候能看到攻击范围（并且塔放下去还可以重新放置，可以看……是哪个键位进行此
   操作以及此操作的页面显示）". The game the user named was checked in its own text tables (local extraction): a device's panel has
   移动 (re-place it, turning it, confirm / cancel; its attack range shown while placing) and 收纳; the keyboard letters are not in the
   extracted tables. Built (Mod/MDTowerTools.cs, Mod/MDTowerRanges.cs), keys on the settings page under "防御塔工具按键":
-  - Z (MDMechAction.Ranges) shows every tower's area of attack until pressed again: a ring at u.Range (a radar's boost included) laid on
-    the terrain near the tower's height, a faint fill, a red inner ring for a minimum range, the band of a directional tower as its
-    rectangle; colour = the tower's fx colour.
+  - Z (MDMechAction.Ranges) on a tower (48 m) shows that tower's area of attack, Z on it again hides it, Z at no tower hides all
+    (MDTowerTools.Shown; several can be marked). First cut showed every tower's at once; user (11-02): "点z对准哪个炮塔才显示哪个炮塔的
+    射程吧，不然一点开全部显示太乱了，看不清楚，还有点M移动炮塔好像也显示所有炮塔的攻击范围了". The ring: u.Range (a radar's boost
+    included) laid on the terrain near the tower's height, a faint fill, a red inner ring for a minimum range, a directional tower's band
+    as its rectangle; colour = the tower's fx colour.
   - Holding a tower's deploy item: a ghost where the right-click puts it (same ray and reach as MDDeployPatch): footprint box green or
-    red, its ring, a facing arrow; the other towers' rings fainter. MDTowerPlacement.Find now also returns the refused spot.
+    red, its ring, a facing arrow; no other tower's ring but those marked with Z (also while moving). MDTowerPlacement.Find now also
+    returns the refused spot.
   - M (MoveTower) on a tower under the crosshair (12 m) picks it up; the ghost follows the crosshair (24 m); R (RotateTower; the mount
     key, kept from the game while moving, so the page allows R for this one action) turns 90 deg; a left-click (a tap on a phone) puts
     the same entity there (ComponentMDTowerBody.FixAt, health / charge / everything kept, plants cleared); right-click or M cancels;
@@ -41,15 +44,21 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
   shorter-lived puffs) and a 0.4 x fireball. Towers' blasts unchanged. Lab, the same blast 0.8 s after (shots t17_smoke_old /
   t17_smoke_new, local/claude-work/r-0.17.0): a dense white cloud before, a thin one now, on both runtimes. The lab's particle counts
   are of the whole world (other fires and shots in them) and are no measure.
-- Package dist/MechDefense-0.17.0.scmod, 35,583,216 bytes, SHA-256 f82ea5fddbb684e85f99563750500e983f2f982c75f3ebd7212bd7ddf9db3e65.
-  Verified (PC, isolated runtime) on 1.9.3.1 and 1.9.4 each: tools17, mech, combat15, all. Not verified: the user's game with its
+- Package dist/MechDefense-0.17.0.scmod, 35,584,227 bytes, SHA-256 28932c733659a73248487524a47a1b0dc082ac376ecf0fab4c978d4a6869c045.
+  Verified (PC, isolated runtime) on 1.9.3.1 and 1.9.4 each: tools17, mech, combat15, all (one 1.9.3.1 mech run died before the mods
+  loaded, the engine's DPI read divided by zero; rerun passed). Not verified: the user's game with its
   other mods (the vehicles of other mods were not tried: a vanilla boat was), a phone (touch: the tap that puts a tower down is the
   game's Interact, not tried on a device).
+- User (11-02): "现在机甲UI好像有文字溢出UI了". The mech panel (MDStatusWidget) had 300-wide lines whatever their text; the weapon line
+  (e.g. 火炮 收起（开火即展开） 腐蚀元素弹) and the key line (longer since the ammo key) ran past the 320-wide panel. Each line is now
+  measured with the game's own label measure when its text changes, the panel widens to the longest line (520 at most) and a line still
+  wider gets a smaller font. Lab hud: 200 cases (every weapon x cannon state x the 轩辕十四's five ammo, default and long key names):
+  the widest needs a 409-wide panel (so the old one overflowed), no line overflows now.
 - Lab tools17 (Tests/TowerLab/Tools17.cs; real key presses through LabKeys, the click as the game's PlayerInput.Hit through LabClick):
-  ranges (Z on / off, rings drawn), ghost (green on free ground, red with the reason in a 1-cell lane), move (M picks, R turns 90 deg,
+  ranges (Z on a tower: 1 ring of the lab's 50, a second: 2, the first again: 1, the sky: 0), hud (above), ghost (green on free ground, red with the reason in a 1-cell lane), move (M picks, R turns 90 deg,
   click puts it with its health and turned, the bar is laid out 760 x 58 with the keys; it locks on a dummy and fires there; M cancels;
   an occupied spot is refused; M at the sky picks nothing), terrain (off: 0 cells; a tower's shell: 0; cannon and grenade break; boat
-  destroyed; tower beside and player unhurt), smoke (old / new). The lab's screenshots do not include the GUI: the bar was checked by
+  destroyed; tower beside and player unhurt), smoke (old / new); the ghost and the move draw only their own ring. The lab's screenshots do not include the GUI: the bar was checked by
   its layout, not seen.
 
 ## Delivered: 0.16.3: the handbook is given once per world, not on every load (PR #19, merged 2026-11-02 on the user's approval, tag v0.16.3)

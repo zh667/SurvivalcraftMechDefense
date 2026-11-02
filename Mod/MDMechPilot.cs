@@ -111,35 +111,63 @@ public static class MDMechPilot {
 // The mech's status panel: armour and speed, the weapon and its state, armour and energy bars, the key hints. Its place, size
 // and turn come from MDSettings.Hud (MDHudPlacement), set in the mod's HUD editor (MDHudLayoutScreen; user, 2026-10-21:
 // drag it on a game page, scale and turn it with fingers or the mouse); the editor shows this same widget.
+// 0.17.0 (user, 11-02: "现在机甲UI好像有文字溢出UI了"): the lines were 300 wide whatever their text, and the weapon line ("火炮   收起
+// （开火即展开）   腐蚀元素弹") and the key line (longer since the ammo key) ran past the panel. Each line is measured with the game's
+// own label measure when its text changes; the panel widens to the longest (MaxWidth at most), and a line still too long gets a
+// smaller font.
 public class MDStatusWidget:CanvasWidget {
     readonly LabelWidget status,weapon,keys;readonly RectangleWidget back,armor,energy;
-    public const float Width=320,Height=112,ShortHeight=86;
-    bool showKeys=true;
+    public const float Width=320,Height=112,ShortHeight=86,MaxWidth=520,Pad=10;
+    static readonly (float status,float weapon,float keys) baseScale=(.7f,.7f,.6f);
+    static readonly LabelWidget probe=new(){Size=new Vector2(-1)};
+    bool showKeys=true;float width=Width,armourShare=1,energyShare;readonly Dictionary<LabelWidget,float> measured=[];
     public MDStatusWidget() {
         Size=new(Width,Height);HorizontalAlignment=VerticalAlignment=WidgetAlignment.Near;IsHitTestVisible=false;
         void Add(Widget w,float x,float y){Children.Add(w);SetWidgetPosition(w,new(x,y));}
         back=new RectangleWidget{Size=Size,FillColor=new Color(8,20,30,190),OutlineThickness=0};Add(back,0,0);
-        status=new LabelWidget{Size=new(300,24),FontScale=.7f,Color=Color.White};Add(status,10,8);
-        weapon=new LabelWidget{Size=new(300,24),FontScale=.7f,Color=new Color(90,220,255)};Add(weapon,10,34);
-        armor=new RectangleWidget{Size=new(300,3),FillColor=new Color(90,220,255),OutlineThickness=0};Add(armor,10,62);
-        energy=new RectangleWidget{Size=new(0,3),FillColor=new Color(120,170,255),OutlineThickness=0};Add(energy,10,68);
-        keys=new LabelWidget{Text=MDMechPilot.KeyHints(false),Size=new(300,24),FontScale=.6f,Color=Color.White};Add(keys,10,80);
+        status=new LabelWidget{Size=new(300,24),FontScale=baseScale.status,Color=Color.White};Add(status,Pad,8);
+        weapon=new LabelWidget{Size=new(300,24),FontScale=baseScale.weapon,Color=new Color(90,220,255)};Add(weapon,Pad,34);
+        armor=new RectangleWidget{Size=new(300,3),FillColor=new Color(90,220,255),OutlineThickness=0};Add(armor,Pad,62);
+        energy=new RectangleWidget{Size=new(0,3),FillColor=new Color(120,170,255),OutlineThickness=0};Add(energy,Pad,68);
+        keys=new LabelWidget{Size=new(300,24),FontScale=baseScale.keys,Color=Color.White};Add(keys,Pad,80);SetText(keys,MDMechPilot.KeyHints(false),baseScale.keys);
+    }
+    // a text's width at a font scale, as the label itself measures it
+    public static float TextWidth(string text,float scale){probe.FontScale=scale;probe.Text=text??"";probe.MeasureOverride(new Vector2(10000,1000));return probe.DesiredSize.X;}
+    void SetText(LabelWidget l,string text,float scale){if(l.Text==text)return;l.Text=text;measured[l]=TextWidth(text,scale);Layout();}
+    float Need(LabelWidget l)=>l.IsVisible&&measured.TryGetValue(l,out var w)?w:0;
+    // the panel as wide as its longest line (Width .. MaxWidth); a line wider than that is drawn smaller
+    void Layout() {
+        float inner=Math.Clamp(Math.Max(Need(status),Math.Max(Need(weapon),Need(keys)))+2,Width-2*Pad,MaxWidth-2*Pad);width=inner+2*Pad;
+        foreach(var (l,s) in new[]{(status,baseScale.status),(weapon,baseScale.weapon),(keys,baseScale.keys)}){float w=measured.GetValueOrDefault(l);l.FontScale=w>inner?s*inner/w:s;l.Size=new(inner,24);}
+        var size=new Vector2(width,showKeys?Height:ShortHeight);if(Size!=size){Size=size;back.Size=size;}
+        armor.Size=new(inner*armourShare,3);energy.Size=new(inner*energyShare,3);
     }
     // without the key line the panel is 26 units shorter
-    public bool ShowKeys{get=>showKeys;set{showKeys=value;keys.IsVisible=value;var size=new Vector2(Width,value?Height:ShortHeight);if(Size!=size){Size=size;back.Size=size;}}}
-    void Show(string s,string w,float armour,float energyShare,bool locked) {
-        if(status.Text!=s)status.Text=s;if(weapon.Text!=w)weapon.Text=w;
-        armor.Size=new(300*Math.Clamp(armour,0,1),3);energy.Size=new(300*Math.Clamp(energyShare,0,1),3);energy.FillColor=locked?new Color(255,90,70):new Color(120,170,255);
+    public bool ShowKeys{get=>showKeys;set{showKeys=value;keys.IsVisible=value;Layout();}}
+    void Show(string s,string w,float armour,float energy,bool locked) {
+        SetText(status,s,baseScale.status);SetText(weapon,w,baseScale.weapon);
+        armourShare=Math.Clamp(armour,0,1);energyShare=Math.Clamp(energy,0,1);float inner=width-2*Pad;
+        armor.Size=new(inner*armourShare,3);this.energy.Size=new(inner*energyShare,3);this.energy.FillColor=locked?new Color(255,90,70):new Color(120,170,255);
     }
     // the speed is smoothed (about 0.3 s) and shown in whole km/h, so the number does not flicker with the physics steps
     public void Refresh(ComponentMDUnit u) {
         var m=u.Mech;float v=new Vector2(u.Body.Velocity.X,u.Body.Velocity.Z).Length()*3.6f;m.ShownSpeed+=(v-m.ShownSpeed)*Math.Min(1,Time.FrameDuration*3.5f);
         Show($"{m.Type.Name}  装甲 {u.Damage.Hitpoints*100:0}%   {MathF.Round(m.ShownSpeed/2)*2:0} km/h",$"{m.WeaponName}   {MDMechBrain.Status(u)}"+(m.Weapon==MDMechWeapon.Laser?"":"   "+MDMechState.AmmoName(m.Ammo)),u.Damage.Hitpoints,m.Energy/m.Type.EnergyMax,m.EnergyLock>0);
         if(ShowKeys!=MDSettings.HudKeys)ShowKeys=MDSettings.HudKeys;
-        if(ShowKeys){var k=MDMechPilot.KeyHints(false);if(keys.Text!=k)keys.Text=k;}   // the bound keys, also right after a change on the settings page
+        if(ShowKeys)SetText(keys,MDMechPilot.KeyHints(false),baseScale.keys);   // the bound keys, also right after a change on the settings page
     }
     // the editor's sample
     public void Sample()=>Show("水星  装甲 100%   0 km/h","步枪   就绪",1,.8f,false);
+    // the lab: a line whose text is wider than its label, or a label past the panel; empty if none
+    public string Overflow() {
+        var r=new List<string>();
+        foreach(var l in new[]{status,weapon,keys}) {
+            if(!l.IsVisible)continue;float w=TextWidth(l.Text,l.FontScale);
+            if(w>l.Size.X+.5f||Pad+l.Size.X>Size.X+.5f)r.Add($"\"{l.Text}\" {w:0} wide in {l.Size.X:0} (panel {Size.X:0})");
+        }
+        return string.Join("; ",r);
+    }
+    public string Widths=>$"panel {Size.X:0}; status {status.FontScale:0.00}, weapon {weapon.FontScale:0.00}, keys {keys.FontScale:0.00}";
 }
 
 // The panel in play: a host over the whole controls area that places the panel while the layout is measured, from the area

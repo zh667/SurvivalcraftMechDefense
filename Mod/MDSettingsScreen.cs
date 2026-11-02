@@ -149,7 +149,7 @@ public sealed class MDSettingsScreen:Screen {
             "开火、上下车另外照常可以用鼠标左键／点屏、游戏的骑乘键。只对机甲有效，不改游戏原来的按键；驾驶机甲时，和游戏共用的键只做机甲动作。"));
         content.Children.Add(MDUi.Heading("防御塔工具按键"));   // 0.17.0 (MDTowerTools)
         foreach(var a in MDMechKeys.Tower){var b=MDUi.Button("",170);keyButtons[a]=b;content.Children.Add(MDUi.Row(MDUi.Label(MDMechKeys.ActionName(a)),b,n));}
-        content.Children.Add(MDUi.Note("步行时用：开关全部防御塔的攻击范围圈；对着已放下的炮塔按「移动」拿起它，对准新位置左键（手机点屏）放下，「旋转」每次转 90°，右键或再按「移动」取消。"+
+        content.Children.Add(MDUi.Note("步行时用：对准一座炮塔按「显示攻击范围」开关它的范围圈（可以标记多座，对着空处按全部隐藏）；对着已放下的炮塔按「移动」拿起它，对准新位置左键（手机点屏）放下，「旋转」每次转 90°，右键或再按「移动」取消。"+
             "手持防御塔部署物时，准星处自动显示占地（绿色可放、红色不能放）和攻击范围。旋转键默认 R：只在移动炮塔时用，这时 R 不会骑乘。"));
         content.Children.Add(MDUi.Heading("画面"));
         fx=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("特效数量"),fx,n));

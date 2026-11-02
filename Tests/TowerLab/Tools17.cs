@@ -39,12 +39,19 @@ public partial class Lab {
             var rg=new Dictionary<string,object>();r["ranges"]=rg;
             var a=Place(gun,T+new Vector3(-6,0,-6),0);var extra=new List<ComponentMDUnit>{a};
             if(band!=null)extra.Add(Place(band,T+new Vector3(6,0,-8),0));if(lobber!=null)extra.Add(Place(lobber,T+new Vector3(0,0,-14),0));
-            MDTowerTools.ShowAll=false;while(Wait(.6))yield return true;
-            foreach(var x in Tap(Key.Z))yield return x;bool on=MDTowerTools.ShowAll;
-            foreach(var x in Hold(T+new Vector3(0,22,14),T+new Vector3(0,0,-7)))yield return x;int rings=MDTowerWorld.RingsDrawn;Shot("t17_ranges_on");yield return true;
-            foreach(var x in Tap(Key.Z))yield return x;bool off=!MDTowerTools.ShowAll;foreach(var x in Hold(T+new Vector3(0,22,14),T+new Vector3(0,0,-7)))yield return x;int after=MDTowerWorld.RingsDrawn;
-            rg["ranges"]=$"Z -> shown {on}, rings drawn {rings} (towers in the lab {proj.Entities.Count(e=>e.FindComponent<ComponentMDUnit>()?.Kind=="Turret")}); Z again -> hidden {off}, rings {after}; message {MDTowerTools.LastText}";
-            if(!on||rings<extra.Count||!off||after!=0)bad.Add("ranges: "+rg["ranges"]);
+            // 0.17.0 second cut (user: all at once "太乱了"): Z on a tower shows its ring only, Z on another adds it, Z on it again hides it,
+            // Z at nothing hides them all; the 50 other towers of the lab never show
+            MDTowerTools.Shown.Clear();while(Wait(.6))yield return true;var eye=T+new Vector3(0,3,4);pl.ComponentBody.Position=T+new Vector3(0,0,4);
+            int RingsAt(){return MDTowerWorld.RingsDrawn;}
+            var steps=new List<string>();
+            IEnumerable<bool> ZOn(Vector3 look,string name){foreach(var x in Hold(eye,look))yield return x;foreach(var x in Tap(Key.Z))yield return x;foreach(var x in Hold(eye,look,3))yield return x;steps.Add($"{name}: rings {RingsAt()} ({MDTowerTools.LastText})");}
+            foreach(var x in ZOn(a.Body.Position+Vector3.UnitY*.8f,"Z on the gun tower"))yield return x;int one=RingsAt();bool onlyA=MDTowerTools.Shown.SetEquals([a]);
+            foreach(var x in Hold(T+new Vector3(0,22,14),T+new Vector3(0,0,-7)))yield return x;Shot("t17_ranges_on");yield return true;
+            var second=extra.Count>1?extra[1]:a;foreach(var x in ZOn(second.Body.Position+Vector3.UnitY*.8f,"Z on a second tower"))yield return x;int two=RingsAt();
+            foreach(var x in ZOn(a.Body.Position+Vector3.UnitY*.8f,"Z on the gun tower again"))yield return x;int back=RingsAt();bool aOff=!MDTowerTools.Shown.Contains(a);
+            foreach(var x in ZOn(eye+new Vector3(0,6,-3),"Z at the sky"))yield return x;int none=RingsAt();
+            rg["ranges"]=string.Join("; ",steps)+$" (towers in the lab {proj.Entities.Count(e=>e.FindComponent<ComponentMDUnit>()?.Kind=="Turret")})";
+            if(one!=1||!onlyA||extra.Count>1&&two!=2||!aOff||back!=(extra.Count>1?1:0)||none!=0||MDTowerTools.Shown.Count!=0)bad.Add("ranges: "+rg["ranges"]);
             Remove(extra);
         }
         if(Part("ghost")) {
@@ -55,11 +62,11 @@ public partial class Lab {
             while(Wait(.4))yield return true;
             pl.ComponentBody.Position=T+new Vector3(0,0,3);
             var eye=T+new Vector3(0,2.4f,3);foreach(var x in Hold(eye,T+new Vector3(0,0,-.5f),6))yield return x;
-            var g1=MDTowerTools.Current;string free=g1==null?"none":$"has {g1.Has} ok {g1.Ok} at {g1.At} ({g1.Reason})";int ghosts=MDTowerWorld.GhostsDrawn;Shot("t17_ghost_free");yield return true;
+            var g1=MDTowerTools.Current;string free=g1==null?"none":$"has {g1.Has} ok {g1.Ok} at {g1.At} ({g1.Reason})";int ghosts=MDTowerWorld.GhostsDrawn,ghostRings=MDTowerWorld.RingsDrawn;Shot("t17_ghost_free");yield return true;
             foreach(var x in Hold(new Vector3(lx+.5f,72.4f,lz+4.5f),new Vector3(lx+.5f,70,lz+.5f),6))yield return x;
             var g2=MDTowerTools.Current;string taken=g2==null?"none":$"has {g2.Has} ok {g2.Ok} at {g2.At} ({g2.Reason})";Shot("t17_ghost_taken");yield return true;
-            gh["ghost"]=$"free ground: {free}, ghosts drawn {ghosts}; in a 1-cell lane: {taken}";
-            if(g1==null||!g1.Has||!g1.Ok||ghosts<1||g2==null||g2.Ok||string.IsNullOrEmpty(g2.Reason))bad.Add("ghost: "+gh["ghost"]);
+            gh["ghost"]=$"free ground: {free}, ghosts drawn {ghosts}, rings drawn {ghostRings} (its own only); in a 1-cell lane: {taken}";
+            if(g1==null||!g1.Has||!g1.Ok||ghosts<1||ghostRings!=1||g2==null||g2.Ok||string.IsNullOrEmpty(g2.Reason))bad.Add("ghost: "+gh["ghost"]);
             inv.RemoveSlotItems(0,inv.GetSlotCount(0));foreach(var c in walls)terrain.ChangeCell(c.X,c.Y,c.Z,0);while(Wait(.3))yield return true;
         }
         if(Part("move")) {
@@ -75,15 +82,15 @@ public partial class Lab {
              var ga=MDTowerTools.Aim(pl,gun,cr,24,a.Body,Quaternion.Identity);
              mv["aimDiag"]=$"input {MDTowerTools.LastInput}; camera ray {cr.Position} {cr.Direction}; terrain hit (boxes off) {h1?.Distance} {h1?.CellFace}, (on) {h2?.Distance} {h2?.CellFace}; Aim: has {ga.Has} ok {ga.Ok} at {ga.At} ({ga.Reason})";}
             var yaw0=a.Yaw;foreach(var x in Tap(Key.R))yield return x;foreach(var x in Hold(eye,to,3))yield return x;
-            var gr=MDTowerTools.Current;float turned=gr==null?float.NaN:MathF.Abs(MDCombat.AngleDelta(MathF.Atan2(-Matrix.CreateFromQuaternion(gr.Rotation).Forward.X,-Matrix.CreateFromQuaternion(gr.Rotation).Forward.Z),yaw0));
+            var gr=MDTowerTools.Current;int moveRings=MDTowerWorld.RingsDrawn;float turned=gr==null?float.NaN:MathF.Abs(MDCombat.AngleDelta(MathF.Atan2(-Matrix.CreateFromQuaternion(gr.Rotation).Forward.X,-Matrix.CreateFromQuaternion(gr.Rotation).Forward.Z),yaw0));
             var barW=pl.ComponentGui.ControlsContainerWidget.Children.OfType<MDMoveBar>().FirstOrDefault();bool barShown=barW!=null&&barW.IsVisible&&barW.BoxSize.X>100&&barW.BoxSize.Y>40;mv["bar"]=barW==null?"none":$"box {barW.BoxSize} at {barW.BoxAt}: {barW.Line}";Shot("t17_move_ghost");yield return true;
             bool mounted=pl.ComponentRider?.Mount!=null;
             foreach(var x in Click(.5))yield return x;
             var moved=a.Entity.FindComponent<ComponentMDTowerBody>(true).Anchor;bool put=MDTowerTools.Moving==null&&Vector3.Distance(new Vector3(moved.X,0,moved.Z),new Vector3(gr?.At.X??0,0,gr?.At.Z??0))<.01f&&Vector3.Distance(moved,at0)>4;
             float yawAfter=MDCombat.AngleDelta(a.Yaw,yaw0);bool kept=MathF.Abs(a.Damage.Hitpoints-.6f)<.01f;bool barGone=!pl.ComponentGui.ControlsContainerWidget.Children.OfType<MDMoveBar>().Any();
-            mv["move"]=$"M on the tower: picked {picked}; ghost at the target ok {gm?.Ok} ({gm?.Reason}); R turned the ghost {turned*180/MathF.PI:0} deg, the mount key mounted {mounted}; bar shown {barShown}; "+
+            mv["move"]=$"M on the tower: picked {picked}; ghost at the target ok {gm?.Ok} ({gm?.Reason}); R turned the ghost {turned*180/MathF.PI:0} deg, the mount key mounted {mounted}; bar shown {barShown}; rings drawn {moveRings} (the ghost's only); "+
                 $"click: put {put} at {moved} (ghost {gr?.At}), yaw {yawAfter*180/MathF.PI:0} deg from before, health kept {kept} ({a.Damage.Hitpoints:0.00}), bar gone {barGone}; message {MDTowerTools.LastText}";
-            if(!picked||gm==null||!gm.Ok||MathF.Abs(turned-MathF.PI/2)>.05f||mounted||!barShown||!put||MathF.Abs(MathF.Abs(yawAfter)-MathF.PI/2)>.05f||!kept||!barGone)bad.Add("move: "+mv["move"]);
+            if(!picked||moveRings!=1||gm==null||!gm.Ok||MathF.Abs(turned-MathF.PI/2)>.05f||mounted||!barShown||!put||MathF.Abs(MathF.Abs(yawAfter)-MathF.PI/2)>.05f||!kept||!barGone)bad.Add("move: "+mv["move"]);
             // it fires from the new place
             // it fires from the new place: the same check once more on a tower that was not moved (the control), each with what it did
             var dum=Dummy(moved+new Vector3(0,0,-7));var ctl=Place(gun,T+new Vector3(12,0,-6),0);var dum2=Dummy(T+new Vector3(12,0,-13));
@@ -152,6 +159,24 @@ public partial class Lab {
             }
             tr["pressures"]=string.Join("; ",sweep);tr["used"]=$"cannon {MDMechBrain.CannonPressure}, grenade {MDMechBrain.GrenadePressure}";
             MDSettings.MechTerrain=false;Remove([near,artillery]);if(mech.IsAddedToProject)proj.RemoveEntity(mech,true);if(boat.IsAddedToProject)proj.RemoveEntity(boat,true);
+        }
+        // 0.17.0 (user: "现在机甲UI好像有文字溢出UI了"): the mech panel's lines for every weapon, its states and every ammo (轩辕十四 has all
+        // five), at 120 km/h and empty energy, with the default keys and with long key names: no line wider than its label or the panel
+        if(Part("hud")) {
+            var hd=new Dictionary<string,object>();r["hud"]=hd;var e=DatabaseManager.CreateEntity(proj,MDMechType.Regulus.Template,true);e.FindComponent<ComponentBody>(true).Position=T+new Vector3(0,0,-8);
+            e.FindComponent<ComponentSpawn>(true).SpawnDuration=0;proj.AddEntity(e);while(Wait(.5))yield return true;var u=e.FindComponent<ComponentMDUnit>(true);var m=u.Mech;
+            var panel=new MDStatusWidget();var over=new List<string>();float widest=0;string widestText="";int cases=0;
+            void Check(string what){panel.Refresh(u);cases++;var o=panel.Overflow();if(o.Length>0&&over.Count<6)over.Add(what+": "+o);if(panel.Size.X>widest){widest=panel.Size.X;widestText=panel.Widths;}}
+            foreach(var keys in new[]{"default","long"}) {
+                if(keys=="long")MDMechKeys.Apply(new Dictionary<MDMechAction,Key>{[MDMechAction.Board]=Key.BackSpace,[MDMechAction.Hover]=Key.Control,[MDMechAction.Jump]=Key.Space,[MDMechAction.Switch]=Key.RightBracket,[MDMechAction.Ammo]=Key.LeftArrow,[MDMechAction.Melee]=Key.Enter,[MDMechAction.View]=Key.Tab});
+                foreach(var wpn in Enum.GetValues<MDMechWeapon>())foreach(var ammo in m.Type.Ammo)foreach(var cs in Enum.GetValues<MDMechState.CannonState>()) {
+                    m.Weapon=wpn;m.Ammo=ammo;m.Cannon=cs;m.Cooldown=cs==MDMechState.CannonState.Ready?1:0;u.Body.Velocity=new Vector3(33.4f,0,0);m.ShownSpeed=120;Check($"{keys} keys, {wpn} {ammo} {cs}");
+                }
+            }
+            MDMechKeys.Apply(MDMechKeys.Defaults());panel.Sample();
+            hd["panel"]=$"{cases} cases; widest {widest:0} ({widestText}); overflows: {(over.Count==0?"none":string.Join(" | ",over))}";
+            if(over.Count>0||widest>MDStatusWidget.MaxWidth+.5f)bad.Add("hud: "+hd["panel"]);
+            proj.RemoveEntity(e,true);
         }
         if(bad.Count>0)throw new Exception("tools17: "+string.Join(" || ",bad));
     }

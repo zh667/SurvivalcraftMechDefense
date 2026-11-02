@@ -7,16 +7,17 @@ namespace Game;
 // 0.17.0 the tower tools (user, 2026-11-02: "希望加个工具，可以开关一键显示所有防御塔攻击范围……在放置塔的时候能看到攻击范围（并且塔放
 // 下去还可以重新放置）"). After the factory building of a game the user named: a device's panel there has 移动 (put it somewhere
 // else, turning it, its attack range shown while it is placed) and 收纳; here the pickaxe takes a tower down as before.
-// - The ranges key (MDMechAction.Ranges, Z) shows every tower's area of attack as a ring on the ground, until pressed again.
+// - The ranges key (MDMechAction.Ranges, Z) on a tower shows that tower's area of attack as a ring on the ground, again on it hides
+//   it, at no tower hides them all (user, 11-02: all at once was "太乱了，看不清楚"; first cut 0.17.0 showed every tower's).
 // - Holding a tower's deploy item shows where a right-click puts it: its footprint (green, or red and the reason on the bar) and
-//   its ring, with the other towers' rings fainter.
+//   its ring; only the towers marked with Z show theirs too (user: moving one showed them all).
 // - Looking at a tower, the move key (MoveTower, M) picks it up: its ghost follows the crosshair (MoveReach m), the rotate key
 //   (RotateTower, R; the mount key is kept from the game meanwhile) turns it by 90 degrees, a left-click (a tap on a phone) puts it
 //   there with everything it had (health, charge, upgrades), a right-click or the move key again leaves it where it was.
 //   A bar over the screen names the keys and says why a spot does not take it. Drawn by MDTowerWorld.DrawRanges (MDTowerRanges.cs).
 public static class MDTowerTools {
     public sealed class Ghost { public MDTowerDef Def; public Vector3 At; public Quaternion Rotation=Quaternion.Identity; public bool Has,Ok; public string Reason; public ComponentMDUnit Moving; }
-    public static bool ShowAll;
+    public static readonly HashSet<ComponentMDUnit> Shown=[];   // towers whose ring Z turned on
     public static Ghost Current;   // this frame's ghost of the local player (drawn by MDTowerWorld)
     public static ComponentMDUnit Moving; static int turns; static MDMoveBar bar; static ComponentPlayer mover;
     public const float MoveReach=24,PickReach=12;
@@ -35,8 +36,10 @@ public static class MDTowerTools {
         Current=null;
         if(p.ComponentHealth.Health<=0||DialogsManager.HasDialogs(p.GuiWidget)||p.ComponentGui.ModalPanelWidget!=null){if(Moving!=null)Stop(p,"");return;}
         if(MDMechKeys.Pressed(gi,MDMechAction.Ranges)) {
-            ShowAll=!ShowAll;MDMechKeys.ConsumePressed(gi,MDMechAction.Ranges);
-            Say(p,ShowAll?$"显示全部防御塔的攻击范围（再按 {K(MDMechAction.Ranges)} 关闭）":"已隐藏攻击范围");
+            MDMechKeys.ConsumePressed(gi,MDMechAction.Ranges);Shown.RemoveWhere(x=>!x.Entity.IsAddedToProject);
+            if(Under(p) is {} t){if(Shown.Remove(t))Say(p,$"已隐藏{t.Tower.name}的攻击范围");else{Shown.Add(t);Say(p,$"显示{t.Tower.name}的攻击范围（对着它再按 {K(MDMechAction.Ranges)} 隐藏，对着空处按全部隐藏）");}}
+            else if(Shown.Count>0){Shown.Clear();Say(p,"已隐藏全部攻击范围");}
+            else Say(p,$"对准一座炮塔按 {K(MDMechAction.Ranges)} 显示它的攻击范围");
         }
         if(MDMechPilot.Mounted(p)!=null){if(Moving!=null)Stop(p,"");return;}   // driving: the mech's keys
         if(Moving==null) {
@@ -61,11 +64,14 @@ public static class MDTowerTools {
     // the clicks and the mount key are the move's while a tower is picked up
     static void Clear(ref PlayerInput v){v.Dig=v.Hit=v.Interact=v.Aim=v.PickBlockType=null;v.ToggleMount=false;}
     // the tower under the crosshair (within PickReach, in front of the terrain)
-    static void Pick(ComponentPlayer p) {
-        var ray=CameraRay(p);var to=ray.Position+ray.Direction*PickReach;
+    public static ComponentMDUnit Under(ComponentPlayer p,float reach=PickReach*4) {
+        var ray=CameraRay(p);var to=ray.Position+ray.Direction*reach;
         var t=p.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(ray.Position,to,false,true,(x,_)=>Solid(x));
         var hit=p.Project.FindSubsystem<SubsystemBodies>(true).Raycast(ray.Position,to,.25f,(b,_)=>b.Entity.FindComponent<ComponentMDUnit>()?.Kind=="Turret");
-        var u=hit is {} h&&(t==null||h.Distance<t.Value.Distance)?h.ComponentBody.Entity.FindComponent<ComponentMDUnit>():null;
+        return hit is {} h&&(t==null||h.Distance<t.Value.Distance)?h.ComponentBody.Entity.FindComponent<ComponentMDUnit>():null;
+    }
+    static void Pick(ComponentPlayer p) {
+        var u=Under(p,PickReach);
         if(u==null){Say(p,$"对准要移动的炮塔再按 {K(MDMechAction.MoveTower)}。");return;}
         if(u.Destroyed){Say(p,"已损毁的炮塔不能移动（可以先维修）。");return;}
         Moving=u;mover=p;turns=0;

@@ -1,4 +1,4 @@
-# Status — 2026-11-01
+# Status — 2026-11-02
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
@@ -9,6 +9,48 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
 (`Mod`/`Tests/*` bin and obj, `tools/__pycache__`): 357 items, 44.4 GB. Kept as before, and `local/claude-work/r-0.14.0`
 (0.14.0 comparison shots) and `engine-src-194`; `dist/` untouched. Results recorded below stand.
 
+
+## 0.17.0: tower ranges and moving towers; the mech's cannon and grenade can break terrain; less blast smoke (branch feat/range-terrain-0170, PR pending)
+
+- User (11-02): "希望加个工具，可以开关一键显示所有防御塔攻击范围……在放置塔的时候能看到攻击范围（并且塔放下去还可以重新放置，可以看……是哪个键位进行此
+  操作以及此操作的页面显示）". The game the user named was checked in its own text tables (local extraction): a device's panel has
+  移动 (re-place it, turning it, confirm / cancel; its attack range shown while placing) and 收纳; the keyboard letters are not in the
+  extracted tables. Built (Mod/MDTowerTools.cs, Mod/MDTowerRanges.cs), keys on the settings page under "防御塔工具按键":
+  - Z (MDMechAction.Ranges) shows every tower's area of attack until pressed again: a ring at u.Range (a radar's boost included) laid on
+    the terrain near the tower's height, a faint fill, a red inner ring for a minimum range, the band of a directional tower as its
+    rectangle; colour = the tower's fx colour.
+  - Holding a tower's deploy item: a ghost where the right-click puts it (same ray and reach as MDDeployPatch): footprint box green or
+    red, its ring, a facing arrow; the other towers' rings fainter. MDTowerPlacement.Find now also returns the refused spot.
+  - M (MoveTower) on a tower under the crosshair (12 m) picks it up; the ghost follows the crosshair (24 m); R (RotateTower; the mount
+    key, kept from the game while moving, so the page allows R for this one action) turns 90 deg; a left-click (a tap on a phone) puts
+    the same entity there (ComponentMDTowerBody.FixAt, health / charge / everything kept, plants cleared); right-click or M cancels;
+    a refused spot keeps it picked up and says why. A bar near the top of the screen names the keys and the spot's state (MDMoveBar).
+    Wrecked towers cannot be moved; driving a mech cancels a move. The mech's own keys are now MDMechKeys.Mech (the pilot suppresses
+    only those); the deploy item text and the handbook's tower chapter name the keys.
+- User (11-02): "希望机甲模组里的大炮能摧毁方块、载具……给机甲的火炮和榴弹做就可以，防御塔的炮弹都不做这个功能，并在模组设置里可设置，默认关闭地形破坏".
+  Setting 战斗 > 机甲火炮、榴弹破坏地形 (MDSettings.MechTerrain, off by default). On: where the mech's cannon shell or grenade bursts
+  (MDTowerBrain.ShellLanded, mech weapons only) the game's own explosion is set off in the air cell before the burst point
+  (Mod/MDTerrainBlast.cs, pressure cannon 320 / grenade 240): blocks break by their resistance and fly, vehicles and animals are hit as
+  by gunpowder (a boat beside a cannon blast is destroyed). This mod's towers and mechs, the robots and players are spared (Harmony
+  prefix on ComponentBody.UnderExplosion while our explosion is simulated; the thrown blocks' hits on them are zeroed in
+  ProcessAttackment). The game's own smoke cells and the blocks' white smoke trails are left out for these blasts.
+  Lab pressures (flat dirt / granite): 40 -> 1 / 0 cells, 80 -> 2 / 0, 160 -> 12 / 2, 320 -> 44 / 9. Game explosives for scale:
+  small gunpowder keg 60, medium 360, large 2160, bomb 60. A cannon shell in dirt broke 39 cells, a grenade in granite 4.
+- User (11-02): "火炮和榴弹的烟雾效果可以减弱一点". The mech's cannon and grenade blasts (13 m radius) threw ~90 smoke puffs and a 93-quad
+  fireball. Now MDTowerFx.smoke (default 1) scales a blast's smoke; the two mech weapons use 0.3 (fewer, 0.75 x smaller, lighter,
+  shorter-lived puffs) and a 0.4 x fireball. Towers' blasts unchanged. Lab, the same blast 0.8 s after (shots t17_smoke_old /
+  t17_smoke_new, local/claude-work/r-0.17.0): a dense white cloud before, a thin one now, on both runtimes. The lab's particle counts
+  are of the whole world (other fires and shots in them) and are no measure.
+- Package dist/MechDefense-0.17.0.scmod, 35,583,216 bytes, SHA-256 f82ea5fddbb684e85f99563750500e983f2f982c75f3ebd7212bd7ddf9db3e65.
+  Verified (PC, isolated runtime) on 1.9.3.1 and 1.9.4 each: tools17, mech, combat15, all. Not verified: the user's game with its
+  other mods (the vehicles of other mods were not tried: a vanilla boat was), a phone (touch: the tap that puts a tower down is the
+  game's Interact, not tried on a device).
+- Lab tools17 (Tests/TowerLab/Tools17.cs; real key presses through LabKeys, the click as the game's PlayerInput.Hit through LabClick):
+  ranges (Z on / off, rings drawn), ghost (green on free ground, red with the reason in a 1-cell lane), move (M picks, R turns 90 deg,
+  click puts it with its health and turned, the bar is laid out 760 x 58 with the keys; it locks on a dummy and fires there; M cancels;
+  an occupied spot is refused; M at the sky picks nothing), terrain (off: 0 cells; a tower's shell: 0; cannon and grenade break; boat
+  destroyed; tower beside and player unhurt), smoke (old / new). The lab's screenshots do not include the GUI: the bar was checked by
+  its layout, not seen.
 
 ## Delivered: 0.16.3: the handbook is given once per world, not on every load (PR #19, merged 2026-11-02 on the user's approval, tag v0.16.3)
 

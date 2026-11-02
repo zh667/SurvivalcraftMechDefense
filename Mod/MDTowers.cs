@@ -37,6 +37,7 @@ public sealed class MDTowerFx {
     public float[] color2 = [1, .5f, .1f];  // secondary (trails, impact)
     public float scale = 1;
     public string kind = "heavy";           // explosion look: fire acid poison frost heavy
+    public float smoke = 1;                 // 0.17.0 x the smoke of its blast (the mech's cannon and grenade: user 2026-11-02 "火炮和榴弹的烟雾效果可以减弱一点")
 }
 public sealed class MDTowerDef {
     public string id, name, template, summary; public int data;

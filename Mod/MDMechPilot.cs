@@ -87,8 +87,8 @@ public static class MDMechPilot {
             u.AimPitch=Math.Clamp(u.AimPitch+input.Look.Y*p.ComponentLocomotion.LookSpeed*dt*(SettingsManager.FlipVerticalAxis?-1:1),-.5f,.65f);
             if(MDMechKeys.Pressed(gi,MDMechAction.View))p.GameWidget.ActiveCamera=p.GameWidget.ActiveCamera is FppCamera?p.GameWidget.FindCamera<TppCamera>():p.GameWidget.FindCamera<FppCamera>();
             m.AimPoint=AimPoint(p,u);
-            MDMechKeys.Suppress(gi,ref v,MDMechKeys.All);   // a mech key does only the mech's action (not also the game's on that key)
-            MDMechKeys.ConsumePressed(gi,MDMechKeys.All);   // nor another mod's that reads the keyboard later in the frame
+            MDMechKeys.Suppress(gi,ref v,MDMechKeys.Mech);   // a mech key does only the mech's action (not also the game's on that key)
+            MDMechKeys.ConsumePressed(gi,MDMechKeys.Mech);   // nor another mod's that reads the keyboard later in the frame
         }
         v.Move=Vector3.Zero;v.Look=Vector2.Zero;v.Dig=v.Hit=v.Aim=v.Interact=v.PickBlockType=null;v.ToggleMount=false;v.ToggleCreativeFly=false;v.Jump=false;v.ToggleCrouch=false;v.SwitchCameraMode=false;
     }
@@ -159,7 +159,7 @@ public class MDHudHost:CanvasWidget {
 }
 
 [HarmonyPatch(typeof(ComponentInput),nameof(ComponentInput.Update))]
-public static class MDMechInputPatch {public static void Postfix(ComponentInput __instance,float dt)=>MDMechPilot.Input(__instance.m_componentPlayer,dt);}
+public static class MDMechInputPatch {public static void Postfix(ComponentInput __instance,float dt){MDMechPilot.Input(__instance.m_componentPlayer,dt);MDTowerTools.Input(__instance.m_componentPlayer);}}   // 0.17.0 the tower tools after the mech
 [HarmonyPatch(typeof(ComponentRider),nameof(ComponentRider.StartMounting))]
 public static class MDMechBoardGuard {public static bool Prefix(ComponentRider __instance,ComponentMount componentMount)=>componentMount.Entity.FindComponent<ComponentMDUnit>() is not {Mech:not null} u||(__instance.ComponentCreature is ComponentPlayer p&&MDMechPilot.CanBoard(p,u));}
 [HarmonyPatch(typeof(ComponentRider),nameof(ComponentRider.StartDismounting))]

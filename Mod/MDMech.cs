@@ -270,15 +270,22 @@ public static class MDMechBrain {
     static readonly System.Random random=new();
     static float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
     public static string Se(int id)=>$"Imported/Mercury/Audio/se{id:00}";   // the original sound effects by id (se.bin)
-    static MDTowerDef Def(string id,string type,float power,float splash,float speed,float[] color,float[] color2,float scale,int hitSe)=>
+    static MDTowerDef Def(string id,string type,float power,float splash,float speed,float[] color,float[] color2,float scale,int hitSe,float smoke=1)=>
         new(){id="mercury_"+id,name="水星",attack=new MDTowerAttack{type=type,power=power,splash=splash,speed=speed,needsSight=false},
-              fx=new MDTowerFx{color=color,color2=color2,scale=scale,kind="heavy"},fireSounds=[],hitSounds=[Se(hitSe)],muzzles=[],nodes=[]};
+              fx=new MDTowerFx{color=color,color2=color2,scale=scale,kind="heavy",smoke=smoke},fireSounds=[],hitSounds=[Se(hitSe)],muzzles=[],nodes=[]};
     static MDTowerDef rifle,missile,cannon,laser,grenade;
     static MDTowerDef Rifle=>rifle??=Def("rifle","bolt",1000*DamageScale,0,60*Unit,[.4f,.9f,1],[.6f,.95f,1],.8f,13);           // 160 m/s, hit_gun
     static MDTowerDef Missile=>missile??=Def("missile","shell",1000*DamageScale,0,12*Unit,[1,.7f,.25f],[1,.45f,.15f],1.1f,14);   // direct hit only, hit_missile
-    static MDTowerDef CannonDef=>cannon??=Def("cannon","shell",2000*DamageScale,5*Unit,120*Unit,[1,.45f,.18f],[1,.3f,.1f],1.6f,13);   // 320 m/s, blast 5 units
+    static MDTowerDef CannonDef=>cannon??=Def("cannon","shell",2000*DamageScale,5*Unit,120*Unit,[1,.45f,.18f],[1,.3f,.1f],1.6f,13,BlastSmoke);   // 320 m/s, blast 5 units
     static MDTowerDef Laser=>laser??=Def("laser","beam",1500*DamageScale,0,0,[.35f,.85f,1],[.7f,.95f,1],1,13);
-    static MDTowerDef Grenade=>grenade??=Def("grenade","shell",2000*DamageScale,5*Unit,0,[1,.75f,.3f],[.9f,.4f,.15f],1.4f,24);   // bomb_explosion
+    static MDTowerDef Grenade=>grenade??=Def("grenade","shell",2000*DamageScale,5*Unit,0,[1,.75f,.3f],[.9f,.4f,.15f],1.4f,24,BlastSmoke);   // bomb_explosion
+    // 0.17.0: their blast smoke is a third of a tower shell's (user: "火炮和榴弹的烟雾效果可以减弱一点"; a 13 m blast threw ~90 puffs); only these
+    // two break terrain, with the setting on (MDTerrainBlast): the game's explosion at these pressures. Lab tools17 (flat dirt / granite):
+    // 40 broke 1 dirt cell, 80: 2, 160: 12 dirt and 2 granite, 320: 44 dirt and 9 granite (a crater about 2 m across in dirt)
+    public const float BlastSmoke=.3f;public static float CannonPressure=320,GrenadePressure=240;
+    public static bool BreaksTerrain(MDTowerDef d)=>d!=null&&(d==cannon||d==grenade);
+    public static float BlastPressure(MDTowerDef d)=>d==grenade?GrenadePressure:CannonPressure;
+    public static MDTowerDef CannonWeapon=>CannonDef;public static MDTowerDef GrenadeWeapon=>Grenade;   // the lab
     static readonly int[] SwitchSe=[25,26,27,30,29];   // change_to_gun / missile / cannon / laser / bomb
 
     static Vector3 Forward(float yaw)=>new(-MathF.Sin(yaw),0,-MathF.Cos(yaw));

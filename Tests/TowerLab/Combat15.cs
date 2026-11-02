@@ -353,6 +353,15 @@ public partial class Lab {
             ScreensManager.SwitchScreen("Game");for(int i=0;i<4;i++)yield return true;
             mn["manual"]=$"given {MDThreat.ManualGiven}, in the inventory {has}; chapters: {string.Join(", ",counts)}";
             if(!MDThreat.ManualGiven||counts.Any(x=>x.EndsWith(" 0")))bad.Add("manual: "+mn["manual"]);
+            // 0.16.3 (user 2026-11-01: 每次重新进游戏都会给一本驾驶手册): the flag went into Project.xml as "true" (XElement writes a
+            // bool that way) and the load compared it with "True", so every world opened as not given yet. A real save, its file read
+            // back as a world load does, then a second of updates: still given, and no second copy.
+            Func<int> books=()=>Enumerable.Range(0,inv.SlotsCount).Count(i=>inv.GetSlotValue(i)==manual&&inv.GetSlotCount(i)>0);   // slots: the lab's Creative counts are unlimited
+            int booksBefore=books();GameManager.SaveProject(true,false);System.Xml.Linq.XElement savedWorld;
+            using(var st=Storage.OpenFile(Storage.CombinePaths(proj.FindSubsystem<SubsystemGameInfo>(true).DirectoryName,"Project.xml"),OpenFileMode.Read))savedWorld=System.Xml.Linq.XElement.Load(st);
+            MDThreat.ManualGiven=false;MDThreat.Load(savedWorld);bool keptGiven=MDThreat.ManualGiven;while(Wait(1))yield return true;int booksAfter=books();
+            mn["reload"]=$"saved flag {savedWorld.Attribute(MDThreat.ManualAttribute)?.Value} -> loaded given {keptGiven}; slots with it {booksBefore} -> {booksAfter} a second later";
+            if(!keptGiven||booksAfter!=booksBefore)bad.Add("manual reload: "+mn["reload"]);
         }
         // 0.16.0 the defence core, in the lab's Creative world (the user's: threat filled to 30 there and no raid came, while this part
         // ran in Survival): a second core puts the first out; robots and bosses killed near it add threat; full: a countdown, waves

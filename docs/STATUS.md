@@ -8,9 +8,14 @@ Housekeeping 2026-11-01 (user: "中间产物都可以删掉了"), same rule: all
 the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.json, loose shots, PR drafts), plus the build output
 (`Mod`/`Tests/*` bin and obj, `tools/__pycache__`): 357 items, 44.4 GB. Kept as before, and `local/claude-work/r-0.14.0`
 (0.14.0 comparison shots) and `engine-src-194`; `dist/` untouched. Results recorded below stand.
+Housekeeping 2026-11-02 (user: "中间产物可删，dist里的历史版本也可删"): all `local/runtime-*` (the 0.17.0 lab runs, 55) and this round's
+`local/claude-work` files (labbatch-*.json, PR drafts), the build output, and every package in `dist/` but MechDefense-0.17.0.scmod
+(0.4.1-0.16.3 and the 0.9.0 previews): 104 items, 10.2 GB. Kept: as before, `local/claude-work/r-0.17.0` (the 0.17.0 shots named
+below), `dist/MechDefense-0.7.0-更新日志.md` and `dist/package-manifest.json`. The old-save migration smoke test
+(`run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod`) needs a 0.5.0 package rebuilt from git history first.
 
 
-## 0.17.0: tower ranges and moving towers; the mech's cannon and grenade can break terrain; less blast smoke; the mech panel fits its text (PR #20, pending)
+## Delivered: 0.17.0: tower ranges and moving towers; the mech's cannon and grenade can break terrain; less blast smoke; the mech panel fits its text (PR #20, merged 2026-11-02 on the user's approval, tag v0.17.0)
 
 - User (11-02): "希望加个工具，可以开关一键显示所有防御塔攻击范围……在放置塔的时候能看到攻击范围（并且塔放下去还可以重新放置，可以看……是哪个键位进行此
   操作以及此操作的页面显示）". The game the user named was checked in its own text tables (local extraction): a device's panel has

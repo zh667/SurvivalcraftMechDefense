@@ -34,17 +34,37 @@ public sealed partial class MDTowerWorld {
         RangeRing(at,range,c,strength,true);
         if(a.minRange>.5f)RangeRing(at,a.minRange,new Color(255,120,100),strength*.8f,false);
     }
+    // The fill: a polar grid (radial steps of about 2 m), every vertex on the ground under it and 5 cm over it; a cell whose corners differ
+    // by more than half a block in height (a block's edge, a step) is left out rather than drawn as a slope across the block. 0.17.0 first cut drew a fan
+    // from a centre 6 cm up to rim points on the ground itself: near the rim it lay in the ground's plane and lost the depth test there,
+    // so wedges of it were missing, changing with the view (user, 11-02: "会有一些锥形区域没绘制攻击范围"); over uneven ground the fan
+    // also went under the terrain.
+    const float FillLift=.05f;
+    Vector3[] fillPrev=[],fillRow=[];
     void RangeRing(Vector3 at,float r,Color c,float strength,bool fill) {
-        int n=Math.Clamp((int)(r*4),32,180);Vector3 prev=default;var centre=new Vector3(at.X,at.Y+.06f,at.Z);
+        int n=Math.Clamp((int)(r*4),32,180);Vector3 prev=default;
         for(int i=0;i<=n;i++) {
             float t=i*MathF.PI*2/n;var p=new Vector3(at.X+MathF.Cos(t)*r,0,at.Z+MathF.Sin(t)*r);p.Y=RangeSurface(p.X,p.Z,at.Y);
-            if(i>0) {
-                RangeRibbon(prev,p,c,strength);
-                if(fill)rangeBatch.QueueTriangle(centre,prev,p,RangeFade(c,.10f*strength));
-            }
+            if(i>0)RangeRibbon(prev,p,c,strength);
             prev=p;
         }
+        if(!fill)return;
+        var col=RangeFade(c,.16f*strength);int k=Math.Clamp((int)MathF.Ceiling(r/2),2,32);
+        if(fillPrev.Length<n+1){fillPrev=new Vector3[n+1];fillRow=new Vector3[n+1];}
+        var centre=new Vector3(at.X,RangeSurface(at.X,at.Z,at.Y)+FillLift,at.Z);
+        for(int j=1;j<=k;j++) {
+            float rr=r*j/k;
+            for(int i=0;i<=n;i++){float t=i*MathF.PI*2/n;float x=at.X+MathF.Cos(t)*rr,z=at.Z+MathF.Sin(t)*rr;fillRow[i]=new Vector3(x,RangeSurface(x,z,at.Y)+FillLift,z);}
+            for(int i=0;i<n;i++) {
+                if(j==1){if(Flat(centre.Y,fillRow[i].Y,fillRow[i+1].Y,centre.Y))rangeBatch.QueueTriangle(centre,fillRow[i],fillRow[i+1],col);}
+                else if(Flat(fillPrev[i].Y,fillPrev[i+1].Y,fillRow[i+1].Y,fillRow[i].Y))rangeBatch.QueueQuad(fillPrev[i],fillPrev[i+1],fillRow[i+1],fillRow[i],col);
+            }
+            (fillPrev,fillRow)=(fillRow,fillPrev);
+        }
+        FillCells+=n*k;
     }
+    public static int FillCells;   // tests
+    static bool Flat(float a,float b,float c,float d)=>MathF.Max(MathF.Max(a,b),MathF.Max(c,d))-MathF.Min(MathF.Min(a,b),MathF.Min(c,d))<=.5f;
     void RangeEdge(Vector3 a,Vector3 b,float y,Color c,float strength) {
         int n=Math.Max(1,(int)(Vector3.Distance(a,b)));Vector3 prev=default;
         for(int i=0;i<=n;i++){var p=Vector3.Lerp(a,b,i/(float)n);p.Y=RangeSurface(p.X,p.Z,y);if(i>0)RangeRibbon(prev,p,c,strength);prev=p;}

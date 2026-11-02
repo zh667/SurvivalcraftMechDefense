@@ -160,6 +160,26 @@ public partial class Lab {
             tr["pressures"]=string.Join("; ",sweep);tr["used"]=$"cannon {MDMechBrain.CannonPressure}, grenade {MDMechBrain.GrenadePressure}";
             MDSettings.MechTerrain=false;Remove([near,artillery]);if(mech.IsAddedToProject)proj.RemoveEntity(mech,true);if(boat.IsAddedToProject)proj.RemoveEntity(boat,true);
         }
+        // 0.17.0 (user: "拿着炮塔未摆放，移动视角，会有一些锥形区域没绘制攻击范围"): a marked tower's ring and fill and a ghost's, seen from
+        // four sides high and low, on flat ground and over a bump (a 3 x 3 block 1 high, a 2-high step) inside the ring: shots for the eye
+        if(Part("fill")) {
+            var fl=new Dictionary<string,object>();r["fill"]=fl;var terrain=proj.FindSubsystem<SubsystemTerrain>(true);MDTowerTools.Shown.Clear();
+            var at=T+new Vector3(0,0,-8);var u=Place(gun,at,0);int bx=(int)MathF.Floor(at.X)+4,bz=(int)MathF.Floor(at.Z)+3;var placedCells=new List<Point3>();
+            for(int x=bx;x<bx+3;x++)for(int z=bz;z<bz+3;z++){terrain.ChangeCell(x,70,z,Terrain.MakeBlockValue(3));placedCells.Add(new Point3(x,70,z));}
+            for(int x=bx-9;x<bx-6;x++)for(int z=bz-1;z<bz+5;z++)for(int y=70;y<72;y++){terrain.ChangeCell(x,y,z,Terrain.MakeBlockValue(3));placedCells.Add(new Point3(x,y,z));}
+            MDTowerTools.Shown.Add(u);while(Wait(.5))yield return true;var shots=new List<string>();
+            float R=u.Range;int i0=0;
+            foreach(var (eye,name) in new[]{(at+new Vector3(0,R*1.1f,1),"top"),(at+new Vector3(10,14,16),"southeast_near"),(at+new Vector3(-14,9,-6),"west_near"),(at+new Vector3(-3,4,12),"south_low")}) {
+                foreach(var x in Hold(eye,at,4))yield return x;int cells=MDTowerWorld.FillCells;foreach(var x in Hold(eye,at,2))yield return x;
+                shots.Add($"{name}: rings {MDTowerWorld.RingsDrawn}, fill cells per frame {(MDTowerWorld.FillCells-cells)/2}");Shot($"t17_fill_{i0++}_{name}");yield return true;
+            }
+            // the ghost of a held deploy item over the bump, seen low
+            MDTowerTools.Shown.Clear();var inv=pl.ComponentMiner.Inventory;inv.ActiveSlotIndex=0;inv.RemoveSlotItems(0,inv.GetSlotCount(0));inv.AddSlotItems(0,MDDeploymentBlock.Value(gun,1),1);
+            Remove([u]);pl.ComponentBody.Position=at+new Vector3(0,0,4);var geye=at+new Vector3(0,2.2f,4);foreach(var x in Hold(geye,at+new Vector3(0,0,-.5f),6))yield return x;
+            shots.Add($"ghost: has {MDTowerTools.Current?.Has} rings {MDTowerWorld.RingsDrawn}");Shot("t17_fill_ghost");yield return true;
+            inv.RemoveSlotItems(0,inv.GetSlotCount(0));foreach(var c in placedCells)terrain.ChangeCell(c.X,c.Y,c.Z,0);
+            fl["fill"]=string.Join("; ",shots);
+        }
         // 0.17.0 (user: "现在机甲UI好像有文字溢出UI了"): the mech panel's lines for every weapon, its states and every ammo (轩辕十四 has all
         // five), at 120 km/h and empty energy, with the default keys and with long key names: no line wider than its label or the panel
         if(Part("hud")) {

@@ -20,7 +20,12 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
     (MDTowerTools.Shown; several can be marked). First cut showed every tower's at once; user (11-02): "点z对准哪个炮塔才显示哪个炮塔的
     射程吧，不然一点开全部显示太乱了，看不清楚，还有点M移动炮塔好像也显示所有炮塔的攻击范围了". The ring: u.Range (a radar's boost
     included) laid on the terrain near the tower's height, a faint fill, a red inner ring for a minimum range, a directional tower's band
-    as its rectangle; colour = the tower's fx colour.
+    as its rectangle; colour = the tower's fx colour. The fill was first a fan from a centre 6 cm up to rim points on the ground: near the
+    rim it lay in the ground's plane and lost the depth test, so wedges were missing and moved with the view (user, 11-02: "拿着炮塔未摆
+    放，移动视角，会有一些锥形区域没绘制攻击范围（放置下去的话就是一些固定锥形区域未绘制）"). Now a polar grid (2 m radial steps), each
+    vertex 5 cm over the ground under it, cells across a step of more than half a block left out (no slopes over blocks), fill 0.16.
+    Lab tools17-fill: a marked tower and a ghost from five views on flat ground and over a 1-high bump and a 2-high step: even fill, no
+    wedges, no bright slopes (shots local/claude-work/r-0.17.0/t17_fill_sheet_q.jpg); a cell wholly on a block's top is tinted there.
   - Holding a tower's deploy item: a ghost where the right-click puts it (same ray and reach as MDDeployPatch): footprint box green or
     red, its ring, a facing arrow; no other tower's ring but those marked with Z (also while moving). MDTowerPlacement.Find now also
     returns the refused spot.
@@ -44,7 +49,7 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
   shorter-lived puffs) and a 0.4 x fireball. Towers' blasts unchanged. Lab, the same blast 0.8 s after (shots t17_smoke_old /
   t17_smoke_new, local/claude-work/r-0.17.0): a dense white cloud before, a thin one now, on both runtimes. The lab's particle counts
   are of the whole world (other fires and shots in them) and are no measure.
-- Package dist/MechDefense-0.17.0.scmod, 35,584,227 bytes, SHA-256 28932c733659a73248487524a47a1b0dc082ac376ecf0fab4c978d4a6869c045.
+- Package dist/MechDefense-0.17.0.scmod, 35,584,564 bytes, SHA-256 c851b6443cd74614fa58f6c58d4405c95b805bfdea5725a3171c22deb77b114d.
   Verified (PC, isolated runtime) on 1.9.3.1 and 1.9.4 each: tools17, mech, combat15, all (one 1.9.3.1 mech run died before the mods
   loaded, the engine's DPI read divided by zero; rerun passed). Not verified: the user's game with its
   other mods (the vehicles of other mods were not tried: a vanilla boat was), a phone (touch: the tap that puts a tower down is the

@@ -10,7 +10,7 @@ the `local/claude-work` folders and files since (c15*, c16a, neo, labbatch-*.jso
 (0.14.0 comparison shots) and `engine-src-194`; `dist/` untouched. Results recorded below stand.
 
 
-## 0.16.3: the handbook is given once per world, not on every load (branch fix/manual-0163, PR pending)
+## Delivered: 0.16.3: the handbook is given once per world, not on every load (PR #19, merged 2026-11-02 on the user's approval, tag v0.16.3)
 
 - User (11-01): "我发现每次重新进游戏都会给一本驾驶手册". The world keeps "MechDefenseManualGiven" in Project.xml
   (MDThreat.Save); XElement.SetAttributeValue writes a bool as "true", and MDThreat.Load compared it with "True", so every world

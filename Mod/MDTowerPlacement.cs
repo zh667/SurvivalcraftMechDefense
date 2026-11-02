@@ -63,7 +63,9 @@ public static class MDTowerPlacement {
     // and a click on grass (the ray stops at the grass) took the grass as the floor, so "no full support". Now: the floor cell is
     // the grass / flower cell itself, the cell on a top face, or the cell beside a side face (down to the ground below it); the
     // footprint is the one of all placements that contain that cell which is free and closest to the click.
-    public static bool Find(SubsystemTerrain terrain,SubsystemBodies bodies,TerrainRaycastResult hit,MDTowerDef d,out Vector3 position,out string reason) {
+    // 0.17.0: `ignore` is a tower being moved (its own body is no obstacle); a refused spot still gives the closest footprint tried
+    // as `position` (the red ghost of MDTowerTools), default when there is none
+    public static bool Find(SubsystemTerrain terrain,SubsystemBodies bodies,TerrainRaycastResult hit,MDTowerDef d,out Vector3 position,out string reason,ComponentBody ignore=null) {
         position=default;var size=Cells(d);var f=hit.CellFace;int bx=f.X,by=f.Y,bz=f.Z;
         if(Replaceable(hit.Value)){}   // the plant's own cell is the floor cell
         else if(f.Face==4)by++;
@@ -72,22 +74,22 @@ public static class MDTowerPlacement {
             var n=CellFace.FaceToPoint3(f.Face);bx+=n.X;bz+=n.Z;
             for(int k=0;k<4&&!Solid(terrain.Terrain.GetCellValue(bx,by-1,bz));k++)by--;   // beside a wall: down to the ground
         }
-        var click=hit.HitPoint();string first=null;
+        var click=hit.HitPoint();string first=null;Vector3? firstAt=null;
         var tries=new List<(float d,int x0,int z0)>();
         for(int ox=0;ox<size.X;ox++)for(int oz=0;oz<size.Z;oz++){int x0=bx-ox,z0=bz-oz;var c=new Vector2(x0+size.X*.5f,z0+size.Z*.5f);tries.Add((Vector2.Distance(c,new Vector2(click.X,click.Z)),x0,z0));}
         foreach(var (_,x0,z0) in tries.OrderBy(t=>t.d)) {
             var at=new Vector3(x0+size.X*.5f,by,z0+size.Z*.5f);
-            if(Validate(terrain,bodies,at,d,out reason)){position=at;return true;}
-            first??=reason;
+            if(Validate(terrain,bodies,at,d,out reason,ignore)){position=at;return true;}
+            first??=reason;firstAt??=at;
         }
-        reason=first;return false;
+        reason=first;position=firstAt??default;return false;
     }
     // clears the grass and flowers in a validated footprint
     public static void ClearPlants(SubsystemTerrain terrain,Vector3 position,MDTowerDef d) {
         var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
         for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++)for(int y=y0;y<y0+size.Y;y++)if(Replaceable(terrain.Terrain.GetCellValue(x,y,z)))terrain.DestroyCell(0,x,y,z,0,false,false);
     }
-    public static bool Validate(SubsystemTerrain terrain,SubsystemBodies bodies,Vector3 position,MDTowerDef d,out string reason) {
+    public static bool Validate(SubsystemTerrain terrain,SubsystemBodies bodies,Vector3 position,MDTowerDef d,out string reason,ComponentBody ignore=null) {
         var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
         for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++) {
             if(terrain.Terrain.GetChunkAtCell(x,z)==null){reason="部署区域尚未加载。";return false;}
@@ -96,7 +98,7 @@ public static class MDTowerPlacement {
         }
         var box=new BoundingBox(new(x0+.001f,y0+.001f,z0+.001f),new(x0+size.X-.001f,y0+size.Y-.001f,z0+size.Z-.001f));
         var near=new DynamicArray<ComponentBody>();bodies.FindBodiesAroundPoint(new(position.X,position.Z),8,near);
-        if(near.Any(b=>box.Intersection(b.BoundingBox))){reason="占地区域已有生物、载具或炮塔，请退后再放置。";return false;}
+        if(near.Any(b=>b!=ignore&&box.Intersection(b.BoundingBox))){reason="占地区域已有生物、载具或炮塔，请退后再放置。";return false;}
         reason=null;return true;
     }
 }

@@ -330,7 +330,8 @@ public static class MDTowerBrain {
         if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir,true);return;}
         string kind=d.fx.kind;float r=Math.Max(splash,.5f);
         if(a.type=="bolt")w.Impact(d,point,dir,true);
-        w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2));
+        w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2),d.fx.smoke);
+        if(u.Mech!=null&&MDSettings.MechTerrain&&MDMechBrain.BreaksTerrain(d))MDTerrainBlast.Blast(u.Project,point,dir,MDMechBrain.BlastPressure(d));   // 0.17.0 (MDTerrainBlast)
         if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt","explosion");   // an enhanced bolt: the round itself, then its blast
         Splash(u,d,point,r,power*(hit!=null?.6f:1),hit);
         if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);

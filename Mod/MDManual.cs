@@ -81,6 +81,7 @@ public sealed class MDManualScreen:Screen {
                 Entry([MDIcon.Heat,MDIcon.Cold],"敌人头上的图标","表示它现在身上的状态。另一种元素打中带状态的敌人会发生反应，头上飘出反应的名字。");
                 break;
             case "防御塔":
+                Note($"摆放：手持部署物时准星处显示占地（绿色可放、红色不能放）和攻击范围圈；放下后对着炮塔按 {MDMechKeys.Hint(MDMechAction.MoveTower)} 拿起来换位置，{MDMechKeys.Hint(MDMechAction.RotateTower)} 旋转，左键放下。对准炮塔按 {MDMechKeys.Hint(MDMechAction.Ranges)} 显示或隐藏它的攻击范围。");   // 0.17.0 (MDTowerTools)
                 foreach(int tier in new[]{1,2,3}) {
                     Head($"{tier} 阶");
                     foreach(var d in MDTowerLibrary.All.OrderBy(t=>t.data).Where(t=>MDEncyclopedia.TierOf(t)==tier)) {

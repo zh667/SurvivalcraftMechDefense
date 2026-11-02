@@ -95,14 +95,14 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
         Emit(S.Ring,p,Vector3.Zero,.25f,.15f*s,1.1f*s,c,c*0f,true);
         SmokePuffs(p,strong?4:2,.22f*s,new Color(110,104,98,95),.5f,1.0f,.1f);Impacts++;
     }
-    public void Explosion(Vector3 p,float radius,string kind,Color c,Color c2) {
+    public void Explosion(Vector3 p,float radius,string kind,Color c,Color c2,float smoke=1) {
         float s=Math.Max(.6f,radius/2);
         Flash(p+Vector3.UnitY*.3f,1.0f*s,c,.12f);
         Emit(S.Ring,p+Vector3.UnitY*.08f,Vector3.Zero,.35f,.3f,radius*1.15f,c,c*0f,true,0,0,0,0,true);
         int n=(int)(14*s);
         if(kind=="fire") {
             for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.8f+.2f;Emit(S.Fire,p+d*.2f,d*R(1.5f,3.5f)*s,R(.35f,.7f),R(.25f,.45f)*s,R(.7f,1.1f)*s,new Color(255,220,140),new Color(180,40,10,0),true,-1,2.4f,0,R(-2,2));}
-            SmokePuffs(p+Vector3.UnitY*.4f,n/2,.45f*s,new Color(60,55,52,170),1.2f,2.2f,.5f*s);
+            SmokePuffs(p+Vector3.UnitY*.4f,Math.Max(1,(int)(n/2*smoke)),.45f*s,new Color(60,55,52,170),1.2f,2.2f,.5f*s);
             Sparks(p,Vector3.UnitY,n,new Color(255,190,90),8*s,1.1f,.8f,.05f);
             Emit(S.Scorch,p+Vector3.UnitY*.03f,Vector3.Zero,5f,radius*.9f,radius*.95f,new Color(20,18,16,170),new Color(20,18,16,0),false,0,0,0,0,true);
         } else if(kind=="acid") {
@@ -120,9 +120,9 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             Ring(p,radius,new Color(170,220,255),.5f);
             for(int i=0;i<10;i++){var q=p+new Vector3(R(-radius,radius)*.6f,.05f,R(-radius,radius)*.6f);Emit(S.Crystal,q,new Vector3(0,R(.2f,.6f),0),R(.6f,1.2f),R(.12f,.2f),.05f,new Color(225,245,255),new Color(225,245,255,0),true,0,1,0,R(-2,2));}
         } else { // heavy / physical
-            for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.8f+.2f;Emit(S.Fire,p+d*.25f,d*R(2,4.5f)*s,R(.3f,.6f),R(.3f,.5f)*s,R(.8f,1.3f)*s,new Color(255,235,170),new Color(150,60,20,0),true,-1,2.6f,0,R(-2,2));}
+            for(int i=0,nf=smoke<1?(int)(n*.4f):n;i<nf;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.8f+.2f;Emit(S.Fire,p+d*.25f,d*R(2,4.5f)*s,R(.3f,.6f),R(.3f,.5f)*s,R(.8f,1.3f)*s*(smoke<1?.7f:1),new Color(255,235,170),new Color(150,60,20,0),true,-1,2.6f,0,R(-2,2));}   // 0.17.0: the mech's (smoke < 1) a smaller fireball
             for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)+.4f;Emit(S.Pixel,p,d*R(3,7)*s,R(.6f,1.2f),R(.05f,.1f)*s,.05f,new Color(70,66,60),new Color(70,66,60,0),false,14,.3f,0,R(-8,8));}
-            SmokePuffs(p+Vector3.UnitY*.5f,n,.55f*s,new Color(80,76,70,180),1.4f,2.6f,.6f*s);
+            SmokePuffs(p+Vector3.UnitY*.5f,Math.Max(1,(int)(n*smoke)),.55f*s*(smoke<1?.75f:1),new Color((byte)80,(byte)76,(byte)70,(byte)(smoke<1?110:180)),smoke<1?1.1f:1.4f,smoke<1?1.6f:2.6f,.6f*s);   // 0.17.0 smoke: fewer, lighter, shorter
             Sparks(p,Vector3.UnitY,n,new Color(255,200,110),10*s,1.0f,.9f,.06f);
             Emit(S.Scorch,p+Vector3.UnitY*.03f,Vector3.Zero,6f,radius*.8f,radius*.85f,new Color(18,16,14,190),new Color(18,16,14,0),false,0,0,0,0,true);
         }
@@ -385,6 +385,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             } else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
         }
         DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
+        DrawRanges();   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)
     }
     void Quad(TexturedBatch3D batch,Vector3 p,Vector3 x,Vector3 y,S slot,Color c) {
         int s=(int)slot;float u=s%8/8f,v=s/8/8f,d=1/8f;

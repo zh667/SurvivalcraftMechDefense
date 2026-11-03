@@ -27,6 +27,9 @@ public abstract class MDBossState {
     public float Armour; public int Escorts,EscortSize; public Vector3? Home;   // armour set at arrival (saved: the template's is the base), escorts called (bits 1, 2), their size
     public int LayersLeft=Layers; public float Plate,Exposed,Stagger;          // layers still up, what is left of the current one (attack power), window and stagger left (s)
     public float Taken;                                                         // attack power that went through since arrival (RD19's interrupt)
+    // 0.18.0 a stagger through the bosses' control resistance (MDControl.cs): shorter when it was held a moment ago, none while immune
+    protected void StaggerFor(float seconds){Stagger=Math.Max(Stagger,MDTowerWorld.For(P).StaggerFor(r.Body,seconds));StaggerAsked+=seconds;}
+    public float StaggerAsked;                                                  // lab: stagger seconds asked for (before the resistance)
     public int EscortsSent,Breaks; public readonly Dictionary<string,int> Moves=[];   // lab: escorts sent, layers broken, attacks started
     public readonly Dictionary<string,float> Injuries=[]; public Attackment LastAttack;  // lab: health lost by source (in armour points), the last hit through Damage
     public Vector3 LastWant,LastFly;                                            // lab: where it wanted to be, the velocity it asked for
@@ -47,7 +50,7 @@ public abstract class MDBossState {
         if(amount<=0||PoiseLockLeft>0||r.Health.Health<=0)return;
         if(!byMech){amount=Math.Min(amount,towerPoiseLeft);towerPoiseLeft-=amount;if(amount<=0)return;}   // towers: TowerPoiseRate a second at most
         Poise+=amount;poiseIdle=0;if(Poise<PoiseNeeded)return;
-        Poise=0;PoiseLockLeft=PoiseLock+PoiseWindow;Unbalanced=PoiseWindow;Stagger=Math.Max(Stagger,PoiseStagger);PoiseBreaks++;
+        Poise=0;PoiseLockLeft=PoiseLock+PoiseWindow;Unbalanced=PoiseWindow;StaggerFor(PoiseStagger);PoiseBreaks++;
         var w=MDTowerWorld.For(P);var c=MDCombat.Center(r.Body);w.Flash(c,3.4f,new Color(255,220,90),.2f);w.Ring(r.Body.Position,5,new Color(255,220,90),.8f);MDRobots.Sound(P,24,c,1);
         MDBoss.Announce(P,c,$"{Name}失衡了！{PoiseWindow:0} 秒内它受到的伤害提高 {(ExposedFactor-1)*100:0}%，并且无视装甲层。",new Color(255,225,110));
     }
@@ -80,10 +83,10 @@ public abstract class MDBossState {
         "RD19"=>"收进底座时几乎打不动，它会开到侧面另一处再升起；升起后绕到背后打（伤害更高），主炮蓄能时集中火力能打断它；离它 12 米内主炮和榴弹都打不到你，贴近它会逼它收回换位置。",
         _=>"脚下光环的颜色是它当前的弱点：白色冲击、橙色爆炸、蓝色能量。"};
 
-    float dig; protected float Dt;
+    float dig,sinkCheck; bool sunk; Vector3 walkVelocity; protected float Dt;
     public void Update(float dt) {
         var w=MDTowerWorld.For(P);Dt=dt;
-        dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(r.Body);}
+        dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(r.Body,sunk&&r.Creature.ComponentLocomotion.FlySpeed<=0);}   // 0.18.0 sunk: it climbs out, not on through the hill
         foreach(var (bit,at) in new[]{(1,.7f),(2,.35f)})if((Escorts&bit)==0&&r.Health.Health<at){Escorts|=bit;MDBoss.Escort(r,EscortSize);}
         if(Exposed>0){Exposed-=dt;if(Exposed<=0&&LayersLeft>0)MDBoss.Announce(P,r.Body.Position,$"{Name}换上了下一层装甲。",new Color(255,170,120));}
         poiseIdle+=dt;if(poiseIdle>PoiseIdle)Poise=Math.Max(0,Poise-PoiseDecay*dt);towerPoiseLeft=Math.Min(TowerPoiseRate,towerPoiseLeft+TowerPoiseRate*dt);if(PoiseLockLeft>0)PoiseLockLeft-=dt;if(Unbalanced>0)Unbalanced-=dt;   // 0.16.0 poise
@@ -91,6 +94,11 @@ public abstract class MDBossState {
         Marks(dt,w);Volleys(dt);
         if(Stagger>0){Stagger-=dt;Staggered(dt,w);return;}
         Act(dt,w);
+        // 0.18.0 a walking boss (RD13, RD19) that is stuck or sunk under the ground round it climbs out (MDUnstuck)
+        if(r.Creature.ComponentLocomotion.FlySpeed<=0) {
+            sinkCheck-=dt;if(sinkCheck<=0){sinkCheck=.5f;sunk=ComponentMDRobot.SmartEnabled&&MDUnstuck.Sunk(r.Body);}
+            r.Unstuck.Step(r.Body,WalkWanted.HasValue&&walkVelocity.LengthSquared()>.1f?r.Body.Position+walkVelocity*4:sunk?r.Target?.Position??Home:null,dt,r.Kind.Speed,sunk);
+        }
     }
     protected abstract void Act(float dt,MDTowerWorld w);
     public virtual string Now=>"";                                  // lab: the attack under way
@@ -114,7 +122,7 @@ public abstract class MDBossState {
         Plate-=amount*Armour;if(Plate<=0)Break();return amount*Through;
     }
     void Break() {
-        LayersLeft--;Breaks++;Exposed=ExposedTime;Stagger=StaggerTime;Plate=LayersLeft>0?PlateShare*Armour:0;
+        LayersLeft--;Breaks++;Exposed=ExposedTime;StaggerFor(StaggerTime);Plate=LayersLeft>0?PlateShare*Armour:0;
         var w=MDTowerWorld.For(P);var c=MDCombat.Center(r.Body);w.Flash(c,3,new Color(255,230,160),.15f);w.Sparks(c,Vector3.UnitY,24,new Color(255,200,120),8,1,.6f,.07f);MDRobots.Sound(P,24,c,1);
         MDRewards.LayerBroken(r);   // 0.15.0: scrap for each layer
         MDBoss.Announce(P,c,$"{Name}的第 {Layers-LayersLeft} 层装甲被击破了！{ExposedTime:0} 秒内它受到的伤害提高 {(ExposedFactor-1)*100:0}%。",new Color(255,230,140));
@@ -128,7 +136,7 @@ public abstract class MDBossState {
     public Vector3? Wanted; public Vector2? WalkWanted;
     protected void Fly(Vector3 velocity){var l=r.Creature.ComponentLocomotion;Wanted=l.FlySpeed>0?velocity/l.FlySpeed:Vector3.Zero;l.FlyOrder=Wanted;}
     protected void Walk(Vector3 velocity) {
-        var l=r.Creature.ComponentLocomotion;if(l.WalkSpeed<=0)return;var m=r.Body.Matrix;
+        walkVelocity=velocity;var l=r.Creature.ComponentLocomotion;if(l.WalkSpeed<=0)return;var m=r.Body.Matrix;
         var o=new Vector2(Vector3.Dot(velocity,m.Right),Vector3.Dot(velocity,m.Forward))/l.WalkSpeed;if(o.LengthSquared()>1)o=Vector2.Normalize(o);
         WalkWanted=o;l.WalkOrder=o;r.Path.Stop();
     }
@@ -206,17 +214,22 @@ public abstract class MDBossState {
     protected float Shoot(MDRobotKind k,string muzzle,ComponentBody target,Vector3? spot=null) {
         var w=MDTowerWorld.For(P);var from=r.Point(muzzle,out var fwd);var tc=target!=null?MDCombat.Center(target):spot??from+fwd*20;
         var f=new MDTowerWorld.Foreign{owner=r.Entity,look=k.Look,pos=from,pass=b=>b==r.Body||MDRobots.IsRobot(b.Entity)};
-        f.landed=(p,d,b)=>Landed(k,p,d,b);r.ShotsFired++;float flight;
+        f.landed=(p,d,b)=>Landed(k,p,d,b);float flight;
+        // 0.18.0 not into a block in the way (ComponentMDRobot.CanHit): a shell needs its arc clear, a straight shot its line; homing missiles climb out
+        bool Blocked(bool clear){if(clear)return false;if(ComponentMDRobot.SmartEnabled){r.HeldShots++;return true;}r.WallShots++;return false;}
         if(k.Gravity>0) {
             var at=spot??tc+(target?.Velocity??Vector3.Zero)*(Vector3.Distance(from,tc)/k.ShotSpeed);var v=ComponentMDRobot.Ballistic(from,at,k.ShotSpeed,k.Gravity);
-            f.vel=v;f.gravity=k.Gravity;f.life=8;w.Muzzle(k.Look,from,Vector3.Normalize(v),true);flight=Vector2.Distance(new(from.X,from.Z),new(at.X,at.Z))/Math.Max(1,new Vector2(v.X,v.Z).Length());
+            if(Blocked(MDCombat.ArcClear(P,from,v,k.Gravity,at,Math.Max(1.5f,k.Splash)+(target?.BoxSize.X??0)*.5f)))return 0;
+            r.ShotsFired++;f.vel=v;f.gravity=k.Gravity;f.life=8;w.Muzzle(k.Look,from,Vector3.Normalize(v),true);flight=Vector2.Distance(new(from.X,from.Z),new(at.X,at.Z))/Math.Max(1,new Vector2(v.X,v.Z).Length());
         }
         else if(k.Weapon=="missile"&&target!=null) {
-            var side=Vector3.Normalize(Vector3.Cross(r.Body.Matrix.Forward,Vector3.UnitY));var v=Vector3.Normalize(fwd*.5f+Vector3.UnitY*.8f+side*MDRobots.R(-.4f,.4f))*k.ShotSpeed*.6f;
+            r.ShotsFired++;var side=Vector3.Normalize(Vector3.Cross(r.Body.Matrix.Forward,Vector3.UnitY));var v=Vector3.Normalize(fwd*.5f+Vector3.UnitY*.8f+side*MDRobots.R(-.4f,.4f))*k.ShotSpeed*.6f;
             f.vel=v;f.missile=true;f.target=target;f.homeAfter=.3f;f.accel=24;f.maxSpeed=k.ShotSpeed*2;f.turn=2.2f;f.life=7;w.Muzzle(k.Look,from,Vector3.Normalize(v),false);flight=Vector3.Distance(from,tc)/k.ShotSpeed;
         }
         else {
             float t=Vector3.Distance(from,tc)/k.ShotSpeed;var aim=spot??tc+(target?.Velocity??Vector3.Zero)*t;
+            if(target!=null&&Blocked(r.Sight(from,target)))return 0;
+            r.ShotsFired++;
             var dir=Vector3.Normalize(Vector3.Normalize(aim-from)+new Vector3(MDRobots.R(-1,1),MDRobots.R(-1,1),MDRobots.R(-1,1))*k.Spread);
             f.vel=dir*k.ShotSpeed;f.life=2.5f;w.Muzzle(k.Look,from,dir,false);flight=t;
         }
@@ -376,6 +389,8 @@ public sealed class MDBirdState:MDBossState {
     public int EyeHits,Stomped;   // lab
     public string Spots=>string.Join(" ",spots.Select(s=>$"({s.at.X:0.0},{s.at.Z:0.0})"));
     public MDBirdState(ComponentMDRobot robot,ValuesDictionary v):base(robot,v){}
+    // 0.18.0 its gatlings' line, not its eye's (it walks on when a rim or a wall is in the way of the guns)
+    bool Hits(ComponentBody tg)=>ComponentMDRobot.SmartEnabled?r.Sight(r.Point("gatlingL",out _),tg)||r.Sight(r.Point("gatlingR",out _),tg):r.Sight(r.Eye,tg);
     protected override float Factor(Attackment a) {
         if(!ByPlayer(a))return 1;
         var eye=r.Point("eye",out _);var v=eye-a.HitPoint;var d=a.HitDirection;
@@ -397,7 +412,7 @@ public sealed class MDBirdState:MDBossState {
             if(sweep<=0&&Duelist(Close)!=null)Begin("sweep");
             else if(leap<=0&&ComponentMDRobot.Rank(tg)!=1&&d>16&&d<42&&(hidden>=HideLeap||d>30))Begin("leap");
             else if(barrage<=0)Begin("barrage");
-            else if(gatling<=0&&d<=r.Kind.Range&&r.Sight(r.Eye,tg)){Begin("gatling");MDRobots.Sound(P,7,r.Body.Position,1);}
+            else if(gatling<=0&&d<=r.Kind.Range&&Hits(tg)){Begin("gatling");MDRobots.Sound(P,7,r.Body.Position,1);}
         }
         switch(move){case "gatling":Gatling(dt,w);break;case "barrage":Barrage(dt);break;case "sweep":Sweep(dt);break;case "leap":Leap(dt,w);break;default:Stride(dt);break;}
     }
@@ -405,7 +420,7 @@ public sealed class MDBirdState:MDBossState {
         var body=r.Body;var tg=r.Target;var v=Vector3.Zero;Vector3? face=null;
         Vector3 Flat(Vector3 a)=>new(a.X-body.Position.X,0,a.Z-body.Position.Z);
         if(tg!=null) {
-            var to=Flat(tg.Position);float d=to.Length();var dir=d>.1f?to/d:body.Matrix.Forward;bool seen=r.Sight(r.Eye,tg);face=MDCombat.Center(tg);
+            var to=Flat(tg.Position);float d=to.Length();var dir=d>.1f?to/d:body.Matrix.Forward;bool seen=Hits(tg);face=MDCombat.Center(tg);
             strafeTime-=dt;if(strafeTime<=0){strafeTime=MDRobots.R(4,7);strafe=-strafe;}
             if(!seen||d>r.Kind.Range*.85f)v=dir*r.Kind.Speed;
             else if(d<15&&ComponentMDRobot.Rank(tg)!=1)v=-dir*r.Kind.Speed*.8f;
@@ -656,7 +671,12 @@ public sealed class MDSiegeState:MDBossState {
     public const float DeployTime=4,StowTime=2,UpTime=16,DownTime=3,MaxDrive=12,MainTell=3,MainBreak=.03f,Close=12,Crowd=10,StowedFactor=.3f,RearFactor=1.5f,FrontFactor=.7f;
     public string Phase="stowed"; float phaseT=DownTime-1,t,howitzer=3,main=5,missiles=4,charged,deathT,crowded,dust;string move="";ComponentBody lockOn;readonly object mainKey=new();
     public Vector3? Spot;                // where it drives to while sunk in its base
-    public int Interrupts,MainShots,Moves2,Evades;   // lab: interrupted charges, main gun shots, drives, early sinks with a player close
+    public int Interrupts,MainShots,Moves2,Evades,BlockedMoves;   // lab: interrupted charges, main gun shots, drives, early sinks with a player close, moves because nothing was in reach
+    public const float BlockedMove=3; float blockCheck,blockedFor; int heldMark;
+    // 0.18.0 the main gun's line or a howitzer's arc reaches b from here
+    bool MainLine(ComponentBody b)=>!ComponentMDRobot.SmartEnabled?r.Sight(r.Eye,b):r.Sight(r.Point("main",out _),b);
+    bool Lob(ComponentBody b){var from=r.Point(Vector3.Dot(b.Position-r.Body.Position,r.Body.Matrix.Forward)>=0?"hou1":"hou5",out _);var at=b.Position;return MDCombat.ArcClear(P,from,ComponentMDRobot.Ballistic(from,at,r.Kind.ShotSpeed,r.Kind.Gravity),r.Kind.Gravity,at,r.Kind.Splash+b.BoxSize.X*.5f);}
+    bool GunsReach(ComponentBody b)=>MainLine(b)||Vector3.Distance(b.Position,r.Body.Position)>=Close&&Lob(b);
     public MDSiegeState(ComponentMDRobot robot,ValuesDictionary v):base(robot,v){}
     public bool Up=>Phase=="up";
     public override string Now=>Phase+(move.Length>0?"/"+move:"");
@@ -664,7 +684,7 @@ public sealed class MDSiegeState:MDBossState {
     // 3 % of its armour in damage during the main gun's charge breaks it off
     protected override void Hurt() {
         if(move!="main"||Taken-charged<MainBreak*Armour)return;
-        move="";main=8*Pace;Interrupts++;Stagger=Math.Max(Stagger,2.5f);
+        move="";main=8*Pace;Interrupts++;StaggerFor(2.5f);
         var from=r.Point("main",out var dir);MDTowerWorld.For(P).Sparks(from,dir,16,new Color(255,200,120),6,1,.5f,.06f);
         MDBoss.Announce(P,r.Body.Position,$"{Name}的主炮蓄能被打断了！",new Color(255,230,140));
     }
@@ -683,7 +703,9 @@ public sealed class MDSiegeState:MDBossState {
             case "deploy": if(phaseT>=DeployTime){Phase="up";phaseT=0;}break;
             case "up":
                 crowded=Duelist(Crowd)!=null?crowded+dt:0;
-                if((phaseT>=UpTime||crowded>=1.5f)&&move.Length==0&&!Queued){if(crowded>=1.5f)Evades++;Phase="stow";phaseT=0;crowded=0;Count("stow");}
+                // 0.18.0 nothing it fights in reach of its guns from here (a pit, a hill in the way) for BlockedMove s: off to another spot
+                blockCheck-=dt;if(blockCheck<=0){blockCheck=.5f;bool held=r.HeldShots>heldMark;heldMark=r.HeldShots;blockedFor=ComponentMDRobot.SmartEnabled&&r.Target!=null&&(held||!GunsReach(r.Target))?blockedFor+.5f:0;}   // shots it held back count too
+                if((phaseT>=UpTime||crowded>=1.5f||blockedFor>=BlockedMove)&&move.Length==0&&!Queued){if(crowded>=1.5f)Evades++;if(blockedFor>=BlockedMove)BlockedMoves++;Phase="stow";phaseT=0;crowded=0;blockedFor=0;Count("stow");}
                 break;
             case "stow": if(phaseT>=StowTime){Phase="stowed";phaseT=0;PickSpot();}break;
         }
@@ -698,9 +720,9 @@ public sealed class MDSiegeState:MDBossState {
             if(t<.8f)w.LockMark(MDCombat.Center(lockOn),Math.Max(1,lockOn.BoxSize.Y*.7f));else{Queue(0,Missile,"msl1",lockOn);Queue(.4f,Missile,"msl2",lockOn);move="";missiles=9*Pace;}
             return;
         }
-        if(tg!=null&&main<=0&&Vector3.Distance(tg.Position,body.Position)>=Close&&r.Sight(r.Eye,tg)){move="main";t=0;charged=Taken;Count("main");MDRobots.Sound(P,10,body.Position,.8f);}
+        if(tg!=null&&main<=0&&Vector3.Distance(tg.Position,body.Position)>=Close&&MainLine(tg)){move="main";t=0;charged=Taken;Count("main");MDRobots.Sound(P,10,body.Position,.8f);}
         else if(howitzer<=0) {
-            var at=Spread(3,Close,r.Kind.Range);
+            var at=Spread(3,Close,r.Kind.Range);if(ComponentMDRobot.SmartEnabled)at=at.Where(Lob).ToList();   // 0.18.0 only what its arcs reach
             if(at.Count>0) {
                 howitzer=r.Kind.Interval*Pace;Count("howitzer");
                 for(int i=0;i<r.Kind.Shots;i++) {
@@ -763,7 +785,9 @@ public static class MDBoss {
     // every collidable block in its body box, half a metre around and above it and 1.5 m ahead of its movement, from just above its
     // feet up (it does not dig down). Not bedrock; no drops (a flight through a hill would leave hundreds of items).
     public static int BlocksCleared;   // tests
-    public static int ClearBlocks(ComponentBody b) {
+    // 0.18.0 keepStep (a walking boss sunk under the ground round it, MDUnstuck.Sunk): the blocks outside its own box in its lowest 1.8 m
+    // stay, so it meets the side of the pit or the hill and climbs it (MDUnstuck) instead of clearing a level trench on through it
+    public static int ClearBlocks(ComponentBody b,bool keepStep=false) {
         var t=b.Project.FindSubsystem<SubsystemTerrain>(true);var box=b.BoundingBox;var v=b.Velocity;
         var min=new Vector3(box.Min.X-.5f,box.Min.Y+.3f,box.Min.Z-.5f);var max=new Vector3(box.Max.X+.5f,box.Max.Y+.6f,box.Max.Z+.5f);
         v.Y=Math.Max(v.Y,0);   // ahead never reaches below its feet: coming down onto a mech it dug a pit there (lab robots-escorts, 10-30)
@@ -774,6 +798,7 @@ public static class MDBoss {
             for(int y=Math.Max(1,(int)MathF.Floor(min.Y));y<=Math.Min(254,(int)MathF.Floor(max.Y));y++) {
                 int value=t.Terrain.GetCellValueFast(x,y,z);var block=BlocksManager.Blocks[Terrain.ExtractContents(value)];
                 if(block is BedrockBlock||!block.IsCollidable_(value))continue;
+                if(keepStep&&y<box.Min.Y+1.8f&&(x+1<=box.Min.X||x>=box.Max.X||z+1<=box.Min.Z||z>=box.Max.Z))continue;
                 t.DestroyCell(0,x,y,z,0,true,false);n++;
             }
         }
@@ -833,7 +858,7 @@ public static class MDBoss {
     public static ComponentMDRobot Spawn(Project p,Vector3 at,Vector3? arrive=null,string template=null) {
         template??=MDRobots.Boss;var kind=MDRobots.KindOf(template);
         var rng=new System.Random();float a=(float)(rng.NextDouble()*Math.PI*2);var from=arrive??at+new Vector3(MathF.Sin(a),0,MathF.Cos(a))*40+Vector3.UnitY*18;
-        if(arrive==null&&(kind.Id=="RD13"||kind.Id=="RD19"))from=MDRaids.Ground(p.FindSubsystem<SubsystemTerrain>(true),at,a,kind.Id=="RD19"?37:40,rng)??at;
+        if(arrive==null&&(kind.Id=="RD13"||kind.Id=="RD19"))from=MDRaids.Ground(p.FindSubsystem<SubsystemTerrain>(true),at,a,kind.Id=="RD19"?37:40,rng,MDRobots.Box(template))??at;   // 0.18.0 on the surface with room over it
         else if(arrive.HasValue&&kind.Id is "RD13" or "RD19")from=at;
         var e=DatabaseManager.CreateEntity(p,template,true);var body=e.FindComponent<ComponentBody>(true);body.Position=from;
         var face=at-from;if(new Vector2(face.X,face.Z).LengthSquared()>1)body.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.Atan2(-face.X,-face.Z));
@@ -850,8 +875,9 @@ public static class MDBoss {
     public static void Escort(ComponentMDRobot boss,int size) {
         var p=boss.Project;var home=boss.Boss.Home??boss.Body.Position;var rng=new System.Random();var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;float dir=(float)(rng.NextDouble()*Math.PI*2);
         for(int i=0;i<size;i++) {
-            var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,boss.Boss.EscortTemplate(i,rng,p),true);var r=e.FindComponent<ComponentMDRobot>(true);
+            var template=boss.Boss.EscortTemplate(i,rng,p);
+            var at=MDRaids.Ground(terrain,home,dir+(float)(rng.NextDouble()-.5)*1.4f,40+(float)rng.NextDouble()*10,rng,MDRobots.Box(template));if(at==null)continue;
+            var e=DatabaseManager.CreateEntity(p,template,true);var r=e.FindComponent<ComponentMDRobot>(true);
             e.FindComponent<ComponentBody>(true).Position=at.Value+(r.Kind.Fly>0?Vector3.UnitY*3:Vector3.Zero);r.Raider=true;r.RaidGoal=home;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;p.AddEntity(e);sent++;   // kept while busy (ComponentMDRobot.Update)
         }
         boss.Boss.EscortsSent+=sent;

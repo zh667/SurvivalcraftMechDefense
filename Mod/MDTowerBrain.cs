@@ -20,6 +20,7 @@ public static class MDTowerBrain {
         if(!float.IsFinite(u.AimYaw)||!float.IsFinite(u.AimPitch)||!float.IsFinite(u.Yaw))Unstick(u);
         if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
         if(u.Destroyed){w.Wreck(u.Body.Position+Vector3.UnitY*(d.bounds[1][1]*.6f),d.fx.scale+(d.bounds[1][1]>4?1:0));return;}
+        if(u.Offline){u.Target=null;u.Channel=0;u.ChannelTarget=null;if(d.HasYaw)u.AimPitch=MathUtils.Lerp(u.AimPitch,d.restPitch,dt*1.5f);w.OfflineFx(u);return;}   // 0.18.0 its core was destroyed (MDThreat.CoreDestroyed)
         if(a.type=="heal"){Heal(u,dt);return;}
         if(a.type=="core")return;   // 0.16.0 the defence core does not fight (MDThreat)
         if(a.type=="radar"){Radar(u);return;}
@@ -63,8 +64,17 @@ public static class MDTowerBrain {
         u.AimYaw=MDCombat.Finite(u.AimYaw,u.Yaw);u.AimPitch=MDCombat.Finite(u.AimPitch,u.Tower.restPitch);u.Tracked=null;u.TrackedVelocity=Vector3.Zero;
     }
     public static bool Sight(ComponentMDUnit u,Vector3 from,ComponentBody target)=>MDCombat.Trace(u,from,MDCombat.Center(target),out _)==target;
-    // The nearest enemy in the area (or the most threatening one) that the tower can see. Candidates are ranked first and
+    // The nearest enemy in the area (or the most threatening one) that the tower can reach. Candidates are ranked first and
     // traced in that order, so the longer ranges do not cost a line-of-sight trace per creature in the area.
+    // 0.18.0 (players via the user, 2026-11-04: "迫击炮会锁定水里的鱼和地下洞穴里的生物，然后一直炸"; the user: check every tower): until
+    // then only the towers with attack.needsSight checked anything, so the shell towers (no sight needed: they lob) took a fish in a
+    // lake or a creature in a cave under them and kept firing at the water or the cave's roof. Now every tower takes only what it
+    // can reach (Reach): never a creature under water (Submerged); a shell tower one its arc reaches (Lob: the flight traced through
+    // the terrain, so a cave's roof or a high wall stops it; open sky over the target is what an arc needs); the sprayers and the
+    // sonic / EMP pulse one with no block between (Open: other creatures do not hide it, their area hits all); every other tower one
+    // in its sight as before. The scan runs every 0.25 s, so a target that moves out of reach is dropped and another one taken.
+    public static bool ReachEnabled=true;   // lab switch: the 0.17.0 choice (shells take what they cannot reach)
+    public static int Unreachable;          // tests: candidates passed over as out of reach
     static ComponentBody FindTarget(ComponentMDUnit u) {
         var a=u.Tower.attack;var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),u.Range+2,bodies);
@@ -72,9 +82,39 @@ public static class MDTowerBrain {
         foreach(var b in bodies)
             if(MDCombat.IsEnemy(u,b)&&Sane(b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
         found.Sort((x,y)=>x.score.CompareTo(y.score));
-        var from=Aim(u);
-        foreach(var (_,b) in found)if(!a.needsSight||Sight(u,from,b))return b;
+        var from=Aim(u);int lobs=0;
+        foreach(var (_,b) in found) {
+            if(!ReachEnabled){if(!a.needsSight||Sight(u,from,b))return b;continue;}
+            if(a.type=="shell"&&++lobs>6)break;   // an arc costs a few dozen short traces: the six nearest at most per scan
+            if(Reach(u,from,b))return b;
+            Unreachable++;
+        }
         return null;
+    }
+    public static bool Reach(ComponentMDUnit u,Vector3 from,ComponentBody b) {
+        if(Submerged(b))return false;
+        var t=u.Tower.attack.type;
+        if(t=="shell")return Lob(u,from,b);
+        if(t is "pulse" or "flame" or "jet")return Open(u.Project,from,MDCombat.Center(b),b);
+        return Sight(u,from,b);
+    }
+    // in the water: the middle of its body in a fluid, or more than about half of it under the surface (a fish, also one floating at
+    // the surface with its back out; a robot on a lake's floor); a robot wading knee-deep stays a target
+    public static bool Submerged(ComponentBody b) {
+        if(b.ImmersionFactor>=.6f)return true;
+        var c=MDCombat.Center(b);var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;int x=Terrain.ToCell(c.X),y=Terrain.ToCell(c.Y),z=Terrain.ToCell(c.Z);
+        if(y<1||y>254||t.GetChunkAtCell(x,z)==null)return false;
+        return BlocksManager.Blocks[Terrain.ExtractContents(t.GetCellValue(x,y,z))] is FluidBlock;
+    }
+    // no block on the line (creatures do not count): what an area attack needs
+    public static bool Open(Project p,Vector3 from,Vector3 to,ComponentBody b) {
+        var hit=p.FindSubsystem<SubsystemTerrain>(true).Raycast(from,to,false,true,(v,_)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v));
+        return !hit.HasValue||hit.Value.Distance>=Vector3.Distance(from,to)-Math.Max(.5f,(b?.BoxSize.X??0)*.5f);
+    }
+    // the shell's arc to the ground under the target, as Fire launches it, traced through the terrain
+    static bool Lob(ComponentMDUnit u,Vector3 from,ComponentBody b) {
+        var a=u.Tower.attack;var c=MDCombat.Center(b);var at=new Vector3(c.X,b.Position.Y+.1f,c.Z);
+        return MDCombat.ArcClear(u.Project,from,LaunchVelocity(u,from,at),Gravity,at,Math.Clamp(a.splash,1.2f,3)+b.BoxSize.X*.5f);
     }
     // Bosses (high AttackResilience) shrug off stun and freeze, as Endfield's elite/boss enemies do.
     static float Resilience(ComponentBody b)=>b.Entity.FindComponent<ComponentHealth>()?.AttackResilience??b.Entity.FindComponent<ComponentDamage>()?.AttackResilience??0;
@@ -257,6 +297,7 @@ public static class MDTowerBrain {
         foreach(var b in bodies) {
             var c=MDCombat.Center(b);
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,c))continue;
+            if(ReachEnabled&&(Submerged(b)||!Open(u.Project,p+Vector3.UnitY*1.2f,c,b)))continue;   // 0.18.0 not through the ground or under water
             if(turning){var dd=c-p;float along=Vector3.Dot(dd,f);if(along<0||Math.Abs(Vector3.Dot(dd,side))>a.width*.5f+along*.15f)continue;}   // the band widens a little with distance
             if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),c,f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
             else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
@@ -283,6 +324,7 @@ public static class MDTowerBrain {
         var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
+            if(ReachEnabled&&(Submerged(b)||!Open(u.Project,top,MDCombat.Center(b),b)))continue;   // 0.18.0 not through the ground or under water
             if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);   // 0.16.0: a boss shrugs it off, shaken
             if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
         }

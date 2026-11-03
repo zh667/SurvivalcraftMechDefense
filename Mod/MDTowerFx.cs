@@ -177,13 +177,14 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
         if(kind=="ice"){Emit(S.Puddle,c+Vector3.UnitY*.05f,Vector3.Zero,life,r*.9f,r,PM(new Color(c1.R,c1.G,c1.B,(byte)130)),Color.Transparent,false,0,0,0,0,true);Ring(c,r,c2,.6f);}
     }
     Status Get(ComponentBody b){if(!status.TryGetValue(b,out var s))status[b]=s=new Status();return s;}
-    public void Slow(ComponentBody b,float factor,float seconds,Color? c=null){var s=Get(b);s.slowFactor=Math.Min(factor,s.slowUntil>time?s.slowFactor:1);s.slowUntil=Math.Max(s.slowUntil,time+seconds);if(c.HasValue)s.slowColor=c.Value;}
-    public void Stun(ComponentBody b,float seconds){var s=Get(b);s.stunUntil=Math.Max(s.stunUntil,time+seconds);}
+    public void Slow(ComponentBody b,float factor,float seconds,Color? c=null){if(TenacityEnabled&&Tenacious(b)){factor=1-(1-factor)*SlowShare;seconds=Control(b,MDControlKind.Soft,seconds);if(seconds<=0)return;}var s=Get(b);s.slowFactor=Math.Min(factor,s.slowUntil>time?s.slowFactor:1);s.slowUntil=Math.Max(s.slowUntil,time+seconds);if(c.HasValue)s.slowColor=c.Value;}
+    public void Stun(ComponentBody b,float seconds){seconds=Control(b,MDControlKind.Hard,seconds);if(seconds<=0)return;var s=Get(b);s.stunUntil=Math.Max(s.stunUntil,time+seconds);}
     public void ArmorDown(ComponentBody b,float factor,float seconds,Color? c=null){var s=Get(b);s.armorFactor=Math.Max(factor,s.armorUntil>time?s.armorFactor:1);s.armorUntil=Math.Max(s.armorUntil,time+seconds);if(c.HasValue)s.armorColor=c.Value;}
     // Frozen solid: no walking, turning or looking around. Afterwards the target is immune for a while, so several
     // frost towers cannot keep one enemy frozen forever.
     public bool Freeze(ComponentBody b,float seconds,float immune) {
         var s=Get(b);if(time<s.freezeImmuneUntil)return false;
+        seconds=Control(b,MDControlKind.Hard,seconds);if(seconds<=0)return false;   // 0.18.0 a boss resists (MDControl.cs)
         s.freezeUntil=time+seconds;s.freezeImmuneUntil=s.freezeUntil+immune;
         for(int i=0;i<10;i++)Emit(S.Crystal,b.Position+new Vector3(R(-.5f,.5f)*b.BoxSize.X,R(0,b.BoxSize.Y),R(-.5f,.5f)*b.BoxSize.Z),RDir()*R(.5f,1.5f),R(.4f,.8f),R(.1f,.18f),.04f,new Color(225,245,255),new Color(225,245,255,0),true,2,1,0,R(-4,4));
         return true;
@@ -385,7 +386,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             } else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
         }
         DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
-        DrawRanges();   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)
+        DrawRanges(eye);   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)
     }
     void Quad(TexturedBatch3D batch,Vector3 p,Vector3 x,Vector3 y,S slot,Color c) {
         int s=(int)slot;float u=s%8/8f,v=s/8/8f,d=1/8f;

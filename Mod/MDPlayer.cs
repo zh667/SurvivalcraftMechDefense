@@ -30,7 +30,8 @@ public class MDModLoader : ModLoader {
     // A boss's own factor and armour phase scale the hit first (MDBoss).
     // A robot remembers a player (or the player's herd) that hits it and fights back (MDRobots.Provoked).
     // a right-click on a tower or a mech with one of our items: kits, the medic charge cell, repair materials (in this order)
-    public static bool Interact(ComponentPlayer p)=>MDKits.TryInstall(p)||MDMedic.TryCharge(p)||MDTowerMaintenance.TryRepair(p);
+    // 0.18.0: then a click on the live defence core shows or hides every tower's range and health bar (MDTowerTools.CoreClick)
+    public static bool Interact(ComponentPlayer p)=>MDKits.TryInstall(p)||MDMedic.TryCharge(p)||MDTowerMaintenance.TryRepair(p)||MDTowerTools.CoreClick(p);
     public override void ProcessAttackment(Attackment attackment){MDRobots.Unstaggered(attackment);MDRobots.Armoured(attackment);MDBoss.Modify(attackment);MDMechArmour.Modify(attackment);MDFaction.Attacked(attackment);MDRobots.Provoked(attackment);MDRewards.Track(attackment);MDTerrainBlast.Hit(attackment);}
     // Right-click on a tower with robot scrap or an alloy plate (on a mech: iron or copper) repairs it (MDTowerMaintenance); the
     // engine's own use/place is skipped then.

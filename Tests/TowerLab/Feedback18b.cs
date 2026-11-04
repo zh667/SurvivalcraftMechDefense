@@ -22,7 +22,7 @@ public partial class Lab {
     static IEnumerable<bool> Feedback18b() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(1))yield return true;
         var r=new Dictionary<string,object>();results["fb18b"]=r;var bad=new List<string>();results["fb18bbad"]=bad;
-        bool Part(string p)=>mode=="fb18b"&&p is "spray" or "wave" or "ui" or "mortar"||mode=="fb18b-"+p;
+        bool Part(string p)=>mode=="fb18b"&&p is "spray" or "wave" or "ui" or "mortar" or "turn"||mode=="fb18b-"+p;
         var proj=GameManager.Project;var pl=player.ComponentPlayer;var w=MDTowerWorld.For(proj);var terrain=proj.FindSubsystem<SubsystemTerrain>(true);
         var keep=new HashSet<GameEntitySystem.Entity>();
         void Tidy(){foreach(var e in proj.Entities.Where(e=>e.FindComponent<ComponentCreature>()!=null&&e.FindComponent<ComponentPlayer>()==null&&!keep.Contains(e)&&!dums.Any(d=>d.Entity==e)).ToList())proj.RemoveEntity(e,true);}
@@ -63,7 +63,7 @@ public partial class Lab {
                 var squad=new List<ComponentMDRobot>();
                 for(int i=0;i<kinds.Length;i++){var at=Home+Dir(yaw)*(start+(i%2)*2.5f)+side*((i-2)*2.8f);at.Y=Top(at)+(kinds[i]=="MDRobot09"?3:0);squad.Add(Robot(kinds[i],at,yaw+MathF.PI));}
                 foreach(var rb in squad)rb.Health.AttackResilience*=Big;
-                int shots0=u.ShotCount,frames=0,held=0,slowed=0,reach=0,stunned=0,aimed=0,aimedAir=0;float power=0;double t0=Time.RealTime,first=-1;var closest=squad.Select(_=>1e9f).ToArray();
+                int shots0=u.ShotCount,area0=MDTowerBrain.AreaHits,frames=0,held=0,slowed=0,reach=0,stunned=0,aimed=0,aimedAir=0;float power=0;double t0=Time.RealTime,first=-1;var closest=squad.Select(_=>1e9f).ToArray();
                 foreach(var x in Seconds(22,()=>{
                     Tidy();bool any=false;
                     for(int i=0;i<squad.Count;i++) {
@@ -82,9 +82,9 @@ public partial class Lab {
                     ["power"]=MathF.Round(power,0),["dps"]=MathF.Round(power/22,1),["held"]=frames>0?MathF.Round(held/(float)frames,2):0,["slowed"]=frames>0?MathF.Round(slowed/(float)frames,2):0,
                     ["engineStun"]=frames>0?MathF.Round(stunned/(float)frames,2):0,["inRange"]=frames>0?MathF.Round(reach/(float)frames,2):0,
                     ["closest"]=MathF.Round(closest.Where(c=>c<1e8f).DefaultIfEmpty(-1).Average(),1),["nearest"]=MathF.Round(closest.Min(),1),["first"]=first<0?-1:Math.Round(first,1),
-                    ["shots"]=u.ShotCount-shots0,["robotShots"]=squad.Sum(q=>q.ShotsFired),["onDrone"]=aimed>0?MathF.Round(aimedAir/(float)aimed,2):0};
+                    ["shots"]=u.ShotCount-shots0,["robotShots"]=squad.Sum(q=>q.ShotsFired),["onDrone"]=aimed>0?MathF.Round(aimedAir/(float)aimed,2):0,["sprayHits"]=MDTowerBrain.AreaHits-area0};
                 rows.Add(Line(row));
-                if(d.id is "battle_shockwave_1" or "emp_2" or "flame_2" or "frost_2"){Shot($"f18b_squad_{d.id}");yield return true;}
+                if(d.id is "battle_shockwave_1" or "emp_2" or "flame_2" or "frost_2" or "battle_jet_1" or "battle_trap_1"){Shot($"f18b_squad_{d.id}");yield return true;}
                 foreach(var rb in squad)if(rb.Entity.IsAddedToProject)proj.RemoveEntity(rb.Entity,true);Remove([u]);ClearAll();while(Wait(.4))yield return true;
             }
             mortar.attack.groundOnly=ground0;
@@ -141,6 +141,29 @@ public partial class Lab {
             }
         }
 
+        // ---------------------------------------------------------------- turn
+        // the water jet and the flame trap (0.18.0 round 3: they turn as a whole, turnWhole): placed facing -Z, a wolf 10 m off to the
+        // side (+X); how far round they turn, how long it takes, whether they hit it; screenshots before and after the turn
+        if(Part("turn")) {
+            var rows=new List<string>();r["turn"]=rows;
+            foreach(var id in new[]{"battle_jet_1","battle_trap_1"}) {
+                var d=MDTowerLibrary.Get(id);ClearAll();Clear((int)Home.X-20,(int)Home.X+30,(int)Home.Z-36,(int)Home.Z+6);while(Wait(.3))yield return true;
+                pl.ComponentBody.Position=Home+new Vector3(-10,0,6);pl.ComponentBody.Velocity=Vector3.Zero;
+                var u=Place(d,Home,0);u.Cooldown=1e6f;while(Wait(.4))yield return true;
+                var at=Home+new Vector3(10,0,0);at.Y=Top(at);var wolf=Dummy(at);float power0=d.attack.power;if(power0<=0)d.attack.power=1e5f;   // the jet does no damage: let the hit show for this count
+                float yaw0=u.AimYaw;var eye=Home+new Vector3(3,9,14);var focus=Home+new Vector3(4,0,-1);
+                Cam(eye,focus);Shot($"f18b_turn_{id}_0");yield return true;
+                u.Cooldown=0;double t0=Time.RealTime,aligned=-1;int a0=MDTowerBrain.AreaHits;
+                foreach(var x in Seconds(3,()=>{float want=MathF.Atan2(-(at-Home).X,-(at-Home).Z);if(aligned<0&&MathF.Abs(MDCombat.AngleDelta(u.AimYaw,want))<.12f)aligned=Time.RealTime-t0;Cam(eye,focus);}))yield return x;
+                Shot($"f18b_turn_{id}_1");yield return true;
+                d.attack.power=power0;
+                var row=new Dictionary<string,object>{["tower"]=id,["turned"]=MathF.Round(MathUtils.RadToDeg(MDCombat.AngleDelta(yaw0,u.AimYaw)),0),["alignedAfter"]=aligned<0?-1:Math.Round(aligned,2),["sprayHits"]=MDTowerBrain.AreaHits-a0,["hit"]=wolf.Hit,["turnWhole"]=d.turnWhole};
+                rows.Add(Line(row));
+                if(after&&(!d.turnWhole||aligned<0||MDTowerBrain.AreaHits-a0<1))bad.Add("turn: "+Line(row));
+                Remove([wolf]);Remove([u]);ClearAll();while(Wait(.3))yield return true;
+            }
+        }
+
         // ---------------------------------------------------------------- wave
         if(Part("wave")) {
             var rows=new List<string>();r["wave"]=rows;const float yaw=0;var fwd=Dir(yaw);var side=new Vector3(-fwd.Z,0,fwd.X);
@@ -177,7 +200,12 @@ public partial class Lab {
             // categories: the game builds the list from every block's creative values (BlocksManager.AddCategory); names through
             // the "BlocksManager" language node
             var cats=BlocksManager.Categories.ToList();
-            var ours=new HashSet<int>(BlocksManager.Blocks.Where(b=>b is MDDeploymentBlock or MDSummonBlock).SelectMany(b=>b.GetCreativeValues()));
+            // every block this mod registers (its assembly), all its creative values (0.18.0 round 3, user: 这个模组新加的东西都放到这个分类)
+            var modBlocks=BlocksManager.Blocks.Where(b=>b!=null&&b.GetType().Assembly==typeof(MDTowerLibrary).Assembly).ToList();
+            ui["modBlocks"]=string.Join(", ",modBlocks.Select(b=>$"{b.GetType().Name} {b.GetCreativeValues().Count()} values"));
+            var ours=new HashSet<int>(modBlocks.SelectMany(b=>b.GetCreativeValues()));
+            var astray=modBlocks.SelectMany(b=>b.GetCreativeValues().Where(v=>b.GetCategory(v)!=MDCategory.Name).Select(v=>$"{b.GetDisplayName(null,v)} [{b.GetCategory(v)}]")).ToList();
+            ui["modItems"]=ours.Count;ui["notInCategory"]=astray.Count==0?"0":string.Join("; ",astray);
             var byCat=new List<string>();string oursIn=null;
             foreach(var c in cats) {
                 var vals=new List<int>();foreach(var b in BlocksManager.Blocks.Where(b=>b!=null)){try{vals.AddRange(b.GetCreativeValues().Where(v=>b.GetCategory(v)==c));}catch{}}
@@ -190,10 +218,11 @@ public partial class Lab {
             SettingsManager.ShowGuiInScreenshots=true;
             foreach(var c in new[]{oursIn??"Weapons","Weapons","Spawn"}.Distinct()) {
                 int idx=widgetCats.IndexOf(c);if(idx<0)continue;
-                pl.ComponentGui.ModalPanelWidget=cinvW;cinv.CategoryIndex=idx;
+                pl.ComponentGui.ModalPanelWidget=cinvW;cinv.CategoryIndex=idx;cinv.PageIndex=0;
                 foreach(var x in Seconds(.8,()=>Cam(Home+new Vector3(-8,7,-12),Home+new Vector3(3,1,-1))))yield return x;
                 Shot($"f18b_creative_{c.Replace(' ','_')}");yield return true;
                 ui[$"shown {c}"]=$"category index {cinv.CategoryIndex}, button text {cinvW.m_categoryButton.Text}";
+                if(c==MDCategory.Name){cinv.PageIndex=1;foreach(var x in Seconds(.8,()=>Cam(Home+new Vector3(-8,7,-12),Home+new Vector3(3,1,-1))))yield return x;Shot("f18b_creative_MechDefense_p2");yield return true;cinv.PageIndex=99;foreach(var x in Seconds(.8,()=>Cam(Home+new Vector3(-8,7,-12),Home+new Vector3(3,1,-1))))yield return x;Shot("f18b_creative_MechDefense_last");yield return true;ui["lastPage"]=cinv.PageIndex;}
             }
             pl.ComponentGui.ModalPanelWidget=null;SettingsManager.ShowGuiInScreenshots=false;
             for(int i=0;i<4;i++)yield return true;
@@ -227,7 +256,7 @@ public partial class Lab {
             ui["manual"]=checks;ui["manualOverflow"]=over.Count==0?"none":over;
             if(after) {
                 var catOurs=byCat.FirstOrDefault(x=>x.StartsWith("MechDefense "));
-                if(oursIn!="MechDefense"||catOurs==null||!catOurs.Contains("[机甲防线]")||!catOurs.Contains($"{ours.Count} items, {ours.Count} of ours")||byCat.Any(x=>!x.StartsWith("MechDefense ")&&!x.EndsWith(" 0 of ours"))||cats.Contains("Spawn"))
+                if(oursIn!="MechDefense"||catOurs==null||astray.Count>0||!catOurs.Contains("[机甲防线]")||!catOurs.Contains($"{ours.Count} items, {ours.Count} of ours")||byCat.Any(x=>!x.StartsWith("MechDefense ")&&!x.EndsWith(" 0 of ours"))||cats.Contains("Spawn"))
                     bad.Add($"ui: category {oursIn}: {string.Join(" | ",byCat)}");
                 if(over.Count>0)bad.Add("ui: manual overflow "+string.Join(" | ",over));
             }

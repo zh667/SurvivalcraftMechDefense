@@ -303,6 +303,7 @@ public static class MDTowerBrain {
         }
         u.ShotCount+=towers.Count>0?1:0;
     }
+    public static int AreaHits;   // tests: enemies a spray tick reached
     static void AreaTick(ComponentMDUnit u) {
         var d=u.Tower;var a=d.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();var p=u.Body.Position;
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+2,bodies);
@@ -314,6 +315,7 @@ public static class MDTowerBrain {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,c))continue;
             if(ReachEnabled&&(Submerged(b)||!Open(u.Project,p+Vector3.UnitY*1.2f,c,b)))continue;   // 0.18.0 not through the ground or under water
             if(turning){var dd=c-p;float along=Vector3.Dot(dd,f);if(along<0||Math.Abs(Vector3.Dot(dd,side))>a.width*.5f+along*.15f)continue;}   // the band widens a little with distance
+            AreaHits++;
             if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),c,f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
             else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
         }

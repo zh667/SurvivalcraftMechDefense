@@ -9,7 +9,8 @@ namespace Game;
 // LanguageControl.Get("BlocksManager", name), so the shown name comes from this mod's Assets/Lang/<language>.json (zh-CN and en-US,
 // both 机甲防线; other languages fall back to en-US). A category has no icon in either version, only a colour (the widget's
 // constructor sets Minerals / Electrics / Plants / Weapons); ours gets the mod's accent colour. Until 0.18.0 the towers and mechs were
-// under 武器 and the summons under an untranslated "Spawn".
+// under 武器 and the summons under an untranslated "Spawn". The user then (11-04): every block and item of this mod goes here, so the
+// materials, beacon, weapon kits, medic cell and handbook (MDPartBlock) too.
 public static class MDCategory {
     public const string Name="MechDefense";
     public static readonly Engine.Color Color=new(90,210,225);

@@ -192,10 +192,14 @@ public sealed partial class MDTowerWorld {
         var flat=new Vector3(eye.X-foot.X,0,eye.Z-foot.Z);float d=flat.Length();if(d<.3f)return;
         var side=new Vector3(-flat.Z,0,flat.X)/d;bool raid=MDThreat.Now!=MDThreat.Phase.Idle;
         Color c=raid?new Color(255,90,70):new Color(170,110,255),hot=raid?new Color(255,215,200):new Color(235,220,255);float pulse=raid?.7f+.3f*MathF.Sin(time*6):.9f+.1f*MathF.Sin(time*1.7f);
-        float near=Math.Clamp((d-1.5f)/14,.2f,1),w=Math.Max(.3f,d*.006f);const int steps=6;   // about 4-8 px wide whatever the distance (lab f18_beam_*)
-        foreach(var (k,a,inner) in new[]{(4f,.16f,false),(1.8f,.4f,false),(.55f,.95f,true)})
+        // 0.18.0 (user, 11-04: 光柱加粗): each layer is a fixed angle wide, so a fixed share of the screen at any distance (at 720 lines
+        // and the game's field of view about 360 px per radian: core 0.022 rad about 8 px, glow 0.06 rad about 22 px, halo 0.12 rad about
+        // 43 px), but never thinner than a set width close by (0.5 / 1.2 / 2.4 m, faded out within 15 m, so it is no wall next to you).
+        // The first cut was 0.0066 rad for the core: about 2 px at 150-260 m, a thin line.
+        float near=Math.Clamp((d-1.5f)/14,.2f,1);const int steps=6;
+        foreach(var (ang,min,a,inner) in new[]{(.06f,1.2f,.11f,false),(.03f,.6f,.32f,false),(.011f,.25f,.95f,true)})
             for(int i=0;i<steps;i++) {
-                float y0=foot.Y+(top-foot.Y)*i/steps,y1=foot.Y+(top-foot.Y)*(i+1)/steps,fade=1-.85f*i/steps;var s=side*(w*k*(1-.35f*i/steps));
+                float y0=foot.Y+(top-foot.Y)*i/steps,y1=foot.Y+(top-foot.Y)*(i+1)/steps,fade=1-.8f*i/steps;var s=side*(Math.Max(min,d*ang)*(1-.35f*i/steps));
                 var col=(inner?hot:c)*(a*pulse*near*fade);var p0=new Vector3(foot.X,y0,foot.Z);var p1=new Vector3(foot.X,y1,foot.Z);
                 beamBatch.QueueQuad(p0-s,p0+s,p1+s,p1-s,col);BeamsDrawn++;
             }

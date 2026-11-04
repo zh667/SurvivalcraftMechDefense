@@ -675,7 +675,7 @@
    "tools": "v5/tools",
    "data": 12,
    "hp": 1800,
-   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（15×4 格范围，朝向放置方向；双管步行机兵、无人机推得动，战车、精英和犀牛这类大型敌人推不动），不造成伤害。",
+   "summary": "敌人靠近时整台转向目标发射激流，把中小型敌人冲退（射程 15 格、宽 4 格；双管步行机兵、无人机推得动，战车、精英和犀牛这类大型敌人推不动），不造成伤害。",
    "attack": {
     "type": "jet",
     "range": 15,
@@ -684,7 +684,6 @@
     "power": 0,
     "duration": 1.2,
     "knockback": 9,
-    "directional": true,
     "needsSight": false,
     "pushMaxMass": 800,
     "element": "kinetic"
@@ -713,7 +712,9 @@
     "Imported/Endfield/Audio/au_int_fac_battle_jet1_hit_start_2"
    ],
    "pitchSpeed": 60,
-   "template": "MDTower_battle_jet_1"
+   "template": "MDTower_battle_jet_1",
+   "turnWhole": true,
+   "yawSpeed": 90
   },
   {
    "id": "battle_rocket_1",
@@ -1055,7 +1056,7 @@
    "tools": "v5/tools",
    "data": 20,
    "hp": 2000,
-   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（15×4 格范围，朝向放置方向）。",
+   "summary": "敌人靠近时整台转向目标喷射火焰，持续造成灼热伤害（射程 15 格、宽 4 格）。",
    "attack": {
     "type": "flame",
     "range": 15,
@@ -1064,7 +1065,6 @@
     "power": 260,
     "duration": 1.5,
     "burn": 3,
-    "directional": true,
     "needsSight": false,
     "element": "heat"
    },
@@ -1087,7 +1087,9 @@
     "Imported/Endfield/Audio/au_int_fac_battle_trap1_blast_start_2"
    ],
    "hitSounds": [],
-   "template": "MDTower_battle_trap_1"
+   "template": "MDTower_battle_trap_1",
+   "turnWhole": true,
+   "yawSpeed": 90
   },
   {
    "id": "gatling_1",
@@ -1362,7 +1364,7 @@
     "width": 3.5,
     "interval": 2,
     "duration": 2,
-    "power": 174,
+    "power": 139,
     "burn": 3,
     "element": "heat"
    },
@@ -1402,7 +1404,7 @@
     "width": 3.5,
     "interval": 2,
     "duration": 2,
-    "power": 294,
+    "power": 235,
     "burn": 3,
     "element": "heat"
    },
@@ -1442,7 +1444,7 @@
     "width": 3.5,
     "interval": 2,
     "duration": 2,
-    "power": 520,
+    "power": 416,
     "burn": 4,
     "element": "heat"
    },

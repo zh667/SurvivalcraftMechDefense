@@ -119,6 +119,12 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             Emit(S.Puddle,p+Vector3.UnitY*.04f,Vector3.Zero,3f,radius*.7f,radius*.8f,PM(new Color(159,226,255,110)),Color.Transparent,false,0,0,0,0,true);
             Ring(p,radius,new Color(170,220,255),.5f);
             for(int i=0;i<10;i++){var q=p+new Vector3(R(-radius,radius)*.6f,.05f,R(-radius,radius)*.6f);Emit(S.Crystal,q,new Vector3(0,R(.2f,.6f),0),R(.6f,1.2f),R(.12f,.2f),.05f,new Color(225,245,255),new Color(225,245,255,0),true,0,1,0,R(-2,2));}
+        } else if(kind=="emp") {   // 0.18.0 the EMP orb's burst: a flat ring out to the radius it holds, sparks and short arcs
+            Emit(S.ThinRing,p+Vector3.UnitY*.15f,Vector3.Zero,.45f,.3f,radius,c,c*0f,true,0,0,0,0,true);
+            Emit(S.Ring,p+Vector3.UnitY*.12f,Vector3.Zero,.35f,.2f,radius*.9f,c2*.7f,c2*0f,true,0,0,0,0,true);
+            Emit(S.Glow,p+Vector3.UnitY*.6f,Vector3.Zero,.3f,radius*.5f,radius*.8f,c*.6f,c*0f,true);
+            Sparks(p+Vector3.UnitY*.4f,Vector3.UnitY,n,c2,7*s,1.2f,.5f,.05f);
+            for(int i=0;i<5;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.4f;AddBeam(p+Vector3.UnitY*.6f,p+Vector3.UnitY*.6f+d*R(.5f,1)*radius,.05f,c,.15f,true);}
         } else { // heavy / physical
             for(int i=0,nf=smoke<1?(int)(n*.4f):n;i<nf;i++){var d=RDir();d.Y=Math.Abs(d.Y)*.8f+.2f;Emit(S.Fire,p+d*.25f,d*R(2,4.5f)*s,R(.3f,.6f),R(.3f,.5f)*s,R(.8f,1.3f)*s*(smoke<1?.7f:1),new Color(255,235,170),new Color(150,60,20,0),true,-1,2.6f,0,R(-2,2));}   // 0.17.0: the mech's (smoke < 1) a smaller fireball
             for(int i=0;i<n;i++){var d=RDir();d.Y=Math.Abs(d.Y)+.4f;Emit(S.Pixel,p,d*R(3,7)*s,R(.6f,1.2f),R(.05f,.1f)*s,.05f,new Color(70,66,60),new Color(70,66,60,0),false,14,.3f,0,R(-8,8));}
@@ -135,16 +141,21 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     readonly Dictionary<object,Held> held=[];
     public void HoldBeam(object key,Vector3 a,Vector3 b,float width,Color c){if(!held.TryGetValue(key,out var h))held[key]=h=new Held();h.a=a;h.b=b;h.width=width;h.c=c;h.seen=0;}
     public void Ring(Vector3 p,float radius,Color c,float life,float y=.06f){Emit(S.ThinRing,p+Vector3.UnitY*y,Vector3.Zero,life,.2f,radius,c,c*0f,true,0,0,0,0,true);Emit(S.Ring,p+Vector3.UnitY*y,Vector3.Zero,life*.8f,.2f,radius*.92f,c*.6f,c*0f,true,0,0,0,0,true);}
+    // 0.18.0 (user: 射程、粒子和特效的长度、伤害判定的长度要一致): a spray particle's speed is solved from the distance it must cover in its
+    // life under its drag (vel *= 1 - drag*dt: distance = v (1 - e^(-drag t)) / drag), so the stream ends where the tower's hits end.
+    // Until 0.18.0 the speed was picked and the life was length / speed, and the drag stopped the flames at about 80 % of the range.
+    public static float SprayReach=.97f;   // the bulk of the stream ends this share of `length` out (the last few % fan out)
+    static float Throw(float length,float life,float drag)=>drag<=1e-4f?length/life:length*drag/(1-MathF.Exp(-drag*life));
     public void Spray(string kind,Vector3 p,Vector3 dir,Color c,Color c2,float length) {
         if(kind=="flame") {
-            for(int i=0;i<3;i++){var d=Vector3.Normalize(dir+RDir()*.12f);float sp=R(7,10);Emit(S.Fire,p+d*.1f,d*sp,length/sp*R(.8f,1.05f),R(.1f,.18f),R(.7f,1.1f),new Color(255,240,190),new Color(200,50,10,0),true,-1.5f,.6f,0,R(-3,3));}
+            for(int i=0;i<3;i++){var d=Vector3.Normalize(dir+RDir()*.12f);float life=R(.8f,1.05f),sp=Throw(length*R(.9f,1)*SprayReach,life,.6f);Emit(S.Fire,p+d*.1f,d*sp,life,R(.1f,.18f),R(.7f,1.1f),new Color(255,240,190),new Color(200,50,10,0),true,-1.5f,.6f,0,R(-3,3));}
             if(random.Next(3)==0)SmokePuffs(p+dir*length*.8f,1,.4f,new Color(50,45,40,120),1,1.2f,.3f);
         } else if(kind=="jet") {
-            for(int i=0;i<4;i++){var d=Vector3.Normalize(dir+RDir()*.05f);float sp=R(14,18);Emit(S.Drop,p+d*.1f,d*sp,length/sp*R(.85f,1.05f),R(.07f,.12f),R(.14f,.22f),c,c2*.4f,false,3,.1f,.02f);}
-            Emit(S.Streak,p+dir*.4f,dir*16,length/16,.16f,.24f,new Color(220,245,255,150),new Color(220,245,255,0),true,2,0,.08f);
+            for(int i=0;i<4;i++){var d=Vector3.Normalize(dir+RDir()*.05f);float life=R(.55f,.7f),sp=Throw(length*R(.92f,1)*SprayReach,life,.1f);Emit(S.Drop,p+d*.1f,d*sp,life,R(.07f,.12f),R(.14f,.22f),c,c2*.4f,false,3,.1f,.02f);}
+            {float life=.6f;Emit(S.Streak,p+dir*.4f,dir*((length-.4f)/life),life,.16f,.24f,new Color(220,245,255,150),new Color(220,245,255,0),true,2,0,.08f);}
         } else if(kind=="frost") {   // cold gas (冰冻塔): pale mist that widens along the jet, and a few ice glints
-            for(int i=0;i<3;i++){var d=Vector3.Normalize(dir+RDir()*.1f);float sp=R(9,12);Emit(i==2?S.Smoke2:S.Smoke,p+d*.15f,d*sp,length/sp*R(.85f,1.1f),R(.12f,.2f),R(.8f,1.3f),PM(new Color(190,228,255,105)),Color.Transparent,false,.3f,.4f,0,R(-2,2));}   // mist colours premultiplied, like the ice mist
-            if(random.Next(2)==0){var d=Vector3.Normalize(dir+RDir()*.15f);float sp=R(8,11);Emit(S.Crystal,p+d*.3f,d*sp,length/sp*R(.5f,.9f),.07f,.03f,new Color(225,245,255),new Color(225,245,255,0),true,0,.3f,0,R(-4,4));}
+            for(int i=0;i<3;i++){var d=Vector3.Normalize(dir+RDir()*.1f);float life=R(.9f,1.15f),sp=Throw(length*R(.9f,1)*SprayReach,life,.4f);Emit(i==2?S.Smoke2:S.Smoke,p+d*.15f,d*sp,life,R(.12f,.2f),R(.8f,1.3f),PM(new Color(190,228,255,105)),Color.Transparent,false,.3f,.4f,0,R(-2,2));}   // mist colours premultiplied, like the ice mist
+            if(random.Next(2)==0){var d=Vector3.Normalize(dir+RDir()*.15f);float life=R(.5f,.8f),sp=Throw(length*R(.5f,.9f),life,.3f);Emit(S.Crystal,p+d*.3f,d*sp,life,.07f,.03f,new Color(225,245,255),new Color(225,245,255,0),true,0,.3f,0,R(-4,4));}
         }
     }
     // A mech thruster: a blue-white core and a short orange flame along dir (strength 1 = hovering, about 2 = a jump's burst).
@@ -290,7 +301,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             ZoneVisual(z);
             if(z.tick<=0){z.tick=.5f;MDTowerBrain.ZoneTick(z.owner,z.kind,z.c,z.r,z.power*.5f,z.slow);}
         }
-        ApplyStatus(dt);SimulateLabels(dt);SimulateNumbers(dt);
+        SimulateWaves(dt);ApplyStatus(dt);SimulateLabels(dt);SimulateNumbers(dt);   // 0.18.0 sonic waves (MDTowerWaves.cs)
         return false;
     }
     ComponentBody TraceForeign(Foreign f,Vector3 a,Vector3 b,out Vector3 point) {
@@ -330,6 +341,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     void ShellTrail(Shot s,float dt) {
         var c=C(s.def.fx.color);var c2=C(s.def.fx.color2);var dir=s.vel.LengthSquared()>.01f?Vector3.Normalize(s.vel):Vector3.UnitY;
         if(s.def.attack.type=="bolt"){Emit(S.Glow,s.pos-dir*.3f,Vector3.Zero,.15f,.16f*s.def.fx.scale,.05f,c2*.7f,c2*0f,true);return;}
+        if(s.def.attack.type=="orb"){Emit(S.Glow,s.pos-dir*.2f,Vector3.Zero,.25f,.35f*s.def.fx.scale,.08f,c*.7f,c*0f,true);if(random.Next(3)==0)Sparks(s.pos,-dir,1,c2,2,1.5f,.25f,.04f);if(random.Next(12)==0)AddBeam(s.pos,s.pos+RDir()*R(.4f,.8f),.03f,c,.06f,true);return;}   // 0.18.0 EMP orb
         Emit(S.Glow,s.pos,Vector3.Zero,.12f,.16f,.05f,c*.8f,c*0f,true);
         if(s.missile) {
             if(s.def.attack.type=="missile"){var body=PM(new Color(214,208,196,255));Emit(S.Streak,s.pos-dir*.2f,dir,Math.Max(dt,.02f)*1.5f,.06f*s.def.fx.scale+.03f,.06f*s.def.fx.scale+.03f,body,body,false,0,0,.25f);}   // the missile itself: a short pale body along its flight
@@ -383,7 +395,8 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
                 var side=Vector3.Cross(dir,front);side=side.LengthSquared()<1e-5f?right:Vector3.Normalize(side);
                 float k=Math.Max(1,s.vel.Length()/45);   // longer tracer for faster bolts (about one frame of flight at 60 fps)
                 Quad(alpha,s.pos-dir*.45f*sc*k,side*.11f*sc,dir*.75f*sc*k,S.Bolt,Deep(c));Quad(add,s.pos-dir*.45f*sc*k,side*.05f*sc,dir*.6f*sc*k,S.Bolt,Color.White);Quad(add,s.pos,right*.3f*sc,up*.3f*sc,S.Glow,c*.9f);
-            } else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
+            } else if(s.def.attack.type=="orb"){Quad(add,s.pos,right*.75f*sc,up*.75f*sc,S.Glow,c);Quad(add,s.pos,right*.32f*sc,up*.32f*sc,S.Glow,Color.White);Quad(add,s.pos,right*.5f*sc,up*.5f*sc,S.ThinRing,c);}   // 0.18.0 EMP orb: a bright ball
+            else {Quad(add,s.pos,right*.2f*sc,up*.2f*sc,S.Glow,c);Quad(alpha,s.pos,right*.11f*sc,up*.11f*sc,S.Dot,C(s.def.fx.color2));}
         }
         DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
         DrawRanges(eye);   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)

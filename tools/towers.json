@@ -514,11 +514,11 @@
    "summary": "发射酸液弹，在敌人附近爆炸造成范围自然伤害，并降低敌人防御 30%（受到的塔伤害提高，持续 15 秒）。",
    "attack": {
     "type": "shell",
-    "range": 28,
+    "range": 32,
     "interval": 5,
     "power": 160,
     "speed": 24,
-    "splash": 3,
+    "splash": 3.5,
     "armorDown": 1.3,
     "armorTime": 15,
     "needsSight": false,
@@ -567,12 +567,12 @@
    "summary": "发射毒雾弹，落地后留下 5 秒紫色毒雾区：区内敌人中毒（持续自然伤害）并减速到 25%，离开毒雾后中毒和减速还会持续 5 秒。",
    "attack": {
     "type": "shell",
-    "range": 30,
+    "range": 34,
     "interval": 5,
     "power": 40,
     "speed": 24,
-    "splash": 3,
-    "zone": 3,
+    "splash": 3.5,
+    "zone": 3.5,
     "zoneTime": 5,
     "zonePower": 0,
     "slow": 0.25,
@@ -624,18 +624,18 @@
    "summary": "发射液氮晶体，爆裂后使范围内敌人移速降到 25%（4 秒）并冻结 1.5 秒（首领级不会被冻结；同一敌人解冻后 4 秒内不会再被冻结），落点留下 3 秒冰面继续减速。不造成伤害。",
    "attack": {
     "type": "shell",
-    "range": 26,
+    "range": 30,
     "interval": 5,
     "power": 0,
     "speed": 24,
-    "splash": 3,
+    "splash": 3.5,
     "slow": 0.25,
     "slowTime": 4,
     "needsSight": false,
     "freeze": 1.5,
     "freezeImmune": 4,
     "bossResilience": 500,
-    "zone": 2.5,
+    "zone": 3,
     "zoneTime": 3,
     "zonePower": 0,
     "element": "cold"
@@ -675,10 +675,10 @@
    "tools": "v5/tools",
    "data": 12,
    "hp": 1800,
-   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（10×4 格范围，朝向放置方向；双管步行机兵、无人机推得动，战车、精英和犀牛这类大型敌人推不动），不造成伤害。",
+   "summary": "敌人靠近时向正前方发射激流，把中小型敌人冲退（15×4 格范围，朝向放置方向；双管步行机兵、无人机推得动，战车、精英和犀牛这类大型敌人推不动），不造成伤害。",
    "attack": {
     "type": "jet",
-    "range": 10,
+    "range": 15,
     "width": 4,
     "interval": 5,
     "power": 0,
@@ -736,7 +736,8 @@
     "needsSight": false,
     "highArc": true,
     "element": "explosive",
-    "stagger": true
+    "stagger": true,
+    "groundOnly": true
    },
    "fx": {
     "color": [
@@ -975,16 +976,18 @@
    "tools": "v5/tools",
    "data": 18,
    "hp": 1800,
-   "summary": "发射一道震荡波，使范围内的普通和进阶敌人晕眩 2 秒（首领级不受影响），不造成伤害。",
+   "summary": "朝目标发出一道扇形震荡波（约 1 秒传到最远处），波面扫过的普通和进阶敌人晕眩 2 秒（首领级不受影响），不造成伤害。",
    "attack": {
-    "type": "pulse",
-    "range": 9,
+    "type": "wave",
+    "range": 24,
     "interval": 5,
     "power": 0,
     "stun": 2,
     "needsSight": false,
     "bossResilience": 500,
-    "element": "electric"
+    "element": "electric",
+    "speed": 20,
+    "arc": 80
    },
    "fx": {
     "color": [
@@ -1052,10 +1055,10 @@
    "tools": "v5/tools",
    "data": 20,
    "hp": 2000,
-   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（10×4 格范围，朝向放置方向）。",
+   "summary": "敌人靠近时向正前方喷射火焰，持续造成灼热伤害（15×4 格范围，朝向放置方向）。",
    "attack": {
     "type": "flame",
-    "range": 10,
+    "range": 15,
     "width": 4,
     "interval": 3,
     "power": 260,
@@ -1229,7 +1232,7 @@
    "summary": "喷射低温气体，喷射带上的地面敌人大幅减速（速度 ×0.7），不造成伤害。",
    "attack": {
     "type": "jet",
-    "range": 12,
+    "range": 16,
     "width": 3,
     "interval": 2,
     "duration": 2,
@@ -1271,7 +1274,7 @@
    "summary": "两支喷枪喷射低温气体，减速更强（速度 ×0.6），并造成少量冻伤。由冰冻塔 Ⅰ 升级。",
    "attack": {
     "type": "jet",
-    "range": 13.8,
+    "range": 18,
     "width": 3,
     "interval": 2,
     "duration": 2,
@@ -1313,7 +1316,7 @@
    "summary": "重型低温喷射塔，减速最强（速度 ×0.5），冻伤更重，射程更远。由冰冻塔 Ⅱ 升级。",
    "attack": {
     "type": "jet",
-    "range": 15.6,
+    "range": 20,
     "width": 3,
     "interval": 2,
     "duration": 2,
@@ -1355,7 +1358,7 @@
    "summary": "朝目标方向喷射火焰，烧伤喷射带上的所有敌人并让其着火，射程短。",
    "attack": {
     "type": "flame",
-    "range": 10,
+    "range": 15,
     "width": 3.5,
     "interval": 2,
     "duration": 2,
@@ -1395,7 +1398,7 @@
    "summary": "两支火焰喷枪，火力更猛，射程更远。由火焰塔 Ⅰ 升级。",
    "attack": {
     "type": "flame",
-    "range": 11.5,
+    "range": 17,
     "width": 3.5,
     "interval": 2,
     "duration": 2,
@@ -1435,7 +1438,7 @@
    "summary": "重型双管火焰喷射塔，火力最强。由火焰塔 Ⅱ 升级。",
    "attack": {
     "type": "flame",
-    "range": 13,
+    "range": 19,
     "width": 3.5,
     "interval": 2,
     "duration": 2,
@@ -2121,16 +2124,17 @@
    "data": 56,
    "template": "MDTower_emp_1",
    "hp": 1600,
-   "summary": "每 5 秒放出一圈电磁脉冲，让范围内的普通和进阶敌人瘫痪 1.5 秒（首领不受影响），不造成伤害。",
+   "summary": "每 5 秒朝目标射出一枚电磁脉冲弹，命中处 3 格内的普通和进阶敌人瘫痪 1.5 秒（首领不受影响），不造成伤害。",
    "attack": {
-    "type": "pulse",
-    "range": 10,
+    "type": "orb",
+    "range": 20,
     "interval": 5,
     "power": 0,
     "stun": 1.5,
-    "needsSight": false,
     "bossResilience": 500,
-    "element": "electric"
+    "element": "electric",
+    "speed": 22,
+    "splash": 3
    },
    "fx": {
     "color": [
@@ -2143,7 +2147,8 @@
      0.75,
      1
     ],
-    "scale": 0.9
+    "scale": 0.9,
+    "kind": "emp"
    },
    "pitchFixed": true,
    "spinParts": [
@@ -2164,16 +2169,17 @@
    "data": 57,
    "template": "MDTower_emp_2",
    "hp": 2000,
-   "summary": "范围更大，瘫痪 2 秒。由电磁脉冲 Ⅰ 升级。",
+   "summary": "射程更远、脉冲半径更大，瘫痪 2 秒。由电磁脉冲 Ⅰ 升级。",
    "attack": {
-    "type": "pulse",
-    "range": 11.5,
+    "type": "orb",
+    "range": 23,
     "interval": 5,
     "power": 0,
     "stun": 2,
-    "needsSight": false,
     "bossResilience": 500,
-    "element": "electric"
+    "element": "electric",
+    "speed": 22,
+    "splash": 3.5
    },
    "fx": {
     "color": [
@@ -2186,7 +2192,8 @@
      0.75,
      1
     ],
-    "scale": 1.0
+    "scale": 1.0,
+    "kind": "emp"
    },
    "pitchFixed": true,
    "spinParts": [
@@ -2207,16 +2214,17 @@
    "data": 58,
    "template": "MDTower_emp_3",
    "hp": 2600,
-   "summary": "范围最大，瘫痪 2.5 秒。由电磁脉冲 Ⅱ 升级。",
+   "summary": "射程最远、脉冲半径最大，瘫痪 2.5 秒。由电磁脉冲 Ⅱ 升级。",
    "attack": {
-    "type": "pulse",
-    "range": 13,
+    "type": "orb",
+    "range": 26,
     "interval": 5,
     "power": 0,
     "stun": 2.5,
-    "needsSight": false,
     "bossResilience": 500,
-    "element": "electric"
+    "element": "electric",
+    "speed": 22,
+    "splash": 4
    },
    "fx": {
     "color": [
@@ -2229,7 +2237,8 @@
      0.75,
      1
     ],
-    "scale": 1.15
+    "scale": 1.15,
+    "kind": "emp"
    },
    "pitchFixed": true,
    "spinParts": [

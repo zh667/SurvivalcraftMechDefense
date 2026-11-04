@@ -60,7 +60,7 @@ public class MDDeploymentBlock : Block {
         $"靠近按 {MDMechKeys.Hint(MDMechAction.Board)} 上下车：鼠标转向瞄准，WASD 移动，按住 {MDMechKeys.Hint(MDMechAction.Hover)} 悬浮（耗能量），{MDMechKeys.Hint(MDMechAction.Jump)} 跳，{MDMechKeys.Hint(MDMechAction.Fire)} 开火，{MDMechKeys.Hint(MDMechAction.Melee)} 近战（有目标时冲过去打），{MDMechKeys.Hint(MDMechAction.View)} 切换视角。"+
         $"{MDMechKeys.Hint(MDMechAction.Switch)} 切换武器：步枪、导弹（按住开火扫过目标锁定，最多 {t.Locks} 个，松开发射追踪导弹）、火炮（开火时展开，按住连发）、激光、榴弹。\n"+
         $"维修：手持铁锭、铜锭（或铁块、铜块）右键机甲。收起：下车后用镐敲 {MDTowerMaintenance.HitsToDismantle} 下，收起的机甲保留耐久和改装。";
-    public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory="Weapons";IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
+    public override void Initialize(){DefaultDisplayName="防御塔 · 部署";DefaultDescription="防御塔在完整平整的支撑面上对齐方格固定部署，自动攻击敌对生物。";DefaultCategory=MDCategory.Name;IsPlaceable=false;DefaultIsUseable=true;IsAimable=false;MaxStacking=20;CraftingId="mddeploy";base.Initialize();}
     public static MDTowerDef Tower(int value)=>MDTowerLibrary.ByData(Terrain.ExtractData(value)&0xFF);
     public static int Wear(int value)=>(Terrain.ExtractData(value)>>8)&0x7F;
     public static float Hitpoints(int value)=>1-Wear(value)/100f;

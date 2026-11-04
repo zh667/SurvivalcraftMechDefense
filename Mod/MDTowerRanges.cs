@@ -37,7 +37,7 @@ public sealed partial class MDTowerWorld {
         if(range<=.5f)return;var a=d.attack;var c=C(d.fx.color);RingsDrawn++;
         if(a.directional) {   // the band in front of it: along 0..range, a.width wide
             forward.Y=0;forward=Vector3.Normalize(forward);var side=new Vector3(-forward.Z,0,forward.X)*(a.width*.5f);
-            var p0=at-side;var p1=at-side+forward*a.range;var p2=at+side+forward*a.range;var p3=at+side;
+            var p0=at-side;var p1=at-side+forward*range;var p2=at+side+forward*range;var p3=at+side;   // 0.18.0 with a radar's boost, as it hits
             RangeEdge(p0,p1,at.Y,c,strength);RangeEdge(p1,p2,at.Y,c,strength);RangeEdge(p2,p3,at.Y,c,strength);RangeEdge(p3,p0,at.Y,c,strength);
             return;
         }

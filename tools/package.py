@@ -21,6 +21,7 @@ subprocess.run(['dotnet','build',str(root/'Mod/MechDefense.csproj'),'-c','Releas
 assets=root/'Mod/Assets'
 files=[(root/'Mod/bin/Release/net10.0/MechDefense.dll','MechDefense.dll'),(root/'Mod/modinfo.json','modinfo.json'),(assets/'MechDefense.xdb','Assets/MechDefense.xdb')]
 files.append((assets/'MechDefense.cr','Assets/MechDefense.cr'))   # crafting recipes (the API merges every .cr in the package)
+for lang in ['zh-CN','en-US']:files.append((assets/f'Lang/{lang}.json',f'Assets/Lang/{lang}.json'))   # 0.18.0 the creative inventory category's name (Mod/MDCategory.cs)
 towers=json.loads((assets/'Towers/towers.json').read_text(encoding='utf-8'))['towers']
 files+=[(assets/'Towers/towers.json','Assets/Towers/towers.json'),(assets/'Towers/fx.png','Assets/Towers/fx.png')]
 files.append((assets/'Towers/status.png','Assets/Towers/status.png'))   # 0.15.0 damage-type and status icons (tools/build_status_icons.py, MDElements)

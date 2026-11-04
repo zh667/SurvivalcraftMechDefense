@@ -12,7 +12,8 @@ namespace Game;
 public sealed class MDTowerNode { public string name; public string parent; public float[] translation; }
 public sealed class MDTowerMuzzle { public string name; public string part; public float[] local; }
 public sealed class MDTowerAttack {
-    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile
+    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile; 0.18.0 wave (sonic) orb (EMP)
+    public float arc = 80;           // 0.18.0 wave: the width of its front in degrees, centred on the target
     public float range, minRange, interval, power, splash, speed = 40, charge, duration;
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;

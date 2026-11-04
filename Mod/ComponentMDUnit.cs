@@ -42,11 +42,15 @@ public class ComponentMDUnit : Component,IUpdateable {
     public float Cooldown; float wreck,lastHitpoints;
     public float HealCharge=-1;   // 0.15.0 medic towers: healing points left (-1 = full; MDMedic)
     public bool CoreLive=true;    // 0.16.0 the defence core: the world's live one (MDThreat)
+    // 0.18.0 out of action after its defence core was destroyed (MDThreat.CoreDestroyed) until a core is live again or this game time
+    public double OfflineUntil;
+    public bool Offline=>Tower!=null&&Clock!=null&&OfflineUntil>Clock.GameTime;
     // Health set from outside (a redeployed tower, a repair): no hit reaction.
     public void SetHitpoints(float hitpoints){Damage.Hitpoints=lastHitpoints=Math.Clamp(hitpoints,0,1);}
     public UpdateOrder UpdateOrder=>(UpdateOrder)1;
     public Vector3 Muzzle=>Mech!=null?MDMechBrain.Eye(this):MDTowerBrain.Muzzle(this);
     void TowerDestroyed() {
+        if(Tower.attack.type=="core"&&CoreLive){MDThreat.CoreDestroyed(this);return;}   // 0.18.0 a big blast, the towers round it go down
         var w=MDTowerWorld.For(Project);var top=Body.Position+Vector3.UnitY*(Tower.bounds[1][1]*.55f);
         w.Explosion(top,Math.Max(1.5f,Tower.radius*.6f),"heavy",new Color(255,200,120),new Color(255,120,40));
         Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Audio/Explosion1",.7f,0,top,10,false);
@@ -60,7 +64,7 @@ public class ComponentMDUnit : Component,IUpdateable {
             return;
         }
         TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);ShotCount=v.GetValue("TurretShotCount",0);
-        HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
+        HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);float off=v.GetValue("OfflineLeft",0f);if(off>0)OfflineUntil=Clock.GameTime+off;TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
         Tower=MDTowerLibrary.Get(TowerId)??throw new InvalidOperationException("Unknown tower "+TowerId);
         recoilAge=Enumerable.Repeat(10f,Tower.recoilParts.Length).ToArray();
         Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=MDCombat.Finite(v.GetValue("AimYaw",Yaw),Yaw);AimPitch=MDCombat.Finite(v.GetValue("AimPitch",0f),0);Cooldown=Math.Clamp(v.GetValue("Cooldown",0f),0,2);lastHitpoints=Damage.Hitpoints;PlayEvent("Deploy",.8f);
@@ -69,7 +73,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         if(Legacy)return;
         if(Mech!=null){v.SetValue("AimYaw",AimYaw);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Mech.Save(v);return;}
-        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("Cooldown",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
+        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("OfflineLeft",Offline?(float)(OfflineUntil-Clock.GameTime):0f);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("Cooldown",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
     public void PlayEvent(string name,float duration) {
         if(Destroyed)return;
         Animation=name;AnimationTime=0;
@@ -136,6 +140,24 @@ public static class MDCombat {
         point=start+Vector3.Normalize(end-start)*Math.Min(t,bdist);return bdist<t?body?.ComponentBody:null;
     }
     public static bool ClearShot(ComponentMDUnit source,ComponentBody target)=>Trace(source,source.Muzzle,Center(target),out _)==target;
+    // 0.18.0 a shell's flight (gravity g, from `from` at `vel`, the way MDTowerWorld moves shells) traced through the terrain: true
+    // when it comes within `tolerance` m of `target` before a block stops it. A lob into a cave or over a high wall ends on the roof
+    // or the wall: that target is out of reach (MDTowerBrain.FindTarget; the robots' shells, ComponentMDRobot.CanHit).
+    public static int ArcTraces;   // tests
+    public static bool ArcClear(Project p,Vector3 from,Vector3 vel,float g,Vector3 target,float tolerance) {
+        var t=p.FindSubsystem<SubsystemTerrain>(true);var pos=from;var v=vel;float tol2=tolerance*tolerance;ArcTraces++;
+        if(!Finite(from)||!Finite(vel))return false;
+        for(float age=0;age<10;) {
+            float dt=Math.Clamp(1.2f/Math.Max(1,v.Length()),.02f,.1f);age+=dt;v.Y-=g*dt;var next=pos+v*dt;
+            var seg=next-pos;float k=seg.LengthSquared()>1e-8f?Math.Clamp(Vector3.Dot(target-pos,seg)/seg.LengthSquared(),0,1):0;
+            var hit=t.Raycast(pos,next,false,true,(c,_)=>BlocksManager.Blocks[Terrain.ExtractContents(c)].IsCollidable_(c));
+            if(hit.HasValue){float kh=Math.Clamp(hit.Value.Distance/Math.Max(1e-6f,seg.Length()),0,1);return Vector3.DistanceSquared(pos+seg*Math.Min(k,kh),target)<=tol2;}   // stopped there: near the target, or passed it just before
+            if(Vector3.DistanceSquared(pos+seg*k,target)<=tol2)return true;
+            if(v.Y<0&&next.Y<target.Y-tolerance-2)return false;   // below it, still falling: missed
+            pos=next;
+        }
+        return false;
+    }
     public static float AngleDelta(float a,float b)=>MathF.Atan2(MathF.Sin(b-a),MathF.Cos(b-a));
     public static float AngleTowards(float a,float b,float step)=>a+Math.Clamp(AngleDelta(a,b),-step,step);
     // 0.16.0 (user, 10-31: 液氮/毒沼/酸洗 showing only their base): a NaN aim angle hides the whole turret above the base for good

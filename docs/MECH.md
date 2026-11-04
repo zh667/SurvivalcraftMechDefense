@@ -76,7 +76,7 @@ the user's installed mods (below). Facts about the original game, with their sou
   | Weapon | Damage | Rhythm | Flight / reach | Behaviour |
   |---|---|---|---|---|
   | Rifle | 100 | 0.25 s while held | 160 m/s | from the rifle tip |
-  | Missiles | 100 each | one per lock, 0.3 s apart | 8 → 32 m/s (38 m/s²), 8-12 s | hold: a creature the crosshair sweeps over locks at once (within 3.5° or 1.3 m of the ray, 0.8-133 m, in sight beyond 13 m), up to 3 (MERCURY's lock count), red rings and the lock_on beep; release: launch. Drift 0.33-0.67 s, then home at 60°/s and faster the longer it homes (600°/s within 13 m, straight at it within 5 m) towards where the target will be. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts on reaching the target. Release without a lock: one straight missile |
+  | Missiles | 100 each | one per lock, 0.3 s apart; since 0.18.0 1.5 s after each salvo | 8 → 32 m/s (38 m/s²), 8-12 s | hold: a creature the crosshair sweeps over locks at once (within 3.5° or 1.3 m of the ray, 0.8-133 m, in sight beyond 13 m), up to 3 (MERCURY's lock count), red rings and the lock_on beep; release: launch. Drift 0.33-0.67 s, then home at 60°/s and faster the longer it homes (600°/s within 13 m, straight at it within 5 m) towards where the target will be. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts on reaching the target. Release without a lock: one straight missile |
   | Cannon | 200, blast 120 within 13.4 m | 1.63 s | 320 m/s, straight | folded until fired: a press unfolds it (0.73 s) and fires once open; held, it stays open and keeps firing; released, it folds after the shot's recoil, as on another weapon |
   | Laser | 150 every 1/6 s | 1 s beam, then 1 s | grows at 160 m/s to 59 m | from the rifle tip, follows the crosshair; drawn as one beam with a soft ribbon through its last 0.12 s of positions (beams added every frame showed as stepped copies) |
   | Grenade | 200, blast within 13.4 m | 1.33 s, on press | arc 4 m above the higher end | thrown from the cannon's base; lands at 75 % of the crosshair's distance, 40 m at most |
@@ -184,6 +184,27 @@ group, mean brightness within 12 % and white-plate share within 10 points of the
 model.glb and icon over the V9 export for the heroes in `POLY_HEROES` (node tree checked; `--poly-only`, `--no-poly`).
 In game (isolated runtime, before / after the same cameras: `lab mech-view-nemesis|regulus`, `robots-heroes`, `icons`): all passed,
 flicker unchanged; shots in `local/claude-work/r14/nemesis|regulus/`. The user, 2026-10-22: "和复仇女神，轩辕十四的我们自建模一起放到同一个包里".
+
+## Since 0.18.0: a pause after each missile salvo
+
+Players via the user (2026-11-04): "机甲导弹没有冷却，适当加一点……现有手感别大改：比如每轮齐射之后冷却 1～2 秒". Before, the missiles had no
+cooldown at all: a salvo left one missile per lock 0.3 s apart, and a tap without a lock queued one straight missile, so tapping kept one
+leaving every 0.3 s for as long as the player tapped (the salvo spacing was the only limit). Now, for all three mechs (水星, 复仇女神,
+轩辕十四; `MDMechBrain.MissileCooldown`), after a salvo's last missile 1.5 s pass before the next locks or leaves; the HUD's weapon line reads
+冷却中 x.x 秒 meanwhile (the panel's existing state text; the rifle, cannon and laser show theirs the same way). Locks, the 0.3 s spacing, damage
+and homing are unchanged.
+
+| | 0.17.0 | 0.18.0 |
+|---|---|---|
+| Spacing within a salvo | 0.3 s | 0.3 s |
+| After a salvo | none | 1.5 s |
+| Full salvo, Mercury / 复仇女神 (3 locks) | 3 missiles in 0.6 s, again at once | 3 in 0.6 s, then 1.5 s: 3 per 2.1 s (143 per second at 100 each) |
+| 轩辕十四 (2 locks) | 2 in 0.3 s, again at once | 2 in 0.3 s, then 1.5 s: 2 per 1.8 s |
+| Tapping without locks | one every 0.3 s (333 per second) | one every 1.8 s (56 per second) |
+| Lab fb18-missile, 6 s of tapping (Mercury / 复仇女神 / 轩辕十四) | 21 each | 4 each (the HUD read 冷却中 between) |
+
+Other missiles were checked and keep their rhythm: the missile towers fire one every 1.2 s (towers.json interval), RD06 two every 5 s,
+the devil mech's volley every 8 s (5.6 s enraged), RD21's four every 10 s and RD19's two every 9 s (Mod/MDBoss.cs).
 
 ## Not done
 

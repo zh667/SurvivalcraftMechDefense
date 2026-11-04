@@ -150,7 +150,7 @@ public static class MDNeorxnaCompatibility {
         var label=type.GetMethod("SetAdditionaLabel",[typeof(string),typeof(string)]);
         if(unit.Kind=="Turret") {
             label?.Invoke(__instance,["MDTowerFootprint",MDTowerPlacement.SizeText(unit.Tower)+" · 固定部署"]);
-            label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"]);
+            label?.Invoke(__instance,["MDTowerHealth",unit.Destroyed?"已损毁":$"耐久 {(int)MathF.Round(unit.Damage.Hitpoints*100)}%"+(unit.Offline?$" · 断电 {unit.OfflineUntil-unit.Clock.GameTime:0} 秒":"")]);   // 0.18.0 offline
             if(MDElements.Of(unit.Tower) is var e&&e!=MDElement.None)label?.Invoke(__instance,["MDTowerElement",$"伤害类型：{MDElements.Name(e)}"]);
             if(unit.Tower.attack.type=="core")label?.Invoke(__instance,["MDCoreStatus",MDThreat.Status(unit)]);   // 0.16.0
             if(MDMedic.Is(unit)) {   // 0.15.0: the medic's store, as text and as a bar (green left, grey used up)

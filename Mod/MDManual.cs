@@ -16,7 +16,7 @@ public sealed class MDManualScreen:Screen {
     readonly MDWorldBackground background=new();
     readonly CanvasWidget root=new(){Size=new Vector2(float.PositiveInfinity)};
     readonly LabelWidget title=new(){Text="机甲防线手册",FontScale=1.1f,TextAnchor=TextAnchor.HorizontalCenter,DropShadow=true};
-    readonly StackPanelWidget tabs=new(){Direction=LayoutDirection.Horizontal,HorizontalAlignment=WidgetAlignment.Center};
+    readonly StackPanelWidget tabs=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Center};   // 0.18.0 rows of tabs (LayoutTabs)
     readonly ScrollPanelWidget tabScroll=new(){Direction=LayoutDirection.Horizontal,HorizontalAlignment=WidgetAlignment.Stretch,VerticalAlignment=WidgetAlignment.Stretch};
     readonly CanvasWidget tabHost=new();
     readonly CanvasWidget scrollHost=new();
@@ -26,18 +26,41 @@ public sealed class MDManualScreen:Screen {
     readonly List<ButtonWidget> tabButtons=[];
     public MDManualScreen() {
         Children.Add(background);Children.Add(MDUi.Frame());
-        foreach(var c in Chapters){var b=MDUi.Button(c,112);b.Margin=new Vector2(2,0);tabButtons.Add(b);tabs.Children.Add(b);}
+        foreach(var c in Chapters){var b=MDUi.Button(c,TabWidth(c));b.Margin=new Vector2(2,0);tabButtons.Add(b);}
         tabScroll.Children.Add(tabs);tabHost.Children.Add(tabScroll);scroll.Children.Add(content);scrollHost.Children.Add(scroll);
         root.Children.Add(title);root.Children.Add(tabHost);root.Children.Add(scrollHost);root.Children.Add(close);Children.Add(root);
     }
     public override void Enter(object[] parameters){background.Reset();back=ScreensManager.PreviousScreen;built=false;}
     public override void Leave(){background.Release();base.Leave();}
+    // 0.18.0 (players via the user, 2026-11-04: "选「伤害与状态」时那个中括号会跑到界面外面"): every tab was 112 wide, and the chosen one's
+    // text gets 【】 round it: 【伤害与状态】 is 115 wide at the buttons' font scale, so its brackets stood out over the button's edges.
+    // Each tab is now as wide as its chosen text plus the bevel (at least 112, so the others look as before), and when the row does
+    // not fit the page (the largest UI scale: 850 / 1.2 = 708 wide) it breaks into two rows; only past that the row scrolls (and
+    // keeps the chosen tab in view).
+    public static float TabWidth(string chapter)=>Math.Max(112,MathF.Ceiling(MDStatusWidget.TextWidth($"【{chapter}】",.82f))+28);
+    int tabRows,scrolledTo=-1;float tabsFor=-1;
+    void LayoutTabs(float avail) {
+        if(MathF.Abs(tabsFor-avail)<1)return;tabsFor=avail;
+        var rows=new List<List<ButtonWidget>>{new()};float x=0;
+        foreach(var b in tabButtons){float bw=b.Size.X+b.Margin.X*2;if(rows[^1].Count>0&&x+bw>avail){rows.Add([]);x=0;}rows[^1].Add(b);x+=bw;}
+        if(rows.Count>2)rows=[tabButtons.ToList()];
+        foreach(var row in tabs.Children.OfType<StackPanelWidget>().ToList()){foreach(var b in row.Children.OfType<ButtonWidget>().ToList())row.Children.Remove(b);tabs.Children.Remove(row);}
+        foreach(var row in rows){var line=new StackPanelWidget{Direction=LayoutDirection.Horizontal,HorizontalAlignment=WidgetAlignment.Center,Margin=new Vector2(0,1)};foreach(var b in row)line.Children.Add(b);tabs.Children.Add(line);}
+        tabRows=rows.Count;
+    }
+    public string TabLayout=>$"{tabRows} row(s) for {tabsFor:0}";   // tests
     public override void MeasureOverride(Vector2 available) {
         float w=Math.Max(280,available.X),h=Math.Max(220,available.Y);bool n=w<650;
         if(!built||n!=narrow||builtChapter!=Chapter||MathF.Abs(builtWidth-w)>1)Build(n,w);
+        LayoutTabs(w-24);float th=tabRows*52;
         root.SetWidgetPosition(title,new Vector2(12,6));title.Size=new Vector2(w-24,36);
-        root.SetWidgetPosition(tabHost,new Vector2(12,44));tabHost.Size=new Vector2(w-24,52);
-        root.SetWidgetPosition(scrollHost,new Vector2(12,100));scrollHost.Size=new Vector2(w-24,Math.Max(60,h-100-60));
+        root.SetWidgetPosition(tabHost,new Vector2(12,44));tabHost.Size=new Vector2(w-24,th);
+        if(tabRows==1&&tabButtons.Count>0&&scrolledTo!=Chapter) {   // a single scrolling row: the chosen tab in view (once per choice)
+            scrolledTo=Chapter;
+            float left=tabButtons.Take(Chapter).Sum(b=>b.Size.X+b.Margin.X*2),total=tabButtons.Sum(b=>b.Size.X+b.Margin.X*2);
+            if(total>w-24)tabScroll.ScrollPosition=Math.Clamp(left-(w-24-tabButtons[Chapter].Size.X)/2,0,total-(w-24));
+        }
+        root.SetWidgetPosition(scrollHost,new Vector2(12,48+th));scrollHost.Size=new Vector2(w-24,Math.Max(60,h-48-th-60));
         root.SetWidgetPosition(close,new Vector2((w-140)/2,h-54));
         base.MeasureOverride(available);
     }
@@ -58,7 +81,9 @@ public sealed class MDManualScreen:Screen {
     void Entry(IEnumerable<MDIcon> marks,string head,string text,Color? color=null) {
         var line=new StackPanelWidget{Direction=LayoutDirection.Horizontal,Margin=new Vector2(0,6)};
         foreach(var m in marks)line.Children.Add(Icon(m));
-        line.Children.Add(new LabelWidget{Text=head,FontScale=.9f,Color=color??MDUi.Text,DropShadow=true,VerticalAlignment=WidgetAlignment.Center,Margin=new Vector2(8,0)});
+        var label=new LabelWidget{Text=head,FontScale=.9f,Color=color??MDUi.Text,DropShadow=true,VerticalAlignment=WidgetAlignment.Center,Margin=new Vector2(8,0)};
+        float room=textWidth-line.Children.Count*34-16;if(MDStatusWidget.TextWidth(head,.9f)>room){label.WordWrap=true;label.Size=new Vector2(Math.Max(80,room),-1);}   // 0.18.0 a long title wraps (narrow pages)
+        line.Children.Add(label);
         content.Children.Add(line);
         if(!string.IsNullOrEmpty(text))content.Children.Add(new LabelWidget{Text=text,FontScale=.72f,Color=MDUi.Dim,WordWrap=true,Size=new Vector2(textWidth,-1),Margin=new Vector2(4,2)});
     }

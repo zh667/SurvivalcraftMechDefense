@@ -228,6 +228,7 @@ public sealed partial class MDTowerWorld {
         DrawNumbers(eye,right,up);   // MDDamageNumbers.cs
         DrawBossBars(eye,right,up);  // MDMedic.cs (0.16.0)
         DrawCore(eye,right,up);      // MDThreat.cs (0.16.0)
+        DrawTowerBars(eye,right,up); // MDTowerRanges.cs (0.18.0)
         IconsDrawn=0;BarsDrawn=0;var l=new List<MDIcon>(6);
         foreach(var (b,s) in status) {
             if(!b.Entity.IsAddedToProject||!MDCombat.Living(b))continue;

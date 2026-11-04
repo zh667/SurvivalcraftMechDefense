@@ -18,7 +18,7 @@ public class MDSummonBlock : Block {
     static MDRobotKind KindOf(int value)=>MDRobots.KindOf(Template(value));
     static string Skin(int value){var t=Template(value);return KindOf(value).Boss?"":t.EndsWith("B")?SkinNames[1]:t.EndsWith("C")?SkinNames[2]:"";}
     public static int Value(int data)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDSummonBlock>(),0,data);
-    public override void Initialize(){DefaultDisplayName="机兵召唤";DefaultCategory="Spawn";CraftingId="mdsummon";IsPlaceable=false;DefaultIsUseable=true;MaxStacking=1;base.Initialize();}
+    public override void Initialize(){DefaultDisplayName="机兵召唤";DefaultCategory=MDCategory.Name;CraftingId="mdsummon";IsPlaceable=false;DefaultIsUseable=true;MaxStacking=1;base.Initialize();}
     public override string GetDisplayName(SubsystemTerrain t,int v)=>$"召唤：{KindOf(v).Name}{Skin(v)}";
     public override string GetDescription(int v)=>KindOf(v).Boss
         ?$"创造模式测试用：右键地面放出首领{KindOf(v).Name}。它按附近炮塔的数量强化耐久，会攻击炮塔和机甲（创造模式下不打玩家），击毁后照常掉落机甲设计图。同一时间只能有一台首领。"

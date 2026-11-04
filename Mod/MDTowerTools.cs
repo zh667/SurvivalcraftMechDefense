@@ -17,7 +17,31 @@ namespace Game;
 //   A bar over the screen names the keys and says why a spot does not take it. Drawn by MDTowerWorld.DrawRanges (MDTowerRanges.cs).
 public static class MDTowerTools {
     public sealed class Ghost { public MDTowerDef Def; public Vector3 At; public Quaternion Rotation=Quaternion.Identity; public bool Has,Ok; public string Reason; public ComponentMDUnit Moving; }
-    public static readonly HashSet<ComponentMDUnit> Shown=[];   // towers whose ring Z turned on
+    public static readonly HashSet<ComponentMDUnit> Shown=[];   // towers whose ring (and, since 0.18.0, health bar) Z or the core turned on
+    // 0.18.0 (players via the user, 2026-11-04: "点击防线核心，可以一键显示或隐藏所有防御塔的攻击范围和耐久条，方便摆放和维修"): a
+    // right-click on the live core (with anything but a repair material, which repairs it) puts every tower in Shown (rings and
+    // health bars, MDTowerRanges.cs), again takes them all out. One set for both, so they agree: Z on one tower while all are shown
+    // hides that one (and the core's next click shows all again), Z at nothing hides all; a tower placed while all are shown joins.
+    // The core's own 120 m ring is left out of "all" (Z on the core still shows it).
+    public static bool ShowAll; static double coreClickAt=-1;
+    public static int CoreToggles;   // tests
+    public static void SetAll(Project p,bool on) {
+        ShowAll=on;Shown.Clear();
+        if(on)foreach(var u in p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()))if(u?.Tower!=null&&!u.Destroyed&&u.Tower.attack.type!="core")Shown.Add(u);
+    }
+    // a newly placed tower while all are shown (MDTowerWorld.DrawRanges, once a second)
+    public static void Refresh(Project p){if(ShowAll)foreach(var u in p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()))if(u?.Tower!=null&&!u.Destroyed&&u.Tower.attack.type!="core")Shown.Add(u);}
+    public static bool CoreClick(ComponentPlayer p) {
+        var ray=p.ComponentInput.PlayerInput.Interact;if(!ray.HasValue)return false;
+        var u=p.ComponentMiner.Raycast<BodyRaycastResult>(ray.Value,RaycastMode.Interaction)?.ComponentBody.Entity.FindComponent<ComponentMDUnit>();
+        if(u?.Tower?.attack.type!="core"||u.Destroyed)return false;
+        double now=u.Clock.GameTime;if(now-coreClickAt<.5&&now>=coreClickAt)return true;coreClickAt=now;   // a held button repeats every frame
+        ToggleAll(p);return true;
+    }
+    public static void ToggleAll(ComponentPlayer p) {
+        SetAll(p.Project,!ShowAll);CoreToggles++;
+        Say(p,ShowAll?$"已显示全部 {Shown.Count} 座防御塔的攻击范围和耐久条（再点核心全部隐藏；对着某座按 {K(MDMechAction.Ranges)} 只开关那一座）":"已隐藏全部防御塔的攻击范围和耐久条");
+    }
     public static Ghost Current;   // this frame's ghost of the local player (drawn by MDTowerWorld)
     public static ComponentMDUnit Moving; static int turns; static MDMoveBar bar; static ComponentPlayer mover;
     public const float MoveReach=24,PickReach=12;
@@ -37,8 +61,8 @@ public static class MDTowerTools {
         if(p.ComponentHealth.Health<=0||DialogsManager.HasDialogs(p.GuiWidget)||p.ComponentGui.ModalPanelWidget!=null){if(Moving!=null)Stop(p,"");return;}
         if(MDMechKeys.Pressed(gi,MDMechAction.Ranges)) {
             MDMechKeys.ConsumePressed(gi,MDMechAction.Ranges);Shown.RemoveWhere(x=>!x.Entity.IsAddedToProject);
-            if(Under(p) is {} t){if(Shown.Remove(t))Say(p,$"已隐藏{t.Tower.name}的攻击范围");else{Shown.Add(t);Say(p,$"显示{t.Tower.name}的攻击范围（对着它再按 {K(MDMechAction.Ranges)} 隐藏，对着空处按全部隐藏）");}}
-            else if(Shown.Count>0){Shown.Clear();Say(p,"已隐藏全部攻击范围");}
+            if(Under(p) is {} t){if(Shown.Remove(t)){ShowAll=false;Say(p,$"已隐藏{t.Tower.name}的攻击范围和耐久条");}else{Shown.Add(t);Say(p,$"显示{t.Tower.name}的攻击范围和耐久条（对着它再按 {K(MDMechAction.Ranges)} 隐藏，对着空处按全部隐藏）");}}
+            else if(Shown.Count>0){Shown.Clear();ShowAll=false;Say(p,"已隐藏全部攻击范围和耐久条");}
             else Say(p,$"对准一座炮塔按 {K(MDMechAction.Ranges)} 显示它的攻击范围");
         }
         if(MDMechPilot.Mounted(p)!=null){if(Moving!=null)Stop(p,"");return;}   // driving: the mech's keys

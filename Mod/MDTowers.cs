@@ -12,7 +12,8 @@ namespace Game;
 public sealed class MDTowerNode { public string name; public string parent; public float[] translation; }
 public sealed class MDTowerMuzzle { public string name; public string part; public float[] local; }
 public sealed class MDTowerAttack {
-    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile
+    public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile; 0.18.0 wave (sonic) orb (EMP)
+    public float arc = 80;           // 0.18.0 wave: the width of its front in degrees, centred on the target
     public float range, minRange, interval, power, splash, speed = 40, charge, duration;
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;
@@ -45,6 +46,7 @@ public sealed class MDTowerDef {
     public float[][] bounds; public float radius; public int[] pitch = [-30, 60]; public bool pitchFixed;
     public int[] cells = [2, 4, 2]; public float hp = 800;
     public float yawSpeed = 150, pitchSpeed = 90, restPitch;
+    public bool turnWhole;   // 0.18.0 a model with no yaw node (激流塔, 熔甲者) turns as a whole, base and all, towards its target
     public string[] recoilParts = []; public float[] recoil = [];
     public string[] spinParts = []; public float spinSpeed = 1440;   // rotary barrel clusters turning about their own Z while a target is held (deg/s at full spin)
     public string spinAxis = "z"; public bool spinIdle;               // "y": a dish / rotor turning about the vertical; spinIdle: always turning
@@ -56,7 +58,7 @@ public sealed class MDTowerDef {
     [System.Text.Json.Serialization.JsonIgnore] public int[] recoilNodes = [];
     [System.Text.Json.Serialization.JsonIgnore] public int[] muzzleNodes = [];
     [System.Text.Json.Serialization.JsonIgnore] public int[] linkNodes = [];
-    public bool HasYaw => yawNode >= 0;
+    public bool HasYaw => yawNode >= 0 || turnWhole;
     public float PitchMin => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[0]);
     public float PitchMax => pitchFixed ? restPitch : MathUtils.DegToRad(pitch[1]);
 }
@@ -143,7 +145,7 @@ public static class MDTowerLibrary {
         var world=new Matrix[d.nodes.Length];
         for(int i=0;i<world.Length;i++) {
             Matrix local;
-            if(i==0)local=body;
+            if(i==0)local=d.turnWhole&&d.yawNode<0?Matrix.CreateRotationY(yaw)*body:body;
             else {
                 int li=Array.IndexOf(d.linkNodes,i);
                 var r=i==d.yawNode?Matrix.CreateRotationY(yaw):i==d.pitchNode?Matrix.CreateRotationX(pitch):li>=0?LinkLocal(d,li,pitch):Matrix.Identity;
@@ -181,7 +183,8 @@ public class ComponentMDTowerModel : ComponentModel {
             links=(unit.Tower?.links??[]).Select(l=>Model.FindBone(l.node,false)?.Index??-1).ToArray();
             spin=(unit.Tower?.spinParts??[]).Select(p=>Model.FindBone(p,false)?.Index??-1).ToArray();
         }
-        SetBoneTransform(root,m_componentFrame.Matrix);
+        var rootMatrix=m_componentFrame.Matrix;if(unit.Tower?.turnWhole==true&&yaw<0)rootMatrix=Matrix.CreateRotationY(unit.AimYaw-unit.Yaw)*rootMatrix;   // 0.18.0 turnWhole
+        SetBoneTransform(root,rootMatrix);
         if(unit.Tower==null)return;
         if(yaw>=0)SetBoneTransform(yaw,Matrix.CreateRotationY(unit.AimYaw-unit.Yaw));
         if(pitch>=0)SetBoneTransform(pitch,Matrix.CreateRotationX(unit.TowerPitch));

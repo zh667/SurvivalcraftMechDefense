@@ -10,28 +10,38 @@ namespace Game;
 public sealed partial class MDTowerWorld {
     FlatBatch3D rangeBatch;
     readonly Dictionary<(int,int,int),float> surface=[];double surfaceAt;
-    public static int RingsDrawn,GhostsDrawn;   // tests (this frame)
-    void DrawRanges() {
-        RingsDrawn=GhostsDrawn=0;
+    public static int RingsDrawn,GhostsDrawn,FillsDrawn;   // tests (this frame)
+    // 0.18.0 every tower at once (the core's click, MDTowerTools.ShowAll): the ring of each within RingRange m of the camera, the fill
+    // only within FillRange m (a fill is a few hundred quads; dozens of them far off cost a phone more than they show)
+    public const float RingRange=96,FillRange=40;
+    double refreshAt;
+    void DrawRanges(Vector3 eye) {
+        RingsDrawn=GhostsDrawn=FillsDrawn=0;
         var g=MDTowerTools.Current;var shown=MDTowerTools.Shown;
+        if(MDTowerTools.ShowAll&&(time-refreshAt>1||time<refreshAt)){refreshAt=time;MDTowerTools.Refresh(project);}
         if(shown.Count==0&&g==null)return;
         rangeBatch??=SubsystemParticles.PrimitivesRenderer.FlatBatch(3,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend);
         if(time-surfaceAt>2||time<surfaceAt){surfaceAt=time;surface.Clear();}
-        foreach(var u in shown)if(u.Entity.IsAddedToProject&&!u.Destroyed&&u.Project==SubsystemParticles.Project&&u!=g?.Moving)RangeArea(u.Tower,u.Body.Position,u.Body.Matrix.Forward,u.Range,1);
+        foreach(var u in shown) {
+            if(!u.Entity.IsAddedToProject||u.Destroyed||u.Project!=SubsystemParticles.Project||u==g?.Moving)continue;
+            float d=Vector2.Distance(new(u.Body.Position.X,u.Body.Position.Z),new(eye.X,eye.Z))-u.Range;   // to the ring
+            if(MDTowerTools.ShowAll&&d>RingRange)continue;
+            RangeArea(u.Tower,u.Body.Position,u.Body.Matrix.Forward,u.Range,1,!MDTowerTools.ShowAll||d<FillRange);
+        }
         if(g!=null&&g.Has) {
-            var f=Matrix.CreateFromQuaternion(g.Rotation).Forward;RangeArea(g.Def,g.At,f,g.Def.attack.range,1);RangeFootprint(g,f);GhostsDrawn++;
+            var f=Matrix.CreateFromQuaternion(g.Rotation).Forward;RangeArea(g.Def,g.At,f,g.Def.attack.range,1,true);RangeFootprint(g,f);GhostsDrawn++;
         }
     }
     static Color RangeFade(Color c,float a)=>new Color(c.R,c.G,c.B,(byte)255)*a;
-    void RangeArea(MDTowerDef d,Vector3 at,Vector3 forward,float range,float strength) {
+    void RangeArea(MDTowerDef d,Vector3 at,Vector3 forward,float range,float strength,bool fill) {
         if(range<=.5f)return;var a=d.attack;var c=C(d.fx.color);RingsDrawn++;
         if(a.directional) {   // the band in front of it: along 0..range, a.width wide
             forward.Y=0;forward=Vector3.Normalize(forward);var side=new Vector3(-forward.Z,0,forward.X)*(a.width*.5f);
-            var p0=at-side;var p1=at-side+forward*a.range;var p2=at+side+forward*a.range;var p3=at+side;
+            var p0=at-side;var p1=at-side+forward*range;var p2=at+side+forward*range;var p3=at+side;   // 0.18.0 with a radar's boost, as it hits
             RangeEdge(p0,p1,at.Y,c,strength);RangeEdge(p1,p2,at.Y,c,strength);RangeEdge(p2,p3,at.Y,c,strength);RangeEdge(p3,p0,at.Y,c,strength);
             return;
         }
-        RangeRing(at,range,c,strength,true);
+        RangeRing(at,range,c,strength,fill);if(fill)FillsDrawn++;
         if(a.minRange>.5f)RangeRing(at,a.minRange,new Color(255,120,100),strength*.8f,false);
     }
     // The fill: a polar grid (radial steps of about 2 m), every vertex on the ground under it and 5 cm over it; a cell whose corners differ
@@ -96,5 +106,27 @@ public sealed partial class MDTowerWorld {
         forward.Y=0;if(forward.LengthSquared()<1e-6f)return;forward=Vector3.Normalize(forward);var side=new Vector3(-forward.Z,0,forward.X);
         var m=new Vector3(g.At.X,lo.Y+.05f,g.At.Z);float half=Math.Min(size.X,size.Z)*.5f;
         rangeBatch.QueueTriangle(m+forward*(half+.6f),m+side*.45f+forward*half,m-side*.45f+forward*half,RangeFade(c,.95f));   // facing
+    }
+}
+
+// 0.18.0 health bars over the towers in MDTowerTools.Shown (the core's click shows all, Z one), within BarRange m: green over
+// half, amber, red under a quarter; grey while the tower is out of action (MDThreat.CoreDestroyed). Drawn with the status icons'
+// batch after them (MDElements.DrawElements).
+public sealed partial class MDTowerWorld {
+    public const float BarRange=64;
+    public static int TowerBarsDrawn;   // tests
+    void DrawTowerBars(Vector3 eye,Vector3 right,Vector3 up) {
+        TowerBarsDrawn=0;if(MDTowerTools.Shown.Count==0)return;
+        foreach(var u in MDTowerTools.Shown) {
+            if(!u.Entity.IsAddedToProject||u.Destroyed||u.Project!=project)continue;
+            float d=Vector3.Distance(u.Body.Position,eye);if(d>BarRange)continue;
+            float hp=Math.Clamp(u.Damage.Hitpoints,0,1),w=1.5f+.03f*d,h=.16f+.004f*d,fade=Math.Clamp((BarRange-d)/8,0,1);
+            var at=new Vector3(u.Body.Position.X,u.Body.BoundingBox.Max.Y+(MDElements.Of(u.Tower)!=MDElement.None||MDMedic.Is(u)?1.5f:.7f)+.012f*d,u.Body.Position.Z);   // over its damage-type icon
+            Bar(at,right,up,w+.06f,h+.06f,0,1,new Color((byte)12,(byte)14,(byte)18,(byte)(220*fade)));
+            Bar(at,right,up,w,h,0,1,new Color((byte)70,(byte)40,(byte)40,(byte)(230*fade)));
+            var c=u.Offline?new Color(150,150,150):hp>.5f?new Color(110,232,120):hp>.25f?new Color(255,190,80):new Color(240,80,70);
+            if(hp>0)Bar(at,right,up,w,h,0,hp,c*fade);
+            TowerBarsDrawn++;
+        }
     }
 }

@@ -116,6 +116,14 @@ public static class MDRobots {
     public const float LoseRange=HuntRange;
     public const double ChaseTime=300;                     // seconds a raid on a player without towers follows that player
     public static bool IsRobot(Entity e)=>e?.FindComponent<ComponentMDRobot>()!=null;
+    // 0.18.0 the body box of a template (its spot must have room for it: MDRaids.Ground); a walker's when it cannot be read
+    static readonly Dictionary<string,Vector3> boxes=[];
+    public static Vector3 Box(string template) {
+        if(boxes.TryGetValue(template,out var b))return b;
+        try{var vd=DatabaseManager.FindEntityValuesDictionary(template,true);b=DatabaseManager.FindValuesDictionaryForComponent(vd,typeof(ComponentBody)).GetValue<Vector3>("BoxSize");}catch{b=new Vector3(2,4,2);}
+        if(KindOf(template).Fly>0)b=new Vector3(2,1,2);   // a drone appears 3 m over the spot
+        return boxes[template]=b;
+    }
     // Leaves in reach of a robot's blast or body give way (players, 2026-10-25: "敌对机器人应该可以破坏树叶，不然在生存环境很容易卡在
     // 那里，一直在放导弹，但炸不过去"). Leaves only (any LeavesBlock, other mods' too), no drops; returns the cells cleared.
     public static int BreakLeaves(Project p,Vector3 c,float r) {
@@ -403,6 +411,21 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         foreach(var b in list){if(Rank(b)>1||!Valid(b))continue;float d=Vector3.Distance(b.Position,p);if(d<bestD){bestD=d;best=b;}}
         return best;
     }
+    // 0.18.0 (players via the user, 2026-11-04: "生成位置不对时会自己挖出一个坑，然后隔着土墙放炮，打不到人"; the user: every ground enemy
+    // and enemy mech): a robot fires only when the shot would get there. A straight shot needs the line from its next muzzle to the
+    // target clear of blocks (the eye is not enough: a tank's barrels sit under it, and its eye saw over a pit's rim the shells then
+    // hit); a shell on an arc (RD07; the bosses' howitzers, MDBossState.Shoot) needs its whole arc clear (MDCombat.ArcClear); a homing
+    // missile (RD06) climbs out first and keeps the eye's sight. Not clear: no shot, and it walks on as when it does not see the target
+    // (Engage: towards it, round the cover). Stuck on the way (a pit, a step too high): it jumps, then climbs (MDUnstuck).
+    public static bool SmartEnabled=true;   // lab switch: the 0.17.0 robots (eye sight only, no climbing, spawn spots as before)
+    public int WallShots,HeldShots;         // lab: shots launched into a block in the way (switch off), shots held back (on)
+    public readonly MDUnstuck Unstuck=new();
+    public bool CanHit(ComponentBody b,string muzzle=null) {
+        if(Kind.Weapon is "missile" or "devil")return Sight(Eye,b);
+        var from=Point(muzzle??Kind.Muzzles[Barrel%Kind.Muzzles.Length],out _);var tc=MDCombat.Center(b);
+        if(Kind.Gravity>0)return MDCombat.ArcClear(Project,from,Ballistic(from,tc,Kind.ShotSpeed,Kind.Gravity),Kind.Gravity,tc,Math.Max(1.5f,Kind.Splash)+b.BoxSize.X*.5f);
+        return Sight(from,b);
+    }
     public bool Sight(Vector3 from,ComponentBody b) {
         var to=MDCombat.Center(b);var hit=terrain.Raycast(from,to,false,true,(cv,cd)=>BlocksManager.Blocks[Terrain.ExtractContents(cv)].IsCollidable_(cv));
         return !hit.HasValue||hit.Value.Distance>=Vector3.Distance(from,to)-Math.Max(.6f,b.BoxSize.X*.6f);
@@ -414,8 +437,9 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     // Walk into range (or around cover), stop and turn to fire; without a target, to the nearest tower or Mercury (Hunt), or a
     // raider to its raid's goal.
     void Engage(float dt) {
+        if(Unstuck.Step(Body,path.Destination,dt,Kind.Speed)){Fire(dt,false);return;}   // 0.18.0 jumping or climbing out (MDUnstuck)
         if(Target!=null) {
-            var tc=MDCombat.Center(Target);var flat=new Vector2(tc.X-Body.Position.X,tc.Z-Body.Position.Z);float dist=flat.Length();bool sight=Sight(Eye,Target);
+            var tc=MDCombat.Center(Target);var flat=new Vector2(tc.X-Body.Position.X,tc.Z-Body.Position.Z);float dist=flat.Length();bool sight=SmartEnabled?CanHit(Target):Sight(Eye,Target);   // 0.18.0 what its gun can hit, not what its eye sees
             if(Evade(dt)){Fire(dt,sight&&dist<=Kind.Range&&Aligned(flat));return;}
             if(!sight||dist>Kind.Range*.9f)path.SetDestination(Target.Position,1,sight?Kind.Range*.6f:2.5f,300,true,false,true,Target);
             else if(dist<Kind.MinRange){var away=Body.Position-new Vector3(flat.X,0,flat.Y)/Math.Max(dist,.1f)*6;path.SetDestination(away,1,1.5f,100,true,true,false,null);}
@@ -521,6 +545,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         if(ready&&Cooldown<=0&&Target!=null){Windup=Kind.Windup;if(Kind.Weapon=="missile")MDRobots.Sound(Project,7,Body.Position,.8f);}
     }
     public void FireOne(ComponentBody target,string muzzle=null) {
+        if(Kind.Weapon is not ("missile" or "devil")&&muzzle==null&&!CanHit(target)){if(SmartEnabled){HeldShots++;Barrel++;return;}WallShots++;}   // 0.18.0 (CanHit)
         var w=MDTowerWorld.For(Project);var k=Kind;var from=Point(muzzle??k.Muzzles[Barrel++%k.Muzzles.Length],out var fwd);var tc=MDCombat.Center(target);
         var f=new MDTowerWorld.Foreign{owner=Entity,look=k.Look,pos=from,pass=b=>b==Body||MDRobots.IsRobot(b.Entity)};
         f.landed=(p,d,b)=>Landed(p,d,b);ShotsFired++;
@@ -619,11 +644,12 @@ public static class MDWildSpawns {
             if(room<=0){LastReason="enough robots near the player";continue;}
             if(at.Y<terrain.Terrain.GetTopHeight(Terrain.ToCell(at.X),Terrain.ToCell(at.Z))-8){LastReason="player underground";continue;}
             int group=Math.Clamp((int)MathF.Round((1+(float)rng.NextDouble()*1.5f)*MDSettings.SpawnDensity),1,room);
-            var centre=MDRaids.Ground(terrain,at,(float)(rng.NextDouble()*Math.PI*2),MinDistance+(float)rng.NextDouble()*(MaxDistance-MinDistance),rng);
+            var centre=MDRaids.Ground(terrain,at,(float)(rng.NextDouble()*Math.PI*2),MinDistance+(float)rng.NextDouble()*(MaxDistance-MinDistance),rng,new Vector3(4,4,4));
             if(centre==null){LastReason="no open ground";continue;}
             for(int i=0;i<group;i++) {
-                var spot=i==0?centre:MDRaids.Ground(terrain,centre.Value,(float)(rng.NextDouble()*Math.PI*2),3+(float)rng.NextDouble()*3,rng);if(spot==null)continue;
-                var e=DatabaseManager.CreateEntity(p,elites&&rng.NextDouble()<.25?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng,lab),true);
+                var template=elites&&rng.NextDouble()<.25?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng,lab);
+                var spot=MDRaids.Ground(terrain,centre.Value,(float)(rng.NextDouble()*Math.PI*2),i==0?0:3+(float)rng.NextDouble()*3,rng,MDRobots.Box(template));if(spot==null)continue;
+                var e=DatabaseManager.CreateEntity(p,template,true);
                 var b=e.FindComponent<ComponentBody>(true);b.Position=spot.Value;b.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,(float)(rng.NextDouble()*Math.PI*2));
                 e.FindComponent<ComponentCreature>(true).ConstantSpawn=true;p.AddEntity(e);sent++;
             }
@@ -702,8 +728,9 @@ public static class MDRaids {
     static int Send(Project p,Vector3 centre,int size,int elites,float dir,System.Random rng,string prefix,ComponentPlayer chase=null) {
         var terrain=p.FindSubsystem<SubsystemTerrain>(true);int sent=0;double now=p.FindSubsystem<SubsystemTime>(true).GameTime;var fight=new Fight{centre=centre};
         for(int i=0;i<size;i++) {
-            var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng);if(at==null)continue;
-            var e=DatabaseManager.CreateEntity(p,i<elites?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng),true);
+            var template=i<elites?MDRobots.PickElite(rng):MDRobots.PickNormal(p,rng);
+            var at=Ground(terrain,centre,dir+(float)(rng.NextDouble()-.5)*.9f,48+(float)rng.NextDouble()*16,rng,MDRobots.Box(template));if(at==null)continue;
+            var e=DatabaseManager.CreateEntity(p,template,true);
             e.FindComponent<ComponentBody>(true).Position=at.Value;var r=e.FindComponent<ComponentMDRobot>(true);r.Raider=true;r.RaidGoal=centre;e.FindComponent<ComponentSpawn>(true).AutoDespawn=false;   // see ComponentMDRobot.Update
             if(chase!=null){r.Chase=chase.ComponentBody;r.ChaseUntil=now+MDRobots.ChaseTime;}
             p.AddEntity(e);sent++;fight.robots.Add(r);
@@ -716,8 +743,13 @@ public static class MDRaids {
     }
     // a dry surface cell around `centre` at `dist`, in loaded terrain, with room for a 4 m robot: near `angle` first, then from
     // any side (a second wave aimed over the sea found nothing at all in the lab, 2026-10-21)
-    public static Vector3? Ground(SubsystemTerrain t,Vector3 centre,float angle,float dist,System.Random rng) {
-        for(int k=0;k<24;k++) {
+    // 0.18.0 (players via the user, 2026-11-04: a tank that spawned in the wrong place dug itself a pit): with `box`, the spot must have
+    // room for that body: every column under its footprint and half a metre round it tops out at the spot's level or one block under
+    // it (no hill side, no hole), none in water or a tree, and nothing solid from the ground up to the box's height + 1 m. More tries
+    // (40), as such spots are rarer in hills and woods.
+    public static Vector3? Ground(SubsystemTerrain t,Vector3 centre,float angle,float dist,System.Random rng,Vector3? box=null) {
+        bool check=box.HasValue&&ComponentMDRobot.SmartEnabled;
+        for(int k=0;k<(check?40:24);k++) {
             float a=k==0?angle:k<10?angle+(float)(rng.NextDouble()-.5)*1.2f:(float)(rng.NextDouble()*Math.PI*2),d=dist+(k==0?0:(float)(rng.NextDouble()-.5)*10);
             int x=(int)MathF.Floor(centre.X-MathF.Sin(a)*d),z=(int)MathF.Floor(centre.Z-MathF.Cos(a)*d);
             if(t.Terrain.GetChunkAtCell(x,z) is not {State:>=TerrainChunkState.InvalidVertices1})continue;
@@ -725,8 +757,74 @@ public static class MDRaids {
             var top=BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y,z))];
             if(top is FluidBlock or LeavesBlock||!top.IsCollidable_(t.Terrain.GetCellValueFast(x,y,z)))continue;   // not on a tree top
             bool clear=true;for(int h=1;h<=4&&clear;h++)clear=!BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y+h,z))].IsCollidable_(t.Terrain.GetCellValueFast(x,y+h,z));
-            if(clear)return new Vector3(x+.5f,y+1.05f,z+.5f);
+            if(clear&&(!check||Room(t,x,y,z,box.Value)))return new Vector3(x+.5f,y+1.05f,z+.5f);
         }
         return null;
+    }
+    public static int RoomChecks,RoomRefused;   // tests
+    public static bool Room(SubsystemTerrain t,int x,int y,int z,Vector3 box) {
+        RoomChecks++;float r=Math.Max(box.X,box.Z)*.5f+.5f;int n=(int)MathF.Ceiling(r),h=(int)MathF.Ceiling(box.Y+1);
+        for(int dx=-n;dx<=n;dx++)for(int dz=-n;dz<=n;dz++) {
+            if(dx*dx+dz*dz>(r+.5f)*(r+.5f))continue;int cx=x+dx,cz=z+dz;
+            if(t.Terrain.GetChunkAtCell(cx,cz) is not {State:>=TerrainChunkState.InvalidVertices1}){RoomRefused++;return false;}
+            int top=t.Terrain.GetTopHeight(cx,cz);if(top<y-1){RoomRefused++;return false;}   // a hole under it
+            if(BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(cx,Math.Min(top,y),cz))] is FluidBlock){RoomRefused++;return false;}
+            for(int hy=y+1;hy<=y+h&&hy<255;hy++){int v=t.Terrain.GetCellValueFast(cx,hy,cz);if(BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v)||BlocksManager.Blocks[Terrain.ExtractContents(v)] is LeavesBlock){RoomRefused++;return false;}}
+        }
+        return true;
+    }
+}
+
+// 0.18.0 (players via the user, 2026-11-04: "卡住检测：一段时间没前进就跳跃或爬升"): a ground robot or walking boss that wants to go
+// somewhere and has not got MinProgress m nearer in Watch s jumps at it (JumpSpeed m/s up); still stuck, it climbs: it presses on
+// towards where it goes and, while a block is in front of it, rises at ClimbSpeed m/s up that face (a pit's side, a step, a hill) until
+// it is over the top, for up to ClimbTime s. A jump or a climb that got it nearer does not count as unstuck until it gets on by
+// itself. A boss whose feet are more than SinkDepth m under the ground round it (it cleared its way
+// into a pit or a hill: MDBoss.ClearBlocks never digs down) climbs the same way, towards what it fights, and while sunk it no longer
+// clears the blocks it would climb (ClearBlocks keepStep).
+public sealed class MDUnstuck {
+    public const float Watch=2.5f,MinProgress=.8f,ClimbTime=4,ClimbSpeed=4,JumpSpeed=7,SinkDepth=.9f;
+    Vector3 mark;bool marked,wasBlocked,acted;float watch,climb,idle;int tries;Vector3 climbDir;
+    public int Jumps,Climbs;public float Risen;   // lab
+    public bool Climbing=>climb>0;
+    static Vector3 Flat(Vector3 v){v.Y=0;return v.LengthSquared()>1e-4f?Vector3.Normalize(v):Vector3.Zero;}
+    static float FlatDistance(Vector3 a,Vector3 b)=>Vector2.Distance(new(a.X,a.Z),new(b.X,b.Z));
+    // goal: where it is heading (null: nowhere; the watch starts again); true while it jumps or climbs (it moves itself then)
+    public bool Step(ComponentBody b,Vector3? goal,float dt,float speed,bool sunk=false) {
+        if(!ComponentMDRobot.SmartEnabled)return false;
+        var p=b.Position;
+        if(climb>0) {
+            climb-=dt;var v=b.Velocity;float push=Math.Max(2,speed*.7f);bool blocked=!Open(b,climbDir);
+            b.Velocity=new Vector3(climbDir.X*push,blocked?Math.Max(v.Y,ClimbSpeed):v.Y,climbDir.Z*push);if(blocked)Risen+=ClimbSpeed*dt;
+            if(!blocked&&wasBlocked&&!sunk)climb=Math.Min(climb,.4f);   // over the top: a moment on, then its own way
+            wasBlocked|=blocked;return true;
+        }
+        var dir=goal.HasValue?Flat(goal.Value-p):Vector3.Zero;
+        if(dir.LengthSquared()<.5f||!sunk&&FlatDistance(goal.Value,p)<2.5f){watch=0;marked=false;idle+=dt;if(idle>5)tries=0;return false;}   // a moment without a goal (it saw its target from a jump) keeps the count
+        idle=0;
+        if(sunk){climb=ClimbTime;climbDir=dir;wasBlocked=false;Climbs++;return true;}
+        if(!marked){mark=p;marked=true;}
+        watch+=dt;if(watch<Watch)return false;
+        float progress=FlatDistance(mark,goal.Value)-FlatDistance(p,goal.Value);watch=0;mark=p;bool helped=acted;acted=false;
+        if(progress>=MinProgress){if(!helped)tries=0;return false;}   // on its own feet: not stuck; after a jump or a climb: watch once more
+        tries++;acted=true;
+        if(tries==1&&b.StandingOnValue.HasValue){b.Velocity=new Vector3(dir.X*3,JumpSpeed,dir.Z*3);Jumps++;return true;}
+        climb=ClimbTime;climbDir=dir;wasBlocked=false;Climbs++;return true;
+    }
+    // nothing solid just in front of it from its feet to 3 m up
+    static bool Open(ComponentBody b,Vector3 dir) {
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;var box=b.BoxSize;var f=b.Position+dir*(Math.Max(box.X,box.Z)*.5f+.6f);
+        for(float y=.2f;y<Math.Min(box.Y,3);y+=.9f){int v=t.GetCellValue(Terrain.ToCell(f.X),Terrain.ToCell(b.Position.Y+y),Terrain.ToCell(f.Z));if(BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v))return false;}
+        return true;
+    }
+    // its feet more than SinkDepth under the ground round it: the median of 8 columns just outside its box, or of 8 three metres further
+    public static bool Sunk(ComponentBody b) {
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;float half=Math.Max(b.BoxSize.X,b.BoxSize.Z)*.5f;
+        foreach(float r in new[]{half+1.5f,half+4.5f}) {
+            var tops=new List<int>(8);
+            for(int i=0;i<8;i++){float a=i*MathF.PI/4;int x=Terrain.ToCell(b.Position.X+MathF.Cos(a)*r),z=Terrain.ToCell(b.Position.Z+MathF.Sin(a)*r);if(t.GetChunkAtCell(x,z)==null)return false;tops.Add(t.GetTopHeight(x,z)+1);}
+            tops.Sort();if((tops[3]+tops[4])*.5f-b.Position.Y>SinkDepth)return true;
+        }
+        return false;
     }
 }

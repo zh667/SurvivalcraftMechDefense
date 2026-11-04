@@ -215,7 +215,7 @@ public sealed class MDMechState {
     public MDMechWeapon Weapon; public float Cooldown,MeleeCooldown,FiredAgo=99,AirTime,ShownSpeed;public bool MeleeHit,Grounded,PendingShot,WasTrigger,WasHover;
     public float Energy,EnergyLock;                                    // EP of the original (per mech type); at 0 no boost for 3 s
     public int BurstShot;                                              // 复仇女神's rifle: shot of the 3-round burst
-    public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer;   // missile locks; missiles still to launch
+    public readonly List<ComponentBody> Locks=[]; public readonly Queue<ComponentBody> Salvo=new(); public float SalvoTimer,MissileCooldown;   // missile locks; missiles still to launch; 0.18.0 the pause after a salvo
     public float BeamTime=-1,BeamTick,BeamLength;                       // laser: seconds since the beam started (<0 off), next damage tick, length
     public ComponentBody LungeTarget;
     public Vector3? CameraAt;                                          // smoothed first-person camera position
@@ -267,6 +267,9 @@ public static class MDMechBrain {
     // there (about 300-350) and below the vehicles' heavy weapons (BF2042 tank shell 600-2700, helicopter rockets 563/s).
     public const float DamageScale=.1f;
     public const int MaxLocks=3;                                        // MERCURY's missile lock count
+    public const float MissileCooldown=1.5f;                            // 0.18.0 after each salvo (all three mechs; docs/MECH.md)
+    public static bool MissileCooldownEnabled=true;                     // lab switch: the 0.17.0 rhythm
+    public static int MissilesLaunched;                                 // tests
     static readonly System.Random random=new();
     static float R(float a,float b)=>a+(float)random.NextDouble()*(b-a);
     public static string Se(int id)=>$"Imported/Mercury/Audio/se{id:00}";   // the original sound effects by id (se.bin)
@@ -296,7 +299,7 @@ public static class MDMechBrain {
 
     public static void Update(ComponentMDUnit u,float dt) {
         var m=u.Mech;var a=m.Anim;var body=u.Body;dt=Math.Min(dt,.1f);m.Invalidate();
-        m.Cooldown=Math.Max(0,m.Cooldown-dt);m.MeleeCooldown=Math.Max(0,m.MeleeCooldown-dt);m.FiredAgo+=dt;m.SalvoTimer-=dt;m.EnergyLock=Math.Max(0,m.EnergyLock-dt);
+        m.Cooldown=Math.Max(0,m.Cooldown-dt);m.MeleeCooldown=Math.Max(0,m.MeleeCooldown-dt);m.FiredAgo+=dt;m.SalvoTimer-=dt;m.MissileCooldown=Math.Max(0,m.MissileCooldown-dt);m.EnergyLock=Math.Max(0,m.EnergyLock-dt);
         if(m.ForceClip!=null){a.PlayBase(m.ForceClip,1,.01f);a.BaseTime=m.ForceTime;a.Fade=1;a.Action=null;a.Update(0);return;}
         if(u.Destroyed) {
             a.PlayBase("death",1,.1f);a.Update(dt);body.Velocity=new(0,body.Velocity.Y,0);m.Locks.Clear();m.Salvo.Clear();m.BeamTime=-1;
@@ -355,12 +358,14 @@ public static class MDMechBrain {
         CannonStep(m,a,dt);
         switch(m.Weapon) {
             case MDMechWeapon.Rifle:if(m.Trigger&&m.Cooldown<=0&&!busy)FireRifle(u);break;
-            case MDMechWeapon.Missile:if(m.Trigger)LockSweep(u);if(released){if(m.Locks.Count==0)m.Salvo.Enqueue(null);foreach(var b in m.Locks)m.Salvo.Enqueue(b);m.Locks.Clear();}break;
+            // 0.18.0 (players via the user, 2026-11-04: "机甲导弹没有冷却"): after a salvo's last missile MissileCooldown s pass before the next
+            // one locks or leaves; until then a tap queued a straight missile every 0.3 s for as long as the player kept tapping
+            case MDMechWeapon.Missile:if(m.MissileCooldown>0||m.Salvo.Count>0){m.Locks.Clear();break;}if(m.Trigger)LockSweep(u);if(released){if(m.Locks.Count==0)m.Salvo.Enqueue(null);foreach(var b in m.Locks)m.Salvo.Enqueue(b);m.Locks.Clear();}break;
             case MDMechWeapon.Cannon:if((m.Trigger||m.PendingShot)&&m.Cooldown<=0&&m.Cannon==MDMechState.CannonState.Ready&&m.Energy>=CannonCost&&!busy)FireCannon(u);break;
             case MDMechWeapon.Laser:if(m.Trigger&&m.Cooldown<=0&&m.BeamTime<0&&!busy){m.BeamTime=0;m.BeamLength=0;m.BeamTick=0;m.FiredAgo=0;Sound(u,Se(10),body.Position,.7f);}break;
             case MDMechWeapon.Grenade:if(pressed&&m.Cooldown<=0&&!busy)ThrowGrenade(u);break;
         }
-        if(m.Salvo.Count>0&&m.SalvoTimer<=0){LaunchMissile(u,m.Salvo.Dequeue());m.SalvoTimer=.3f;}   // one missile per lock, 0.3 s apart
+        if(m.Salvo.Count>0&&m.SalvoTimer<=0){LaunchMissile(u,m.Salvo.Dequeue());m.SalvoTimer=.3f;if(m.Salvo.Count==0&&MissileCooldownEnabled)m.MissileCooldown=MissileCooldown;}   // one missile per lock, 0.3 s apart
         if(m.BeamTime>=0)Beam(u,dt);
         LockMarks(u);
         a.Update(dt);m.CannonKick=Math.Max(0,m.CannonKick-dt);
@@ -391,7 +396,7 @@ public static class MDMechBrain {
         var m=u.Mech;
         if(m.EnergyLock>0&&m.Hover)return "能量耗尽";
         switch(m.Weapon) {
-            case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":$"锁定 {m.Locks.Count}/{m.Type.Locks}";
+            case MDMechWeapon.Missile:return m.Salvo.Count>0?"发射中":m.MissileCooldown>.05f?$"冷却中 {m.MissileCooldown:0.0} 秒":$"锁定 {m.Locks.Count}/{m.Type.Locks}";
             case MDMechWeapon.Cannon:return m.Cannon switch{MDMechState.CannonState.Deploying=>"展开中",MDMechState.CannonState.Ready=>m.Cooldown>.15f?"装填中":"就绪",_=>"收起（开火即展开）"};
             case MDMechWeapon.Laser:return m.BeamTime>=0?"照射中":m.Cooldown>.15f?"冷却中":"就绪";
             case MDMechWeapon.Rifle:return m.Trigger&&m.FiredAgo<.5f?"射击中":"就绪";   // 4 shots a second: its 0.25 s between shots is no reload (it flickered 装填中 / 就绪, user 2026-10-21)
@@ -432,7 +437,7 @@ public static class MDMechBrain {
     }
     static void LockMarks(ComponentMDUnit u){var m=u.Mech;if(m.Locks.Count==0)return;var w=MDTowerWorld.For(u.Project);foreach(var b in m.Locks)if(b.Entity.IsAddedToProject)w.LockMark(MDCombat.Center(b),Math.Max(.7f,b.BoxSize.Y*.7f));}
     static void LaunchMissile(ComponentMDUnit u,ComponentBody target) {
-        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"missile",out var fwd);if(Covered(u,from))return;
+        var m=u.Mech;var w=MDTowerWorld.For(u.Project);var from=Muzzle(u,"missile",out var fwd);if(Covered(u,from))return;MissilesLaunched++;
         var side=Vector3.Normalize(Vector3.Cross(fwd,Vector3.UnitY));var aim=target==null?Vector3.Normalize(Target(u,from)-from):fwd;
         var v=Vector3.Normalize(aim+Vector3.UnitY*.35f+side*R(-.3f,.3f))*(.05f*Unit*60);   // leaves slowly, drifting up and aside
         w.Muzzle(Missile,from,Vector3.Normalize(v),false);Sound(u,Se(9),from,.6f);m.FiredAgo=0;

@@ -15,7 +15,8 @@ namespace TowerLab;
 // "phone" (Phone.cs, 0.12.0: a Snapdragon GPU's draw limit, the mechs drawn in batches); "fb181" (Feedback181.cs, 0.18.1: every hit path leaves its
 // element, the creative category right after Weapons; "fb181-elements" / "fb181-mech" / "fb181-category" for one part); "fb182" (Feedback182.cs,
 // 0.18.2: the range ring over snow, pits, plants, steps, water and things that hide it, the ghost's on snow, the icons and bars in fog;
-// "fb182-ranges" / "fb182-ghost" / "fb182-fog").
+// "fb182-ranges" / "fb182-ghost" / "fb182-fog"); "fb183" (Feedback183.cs, 0.18.3: texts hidden by walls and hills but not by their own target,
+// shared hard control, frost damage; "fb183-walls" / "fb183-control" / "fb183-frost").
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
     static readonly List<string> log=[];static readonly Dictionary<string,object> results=[];
@@ -201,6 +202,7 @@ public partial class Lab:ModLoader {
         if(mode=="fb18b"||mode.StartsWith("fb18b-"))foreach(var x in Feedback18b())yield return x;   // Tests/TowerLab/Feedback18b.cs (0.18.0, second batch)
         if(mode=="fb181"||mode.StartsWith("fb181-"))foreach(var x in Feedback181())yield return x;   // Tests/TowerLab/Feedback181.cs (0.18.1: elements of the control towers, category order)
         if(mode=="fb182"||mode.StartsWith("fb182-"))foreach(var x in Feedback182())yield return x;   // Tests/TowerLab/Feedback182.cs (0.18.2: ranges over snow, pits and the rest; overlays in fog)
+        if(mode=="fb183"||mode.StartsWith("fb183-"))foreach(var x in Feedback183())yield return x;   // Tests/TowerLab/Feedback183.cs (0.18.3: texts behind walls, shared hard control, frost damage)
         if(mode=="fb13"||mode=="faction-mods")foreach(var x in Feedback13())yield return x;   // Tests/TowerLab/Feedback13.cs
         if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs
         if(mode=="robots"||mode.StartsWith("robots-"))foreach(var x in Robots())yield return x;   // Tests/TowerLab/Robots.cs

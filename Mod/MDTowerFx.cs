@@ -180,8 +180,23 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     public void LaunchMissile(ComponentMDUnit owner,MDTowerDef def,Vector3 from,Vector3 velocity,ComponentBody target,float homeAfter,float accel,float maxSpeed,float life,float power,float splash=0) {
         shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,splash=splash,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life,element=MDElements.Shot(owner,def)});
     }
-    // a lock-on marker: a red ring around the locked creature, renewed every frame while it is locked
-    public void LockMark(Vector3 p,float size){Emit(S.ThinRing,p,Vector3.Zero,.05f,size,size,new Color(255,60,50,230),new Color(255,60,50,200),true);Emit(S.Plus,p,Vector3.Zero,.05f,size*.25f,size*.25f,new Color(255,90,70,230),new Color(255,90,70,200),true);}
+    // a lock-on marker: a red ring around the locked creature, renewed every frame while it is locked (the mech's missiles, a robot's or
+    // a boss's missile wind-up on its target). 0.18.2: a hint like the status icons, so drawn with them without fog (MDElements.cs,
+    // user 11-04: "有雾的话……图标看不清了"); until 0.18.1 two particles of 0.05 s each, fogged with every other particle.
+    readonly List<(Vector3 p,float size,int frame)> lockMarks=[];TexturedBatch3D lockBatch;
+    public static int LockMarksDrawn;   // tests (this frame)
+    public void LockMark(Vector3 p,float size){if(lockMarks.Count>256)lockMarks.RemoveRange(0,128);lockMarks.Add((p,size,Time.FrameIndex));}
+    void DrawLockMarks(Vector3 right,Vector3 up) {
+        LockMarksDrawn=0;lockMarks.RemoveAll(l=>l.frame<Time.FrameIndex-1);if(lockMarks.Count==0)return;
+        // alpha-blended, not added as the particles were: added red over a pale fog turned white (lab fb182-fog); this stays red on anything
+        lockBatch??=overlay.TexturedBatch(texture,true,1,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.PointClamp);
+        for(int i=0;i<lockMarks.Count;i++) {
+            var (p,size,_)=lockMarks[i];bool later=false;for(int j=i+1;j<lockMarks.Count;j++)if(Vector3.DistanceSquared(lockMarks[j].p,p)<.09f){later=true;break;}
+            if(later)continue;   // one mark a target (the same target marked this frame and the last)
+            Quad(lockBatch,p,right*size,up*size,S.ThinRing,new Color((byte)230,(byte)54,(byte)45,(byte)230));   // premultiplied
+            Quad(lockBatch,p,right*size*.25f,up*size*.25f,S.Plus,new Color((byte)230,(byte)81,(byte)63,(byte)230));LockMarksDrawn++;
+        }
+    }
     public void AddZone(ComponentMDUnit owner,string kind,Vector3 c,float r,float life,float power,float slow=1) {
         zones.Add(new Zone{owner=owner,kind=kind,c=c,r=r,life=life,power=power,slow=slow});
         var fx=owner.Tower.fx;var c1=C(fx.color);var c2=C(fx.color2);
@@ -401,6 +416,8 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
         }
         DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
         DrawRanges(eye);   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)
+        DrawLockMarks(right,up);   // 0.18.2 without fog too
+        FlushOverlay(camera);   // 0.18.2 the icons and bars, without fog (MDElements.cs)
     }
     void Quad(TexturedBatch3D batch,Vector3 p,Vector3 x,Vector3 y,S slot,Color c) {
         int s=(int)slot;float u=s%8/8f,v=s/8/8f,d=1/8f;

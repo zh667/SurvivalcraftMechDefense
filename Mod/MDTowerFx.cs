@@ -20,7 +20,8 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     struct P { public Vector3 pos,vel; public float age,life,s0,s1,rot,spin,gravity,drag,stretch; public Color c0,c1; public S slot; public bool add,flat; }
     struct Beam { public Vector3 a,b; public float age,life,width; public Color c; public bool lightning; public int seed; }
     sealed class Shot { public ComponentMDUnit owner; public MDTowerDef def; public Vector3 pos,vel; public float age,gravity,power,splash; public bool enhanced; public int muzzle; public Vector3 last;
-        public bool missile; public ComponentBody target; public float homeAfter,accel,maxSpeed,life=8; }   // a homing missile (the mech's)
+        public bool missile; public ComponentBody target; public float homeAfter,accel,maxSpeed,life=8;   // a homing missile (the mech's)
+        public MDElement? element; }   // 0.18.1 a mech's shot: the element of the weapon and ammo it was fired with (MDElements.Of(u,def))
     sealed class Zone { public ComponentMDUnit owner; public Vector3 c; public float r,age,life,tick,power,slow; public string kind; }
     // Fire of creatures that are not towers (the robot enemies, MDRobots.cs): a tower definition gives the look (colours, trail,
     // impact); `pass` names the bodies it flies through (its own side); `landed` deals the damage where it stops. A missile homes
@@ -170,14 +171,14 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
     // ---------------------------------------------------------------- shells, zones, status
     public Vector3 LastLaunch;   // velocity of the last shell (lab checks)
     // def: the weapon (a tower's own definition by default; the mech passes one per weapon)
-    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced,MDTowerDef def=null){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=def??owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced});}
+    public void LaunchShell(ComponentMDUnit owner,Vector3 from,Vector3 velocity,float gravity,float power,float splash,bool enhanced,MDTowerDef def=null){LastLaunch=velocity;shots.Add(new Shot{owner=owner,def=def??owner.Tower,pos=from,last=from,vel=velocity,gravity=gravity,power=power,splash=splash,enhanced=enhanced,element=MDElements.Shot(owner,def)});}
     // The mech's missile, after the original: it leaves slowly, drifts for homeAfter seconds, then accelerates to maxSpeed and
     // turns towards where the target will be: 60 deg/s at first, faster the longer it homes, 600 deg/s within 13 m, straight at
     // it within 5 m. A missile with a live target always hits (user): it passes through terrain and bodies in its way and bursts
     // when it reaches the target. Without a target, or once the target is dead, it flies on and hits like a shell.
     // The 导弹塔 (0.10.0) launches the same missile, with a little splash.
     public void LaunchMissile(ComponentMDUnit owner,MDTowerDef def,Vector3 from,Vector3 velocity,ComponentBody target,float homeAfter,float accel,float maxSpeed,float life,float power,float splash=0) {
-        shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,splash=splash,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life});
+        shots.Add(new Shot{owner=owner,def=def,pos=from,last=from,vel=velocity,power=power,splash=splash,missile=true,target=target,homeAfter=homeAfter,accel=accel,maxSpeed=maxSpeed,life=life,element=MDElements.Shot(owner,def)});
     }
     // a lock-on marker: a red ring around the locked creature, renewed every frame while it is locked
     public void LockMark(Vector3 p,float size){Emit(S.ThinRing,p,Vector3.Zero,.05f,size,size,new Color(255,60,50,230),new Color(255,60,50,200),true);Emit(S.Plus,p,Vector3.Zero,.05f,size*.25f,size*.25f,new Color(255,90,70,230),new Color(255,90,70,200),true);}
@@ -279,12 +280,12 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
             if(s.missile&&s.target!=null&&s.target.Entity.IsAddedToProject&&MDCombat.Living(s.target)) {
                 var c=MDCombat.Center(s.target);float r=Math.Max(1.2f,s.target.BoxSize.X*.6f+.5f);var seg=next-s.pos;
                 float k=seg.LengthSquared()>1e-8f?Math.Clamp(Vector3.Dot(c-s.pos,seg)/seg.LengthSquared(),0,1):0;
-                if(Vector3.Distance(s.pos+seg*k,c)<=r){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,c,Vector3.Normalize(s.vel),s.target,s.power,s.splash,s.enhanced);continue;}
+                if(Vector3.Distance(s.pos+seg*k,c)<=r){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,c,Vector3.Normalize(s.vel),s.target,s.power,s.splash,s.enhanced,s.element);continue;}
                 s.pos=next;ShellTrail(s,dt);continue;
             }
             var hit=MDCombat.Trace(s.owner,s.pos,next,out var point);
             bool collided=hit!=null||Vector3.DistanceSquared(point,next)>1e-6f;
-            if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced);continue;}
+            if(collided){shots.RemoveAt(i);MDTowerBrain.ShellLanded(s.owner,s.def,point,Vector3.Normalize(s.vel),hit,s.power,s.splash,s.enhanced,s.element);continue;}
             s.pos=next;ShellTrail(s,dt);
         }
         for(int i=foreign.Count-1;i>=0;i--) {

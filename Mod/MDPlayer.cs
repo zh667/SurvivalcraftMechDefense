@@ -7,7 +7,7 @@ namespace Game;
 public class MDModLoader : ModLoader {
     public override void __ModInitialize() {
         new Harmony("local.mechdefense.sample").PatchAll();
-        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount"})ModsManager.RegisterHook(hook,this);
+        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized"})ModsManager.RegisterHook(hook,this);
     }
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
@@ -17,6 +17,8 @@ public class MDModLoader : ModLoader {
     // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
     public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);MDThreat.Load(xElement);MDNeorxnaCompatibility.Install();}
     public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);MDThreat.Save(xElement);}
+    // 0.18.1 the creative category right after Weapons (MDCategory.Place); the game calls this at the end of PostProcessBlocksLoad
+    public override void BlocksInitalized()=>MDCategory.Place(BlocksManager.m_categories);
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}
     // The mod's settings (MDSettings) live in the game's ModSettings.xml, under this mod's own element; the engine calls these
     // directly (load: while loading, when the file has this mod; save: whenever it writes the file).

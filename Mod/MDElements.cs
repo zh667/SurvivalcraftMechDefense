@@ -52,8 +52,13 @@ public static class MDElements {
     public static MDElement Parse(string s)=>s switch{"kinetic"=>MDElement.Kinetic,"explosive"=>MDElement.Explosive,"heat"=>MDElement.Heat,"cold"=>MDElement.Cold,
         "electric"=>MDElement.Electric,"corrosive"=>MDElement.Corrosive,_=>MDElement.None};
     public static MDElement Of(MDTowerDef d)=>d==null?MDElement.None:Parse(d.attack.element);
-    public static MDElement Of(ComponentMDUnit u)=>u.Tower!=null?Of(u.Tower):u.Mech==null?MDElement.None:u.Mech.Weapon==MDMechWeapon.Laser?MDElement.Electric:
-        u.Mech.Ammo!=MDElement.Kinetic?u.Mech.Ammo:u.Mech.Weapon is MDMechWeapon.Missile or MDMechWeapon.Cannon or MDMechWeapon.Grenade?MDElement.Explosive:MDElement.Kinetic;   // 0.15.0 ammo
+    public static MDElement Of(ComponentMDUnit u)=>u.Tower!=null?Of(u.Tower):u.Mech==null?MDElement.None:Of(u.Mech,u.Mech.Weapon);
+    // a mech's weapon with its loaded ammo (0.15.0); the blade counts as the rifle (kinetic, or the ammo's element)
+    public static MDElement Of(MDMechState m,MDMechWeapon w)=>w==MDMechWeapon.Laser?MDElement.Electric:
+        m.Ammo!=MDElement.Kinetic?m.Ammo:w is MDMechWeapon.Missile or MDMechWeapon.Cannon or MDMechWeapon.Grenade?MDElement.Explosive:MDElement.Kinetic;
+    // 0.18.1 the element a shell or missile carries from the moment it is fired: a mech's by the weapon that fired it (a grenade landing
+    // after the pilot switched to the laser was electric); null for a tower (its own element, Of(u))
+    public static MDElement? Shot(ComponentMDUnit u,MDTowerDef d)=>u?.Mech!=null&&MDMechBrain.WeaponOf(d) is {} w?Of(u.Mech,w):null;
     public static string Name(MDElement e)=>Names[(int)e];
     public static bool Aura(MDElement e)=>e is MDElement.Heat or MDElement.Cold or MDElement.Electric or MDElement.Corrosive;
     // damage taken per type, by robot kind (x 0.75 .. x 1.5; 1 where not listed). The devil mech has its own weak point instead.

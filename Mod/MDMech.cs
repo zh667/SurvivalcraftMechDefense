@@ -289,6 +289,7 @@ public static class MDMechBrain {
     public static bool BreaksTerrain(MDTowerDef d)=>d!=null&&(d==cannon||d==grenade);
     public static float BlastPressure(MDTowerDef d)=>d==grenade?GrenadePressure:CannonPressure;
     public static MDTowerDef CannonWeapon=>CannonDef;public static MDTowerDef GrenadeWeapon=>Grenade;   // the lab
+    public static MDMechWeapon? WeaponOf(MDTowerDef d)=>d==null?null:d==rifle?MDMechWeapon.Rifle:d==missile?MDMechWeapon.Missile:d==cannon?MDMechWeapon.Cannon:d==grenade?MDMechWeapon.Grenade:d==laser?MDMechWeapon.Laser:null;
     static readonly int[] SwitchSe=[25,26,27,30,29];   // change_to_gun / missile / cannon / laser / bomb
 
     static Vector3 Forward(float yaw)=>new(-MathF.Sin(yaw),0,-MathF.Cos(yaw));
@@ -451,7 +452,7 @@ public static class MDMechBrain {
         var from=Muzzle(u,"rifle",out _);if(Covered(u,from))return;var dir=Vector3.Normalize(Target(u,from)-from);
         m.BeamLength=Math.Min(m.BeamLength+60*Unit*dt,22*Unit);var hit=MDCombat.Trace(u,from,from+dir*m.BeamLength,out var end);
         var c=new Color(Laser.fx.color[0],Laser.fx.color[1],Laser.fx.color[2]);w.HoldBeam(u,from,end,.16f,c);   // one beam, a smooth fading ribbon behind it
-        m.BeamTick-=dt;if(m.BeamTick<=0&&hit!=null){m.BeamTick=1/6f;MDTowerBrain.Hit(u,hit,Laser.attack.power,end,dir);w.Sparks(end,-dir,4,c,4,.8f,.3f,.04f);Sound(u,Se(13),end,.4f);}
+        m.BeamTick-=dt;if(m.BeamTick<=0&&hit!=null){m.BeamTick=1/6f;MDTowerBrain.Hit(u,hit,Laser.attack.power,end,dir,false,null,MDElements.Of(m,MDMechWeapon.Laser));w.Sparks(end,-dir,4,c,4,.8f,.3f,.04f);Sound(u,Se(13),end,.4f);}
     }
     // The grenade: thrown from the cannon's base in an arc 4 m high that lands at 75 % of the crosshair's distance (40 m at most).
     static void ThrowGrenade(ComponentMDUnit u) {
@@ -468,14 +469,15 @@ public static class MDMechBrain {
         return bodies.Where(b=>MDCombat.IsEnemy(u,b)&&Vector3.Distance(b.Position,u.Body.Position)<=range&&Vector3.Dot(Vector3.Normalize(MDCombat.Center(b)-u.Body.Position-Vector3.UnitY*2),dir)>MathF.Cos(cone))
             .OrderBy(b=>Vector3.DistanceSquared(b.Position,u.Body.Position)).FirstOrDefault();
     }
-    // melee: the creatures in a 120 deg wedge up to 5.5 m in front, at the hit frame of the clip (the punch is 1000 %)
+    // melee: the creatures in a 120 deg wedge up to 5.5 m in front, at the hit frame of the clip (the punch is 1000 %); kinetic like the
+    // rifle, or the loaded ammo's element (0.18.1: it took the selected weapon's, explosive with the missiles, electric with the laser)
     static void MeleeStrike(ComponentMDUnit u) {
         var w=MDTowerWorld.For(u.Project);var f=Forward(u.Yaw);var c=u.Body.Position+Vector3.UnitY*1.6f;var bodies=new DynamicArray<ComponentBody>();bool any=false;
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(c.X,c.Z),7,bodies);
         foreach(var b in bodies) {
             if(!MDCombat.IsEnemy(u,b))continue;var to=MDCombat.Center(b)-c;var flat=new Vector3(to.X,0,to.Z);float dist=flat.Length();
             if(dist>5.5f+b.BoxSize.X*.5f||Vector3.Dot(flat/Math.Max(dist,.01f),f)<.5f)continue;
-            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f,false,"kinetic");w.Impact(CannonDef,at,f,true);any=true;
+            var at=MDCombat.Center(b);MDTowerBrain.Hit(u,b,10000*DamageScale,at,f,false,"kinetic",MDElements.Of(u.Mech,MDMechWeapon.Rifle));w.Impact(CannonDef,at,f,true);any=true;
             if(b.Mass<=800)b.Velocity+=f*7+Vector3.UnitY*3;
         }
         if(any)Sound(u,Se(17),c,.8f);

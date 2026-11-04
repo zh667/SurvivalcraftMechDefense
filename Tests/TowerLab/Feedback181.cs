@@ -11,7 +11,9 @@ namespace TowerLab;
 // elements  every tower whose damage type leaves a status (heat, cold, electric, corrosive), alone against one RD05 walker held 10 m
 //           off: the element's own status on the robot (its own timer: freezing, burning and poison count as the element too, but
 //           they are not what the hit leaves), how long after the first shot, and its icon over the robot. Then the sonic tower and
-//           the EMP towers against two robots 16 m off, one of them carrying heat: electric on the other one, 过载 on that one.
+//           the EMP towers against two robots 16 m off, one of them carrying heat: electric on the other one; since 0.18.2 (user,
+//           2026-11-04: "电磁脉冲、声波只附加元素") electric on the hot one too, no reaction, its heat kept, and its reaction cooldown
+//           free: a cold hit right after reacts at once (0.18.1: 过载 used the heat up and the 1.5 s cooldown, the cold hit did nothing).
 // mech      Mercury: a grenade thrown with cold ammo that lands after the pilot switched to standard ammo and the laser (it stays
 //           cold), and a melee blow with the missiles selected on a chilled robot (kinetic: 碎冰, not 扩散).
 // category  the creative inventory's categories: MechDefense once and right after Weapons (BlocksManager, the inventory widget, the
@@ -81,21 +83,30 @@ public partial class Lab {
                 foreach(var off in new[]{-1.5f,1.5f}){var at=Home+fwd*16+side*off;at.Y=Top(at);var rb=Robot("MDRobot05",at,yaw+MathF.PI);Hold(rb);two.Add(rb);}
                 while(Wait(.6))yield return true;foreach(var rb in two)Hold(rb);
                 var hot=two[0].Body;var clean=two[1].Body;w.Elemental(u,hot,MDElement.Heat,0);   // 6 s of heat on the first one
-                int s0=u.ShotCount,n0=MDElements.Count;u.Cooldown=0;double t0=Time.RealTime,fired=-1,elec=-1,reacted=-1;bool icon=false,shot=false;
+                int s0=u.ShotCount,n0=MDElements.Count;u.Cooldown=0;double t0=Time.RealTime,fired=-1,elec=-1,reacted=-1;bool icon=false,shot=false;float cdMax=-1e9f;
                 var eye=Home+fwd*10+side*12+Vector3.UnitY*7;var focus=Home+fwd*16;
                 foreach(var x in Seconds(4,()=>{
                     Tidy();foreach(var rb in two)rb.Health.Health=1;u.Damage.Hitpoints=1;if(fired<0&&u.ShotCount>s0)fired=Time.RealTime;
                     if(elec<0&&Own(clean,MDElement.Electric)){elec=Time.RealTime-t0;icon=w.Icons(clean).Contains(MDIcon.Electric);}
                     if(reacted<0&&MDElements.Count>n0)reacted=Time.RealTime-t0;
+                    {var tb=(IDictionary)stF.GetValue(w);if(tb.Contains(hot))cdMax=Math.Max(cdMax,(float)stType.GetField("reactUntil").GetValue(tb[hot])-(float)timeF.GetValue(w));}   // a reaction cooldown taken at any time
                     Cam(eye,focus);
                 })){
-                    if(!shot&&reacted>=0&&Time.RealTime-t0-reacted>.15){Shot($"f181_react_{id}");shot=true;}
+                    if(!shot&&elec>=0&&Time.RealTime-t0-elec>.15){Shot($"f181_react_{id}");shot=true;}
                     yield return x;
                 }
+                // the hot one: electric on it too, its heat kept, no reaction, its cooldown free (reactUntil, reactAt through reflection)
+                bool hotElec=Own(hot,MDElement.Electric),heatKept=Own(hot,MDElement.Heat);var hotIcons=w.Icons(hot);
+                float now=(float)timeF.GetValue(w);var hs=((IDictionary)stF.GetValue(w))[hot];float reactUntil=(float)stType.GetField("reactUntil").GetValue(hs);
+                var reactAt=(float[])stType.GetField("reactAt").GetValue(hs);bool cooldownFree=cdMax<=0&&reactUntil<=now&&reactAt.All(x=>x<=now);
+                string during=Reactions(n0);int nDuring=MDElements.Count-n0;
+                // a cold hit right after (a tower of cold, here through Elemental itself): a reaction at once if nothing took the cooldown
+                int n1=MDElements.Count;w.Elemental(u,hot,MDElement.Cold,100);string after=Reactions(n1);
                 var row=new Dictionary<string,object>{["tower"]=id,["shots"]=u.ShotCount-s0,["firstShot"]=fired<0?-1:Math.Round(fired-t0,2),["electricOnClean"]=Math.Round(elec,2),["icon"]=icon,
-                    ["reactionAt"]=Math.Round(reacted,2),["reactions"]=Reactions(n0),["heatLeft"]=Own(hot,MDElement.Heat),["hotStunned"]=w.IsStunned(hot)};
+                    ["reactionsDuring"]=nDuring,["reactionNames"]=during,["hotElectric"]=hotElec,["hotHeatKept"]=heatKept,["hotIcons"]=string.Join("+",hotIcons),
+                    ["hotCooldownFree"]=cooldownFree,["cooldownLeftMax"]=cdMax<-1e8f?"none":Math.Round(cdMax,2),["coldHitAfter"]=after.Length>0?after:"none"};
                 react.Add(Line(row));
-                if(elec<0||!icon||reacted<0||!Reactions(n0).Contains(MDElements.Reactions[(int)MDReaction.Overload].Name))bad.Add("react: "+Line(row));
+                if(elec<0||!icon||nDuring!=0||!hotElec||!heatKept||!hotIcons.Contains(MDIcon.Heat)||!hotIcons.Contains(MDIcon.Electric)||!cooldownFree||after.Length==0)bad.Add("react: "+Line(row));
                 foreach(var rb in two)if(rb.Entity.IsAddedToProject)proj.RemoveEntity(rb.Entity,true);Remove([u]);ClearAll();while(Wait(.3))yield return true;
             }
         }

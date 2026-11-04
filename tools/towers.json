@@ -988,7 +988,8 @@
     "bossResilience": 500,
     "element": "electric",
     "speed": 20,
-    "arc": 80
+    "arc": 80,
+    "statusOnly": true
    },
    "fx": {
     "color": [
@@ -2136,7 +2137,8 @@
     "bossResilience": 500,
     "element": "electric",
     "speed": 22,
-    "splash": 3
+    "splash": 3,
+    "statusOnly": true
    },
    "fx": {
     "color": [
@@ -2181,7 +2183,8 @@
     "bossResilience": 500,
     "element": "electric",
     "speed": 22,
-    "splash": 3.5
+    "splash": 3.5,
+    "statusOnly": true
    },
    "fx": {
     "color": [
@@ -2226,7 +2229,8 @@
     "bossResilience": 500,
     "element": "electric",
     "speed": 22,
-    "splash": 4
+    "splash": 4,
+    "statusOnly": true
    },
    "fx": {
     "color": [

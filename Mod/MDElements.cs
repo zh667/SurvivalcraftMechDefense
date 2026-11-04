@@ -87,6 +87,7 @@ public static class MDElements {
         MDElement.Corrosive=>has(MDElement.Heat)?MDReaction.Corrode:has(MDElement.Cold)?MDReaction.FrostEtch:has(MDElement.Electric)?MDReaction.Electrolysis:MDReaction.None,
         _=>MDReaction.None};
     public static int Count;                                         // tests: reactions so far
+    public static int StatusOnlyHits;                                // tests: hits that only left a status (attack.statusOnly)
     public static float Bonus;                                       // tests: power reactions added to the hits that made them
     public static readonly List<string> Log=[];                      // tests: the last reactions (name, target, power before / after)
 }
@@ -108,11 +109,15 @@ public sealed partial class MDTowerWorld {
 
     // A hit of element e and this power from u on b: resistance, brittleness, the reaction if any, the status. Returns the power to
     // deal. Secondary hits of reactions come back through MDTowerBrain.Hit with MDElement.None (no chains of reactions).
-    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power) {
+    // 0.18.2 statusOnly (a tower's attack.statusOnly: the sonic and EMP towers): the status only (put on or renewed, never shortened);
+    // no reaction, the statuses already on the target stay, its reaction cooldowns and the residue for a third element are not touched.
+    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power)=>Elemental(u,b,e,power,false);   // the 0.18.1 signature (the lab runs on older packages)
+    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power,bool statusOnly) {
         if(e==MDElement.None)return power;
         var robot=b.Entity.FindComponent<ComponentMDRobot>();
         if(robot!=null)power*=MDElements.Resist(robot.Kind,e);
         var s=Get(b);
+        if(statusOnly){if(MDElements.Aura(e))SetAura(s,e,time+MDElements.AuraTime);MDElements.StatusOnlyHits++;return power;}
         if(s.brittleUntil>time&&e is MDElement.Kinetic or MDElement.Explosive)power*=1.35f;
         // three elements first: two statuses on it, or a two-element reaction on it within ResidueTime, and a third element
         if(MDSettings.Reactions&&MDElements.Aura(e)&&time>=s.reactUntil) {

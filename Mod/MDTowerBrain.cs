@@ -75,12 +75,16 @@ public static class MDTowerBrain {
     // in its sight as before. The scan runs every 0.25 s, so a target that moves out of reach is dropped and another one taken.
     public static bool ReachEnabled=true;   // lab switch: the 0.17.0 choice (shells take what they cannot reach)
     public static int Unreachable;          // tests: candidates passed over as out of reach
+    // 0.18.3 a control tower (attack.stun or freeze: the EMP and sonic towers, liquid nitrogen) takes first a target that is neither held
+    // nor immune to hard control (MDTowerWorld.HardResisting, MDControl.cs), so several of them spread their control over a squad; with
+    // nothing else in reach it still fires at a held one (its element still counts).
+    public static bool SpreadEnabled=true;  // lab switch
     static ComponentBody FindTarget(ComponentMDUnit u) {
-        var a=u.Tower.attack;var bodies=new DynamicArray<ComponentBody>();
+        var a=u.Tower.attack;var bodies=new DynamicArray<ComponentBody>();bool spread=SpreadEnabled&&(a.stun>0||a.freeze>0);var w=spread?World(u):null;
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(u.Body.Position.X,u.Body.Position.Z),u.Range+2,bodies);
         var found=new List<(float score,ComponentBody body)>();
         foreach(var b in bodies)
-            if(MDCombat.IsEnemy(u,b)&&Sane(b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0),b));
+            if(MDCombat.IsEnemy(u,b)&&Sane(b)&&!(a.groundOnly&&Airborne(b))&&InArea(u,MDCombat.Center(b)))found.Add(((a.threatFirst?-Threat(b):Vector3.DistanceSquared(b.Position,u.Body.Position))+(a.airFirst&&!Airborne(b)?1e7f:0)+(spread&&w.HardResisting(b)?1e5f:0),b));
         found.Sort((x,y)=>x.score.CompareTo(y.score));
         var from=Aim(u);int lobs=0;
         foreach(var (_,b) in found) {
@@ -400,6 +404,8 @@ public static class MDTowerBrain {
     // 0.18.2 (user, 2026-11-04: "电磁脉冲、声波只附加元素"): a tower whose attack is statusOnly (the sonic tower, the EMP towers) only leaves
     // its status: no reaction, nothing on the target used up, no reaction cooldown taken (MDTowerWorld.Elemental). Other damageless
     // hits (液氮塔, 冰冻塔 Ⅰ, the ice field) still react as in 0.18.1.
+    // 0.18.3 (user, 2026-11-05): 冰冻塔 Ⅰ (15 a spray, Ⅱ 30, Ⅲ 60), 液氮塔 (40 a shell, its ice 8 every half second) deal damage now: plain
+    // cold towers, their hits leave 冰寒 and react like any other; of the damageless status hits only the statusOnly towers are left.
     public static bool StatusWithoutDamage=true;   // lab switch: the 0.18.0 behaviour
     public static bool StatusOnlyEnabled=true;     // lab switch: false = the 0.18.1 behaviour (attack.statusOnly ignored)
     public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null,MDElement? element=null) {

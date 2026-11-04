@@ -125,6 +125,9 @@ public sealed class MDManualScreen:Screen {
                 Note($"灼烧、冰寒、带电、腐蚀持续 {MDElements.AuraTime:0} 秒，再次命中刷新；着火算灼烧，冻结算冰寒，中毒算腐蚀。");
                 if(MDTowerLibrary.All.Where(t=>t.attack.statusOnly).Select(t=>t.name).ToList() is {Count:>0} only)   // 0.18.2
                     Note($"{string.Join("、",only)}命中只留下状态：自己不触发反应，不消耗敌人身上已有的状态，也不占反应冷却，留给其他炮塔来触发。");
+                // 0.18.3 hard control shared over all towers (MDControl.cs NormalHard)
+                Note($"冻结和瘫痪都算硬控，不论来自哪座塔或哪种反应，同一个敌人共用一段：一段最长 {MDTowerWorld.NormalHardCap:0} 秒，结束后 {MDTowerWorld.NormalHardImmune:0} 秒内不会再被硬控（头上没有冻结 / 瘫痪图标时也可能正在免疫）。"+
+                    "电磁脉冲、全向声波、液氮塔会先打没被控、不在免疫期的敌人。减速不算硬控，免疫期里照样有效。首领另有规则，见“首领”。");
                 Entry([MDIcon.Frozen],"冻结","不能移动、不能开火（液氮塔、晶化反应）。");
                 Entry([MDIcon.Paralysed],"瘫痪","不能移动、不能开火（电磁脉冲、全向声波、过载和雷暴反应）。");
                 Entry([MDIcon.Slowed],"减速","移动变慢（冰冻塔、毒沼、冻蚀反应）。");

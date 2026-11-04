@@ -207,7 +207,7 @@ public sealed partial class MDTowerWorld {
         int cap=MaxLabels[Math.Clamp(MDSettings.FxLevel,0,2)];while(labels.Count>=cap)labels.RemoveAt(0);   // many reactions at once: the newest names only
         bool triad=MDElements.Triads.TryGetValue(r,out var three);
         if(triad){Ring(b.Position,Math.Max(2.4f,b.BoxSize.X*1.4f),MDElements.Colors[(int)three[2]],.8f,.18f);Flash(c,1.6f,Color.White,.2f);}   // all three used up, a bigger look
-        labels.Add(new ReactionLabel{pos=b.Position+Vector3.UnitY*(b.BoxSize.Y+LabelsAt),text=info.Name,c=triad?new Color(255,236,140):Color.Lerp(c1,Color.White,.35f),c2=c2,life=triad?2:1.6f,big=triad});   // above the status icons
+        labels.Add(new ReactionLabel{body=b,pos=b.Position+Vector3.UnitY*(b.BoxSize.Y+LabelsAt),text=info.Name,c=triad?new Color(255,236,140):Color.Lerp(c1,Color.White,.35f),c2=c2,life=triad?2:1.6f,big=triad});   // above the status icons
         return power;
     }
     IEnumerable<ComponentBody> Near(ComponentMDUnit u,ComponentBody b,float r) {
@@ -216,7 +216,7 @@ public sealed partial class MDTowerWorld {
     }
 
     // ---- icons over the targets and reaction names (drawn after the particles)
-    sealed class ReactionLabel { public Vector3 pos; public string text; public Color c,c2; public float age,life; public bool big; }
+    sealed class ReactionLabel { public Vector3 pos; public string text; public Color c,c2; public float age,life; public bool big; public ComponentBody body; }   // 0.18.3 body: its target (InFront)
     readonly List<ReactionLabel> labels=[];
     // 0.18.2 (user, 2026-11-04: "有雾的话，敌人已经有的元素图标看不清了"): the icons and every bar (towers', bosses', the medic's charge) were
     // queued in the particles' renderer, whose textured batches SubsystemParticles draws with the terrain's alpha-tested shader, fog
@@ -225,7 +225,37 @@ public sealed partial class MDTowerWorld {
     // depth-tested, and only within IconRange / BarRange / TowerIconRange m, so they are not seen through hills or from far off.
     Texture2D iconTexture;TexturedBatch3D iconBatch;FontBatch3D labelBatch;readonly PrimitivesRenderer3D overlay=new();
     void FlushOverlay(Camera camera)=>overlay.Flush(camera.ViewProjectionMatrix);
-    public const float IconRange=32,TowerIconRange=14;
+    // 0.18.3 (user, 2026-11-05: "反应字样和伤害数字在 48 米内能隔墙看到……改一下吧"): every text in the world (reaction names, damage numbers,
+    // a boss's name and tags, the core's line, "断电失效") is one font batch in the particles' renderer. Until 0.18.2 it had no depth test
+    // (DepthStencilState.None, since 0.15.0), so all of it showed through walls and hills within its range (names 48 m, numbers 28 m,
+    // boss names 72 m, the core's line 56 m). Now it is depth-tested like the icons and bars: terrain, blocks and other creatures hide
+    // it. It writes no depth, it stays without fog (the renderer's Flush uses the unlit shader), and its layer (LabelLayer) comes after
+    // the range rings (3) and the core's beam (5), and the icons and bars are flushed before the whole renderer (FlushOverlay in Draw),
+    // so the text is blended over the half-transparent fill, the beam, the icons and the bars, never under them.
+    public const int LabelLayer=6;
+    void Labels()=>labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,LabelLayer,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
+    // What floats over a target (its icons, numbers, reaction names, a boss's bars) must not be hidden by the target itself: seen
+    // from close by and below, the line to it passes through the creature's own model. Where that line enters the target's box (with a
+    // margin for guns and heads the box leaves out) the hint is drawn just in front of that point instead, scaled about the eye by the
+    // same share, so on screen it is exactly where and as big as it was. Returns that share of the way from the eye (1: no change).
+    // Anything else between the eye and the target (a wall, a hill, another creature) still hides it.
+    public static bool InFrontEnabled=true;   // lab switch
+    public static float InFront(Vector3 eye,Vector3 p,ComponentBody b) {
+        if(!InFrontEnabled||b==null||!b.Entity.IsAddedToProject)return 1;
+        var box=b.BoundingBox;var size=b.BoxSize;float m=.3f+.1f*Math.Max(size.X,size.Z);
+        var lo=box.Min-new Vector3(m,m,m);var hi=box.Max+new Vector3(m,m+.1f*size.Y,m);
+        var d=p-eye;float len=d.Length();if(!(len>1e-3f))return 1;
+        float t0=0,t1=1;
+        for(int i=0;i<3;i++) {
+            float o=i==0?eye.X:i==1?eye.Y:eye.Z,dd=i==0?d.X:i==1?d.Y:d.Z,l=i==0?lo.X:i==1?lo.Y:lo.Z,h=i==0?hi.X:i==1?hi.Y:hi.Z;
+            if(MathF.Abs(dd)<1e-6f){if(o<l||o>h)return 1;continue;}
+            float a=(l-o)/dd,c=(h-o)/dd;if(a>c)(a,c)=(c,a);
+            t0=Math.Max(t0,a);t1=Math.Min(t1,c);if(t0>t1)return 1;   // the line misses the box (or reaches the hint first)
+        }
+        float near=Math.Min(1,.6f/len);   // never nearer than 0.6 m to the eye
+        return t0<=0?near:Math.Max(near,t0-.15f/len);   // the eye inside the margin (right next to it): just in front of the eye
+    }
+    public const float IconRange=32,TowerIconRange=14,LabelRange=48;
     // 0.16.0 one stack over a target, from the top of its box (user, 2026-10-31: "元素图标和敌人状态条会有重叠部分"): status icons, then
     // damage numbers, then reaction names (they rise), then a boss's bars; the bars also climb with distance as the icons grow
     public const float IconsAt=1f,NumbersAt=2f,LabelsAt=2.8f,BarsAt=4.4f;
@@ -252,6 +282,7 @@ public sealed partial class MDTowerWorld {
             l.Clear();Icons(b,s,l);if(l.Count==0)continue;
             float size=.32f+.012f*d;                                     // a little bigger far off, so they stay readable
             var top=b.Position+Vector3.UnitY*(b.BoxSize.Y+IconsAt+size);
+            float f=InFront(eye,top,b);if(f<1){top=eye+(top-eye)*f;size*=f;}   // 0.18.3 not hidden by the target's own body
             for(int i=0;i<l.Count&&i<5;i++) {
                 var p=top+right*((i-(Math.Min(l.Count,5)-1)*.5f)*size*2.1f);int k=(int)l[i];float u=k%4/4f,v=k/4/4f,q=1/4f;
                 var x=right*size;var y=up*size;
@@ -270,14 +301,15 @@ public sealed partial class MDTowerWorld {
             iconBatch.QueueQuad(p-x-y,p+x-y,p+x+y,p-x+y,new Vector2(u,v+q),new Vector2(u+q,v+q),new Vector2(u+q,v),new Vector2(u,v),Color.White*fade);IconsDrawn++;
         }
         if(labels.Count==0)return;
-        labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,3,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
+        Labels();
         foreach(var lb in labels) {
-            float d=Vector3.Distance(lb.pos,eye);if(d>48)continue;
+            float d=Vector3.Distance(lb.pos,eye);if(d>LabelRange)continue;
             float t=lb.age/lb.life,a=t<.7f?1:1-(t-.7f)/.3f,sc=(.032f+.0012f*d)*(t<.12f?.6f+3.3f*t:1)*(lb.big?1.5f:1);
+            float f=InFront(eye,lb.pos,lb.body);var pos=eye+(lb.pos-eye)*f;sc*=f;   // 0.18.3 depth-tested, but not hidden by its own target
             var outline=new Color((byte)10,(byte)12,(byte)18,(byte)(220*a));var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;
             foreach(var (ox,oy) in new[]{(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(1,1),(-1,1),(1,-1)})   // a dark outline, readable over sky and ground
-                labelBatch.QueueText(lb.text,lb.pos+(right*ox-up*oy)*sc*2.2f,right*sc,-up*sc,outline,anchor);
-            labelBatch.QueueText(lb.text,lb.pos,right*sc,-up*sc,lb.c*a,anchor);
+                labelBatch.QueueText(lb.text,pos+(right*ox-up*oy)*sc*2.2f,right*sc,-up*sc,outline,anchor);
+            labelBatch.QueueText(lb.text,pos,right*sc,-up*sc,lb.c*a,anchor);
         }
     }
 }

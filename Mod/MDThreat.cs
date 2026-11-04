@@ -168,11 +168,12 @@ public sealed partial class MDTowerWorld {
         var core=MDThreat.CoreCached(project);BeamsDrawn=0;if(core==null)return;CoreBeam(core,eye);
         float d=Vector3.Distance(core.Body.Position,eye);if(d>56)return;
         float w=2.6f+.03f*d,h=.2f+.005f*d;var at=new Vector3(core.Body.Position.X,core.Body.BoundingBox.Max.Y+1.1f,core.Body.Position.Z);
-        Bar(at,right,up,w+.08f,h+.08f,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h,0,1,new Color(60,50,70,230));
+        float k=InFront(eye,at,core.Body);at=eye+(at-eye)*k;w*=k;h*=k;   // 0.18.3 depth-tested text and bar, not hidden by the core itself
+        Bar(at,right,up,w+.08f*k,h+.08f*k,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h,0,1,new Color(60,50,70,230));
         float share=MDThreat.Now==MDThreat.Phase.Idle?MDThreat.Threat/Math.Max(1,MDThreat.Cap):1;
         Bar(at,right,up,w,h,0,share,MDThreat.Now==MDThreat.Phase.Idle?new Color(190,120,255):new Color(255,110,90)*(.75f+.25f*MathF.Sin(time*6)));
-        labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,3,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
-        float sc=.016f+.0006f*d;var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;var text=MDThreat.Status(core);var tp=at+up*(h+sc*28);
+        Labels();
+        float sc=(.016f+.0006f*d)*k;var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;var text=MDThreat.Status(core);var tp=at+up*(h+sc*28);
         labelBatch.QueueText(text,tp+right*sc*1.5f-up*sc*1.5f,right*sc,-up*sc,new Color(0,0,0,200),anchor);labelBatch.QueueText(text,tp,right*sc,-up*sc,Color.White,anchor);
     }
 }
@@ -212,8 +213,9 @@ public sealed partial class MDTowerWorld {
         foreach(var b in near) {
             if(b.Entity.FindComponent<ComponentMDUnit>() is not {} u||!u.Offline||u.Destroyed)continue;
             float d=Vector3.Distance(b.Position,eye);if(d>40)continue;
-            labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,3,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
+            Labels();
             float sc=.02f+.0008f*d;var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;var at=new Vector3(b.Position.X,b.BoundingBox.Max.Y+.7f,b.Position.Z);
+            float k=InFront(eye,at,b);at=eye+(at-eye)*k;sc*=k;   // 0.18.3 depth-tested, not hidden by the tower itself
             string text=$"断电失效 {Math.Max(0,u.OfflineUntil-u.Clock.GameTime):0} 秒";
             labelBatch.QueueText(text,at+right*sc*1.5f-up*sc*1.5f,right*sc,-up*sc,new Color(0,0,0,210),anchor);labelBatch.QueueText(text,at,right*sc,-up*sc,new Color(255,90,80)*(.75f+.25f*MathF.Sin(time*5)),anchor);
             OfflineDrawn++;

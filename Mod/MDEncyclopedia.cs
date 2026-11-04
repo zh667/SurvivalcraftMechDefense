@@ -171,7 +171,7 @@ public static class MDEncyclopedia {
         return $"{d.name}：{d.summary}\n{ElementText(d)}{medic}血量 {d.hp:0}，射程 {a.range:0.#} 格，{AttackText(d)}{(t.Length>0?"，"+t:"")}；占地 {d.cells[0]}×{d.cells[2]} 格。\n{RecipeText(Recipe(d))}";
     }
     // 0.15.0 damage types and reactions (MDElements)
-    public static string ElementText(MDTowerDef d){var e=MDElements.Of(d);return e==MDElement.None?"":$"伤害类型：{MDElements.Name(e)}"+(MDElements.Aura(e)?$"（命中留下“{MDElements.Statuses[(int)e]}”状态）":"")+"。";}
+    public static string ElementText(MDTowerDef d){var e=MDElements.Of(d);return e==MDElement.None?"":$"伤害类型：{MDElements.Name(e)}"+(MDElements.Aura(e)?d.attack.statusOnly?$"（命中只留下“{MDElements.Statuses[(int)e]}”状态，自己不触发反应，也不消耗敌人身上已有的状态，留给其他炮塔触发）":$"（命中留下“{MDElements.Statuses[(int)e]}”状态）":"")+"。";}   // 0.18.2 statusOnly
     static string Elements() {
         var s=new StringBuilder("每座炮塔造成一种伤害：动能、爆炸、热、冷、电、腐蚀（物品说明和各阶炮塔的条目里写着）。机甲的步枪和近战是动能，导弹、火炮、榴弹是爆炸，激光是电。\n\n");
         s.Append($"状态：热、冷、电、腐蚀命中时给敌人挂上对应的状态（灼烧、冰寒、带电、腐蚀），持续 {MDElements.AuraTime:0} 秒，再次命中刷新；着火算灼烧，冻结算冰寒，中毒算腐蚀。敌人头顶的图标显示它现在的状态（还有冻结、瘫痪、减速、破甲、脆化），{MDTowerWorld.IconRange:0} 米内可见。\n\n");

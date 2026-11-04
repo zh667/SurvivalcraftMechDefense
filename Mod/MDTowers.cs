@@ -30,6 +30,8 @@ public sealed class MDTowerAttack {
     public float width;              // directional rectangle width (flame/jet)
     public string element;           // 0.15.0 damage type: kinetic explosive heat cold electric corrosive (MDElements)
     public bool stagger;             // 0.15.0: its hits still stun and push robots (heavy single shots, MDRobots.Unstaggered)
+    public bool statusOnly;          // 0.18.2: its hits only leave its element's status: no reaction, nothing used up, no reaction cooldown
+                                     // (全向声波塔, 电磁脉冲 Ⅰ–Ⅲ; user, 2026-11-04: "电磁脉冲、声波只附加元素"; MDTowerWorld.Elemental)
 }
 // A piston or strut between the turret and the elevating cradle (rest-pose (y, z) points in the turret frame).
 public sealed class MDTowerLink { public string node, parent, on; public float[] hinge, at; public bool stretch; }

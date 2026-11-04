@@ -397,14 +397,18 @@ public static class MDTowerBrain {
     // Elemental as every other hit; it ended here (power <= 0) before, and the wave and the old pulse did not even call Hit. A reaction
     // that adds damage (热冲击: 3 % of the health) then makes a hit with its damage number; otherwise nothing is dealt. A damageless
     // kinetic or explosive hit (the water jet) stays nothing: those leave no status and would only use up the target's.
+    // 0.18.2 (user, 2026-11-04: "电磁脉冲、声波只附加元素"): a tower whose attack is statusOnly (the sonic tower, the EMP towers) only leaves
+    // its status: no reaction, nothing on the target used up, no reaction cooldown taken (MDTowerWorld.Elemental). Other damageless
+    // hits (液氮塔, 冰冻塔 Ⅰ, the ice field) still react as in 0.18.1.
     public static bool StatusWithoutDamage=true;   // lab switch: the 0.18.0 behaviour
+    public static bool StatusOnlyEnabled=true;     // lab switch: false = the 0.18.1 behaviour (attack.statusOnly ignored)
     public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null,MDElement? element=null) {
         if(b==null||!MDCombat.IsEnemy(u,b))return;
         var el=element??MDElements.Of(u);
         if(!(power>0)&&!(power==0&&StatusWithoutDamage&&MDElements.Aura(el)))return;
         power*=World(u).DamageFactor(b);
         if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit)*u.Mech.Type.Damage;   // weapon kit x the mech's own factor
-        int reactions=MDElements.Count;power=World(u).Elemental(u,b,el,power);
+        int reactions=MDElements.Count;power=World(u).Elemental(u,b,el,power,u.Tower?.attack.statusOnly==true&&StatusOnlyEnabled);
         if(!(power>0))return;   // a status only
         MDTowerWorld.HitElement=el;MDTowerWorld.HitReacted=MDElements.Count>reactions;   // for its damage number (MDDamageNumbers.cs)
         ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power){Channel=channel??Channel(u)});

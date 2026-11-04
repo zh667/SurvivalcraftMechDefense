@@ -87,6 +87,7 @@ public static class MDElements {
         MDElement.Corrosive=>has(MDElement.Heat)?MDReaction.Corrode:has(MDElement.Cold)?MDReaction.FrostEtch:has(MDElement.Electric)?MDReaction.Electrolysis:MDReaction.None,
         _=>MDReaction.None};
     public static int Count;                                         // tests: reactions so far
+    public static int StatusOnlyHits;                                // tests: hits that only left a status (attack.statusOnly)
     public static float Bonus;                                       // tests: power reactions added to the hits that made them
     public static readonly List<string> Log=[];                      // tests: the last reactions (name, target, power before / after)
 }
@@ -108,11 +109,15 @@ public sealed partial class MDTowerWorld {
 
     // A hit of element e and this power from u on b: resistance, brittleness, the reaction if any, the status. Returns the power to
     // deal. Secondary hits of reactions come back through MDTowerBrain.Hit with MDElement.None (no chains of reactions).
-    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power) {
+    // 0.18.2 statusOnly (a tower's attack.statusOnly: the sonic and EMP towers): the status only (put on or renewed, never shortened);
+    // no reaction, the statuses already on the target stay, its reaction cooldowns and the residue for a third element are not touched.
+    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power)=>Elemental(u,b,e,power,false);   // the 0.18.1 signature (the lab runs on older packages)
+    public float Elemental(ComponentMDUnit u,ComponentBody b,MDElement e,float power,bool statusOnly) {
         if(e==MDElement.None)return power;
         var robot=b.Entity.FindComponent<ComponentMDRobot>();
         if(robot!=null)power*=MDElements.Resist(robot.Kind,e);
         var s=Get(b);
+        if(statusOnly){if(MDElements.Aura(e))SetAura(s,e,time+MDElements.AuraTime);MDElements.StatusOnlyHits++;return power;}
         if(s.brittleUntil>time&&e is MDElement.Kinetic or MDElement.Explosive)power*=1.35f;
         // three elements first: two statuses on it, or a two-element reaction on it within ResidueTime, and a third element
         if(MDSettings.Reactions&&MDElements.Aura(e)&&time>=s.reactUntil) {
@@ -213,7 +218,13 @@ public sealed partial class MDTowerWorld {
     // ---- icons over the targets and reaction names (drawn after the particles)
     sealed class ReactionLabel { public Vector3 pos; public string text; public Color c,c2; public float age,life; public bool big; }
     readonly List<ReactionLabel> labels=[];
-    Texture2D iconTexture;TexturedBatch3D iconBatch;FontBatch3D labelBatch;
+    // 0.18.2 (user, 2026-11-04: "有雾的话，敌人已经有的元素图标看不清了"): the icons and every bar (towers', bosses', the medic's charge) were
+    // queued in the particles' renderer, whose textured batches SubsystemParticles draws with the terrain's alpha-tested shader, fog
+    // and haze included: in fog they faded into it with the robot. They are hints, so now they have a renderer of their own, flushed
+    // right after the particles are queued with the plain unlit shader (no fog, as the flat and text batches always were); still
+    // depth-tested, and only within IconRange / BarRange / TowerIconRange m, so they are not seen through hills or from far off.
+    Texture2D iconTexture;TexturedBatch3D iconBatch;FontBatch3D labelBatch;readonly PrimitivesRenderer3D overlay=new();
+    void FlushOverlay(Camera camera)=>overlay.Flush(camera.ViewProjectionMatrix);
     public const float IconRange=32,TowerIconRange=14;
     // 0.16.0 one stack over a target, from the top of its box (user, 2026-10-31: "元素图标和敌人状态条会有重叠部分"): status icons, then
     // damage numbers, then reaction names (they rise), then a boss's bars; the bars also climb with distance as the icons grow
@@ -229,7 +240,7 @@ public sealed partial class MDTowerWorld {
     void SimulateLabels(float dt){for(int i=labels.Count-1;i>=0;i--){labels[i].age+=dt;labels[i].pos+=Vector3.UnitY*dt*.8f;if(labels[i].age>=labels[i].life)labels.RemoveAt(i);}}
     void DrawElements(Vector3 eye,Vector3 right,Vector3 up) {
         iconTexture??=ContentManager.Get<Texture2D>("Towers/status");
-        iconBatch??=SubsystemParticles.PrimitivesRenderer.TexturedBatch(iconTexture,true,2,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
+        iconBatch??=overlay.TexturedBatch(iconTexture,true,2,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
         DrawNumbers(eye,right,up);   // MDDamageNumbers.cs
         DrawBossBars(eye,right,up);  // MDMedic.cs (0.16.0)
         DrawCore(eye,right,up);      // MDThreat.cs (0.16.0)

@@ -123,6 +123,8 @@ public sealed class MDManualScreen:Screen {
                 }
                 Head("状态");
                 Note($"灼烧、冰寒、带电、腐蚀持续 {MDElements.AuraTime:0} 秒，再次命中刷新；着火算灼烧，冻结算冰寒，中毒算腐蚀。");
+                if(MDTowerLibrary.All.Where(t=>t.attack.statusOnly).Select(t=>t.name).ToList() is {Count:>0} only)   // 0.18.2
+                    Note($"{string.Join("、",only)}命中只留下状态：自己不触发反应，不消耗敌人身上已有的状态，也不占反应冷却，留给其他炮塔来触发。");
                 Entry([MDIcon.Frozen],"冻结","不能移动、不能开火（液氮塔、晶化反应）。");
                 Entry([MDIcon.Paralysed],"瘫痪","不能移动、不能开火（电磁脉冲、全向声波、过载和雷暴反应）。");
                 Entry([MDIcon.Slowed],"减速","移动变慢（冰冻塔、毒沼、冻蚀反应）。");

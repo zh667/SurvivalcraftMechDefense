@@ -74,21 +74,23 @@ public sealed partial class MDTowerWorld {
             var r=bs.Robot;if(r==null||r.Project!=project||!r.Entity.IsAddedToProject||r.Health.Health<=0)continue;
             float d=Vector3.Distance(r.Body.Position,eye);if(d>BossBarRange)continue;
             float w=3.2f+.035f*d,h=.2f+.006f*d;var top=r.Body.Position+Vector3.UnitY*(r.Body.BoxSize.Y+BarsAt+.04f*d);   // the top of the stack (MDTowerWorld.IconsAt ...)
+            // 0.18.3 the whole stack in front of the boss's own body where that would hide it (InFront, MDElements.cs); k scales every size
+            float k=InFront(eye,top,r.Body);top=eye+(top-eye)*k;w*=k;h*=k;float pad=.08f*k;
             float plate=bs.LayersLeft>0&&bs.Armour>0?Math.Clamp(bs.Plate/(MDBossState.PlateShare*bs.Armour),0,1):0;
-            var at=top;Bar(at,right,up,w+.08f,h*.6f+.08f,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h*.6f,0,1,new Color(60,64,72,230));
+            var at=top;Bar(at,right,up,w+pad,h*.6f+pad,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h*.6f,0,1,new Color(60,64,72,230));
             if(plate>0)Bar(at,right,up,w,h*.6f,0,plate,new Color(120,190,255));
-            at-=up*(h*1.2f);Bar(at,right,up,w+.08f,h+.08f,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h,0,1,new Color(70,40,40,230));Bar(at,right,up,w,h,0,r.Health.Health,new Color(235,70,60));
-            at-=up*(h*1.4f);Bar(at,right,up,w+.08f,h*.8f+.08f,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h*.8f,0,1,new Color(70,66,40,230));
+            at-=up*(h*1.2f);Bar(at,right,up,w+pad,h+pad,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h,0,1,new Color(70,40,40,230));Bar(at,right,up,w,h,0,r.Health.Health,new Color(235,70,60));
+            at-=up*(h*1.4f);Bar(at,right,up,w+pad,h*.8f+pad,0,1,new Color(12,14,18,220));Bar(at,right,up,w,h*.8f,0,1,new Color(70,66,40,230));
             if(bs.Unbalanced>0)Bar(at,right,up,w,h*.8f,0,bs.Unbalanced/MDBossState.PoiseWindow,new Color(255,150,60)*(.7f+.3f*MathF.Sin(time*14)));
             else if(bs.PoiseLockLeft>0)Bar(at,right,up,w,h*.8f,0,bs.PoiseLockLeft/MDBossState.PoiseLock,new Color(130,130,130));
             else Bar(at,right,up,w,h*.8f,0,bs.Poise/bs.PoiseNeeded,new Color(255,220,90));
             BossBarsDrawn++;
-            labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,3,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
-            float sc=.018f+.0007f*d;var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;
+            Labels();
+            float sc=(.018f+.0007f*d)*k;var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;
             string name=bs.Name+(bs.LayersLeft>0?$"  装甲 {bs.LayersLeft}/{MDBossState.Layers}":"");
             labelBatch.QueueText(name,top+up*(h*1.3f)+right*sc*1.5f-up*sc*1.5f,right*sc,-up*sc,new Color(0,0,0,200),anchor);
             labelBatch.QueueText(name,top+up*(h*1.3f),right*sc,-up*sc,Color.White,anchor);
-            string tag=bs.Unbalanced>0?"失衡！":bs.PoiseLockLeft>0?"失衡冷却":"失衡";var tagAt=at-right*(w*.5f+.2f+sc*40);
+            string tag=bs.Unbalanced>0?"失衡！":bs.PoiseLockLeft>0?"失衡冷却":"失衡";var tagAt=at-right*(w*.5f+.2f*k+sc*40);
             labelBatch.QueueText(tag,tagAt,right*sc*.8f,-up*sc*.8f,bs.Unbalanced>0?new Color(255,170,80):new Color(255,225,120),anchor);
         }
     }

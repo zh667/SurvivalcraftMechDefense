@@ -160,7 +160,7 @@ public static class MDEncyclopedia {
         if(a.burn>0)extra.Add($"着火 {a.burn:0.#} 秒");
         if(a.dot>0)extra.Add($"毒雾每秒 {a.dot:0.#}");
         if(a.armorDown>1)extra.Add($"破甲（受到伤害 ×{a.armorDown:0.##}）");
-        if(a.zone>0)extra.Add($"留下 {a.zone:0.#} 格范围 {a.zoneTime:0} 秒");
+        if(a.zone>0)extra.Add($"留下 {a.zone:0.#} 格范围 {a.zoneTime:0} 秒"+(a.zonePower>0?$"（范围内每秒 {a.zonePower:0.#}）":""));   // 0.18.3 the zone's damage
         if(a.minRange>0)extra.Add($"{a.minRange:0} 格内打不到");
         if(a.directional)extra.Add($"只打正前方 {a.range:0}×{a.width:0} 格");
         return extra.Count>0?s+"；"+string.Join("，",extra):s;

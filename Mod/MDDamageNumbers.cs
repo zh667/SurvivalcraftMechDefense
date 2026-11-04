@@ -15,11 +15,13 @@ namespace Game;
 // - a reaction's number is bigger and in both colours' blend; numbers can be turned off (模组设置“伤害数字”).
 // 0.16.1 (user, 10-31: "只是我们的模组物品有这个就可以，现在用别的模组或者原版物品造成伤害，都有这个伤害显示"): only hits whose
 // attacker is a tower or a mech of this mod; a player's own hits (vanilla items, other mods' weapons) show none.
+// 0.18.3 (user, 11-05: "反应字样和伤害数字在 48 米内能隔墙看到……改一下吧"): depth-tested, walls and hills hide them, their own target does not
+// (MDElements.cs Labels / InFront).
 public sealed partial class MDTowerWorld {
     public const float MergeTime=.35f,NumberRange=28,NumberLife=.9f;
     public static readonly int[] MaxShown=[14,8,4],MaxLabels=[6,4,2];
     sealed class Pending { public float amount,age; public MDElement element; public bool reaction; public Vector3 at; }
-    sealed class Number { public Vector3 pos,drift; public string text; public Color c; public float age,size; public bool big; }
+    sealed class Number { public Vector3 pos,drift; public string text; public Color c; public float age,size; public bool big; public ComponentBody body; }   // 0.18.3 body: its target (InFront)
     readonly Dictionary<ComponentBody,Pending> pending=[];
     readonly List<Number> numbers=[];
     public static int NumbersShown,NumbersMerged;   // tests: numbers made, hits merged into them
@@ -58,21 +60,22 @@ public sealed partial class MDTowerWorld {
         var c=p.element==MDElement.None?Color.White:Color.Lerp(MDElements.Colors[(int)p.element],Color.White,.25f);
         if(p.reaction)c=Color.Lerp(c,new Color(255,236,120),.5f);
         string text=p.amount>=100000?$"{p.amount/10000:0.#}万":$"{p.amount:0}";
-        numbers.Add(new Number{pos=p.at+new Vector3(R(-.4f,.4f),R(0,.3f),R(-.4f,.4f)),drift=new Vector3(R(-.25f,.25f),0,R(-.25f,.25f)),text=text,c=c,size=size,big=p.reaction});
+        numbers.Add(new Number{body=b,pos=p.at+new Vector3(R(-.4f,.4f),R(0,.3f),R(-.4f,.4f)),drift=new Vector3(R(-.25f,.25f),0,R(-.25f,.25f)),text=text,c=c,size=size,big=p.reaction});
         NumbersShown++;
     }
     Vector3 lastEye;bool lastEyeSet;
     void DrawNumbers(Vector3 eye,Vector3 right,Vector3 up) {
         lastEye=eye;lastEyeSet=true;if(numbers.Count==0)return;
-        labelBatch??=SubsystemParticles.PrimitivesRenderer.FontBatch(LabelWidget.BitmapFont,3,DepthStencilState.None,RasterizerState.CullNoneScissor,BlendState.AlphaBlend,SamplerState.LinearClamp);
+        Labels();
         var anchor=TextAnchor.HorizontalCenter|TextAnchor.VerticalCenter;
         foreach(var n in numbers) {
             float d=Vector3.Distance(n.pos,eye);if(d>NumberRange+4)continue;
             float t=n.age/NumberLife,a=t<.6f?1:1-(t-.6f)/.4f,pop=t<.1f?.7f+3*t:t<.2f?1.3f-(t-.1f)*3:1;
             float sc=(.018f+.0008f*d)*n.size*pop;
+            float f=InFront(eye,n.pos,n.body);var pos=eye+(n.pos-eye)*f;sc*=f;   // 0.18.3 depth-tested, but not hidden by its own target (MDElements.cs)
             var outline=new Color((byte)8,(byte)10,(byte)14,(byte)(200*a));
-            foreach(var (ox,oy) in new[]{(-1,0),(1,0),(0,-1),(0,1)})labelBatch.QueueText(n.text,n.pos+(right*ox-up*oy)*sc*2f,right*sc,-up*sc,outline,anchor);   // four-way outline (cheap)
-            labelBatch.QueueText(n.text,n.pos,right*sc,-up*sc,n.c*a,anchor);
+            foreach(var (ox,oy) in new[]{(-1,0),(1,0),(0,-1),(0,1)})labelBatch.QueueText(n.text,pos+(right*ox-up*oy)*sc*2f,right*sc,-up*sc,outline,anchor);   // four-way outline (cheap)
+            labelBatch.QueueText(n.text,pos,right*sc,-up*sc,n.c*a,anchor);
         }
     }
 }

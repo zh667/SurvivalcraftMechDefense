@@ -317,7 +317,7 @@ public static class MDTowerBrain {
             if(turning){var dd=c-p;float along=Vector3.Dot(dd,f);if(along<0||Math.Abs(Vector3.Dot(dd,side))>a.width*.5f+along*.15f)continue;}   // the band widens a little with distance
             AreaHits++;
             if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),c,f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
-            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;if(a.power>0)Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
+            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
         }
     }
     static void ChainStrike(ComponentMDUnit u,Vector3 from,ComponentBody first) {
@@ -343,11 +343,12 @@ public static class MDTowerBrain {
             if(!MDCombat.IsEnemy(u,b)||!InArea(u,MDCombat.Center(b)))continue;
             if(ReachEnabled&&(Submerged(b)||!Open(u.Project,top,MDCombat.Center(b),b)))continue;   // 0.18.0 not through the ground or under water
             if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);   // 0.16.0: a boss shrugs it off, shaken
-            if(a.power>0)Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));
+            Hit(u,b,a.power,MDCombat.Center(b),Vector3.Normalize(b.Position-p+Vector3.UnitY*.01f));   // 0.18.1 also without damage: its element (Hit)
         }
     }
     // 0.18.0 the sonic wave's front passing from radius r0 to r1 (MDTowerWorld.SimulateWaves): every enemy it reaches in that step,
-    // once per wave, in the arc (a body's own width counts), not through the ground or under water: stunned, a boss shaken.
+    // once per wave, in the arc (a body's own width counts), not through the ground or under water: stunned, a boss shaken, and since
+    // 0.18.1 its element (electric) left on it like any tower's hit.
     public static int WaveHits;   // tests
     public static void WaveTick(ComponentMDUnit u,Vector3 from,Vector3 dir,float r0,float r1,float half,HashSet<ComponentBody> done) {
         var a=u.Tower.attack;var w=World(u);var bodies=new DynamicArray<ComponentBody>();var p=u.Body.Position;
@@ -360,7 +361,7 @@ public static class MDTowerBrain {
             if(ReachEnabled&&(Submerged(b)||!Open(u.Project,from,c,b)))continue;
             done.Add(b);WaveHits++;
             if(a.stun>0){if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);}
-            if(a.power>0)Hit(u,b,a.power,c,new Vector3(dir.X,0,dir.Z));
+            Hit(u,b,a.power,c,new Vector3(dir.X,0,dir.Z));   // 0.18.1 also without damage: the tower's element (Hit)
             w.Sparks(c,-new Vector3(dir.X,0,dir.Z),4,MDTowerWorldColor(u.Tower.fx.color2),3,.9f,.3f,.05f);
         }
     }
@@ -391,29 +392,39 @@ public static class MDTowerBrain {
     // burning ground) or energy (beams, lightning, sonic pulses, poison and frost fields). Mercury's weapon kits multiply its damage.
     // 0.15.0: `element` (default: the tower's or mech weapon's damage type) goes through resistances, statuses and reactions
     // (MDTowerWorld.Elemental); MDElement.None for the secondary hits of a reaction.
+    // 0.18.1 (players via the user, 2026-11-04: "声波塔和电磁脉冲命中敌人，并没有附加元素"): a hit without damage of an element that leaves a
+    // status (the sonic wave, the EMP orbs, 液氮, 冰冻塔 Ⅰ, the ice field: power 0) still leaves it and reacts, through the same
+    // Elemental as every other hit; it ended here (power <= 0) before, and the wave and the old pulse did not even call Hit. A reaction
+    // that adds damage (热冲击: 3 % of the health) then makes a hit with its damage number; otherwise nothing is dealt. A damageless
+    // kinetic or explosive hit (the water jet) stays nothing: those leave no status and would only use up the target's.
+    public static bool StatusWithoutDamage=true;   // lab switch: the 0.18.0 behaviour
     public static void Hit(ComponentMDUnit u,ComponentBody b,float power,Vector3 point,Vector3 dir,bool bullet=false,string channel=null,MDElement? element=null) {
-        if(b==null||!MDCombat.IsEnemy(u,b)||power<=0)return;
+        if(b==null||!MDCombat.IsEnemy(u,b))return;
+        var el=element??MDElements.Of(u);
+        if(!(power>0)&&!(power==0&&StatusWithoutDamage&&MDElements.Aura(el)))return;
         power*=World(u).DamageFactor(b);
         if(u.Mech!=null)power*=MDMechState.KitFactor(u.Mech.Kit)*u.Mech.Type.Damage;   // weapon kit x the mech's own factor
-        var el=element??MDElements.Of(u);int reactions=MDElements.Count;power=World(u).Elemental(u,b,el,power);
+        int reactions=MDElements.Count;power=World(u).Elemental(u,b,el,power);
+        if(!(power>0))return;   // a status only
         MDTowerWorld.HitElement=el;MDTowerWorld.HitReacted=MDElements.Count>reactions;   // for its damage number (MDDamageNumbers.cs)
         ComponentMiner.AttackBody(bullet?new ProjectileAttackment(b.Entity,u.Entity,point,dir,power,null):new MDTowerAttackment(b.Entity,u.Entity,point,dir,power){Channel=channel??Channel(u)});
         MDTowerWorld.HitElement=MDElement.None;MDTowerWorld.HitReacted=false;
     }
     public static string Channel(ComponentMDUnit u)=>(u.Tower?.attack.type??(u.Mech?.Weapon==MDMechWeapon.Laser?"beam":"bolt")) switch{"shell" or "flame"=>"explosion","beam" or "chain" or "pulse" or "heal" or "wave" or "orb"=>"energy",_=>"kinetic"};
-    public static void ShellLanded(ComponentMDUnit u,MDTowerDef d,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced) {
+    // element: the shot's, set when it was fired (0.18.1: a mech's grenade or missile took the weapon and ammo selected when it landed)
+    public static void ShellLanded(ComponentMDUnit u,MDTowerDef d,Vector3 point,Vector3 dir,ComponentBody hit,float power,float splash,bool enhanced,MDElement? element=null) {
         var a=d.attack;var w=World(u);
         Sound(u,d.hitSounds,point,.55f);
-        if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir,true);return;}
+        if(a.type=="bolt"&&splash<=0){w.Impact(d,point,dir,enhanced);Hit(u,hit,power,point,dir,true,null,element);return;}
         string kind=d.fx.kind;float r=Math.Max(splash,.5f);
         if(a.type=="bolt")w.Impact(d,point,dir,true);
         w.Explosion(point,r,a.type=="bolt"?"heavy":kind,MDTowerWorldColor(d.fx.color),MDTowerWorldColor(d.fx.color2),d.fx.smoke);
         if(u.Mech!=null&&MDSettings.MechTerrain&&MDMechBrain.BreaksTerrain(d))MDTerrainBlast.Blast(u.Project,point,dir,MDMechBrain.BlastPressure(d));   // 0.17.0 (MDTerrainBlast)
-        if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt",a.type=="orb"?"energy":"explosion");   // an enhanced bolt: the round itself, then its blast
-        Splash(u,d,point,r,power*(hit!=null?.6f:1),hit);
+        if(hit!=null)Hit(u,hit,power,point,dir,a.type=="bolt",a.type=="orb"?"energy":"explosion",element);   // an enhanced bolt: the round itself, then its blast
+        Splash(u,d,point,r,power*(hit!=null?.6f:1),hit,element);
         if(a.zone>0)w.AddZone(u,a.burn>0?"burn":kind=="poison"?"poison":kind=="frost"?"ice":"zone",point,a.zone,a.zoneTime,a.zonePower,a.slow>0?a.slow:1);
     }
-    static void Splash(ComponentMDUnit u,MDTowerDef d,Vector3 point,float r,float power,ComponentBody skip) {
+    static void Splash(ComponentMDUnit u,MDTowerDef d,Vector3 point,float r,float power,ComponentBody skip,MDElement? element=null) {
         var a=d.attack;var fx=d.fx;var w=World(u);var bodies=new DynamicArray<ComponentBody>();
         u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(point.X,point.Z),r+1,bodies);
         foreach(var b in bodies) {
@@ -422,7 +433,7 @@ public static class MDTowerBrain {
             // 0.18.0: the body the shot hit does not shield the others from its own burst (a missile or EMP orb bursts on that body, and
             // the trace from there met it first: lab fb18b, the second robot 3 m off was never held)
             var start=point+Vector3.UnitY*.3f;var seen=MDCombat.Trace(u,start,c,out _);if(seen!=b&&(seen==null||seen!=skip)&&dist>.8f)continue;
-            if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f),false,a.type=="orb"?"energy":"explosion");
+            if(b!=skip)Hit(u,b,power*MathUtils.Lerp(1,.5f,Math.Clamp(dist/r,0,1)),c,Vector3.Normalize(c-point+Vector3.UnitY*.01f),false,a.type=="orb"?"energy":"explosion",element);
             if(a.stun>0){if(Holdable(b,a))w.Stun(b,a.stun);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);}   // 0.18.0 the EMP orb's burst (a boss: shaken, as by the old pulse)
             if(a.slow>0&&fx.kind!="poison")w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(fx.color2));   // poison slows through its cloud
             if(a.freeze>0){if(Holdable(b,a))w.Freeze(b,a.freeze,a.freezeImmune);else b.Entity.FindComponent<ComponentMDRobot>()?.Boss?.AddPoise(MDBossState.PoiseControl);}

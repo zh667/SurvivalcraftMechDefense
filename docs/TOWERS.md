@@ -511,3 +511,7 @@ python tools/run_isolated.py smoke --mode new --label migration                 
 | 重锤迫击炮 | 不变 | 48 | **只打地面**（groundOnly） |
 
 喷射的粒子：速度按阻力反算到 `SprayLength`（塔身到 u.Range、扣掉喷口位置）的 97 %，实验室量到粒子中位最远点比判定最远的探针近 0～1 米（8 种都在 1.5 米内）。
+
+第三轮（用户 11-04 答复后）：火焰塔 Ⅰ / Ⅱ / Ⅲ 每次伤害 174 / 294 / 520 → **139 / 235 / 416**；激流塔、AF1“熔甲者”去掉 `directional`，加 `turnWhole`
+（模型没有 yaw 节点：Root 整体绕竖轴转，`MDTowerLibrary.Pose` 和 `ComponentMDTowerModel` 都把 AimYaw−Yaw 加在根节点上）和 `yawSpeed` 90。
+

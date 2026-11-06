@@ -21,18 +21,19 @@ public class Smoke : ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData data;static string mode="new";
     static Vector3 origin;static ComponentCreature wolf;static float wolfMin=1;static int towerShots;
     static readonly List<string> checks=[];
-    public override void __ModInitialize(){new Harmony("local.smoke").PatchAll(typeof(Smoke).Assembly);SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();}
+    public override void __ModInitialize(){new Harmony("local.smoke").PatchAll(typeof(Smoke).Assembly);SettingsManager.FileAssociationEnabled=false;var m=Path.Combine(AppContext.BaseDirectory,"smoke-mode.txt");if(File.Exists(m))mode=File.ReadAllText(m).Trim();
+        if(mode=="pkg-new-plain")Rename.NoMigration();}   // before the engine reads ModSettings.xml (Rename.cs)
     static string Output=>Path.Combine(AppContext.BaseDirectory,"smoke-result.json");
     public override void OnLoadingFinished(List<Action> actions){actions.Add(()=>{began=Time.RealTime;Window.Frame+=Frame;});}
     static void Check(bool ok,string description){if(!ok)throw new Exception("FAILED: "+description);checks.Add(description);}
     static ContainerWidget Games=>ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget");
     static int Deploy(int data)=>Terrain.MakeBlockValue(BlocksManager.GetBlockIndex<MDDeploymentBlock>(),0,data);
     static ComponentMDUnit[] Units()=>GameManager.Project.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u!=null).ToArray();
-    static void Finish(object result){File.WriteAllText(Output,JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));Window.Frame-=Frame;Window.Close();}
+    internal static void Finish(object result){File.WriteAllText(Output,JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));Window.Frame-=Frame;Window.Close();}
     static void Frame() {
         try {
-            if(Time.RealTime-began>240)throw new TimeoutException("stage "+stage);
-            if(mode=="old")Old();else New();
+            if(Time.RealTime-began>300)throw new TimeoutException("stage "+stage);
+            if(mode=="old")Old();else if(mode.StartsWith("pkg-"))Rename.Frame(mode);else New();   // Rename.cs (1.0.0)
         }catch(Exception e){Finish(new{passed=false,mode,stage,checks,error=e.ToString()});}
     }
 

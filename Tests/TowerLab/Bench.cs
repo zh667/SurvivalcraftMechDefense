@@ -97,6 +97,16 @@ public partial class Lab {
                 foreach(var x in Duel([d],t,Math.Max(12,3*d.attack.interval+3),row,inside:true))yield return x;rows.Add(Line(row));   // three shots at least
             }
         }
+        // bench-kinetic (1.0.0, user 2026-11-06: rotary guns and anti-aircraft guns -20 % damage per second, fire rate kept): the six towers and,
+        // as a check that nothing else moved, the other kinetic towers and one missile and one cannon tower, against RD05 and RD09, 20 s each
+        if(Part("kinetic")) {
+            var rows=new List<string>();r["kinetic"]=rows;
+            foreach(var id in new[]{"gatling_1","gatling_2","gatling_3","aa_1","aa_2","aa_3","battle_turret_1","battle_turret_2","battle_turret_3","battle_sniper_1","battle_jet_1","missile_1","cannon_1"})foreach(var t in new[]{"MDRobot05","MDRobot09"}) {
+                var d=defs.First(x=>x.id==id);if(t=="MDRobot09"&&(d.attack.groundOnly||d.attack.power<=0))continue;
+                var row=new Dictionary<string,object>{["tower"]=d.id,["power"]=d.attack.power,["interval"]=d.attack.interval,["robot"]=t};
+                foreach(var x in Duel([d],t,20,row,inside:true))yield return x;rows.Add(Line(row));
+            }
+        }
         if(Part("enemies")) {
             var rows=new List<string>();r["enemies"]=rows;
             foreach(var t in new[]{"MDRobot05","MDRobot06","MDRobot07","MDRobot14","MDRobot09","MDRobotEN02"})foreach(var id in new[]{"battle_turret_1","battle_turret_2","battle_turret_3"}) {

@@ -89,6 +89,17 @@ public static class MDTowerPlacement {
         var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
         for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++)for(int y=y0;y<y0+size.Y;y++)if(Replaceable(terrain.Terrain.GetCellValue(x,y,z)))terrain.DestroyCell(0,x,y,z,0,false,false);
     }
+    // 1.0.0 a tower restored from MechDefense/state.xml (MDSaveGuard): its floor and its cells as when it was placed, bodies aside; null while
+    // that ground is not loaded yet
+    public static bool? TerrainFits(SubsystemTerrain terrain,Vector3 position,MDTowerDef d,out string reason) {
+        var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);reason=null;
+        for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++)if(terrain.Terrain.GetChunkAtCell(x,z) is not {State:>=TerrainChunkState.InvalidLight})return null;
+        for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++) {
+            if(!Solid(terrain.Terrain.GetCellValue(x,y0-1,z))){reason="no floor under it";return false;}
+            for(int y=y0;y<y0+size.Y;y++)if(!Free(terrain.Terrain.GetCellValue(x,y,z))){reason=$"a block in its place at ({x},{y},{z})";return false;}
+        }
+        return true;
+    }
     public static bool Validate(SubsystemTerrain terrain,SubsystemBodies bodies,Vector3 position,MDTowerDef d,out string reason,ComponentBody ignore=null) {
         var size=Cells(d);int x0=Terrain.ToCell(position.X-size.X*.5f),y0=Terrain.ToCell(position.Y+.001f),z0=Terrain.ToCell(position.Z-size.Z*.5f);
         for(int x=x0;x<x0+size.X;x++)for(int z=z0;z<z0+size.Z;z++) {
@@ -120,7 +131,7 @@ public static class MDNeorxnaCompatibility {
         try {
             var method=a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)?.GetMethod("SetInfo_Entity",[typeof(Entity)]);
             if(method==null||installed)return installed;
-            new Harmony("local.mechdefense.neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
+            new Harmony(MDSettings.Package+".neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
             installed=true;Log.Information("[MechDefense] Neorxna info panel: names and status of towers and mechs");return true;
         } catch(Exception x){Log.Warning("[MechDefense] Neorxna patch: "+x.Message);return false;}
     }

@@ -6,8 +6,10 @@ namespace Game;
 
 public class MDModLoader : ModLoader {
     public override void __ModInitialize() {
-        new Harmony("local.mechdefense.sample").PatchAll();
-        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized"})ModsManager.RegisterHook(hook,this);
+        new Harmony(MDSettings.Package).PatchAll();   // 1.0.0: the package name (0.18.4 and older: local.mechdefense.sample)
+        // 1.0.0 an old copy (0.18.4 or older, the old package name) still in the Mods folder loads as a second mod with the same types
+        if(ModsManager.ModListAll.Any(m=>m.modInfo?.PackageName==MDSettings.OldPackage&&!m.IsDisabled))Log.Error("[MechDefense] an old copy of this mod ("+MDSettings.OldPackage+", 0.18.4 or older) is also installed: delete the old file from the Mods folder");
+        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized","OnProjectXmlSaved"})ModsManager.RegisterHook(hook,this);
     }
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
@@ -15,8 +17,11 @@ public class MDModLoader : ModLoader {
     // A boss takes at most MDBoss.MaxHitShare of its armour per hit.
     public override void CalculateCreatureInjuryAmount(Injury injury){MDBoss.CapInjury(injury);MDTowerWorld.Injured(injury);}
     // The world's count of destroyed robots towards the next boss and the rotation's next one (MDBossKills) are attributes of Project.xml.
-    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDBossKills.Load(xElement);MDRewards.Load(xElement);MDThreat.Load(xElement);MDNeorxnaCompatibility.Install();}
-    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDBossKills.Save(xElement);MDRewards.Save(xElement);MDThreat.Save(xElement);}
+    // 1.0.0 MDSaveGuard first: this mod's entities and values saved aside go back into a world that was saved without the mod
+    public override void ProjectXmlLoad(System.Xml.Linq.XElement xElement,WorldInfo worldInfo,ContainerWidget gameWidget){MDSaveGuard.Load(xElement,worldInfo);MDBossKills.Load(xElement);MDRewards.Load(xElement);MDThreat.Load(xElement);MDNeorxnaCompatibility.Install();}
+    public override void ProjectXmlSave(System.Xml.Linq.XElement xElement){MDSaveGuard.SaveId(xElement);MDBossKills.Save(xElement);MDRewards.Save(xElement);MDThreat.Save(xElement);}
+    // 1.0.0 the XML as written: this mod's part saved aside in the world folder (MDSaveGuard)
+    public override void OnProjectXmlSaved(System.Xml.Linq.XElement xElement)=>MDSaveGuard.Saved(xElement);
     // 0.18.1 the creative category right after Weapons (MDCategory.Place); the game calls this at the end of PostProcessBlocksLoad
     public override void BlocksInitalized()=>MDCategory.Place(BlocksManager.m_categories);
     public override void OnLoadingFinished(List<Action> actions){actions.Add(MDNeorxnaCompatibility.Install);actions.Add(MDSettingsScreen.EnsureScreens);}

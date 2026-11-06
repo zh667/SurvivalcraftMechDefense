@@ -89,6 +89,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public override void OnEntityRemoved(){if(Mech!=null)MDMechPilot.RemoveHud(this);if(Mech!=null&&MDMechPilot.Driver(this) is {} p)MDMechPilot.Exit(p,this,true);else ReleaseRider();base.OnEntityRemoved();}
     public void Update(float dt) {
         if(Legacy){ReleaseRider();Project.RemoveEntity(Entity,true);return;}
+        if(MDSaveGuard.Pending>0&&MDSaveGuard.Check(this))return;   // 1.0.0 restored from MechDefense/state.xml: still room for it?
         if(Mech!=null){MechUpdate(Math.Min(dt,.1f));return;}
         dt=Math.Min(dt,.1f);   // 0.18.4 the cooldown counts down once, in MDTowerBrain.Update (it did here too: twice a frame since 0.4.0)
         if(Damage.Hitpoints<=0&&!Destroyed){PlayEvent("Death",1.4f);Destroyed=true;Target=null;Channel=0;TowerDestroyed();}

@@ -2,7 +2,7 @@
 
 python tools/stage_mech_preview.py [--mech Mercury] --dir E:/projects/dguns-mech-model/v10_poly/mercury [--base PKG] [--out PATH]
   --dir holds model.glb and game/icon.bin, game/icon.png (the inventory icon of the new model, tools/build_mech_assets.py format)
-  -> dist/MechDefense-<version>-preview-<mech>.scmod
+  -> dist/[API1.9]机甲防线<version>-preview-<mech>.scmod
 
 Never touches Mod/Assets. Copies the base package with Assets/Imported/<mech>/model.glb (texture re-encoded as WebP quality 90,
 as package.py does), icon.bin and icon.webp replaced and asset-manifest.json updated. mech.json, clips.bin and the sounds stay:
@@ -30,9 +30,9 @@ def main():
         if k in args: i = args.index(k); opts[k] = args[i + 1]; del args[i:i + 2]
     assert '--dir' in opts and not args, __doc__
     src = Path(opts['--dir']); mech = opts['--mech']
-    version = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
-    base = root / opts.get('--base', f'dist/MechDefense-{version}.scmod')
-    out = root / opts.get('--out', f'dist/MechDefense-{version}-preview-{mech.lower()}.scmod')
+    info = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8')); version = info['Version']; stem = f"[API1.9]{info['Name']}{version}"   # 1.0.0 naming (tools/package.py)
+    base = root / opts.get('--base', f'dist/{stem}.scmod')
+    out = root / opts.get('--out', f'dist/{stem}-preview-{mech.lower()}.scmod')
     zi = zipfile.ZipFile(base); pre = f'Assets/Imported/{mech}/'
     glb = (src / 'model.glb').read_bytes()
     old, new_nodes = nodes_of(zi.read(pre + 'model.glb')), nodes_of(glb)

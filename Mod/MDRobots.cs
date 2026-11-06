@@ -722,7 +722,7 @@ public static class MDWildSpawns {
     }
 }
 [HarmonyPatch(typeof(SubsystemCreatureSpawn),nameof(SubsystemCreatureSpawn.Update))]
-public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDThreat.Update(__instance.Project,dt);MDBossKills.Tick(__instance.Project);MDBoss.Tick(__instance.Project,dt);}}
+public static class MDRobotSpawnTick {public static void Postfix(SubsystemCreatureSpawn __instance,float dt){MDWildSpawns.Update(__instance.Project,dt);MDRaids.Update(__instance.Project,dt);MDThreat.Update(__instance.Project,dt);MDBossKills.Tick(__instance.Project);MDBoss.Tick(__instance.Project,dt);MDSaveGuard.Tick(__instance.Project);}}
 
 // Night raids: shortly after nightfall (from game day StartDay, on RaidChance % of the nights, decided per day and world; mod
 // settings, default day 3 and 75 %) a group of robots comes for the strongest cluster of the player's towers near a player

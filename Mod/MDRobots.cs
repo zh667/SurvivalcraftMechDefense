@@ -811,13 +811,25 @@ public static class MDRaids {
     // room for that body: every column under its footprint and half a metre round it tops out at the spot's level or one block under
     // it (no hill side, no hole), none in water or a tree, and nothing solid from the ground up to the box's height + 1 m. More tries
     // (40), as such spots are rarer in hills and woods.
+    // 1.0.0 (user, 2026-11-06: "敌对机器人会在树顶上生成然后发呆……别让敌兵生成在这些特殊位置就可以，不必加新东西"): the spot itself must be
+    // natural ground (Natural: grass, dirt, sand, gravel, stone, clay, ice, snow, ores, fallen leaves on the forest floor; another mod's
+    // full solid cube unless its type name says leaves, wood, planks, glass, bricks...), never leaves, logs, plants, glass, fences, slabs
+    // or any building block, with two more solid ground blocks under it (no roof over a room, no tree stump); a plant or another non-solid
+    // cover on the ground is looked through (the ground under it is the spot); and no leaves or wood round the footprint of the body at
+    // its feet (Room). No spot in 40 tries: none, that robot is not spawned.
+    public static bool SpotRulesEnabled=true;   // lab switch: false = the 0.18.4 rules
+    public static int SpotRefused;               // tests: candidates refused by these rules
     public static Vector3? Ground(SubsystemTerrain t,Vector3 centre,float angle,float dist,System.Random rng,Vector3? box=null) {
-        bool check=box.HasValue&&ComponentMDRobot.SmartEnabled;
+        bool check=box.HasValue&&ComponentMDRobot.SmartEnabled,rules=SpotRulesEnabled&&ComponentMDRobot.SmartEnabled;
         for(int k=0;k<(check?40:24);k++) {
             float a=k==0?angle:k<10?angle+(float)(rng.NextDouble()-.5)*1.2f:(float)(rng.NextDouble()*Math.PI*2),d=dist+(k==0?0:(float)(rng.NextDouble()-.5)*10);
             int x=(int)MathF.Floor(centre.X-MathF.Sin(a)*d),z=(int)MathF.Floor(centre.Z-MathF.Cos(a)*d);
             if(t.Terrain.GetChunkAtCell(x,z) is not {State:>=TerrainChunkState.InvalidVertices1})continue;
             int y=t.Terrain.GetTopHeight(x,z);if(y<=1||y>=250)continue;
+            if(rules) {
+                while(y>2&&Cover(t.Terrain.GetCellValueFast(x,y,z)))y--;   // grass, flowers and other plants: the ground under them
+                if(!Natural(t.Terrain.GetCellValueFast(x,y,z))||!Natural(t.Terrain.GetCellValueFast(x,y-1,z),true)||!Natural(t.Terrain.GetCellValueFast(x,y-2,z),true)){SpotRefused++;continue;}
+            }
             var top=BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y,z))];
             if(top is FluidBlock or LeavesBlock||!top.IsCollidable_(t.Terrain.GetCellValueFast(x,y,z)))continue;   // not on a tree top
             bool clear=true;for(int h=1;h<=4&&clear;h++)clear=!BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(x,y+h,z))].IsCollidable_(t.Terrain.GetCellValueFast(x,y+h,z));
@@ -825,6 +837,21 @@ public static class MDRaids {
         }
         return null;
     }
+    static readonly HashSet<string> NaturalTypes=["GrassBlock","DirtBlock","SandBlock","GravelBlock","GraniteBlock","BasaltBlock","LimestoneBlock","MarbleBlock","SandstoneBlock",
+        "ClayBlock","IceBlock","SnowBlock","CoalOreBlock","CopperOreBlock","IronOreBlock","SaltpeterOreBlock","SulphurOreBlock","DiamondOreBlock","GermaniumOreBlock","MalachiteBlock","FallenLeavesBlock"];
+    static readonly string[] BuiltWords=["Leaves","Leaf","Wood","Log","Plank","Glass","Fence","Brick","Cobble","Slab","Stair","Door","Gate","Wall","Roof","Tile","Concrete","Furniture","Table","Chest"];
+    // natural ground: the game's ground and stone blocks unpainted (painted ones are placed by players), or another mod's plain full cube
+    // whose type name is not a building or tree word; `under`: a block lower in the column, where any of the game's solid cubes but wood,
+    // leaves and glass will do (stone bricks under a grass top are rare and harmless)
+    public static bool Natural(int value,bool under=false) {
+        var b=BlocksManager.Blocks[Terrain.ExtractContents(value)];string n=b.GetType().Name;
+        if(b is LeavesBlock or WoodBlock or FenceBlock or FluidBlock||b is AlphaTestCubeBlock||!b.IsCollidable_(value))return false;
+        if(b.GetType().Assembly==typeof(GrassBlock).Assembly)return under?b is CubeBlock:NaturalTypes.Contains(n)&&(b is not PaintedCubeBlock||PaintedCubeBlock.GetColor(Terrain.ExtractData(value))==null);
+        if(BuiltWords.Any(w=>n.Contains(w,StringComparison.OrdinalIgnoreCase)))return false;
+        try{var boxes=b.GetCustomCollisionBoxes(null,value);return boxes.Length==1&&boxes[0].Min==Vector3.Zero&&boxes[0].Max==Vector3.One;}catch{return false;}
+    }
+    // looked through to the ground under it: plants and other non-solid covers (not water)
+    static bool Cover(int value){var b=BlocksManager.Blocks[Terrain.ExtractContents(value)];return b is not FluidBlock&&b.BlockIndex!=0&&!b.IsCollidable_(value);}
     public static int RoomChecks,RoomRefused;   // tests
     public static bool Room(SubsystemTerrain t,int x,int y,int z,Vector3 box) {
         RoomChecks++;float r=Math.Max(box.X,box.Z)*.5f+.5f;int n=(int)MathF.Ceiling(r),h=(int)MathF.Ceiling(box.Y+1);
@@ -833,6 +860,7 @@ public static class MDRaids {
             if(t.Terrain.GetChunkAtCell(cx,cz) is not {State:>=TerrainChunkState.InvalidVertices1}){RoomRefused++;return false;}
             int top=t.Terrain.GetTopHeight(cx,cz);if(top<y-1){RoomRefused++;return false;}   // a hole under it
             if(BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(cx,Math.Min(top,y),cz))] is FluidBlock){RoomRefused++;return false;}
+            if(SpotRulesEnabled&&ComponentMDRobot.SmartEnabled)for(int hy=y-1;hy<=Math.Min(top,y+1);hy++)if(BlocksManager.Blocks[Terrain.ExtractContents(t.Terrain.GetCellValueFast(cx,hy,cz))] is LeavesBlock or WoodBlock){RoomRefused++;return false;}   // 1.0.0 not beside or over a tree top
             for(int hy=y+1;hy<=y+h&&hy<255;hy++){int v=t.Terrain.GetCellValueFast(cx,hy,cz);if(BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v)||BlocksManager.Blocks[Terrain.ExtractContents(v)] is LeavesBlock){RoomRefused++;return false;}}
         }
         return true;

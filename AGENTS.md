@@ -8,6 +8,9 @@ One shared instruction source for Codex and Claude Code (`CLAUDE.md` imports it)
 - Target Survivalcraft API 1.9.3.1 and .NET 10. Package `zh667.MechDefense` (since 1.0.0; `local.mechdefense.sample` up to 0.18.4:
   old settings and worlds are carried over by `MDSettings.Migrate` / `MDOldPackageAlias`), name 机甲防线, author zh667, version in
   `Mod/modinfo.json`. The player community indexes mods by `PackageName` + `Version`: keep both real.
+- Worlds store this mod's blocks by class name and its entities by template name and GUID; never rename a block class, an entity
+  template or its GUID. Since 1.0.0 each save also writes `<world>/MechDefense/state.xml` (`Mod/MDSaveGuard.cs`) so a world saved
+  without the mod gets its towers back after a reinstall (rules in `docs/STATUS.md` 1.0.0).
 - Towers, and since 0.8.0 one mech a player boards: Mercury from Destroy Gunners (user, 2026-10-17; crafting table or creative inventory,
   the original model and clips via `tools/build_mech_assets.py`, details in `docs/MECH.md`). The 0.5.0 sample enemy stays
   removed (0.6.0): its template stays so that old worlds load, and such entities remove themselves on load.

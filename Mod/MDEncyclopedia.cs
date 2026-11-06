@@ -140,19 +140,19 @@ public static class MDEncyclopedia {
     }
     static string Targets(MDTowerAttack a)=>a.type is "heal" or "radar"?"":a.groundOnly?"只打地面":a.airFirst?$"优先打空中（地面伤害 ×{a.groundFactor:0.##}）":"地面和空中";
     static string AttackText(MDTowerDef d) {
-        var a=d.attack;float per=a.interval>0?a.power/a.interval:0;
+        var a=d.attack;float per=a.Period>0?a.power/a.Period:0;   // 0.18.4 the real time between attacks (a spray also lasts its duration)
         var s=a.type switch{
             "radar"=>$"范围 {a.range:0} 格内所有防御塔射程 ×{a.boost:0.##}",
-            "heal"=>$"每 {a.interval:0.#} 秒治疗附近的玩家、机甲和炮塔 {a.power:0.#}",
-            "pulse"=>$"每 {a.interval:0.#} 秒一圈脉冲{(a.stun>0?$"，瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "wave"=>$"每 {a.interval:0.#} 秒朝目标发出一道 {a.arc:0}° 的震荡波（每秒 {a.speed:0} 格）{(a.stun>0?$"，扫过的敌人晕眩 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "orb"=>$"每 {a.interval:0.#} 秒射出一枚脉冲弹（每秒 {a.speed:0} 格），命中处 {a.splash:0.#} 格内{(a.stun>0?$"瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "chain"=>$"每 {a.interval:0.#} 秒一道闪电 {a.power:0}（每秒 {per:0.#}）{(a.bounces>0?$"，再弹射 {a.bounces} 个附近的敌人":"")}",
+            "heal"=>a.healBlock>a.interval?$"每 {a.interval:0.#} 秒治疗附近的玩家 {a.power:0.#}，同一座炮塔或机甲每 {a.healBlock:0.#} 秒一次":$"每 {a.interval:0.#} 秒治疗附近的玩家、机甲和炮塔 {a.power:0.#}",
+            "pulse"=>$"每 {a.Period:0.#} 秒一圈脉冲{(a.stun>0?$"，瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "wave"=>$"每 {a.Period:0.#} 秒朝目标发出一道 {a.arc:0}° 的震荡波（每秒 {a.speed:0} 格）{(a.stun>0?$"，扫过的敌人晕眩 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "orb"=>$"每 {a.Period:0.#} 秒射出一枚脉冲弹（每秒 {a.speed:0} 格），命中处 {a.splash:0.#} 格内{(a.stun>0?$"瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "chain"=>$"每 {a.Period:0.#} 秒一道闪电 {a.power:0}（每秒 {per:0.#}）{(a.bounces>0?$"，再弹射 {a.bounces} 个附近的敌人":"")}",
             "flame"=>$"喷火，喷射带上每个敌人每秒 {per:0.#}",
             "jet"=>(a.power>0?$"喷射，喷射带上每个敌人每秒 {per:0.#}":"喷射，不造成伤害")+(a.knockback>0?"，把敌人冲退":""),
-            "missile"=>$"追踪导弹，每 {a.interval:0.##} 秒一发 {a.power:0.#}（每秒 {per:0.#}），必定命中",
-            "beam"=>$"激光，每 {a.interval:0.#} 秒一束 {a.power:0}（每秒 {per:0.#}）",
-            _=>$"每 {a.interval:0.##} 秒 {a.power:0.#}（每秒 {per:0.#}）"};
+            "missile"=>$"追踪导弹，每 {a.Period:0.##} 秒一发 {a.power:0.#}（每秒 {per:0.#}），必定命中",
+            "beam"=>$"激光，每 {a.Period:0.#} 秒一束 {a.power:0}（每秒 {per:0.#}）",
+            _=>$"每 {a.Period:0.##} 秒 {a.power:0.#}（每秒 {per:0.#}）"};
         var extra=new List<string>();
         if(a.splash>0&&a.type is not ("flame" or "jet" or "orb"))extra.Add($"爆炸半径 {a.splash:0.#} 格");
         if(a.slow>0&&a.slow<1)extra.Add($"减速到 ×{a.slow:0.##}");

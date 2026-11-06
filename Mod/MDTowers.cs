@@ -15,6 +15,10 @@ public sealed class MDTowerAttack {
     public string type;              // bolt shell snipe beam chain flame jet pulse heal radar missile; 0.18.0 wave (sonic) orb (EMP)
     public float arc = 80;           // 0.18.0 wave: the width of its front in degrees, centred on the target
     public float range, minRange, interval, power, splash, speed = 40, charge, duration;
+    // 0.18.4: interval = the real seconds between attacks (towers counted their cooldown down twice a frame until 0.18.3: the table held
+    // twice the real time, the numbers were halved); a channelled attack (beam, chain, flame, jet) also waits for charge + duration (Period)
+    public float Period => Math.Max(interval, charge + duration);
+    public float healBlock;          // 0.18.4 medic: seconds before the same tower or mech can be healed again (0 = interval)
     public int enhancedEvery; public float enhancedPower = 1, enhancedSplash;
     public int bounces; public float bounceRange = 5;
     public float slow, slowTime, stun, armorDown, armorTime, knockback, burn, zone, zoneTime, zonePower;

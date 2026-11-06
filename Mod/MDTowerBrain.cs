@@ -16,6 +16,8 @@ public static class MDTowerBrain {
 
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
+        // 0.18.4: the only countdown of u.Cooldown. ComponentMDUnit.Update counted it down as well since 0.4.0, so every tower attacked
+        // twice as often as attack.interval said; towers.json now holds the real times (all cooldown sources halved, nothing plays differently)
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
         if(!float.IsFinite(u.AimYaw)||!float.IsFinite(u.AimPitch)||!float.IsFinite(u.Yaw))Unstick(u);
         if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
@@ -294,7 +296,9 @@ public static class MDTowerBrain {
     public static bool Airborne(ComponentBody b){var loc=b.Entity.FindComponent<ComponentLocomotion>();return loc!=null&&loc.FlySpeed>0&&!b.StandingOnValue.HasValue&&b.ImmersionFactor<=0;}
     // Radar (0.10.0): every interval, every working tower within range (attack.links > 0: only that many, nearest first) gets
     // range x attack.boost until a little after the next pulse (several radars: the strongest boost). Silent and without link
-    // lines (user, 10-23: with many radars the lines and pings were too busy).
+    // lines (user, 10-23: with many radars the lines and pings were too busy). 0.18.4: interval halved to the real 0.5 s; the boost
+    // still lasts 1.5 s after a pulse as before (BoostLinger; was interval + 0.5 with the old 1 s).
+    public const float BoostLinger=1;
     static void Radar(ComponentMDUnit u) {
         var d=u.Tower;var a=d.attack;if(u.Cooldown>0)return;u.Cooldown=a.interval;
         var p=u.Body.Position;var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
@@ -303,7 +307,7 @@ public static class MDTowerBrain {
         double now=u.Clock.GameTime;
         foreach(var t in towers) {
             if(t.RangeBoostUntil<now||a.boost>=t.RangeBoost)t.RangeBoost=a.boost;
-            t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+.5);
+            t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+BoostLinger);
         }
         u.ShotCount+=towers.Count>0?1:0;
     }
@@ -396,9 +400,9 @@ public static class MDTowerBrain {
             // not another medic tower (players via the user, 2026-10-29: two medics healing each other were all but invulnerable);
             // 0.14.0: not a tower a boss hit in the last MDBoss.HealBlock seconds, and once per interval however many medics reach it
             else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"&&unit.Tower?.attack.type!="heal"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1&&w.CanHeal(b)){float pts=unit.Tower?.hp??unit.Damage.AttackResilience,want=Math.Min(a.power,1-unit.Damage.Hitpoints),got=MDMedic.Take(u,want*pts);
-                if(got>0){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+got/pts);w.Healed(b,a.interval);w.Heal(b.Position);any=true;}}   // towers and, since 0.9.0 round 5, Mercury
+                if(got>0){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+got/pts);w.Healed(b,a.healBlock>0?a.healBlock:a.interval);w.Heal(b.Position);any=true;}}   // towers and, since 0.9.0 round 5, Mercury
         }
-        u.Cooldown=any?a.interval:.5f;
+        u.Cooldown=any?a.interval:.25f;   // 0.18.4 nothing healed: looks again in 0.25 s (was .5 counted down twice)
         if(any){w.Ring(p,a.range,MDTowerWorldColor(d.fx.color),.8f);w.Flash(Muzzle(u,0),.5f,MDTowerWorldColor(d.fx.color),.2f);Sound(u,d.fireSounds,p,.5f);}
     }
 

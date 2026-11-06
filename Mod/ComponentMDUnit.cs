@@ -67,13 +67,14 @@ public class ComponentMDUnit : Component,IUpdateable {
         HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);float off=v.GetValue("OfflineLeft",0f);if(off>0)OfflineUntil=Clock.GameTime+off;TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
         Tower=MDTowerLibrary.Get(TowerId)??throw new InvalidOperationException("Unknown tower "+TowerId);
         recoilAge=Enumerable.Repeat(10f,Tower.recoilParts.Length).ToArray();
-        Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=MDCombat.Finite(v.GetValue("AimYaw",Yaw),Yaw);AimPitch=MDCombat.Finite(v.GetValue("AimPitch",0f),0);Cooldown=Math.Clamp(v.GetValue("Cooldown",0f),0,2);lastHitpoints=Damage.Hitpoints;PlayEvent("Deploy",.8f);
+        // 0.18.4 CooldownLeft: the seconds left; a save from 0.18.3 or older has Cooldown, which ran down twice a frame (half of it is left)
+        Yaw=MathF.Atan2(-Body.Matrix.Forward.X,-Body.Matrix.Forward.Z);AimYaw=MDCombat.Finite(v.GetValue("AimYaw",Yaw),Yaw);AimPitch=MDCombat.Finite(v.GetValue("AimPitch",0f),0);Cooldown=Math.Clamp(v.ContainsKey("CooldownLeft")?v.GetValue("CooldownLeft",0f):v.GetValue("Cooldown",0f)*.5f,0,2);lastHitpoints=Damage.Hitpoints;PlayEvent("Deploy",.8f);
         if(Damage.Hitpoints<=0||v.GetValue("Destroyed",false)) {Damage.Hitpoints=0;PlayEvent("Death",1.4f);Destroyed=true;wreck=v.GetValue("WreckTime",0f);AnimationTime=wreck;}
     }
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         if(Legacy)return;
         if(Mech!=null){v.SetValue("AimYaw",AimYaw);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Mech.Save(v);return;}
-        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("OfflineLeft",Offline?(float)(OfflineUntil-Clock.GameTime):0f);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("Cooldown",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
+        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("OfflineLeft",Offline?(float)(OfflineUntil-Clock.GameTime):0f);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("CooldownLeft",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);}
     public void PlayEvent(string name,float duration) {
         if(Destroyed)return;
         Animation=name;AnimationTime=0;
@@ -89,7 +90,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public void Update(float dt) {
         if(Legacy){ReleaseRider();Project.RemoveEntity(Entity,true);return;}
         if(Mech!=null){MechUpdate(Math.Min(dt,.1f));return;}
-        dt=Math.Min(dt,.1f);Cooldown=Math.Max(0,Cooldown-dt);
+        dt=Math.Min(dt,.1f);   // 0.18.4 the cooldown counts down once, in MDTowerBrain.Update (it did here too: twice a frame since 0.4.0)
         if(Damage.Hitpoints<=0&&!Destroyed){PlayEvent("Death",1.4f);Destroyed=true;Target=null;Channel=0;TowerDestroyed();}
         AnimationTime+=dt;if(AnimationTime>=AnimationDuration&&Animation!="Idle"&&!Destroyed)Animation="Idle";
         if(Damage.Hitpoints<lastHitpoints-.001f&&Damage.Hitpoints>0)PlayEvent("Hit",.28f);lastHitpoints=Damage.Hitpoints;

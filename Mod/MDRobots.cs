@@ -56,9 +56,10 @@ public static class MDRobots {
         // what they fight and fire from the air. Anti-air towers pick them first; the cannon towers (groundOnly) cannot reach them.
         new(){Id="RD09",Name="旋翼机炮无人机",Root=Root+"RD09/",Weapon="drone",Sight=40,Range=24,Interval=1.6f,Shots=3,ShotGap=.12f,ShotSpeed=70,Spread=.04f,Windup=.2f,
               VsCreature=1.2f,VsStructure=10,Muzzles=["gun"],FireSe=8,HitSe=13,Speed=6,Fly=7,FromDay=3,Look=Look("drone","bolt",[1,.45f,.2f],[1,.3f,.15f],.7f)},
-        // 0.15.0 (user, 2026-10-30): the repair drone, RD09's model tinted green (MDTowerWorld.Tint): it does not fire; it flies over a hurt
-        // robot near it and mends 4 % of its health a second (not bosses); from 14 days after the start day (MDGrowth.RepairDay)
-        new(){Id="RP09",Name="维修无人机",Root=Root+"RD09/",Weapon="repair",Sight=40,Range=16,Interval=1,Shots=0,ShotSpeed=1,VsCreature=0,VsStructure=0,
+        // 0.15.0 (user, 2026-10-30): the repair drone, RD09's model tinted green (MDTowerWorld.Tint): it does not fire; it mends a hurt
+        // robot near it 4 % of its health a second (not bosses); from 14 days after the start day (MDGrowth.RepairDay). 0.18.4: from
+        // behind its squad with a beam, Range = its reach centre to centre (ComponentMDRobot.HealerGoal; it flew over the patient)
+        new(){Id="RP09",Name="维修无人机",Root=Root+"RD09/",Weapon="repair",Sight=40,Range=18,Interval=1,Shots=0,ShotSpeed=1,VsCreature=0,VsStructure=0,
               Muzzles=["gun"],FireSe=8,HitSe=13,Speed=6,Fly=7,FromDay=MDGrowth.RepairDay,Look=Look("drone","bolt",[.45f,1,.55f],[.3f,.9f,.4f],.7f)},
         new(){Id="EN02",Name="双旋翼无人机",Root=Root+"EN02/",Elite=true,Weapon="gunship",Sight=44,Range=30,Interval=2.4f,Shots=6,ShotGap=.1f,ShotSpeed=75,Spread=.03f,Windup=.3f,
               VsCreature=1.5f,VsStructure=14,Muzzles=["gunL","gunR"],FireSe=8,HitSe=13,Speed=5,Fly=9,Look=Look("gunship","bolt",[1,.45f,.2f],[1,.3f,.15f],.8f)},
@@ -388,7 +389,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     // Mercury or a tower out of sight (it walks around to it), a player or the herd in sight, then out of sight. Nearest first
     // within each; the current target counts 20 % nearer.
     public ComponentBody FindTarget() {
-        if(Kind.Weapon=="repair"){Patient=FindPatient();return null;}   // 0.15.0: it fights nothing
+        if(Kind.Weapon=="repair"){Patient=FindPatient();PlanHealer();return null;}   // 0.15.0: it fights nothing (0.18.4: where to keep, PlanHealer)
         if(ProvokerNow is {} locked)return locked;
         var list=new DynamicArray<ComponentBody>();var p=Body.Position;bodies.FindBodiesAroundPoint(new(p.X,p.Z),Kind.Sight,list);
         ComponentBody best=null;var bestKey=(int.MaxValue,float.MaxValue);var eye=Eye;
@@ -490,7 +491,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public Vector3? FlyWanted; float orbit=MDRobots.R(0,6.28f),stuckAir; readonly DynamicArray<ComponentBody> under=new();
     void EngageAir(float dt) {
         var p=Body.Position;Vector3? goal=null;float near=0;
-        if(Patient!=null){orbit+=dt*.6f;goal=Patient.Body.Position+new Vector3(MathF.Sin(orbit),0,MathF.Cos(orbit))*5;}   // the repair drone circles close over its patient
+        if(Kind.Weapon=="repair"&&HealerGoal(dt) is {} hg)goal=hg;   // 0.18.4 behind its squad (HealerGoal); none: as below (a raid's goal)
         else if(Target!=null){orbit+=dt*Kind.Speed*.5f/Math.Max(4,Kind.Range*.6f);goal=Target.Position+new Vector3(MathF.Sin(orbit),0,MathF.Cos(orbit))*Kind.Range*.6f;}
         else if(Hunt!=null){goal=Hunt.Position;near=Kind.Sight*.5f;}
         else if(Chasing&&Valid(Chase)){goal=Chase.Position;near=Kind.Range*.6f;}
@@ -513,7 +514,63 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
             var tc=MDCombat.Center(Target);Face(tc,dt,2.5f);
             Fire(dt,Sight(Eye,Target)&&Vector3.Distance(tc,p)<=Kind.Range&&Aligned(new Vector2(tc.X-p.X,tc.Z-p.Z)));
         }
+        else if(Kind.Weapon=="repair"&&InReach(Patient))Face(MDCombat.Center(Patient.Body),dt,2.5f);   // 0.18.4 the beam's way
         else {ShotsLeft=0;Windup=-1;if(fd>1)Face(want,dt,1.5f);}
+    }
+    // 0.18.4 (user, 2026-11-06: "治疗无人机会被优先攻击，但还往最前线冲，基本都是直接被秒的下场，希望尽量躲在其他敌对机器人后面，治疗距离可以给远点"):
+    // the repair drone circled 5 m round the most hurt robot (the one in front, under fire) and mended it from right over it, so it
+    // was the nearest target of the towers there and an anti-air tower's first pick, alone it flew on to its raid's goal. Now it keeps
+    // behind its squad (the robots within its sight): the front is the way from the squad's centre to the defence nearest that centre
+    // (a tower, mech or the defence core; a player when there is none). It holds HealHold m behind its patient (or the squad's centre
+    // when nobody is hurt) along that way, swaying 3 m sideways, and at least HealBehind m farther from that defence than the squad's
+    // nearest robot, never nearer than its reach + 2 m; for HealDuckTime s after a hit, or while a tower aims at it, HealDuck m more.
+    // Without a squad it keeps HealAlone m from the defence. It mends from Kind.Range (18 m, centre to centre) with a beam.
+    public const float HealHold=12,HealBehind=6,HealDuck=4,HealDuckTime=3,HealAlone=44,HealSway=3;
+    Vector3 squadCentre,threatAt;bool hasSquad,hasThreat;float frontDistance,healerLast=1;double duckUntil;public int Ducks;   // Ducks: lab
+    public bool Ducking=>time.GameTime<duckUntil;
+    public bool InReach(ComponentMDRobot r)=>r!=null&&r.Entity.IsAddedToProject&&r.Health.Health>0&&Vector3.Distance(MDCombat.Center(r.Body),MDCombat.Center(Body))<=Kind.Range;
+    // with each scan (FindTarget): the squad, the defence it faces, whether a tower aims at the drone
+    void PlanHealer() {
+        var p=Body.Position;var list=new DynamicArray<ComponentBody>();bodies.FindBodiesAroundPoint(new(p.X,p.Z),Kind.Sight,list);
+        var sum=Vector3.Zero;int n=0;
+        foreach(var b in list) {
+            if(b.Entity.FindComponent<ComponentMDRobot>() is not {} r||r==this||r.Kind.Weapon=="repair"||r.Health.Health<=0||Vector3.DistanceSquared(b.Position,p)>Kind.Sight*Kind.Sight)continue;
+            sum+=b.Position;n++;
+        }
+        hasSquad=n>0;squadCentre=hasSquad?sum/n:p;
+        list.Clear();bodies.FindBodiesAroundPoint(new(squadCentre.X,squadCentre.Z),MDRobots.HuntRange,list);
+        ComponentBody unit=null,person=null;float du=float.MaxValue,dp=float.MaxValue;bool aimed=false;
+        foreach(var b in list) {
+            float d=Vector2.DistanceSquared(new(b.Position.X,b.Position.Z),new(squadCentre.X,squadCentre.Z));
+            if(b.Entity.FindComponent<ComponentMDUnit>() is {} u){if(u.Destroyed||u.Legacy||u.Offline)continue;if(u.Target==Body)aimed=true;if(d<du){du=d;unit=b;}}
+            else if(b.Entity.FindComponent<ComponentPlayer>() is {} pl&&pl.ComponentHealth.Health>0&&d<dp&&d<Kind.Sight*Kind.Sight){dp=d;person=b;}
+        }
+        var threat=unit??person;hasThreat=threat!=null;
+        if(hasThreat) {
+            threatAt=threat.Position;frontDistance=float.MaxValue;
+            list.Clear();bodies.FindBodiesAroundPoint(new(p.X,p.Z),Kind.Sight,list);
+            foreach(var b in list)if(b.Entity.FindComponent<ComponentMDRobot>() is {} r&&r!=this&&r.Kind.Weapon!="repair"&&r.Health.Health>0&&Vector3.DistanceSquared(b.Position,p)<=Kind.Sight*Kind.Sight)
+                frontDistance=Math.Min(frontDistance,Vector2.Distance(new(b.Position.X,b.Position.Z),new(threatAt.X,threatAt.Z)));
+        }
+        if(aimed||Health.Health<healerLast-.002f){if(!Ducking)Ducks++;duckUntil=time.GameTime+HealDuckTime;}
+        healerLast=Health.Health;
+    }
+    Vector3? HealerGoal(float dt) {
+        if(!hasThreat)return hasSquad?squadCentre:null;   // nothing to face: with the squad; alone: a raid's goal as before
+        orbit+=dt*.5f;var dir=threatAt-squadCentre;dir.Y=0;
+        if(dir.LengthSquared()<1){dir=threatAt-Body.Position;dir.Y=0;}
+        dir=dir.LengthSquared()>1e-4f?Vector3.Normalize(dir):Vector3.UnitZ;
+        float duck=Ducking?HealDuck:0;
+        if(!hasSquad) {   // alone: never closer than HealAlone, else it stays where it is
+            var away=Body.Position-threatAt;away.Y=0;float d=away.Length();
+            return d>=HealAlone?Body.Position:threatAt+(d>.1f?away/d:-dir)*HealAlone;
+        }
+        var anchor=Patient!=null&&Patient.Health.Health<1&&Patient.Entity.IsAddedToProject?Patient.Body.Position:squadCentre;
+        var goal=anchor-dir*(HealHold+duck)+new Vector3(-dir.Z,0,dir.X)*MathF.Sin(orbit)*HealSway;
+        float need=Math.Max(frontDistance+HealBehind+duck,Kind.Range+2);
+        var off=goal-threatAt;off.Y=0;float od=off.Length();
+        if(od<need){var o=od>.1f?off/od:-dir;goal=new Vector3(threatAt.X+o.X*need,goal.Y,threatAt.Z+o.Z*need);}
+        return goal;
     }
     // 0.15.0 repair drone: the most hurt robot in sight (not a boss, not another repairer), else the nearest; mends it within Range
     ComponentMDRobot FindPatient() {
@@ -523,11 +580,15 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     void Mend(float dt) {
         if(Patient!=null&&(!Patient.Entity.IsAddedToProject||Patient.Health.Health<=0))Patient=null;
-        mendTick-=dt;if(mendTick>0||Patient==null||Patient.Health.Health>=1||Vector3.Distance(Patient.Body.Position,Body.Position)>Kind.Range)return;
-        mendTick=1;if(MDTowerWorld.For(Project).IsStunned(Body)||MDTowerWorld.For(Project).IsFrozen(Body))return;   // held: no mending either
+        mendTick-=dt;var w=MDTowerWorld.For(Project);
+        if(Patient==null||Patient.Health.Health>=1||!InReach(Patient)||w.IsStunned(Body)||w.IsFrozen(Body))return;   // held: no mending either
+        // 0.18.4 a thin green beam to the patient all the while it mends; each mend a brighter one, a flash and the medic's plus signs
+        var a=Point(Kind.Muzzles[0],out _);var b=MDCombat.Center(Patient.Body);var green=new Color(120,255,140);
+        w.AddBeam(a,b,.035f,green*.8f,.05f,false);
+        if(mendTick>0)return;
+        mendTick=1;
         float before=Patient.Health.Health;Patient.Health.Heal(.04f);Mended+=Patient.Health.Health-before;
-        var w=MDTowerWorld.For(Project);var a=Point(Kind.Muzzles[0],out _);var b=MDCombat.Center(Patient.Body);
-        w.AddBeam(a,b,.06f,new Color(120,255,140),.35f,false);w.Flash(b,.6f,new Color(120,255,140),.2f);
+        w.AddBeam(a,b,.08f,green,.35f,false);w.Flash(a,.35f,green,.15f);w.Flash(b,.6f,green,.2f);w.Heal(Patient.Body.Position);
     }
     // the top of the column (blocks, trees, water); unloaded: where the drone flies now
     float Top(Vector3 at){int x=Terrain.ToCell(at.X),z=Terrain.ToCell(at.Z);return terrain.Terrain.GetChunkAtCell(x,z)!=null?terrain.Terrain.GetTopHeight(x,z)+1:Body.Position.Y-Kind.Fly;}

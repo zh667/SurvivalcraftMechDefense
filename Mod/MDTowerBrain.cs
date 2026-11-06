@@ -16,6 +16,8 @@ public static class MDTowerBrain {
 
     public static void Update(ComponentMDUnit u,float dt) {
         var d=u.Tower;var a=d.attack;var w=World(u);
+        // 0.18.4: the only countdown of u.Cooldown. ComponentMDUnit.Update counted it down as well since 0.4.0, so every tower attacked
+        // twice as often as attack.interval said; towers.json now holds the real times (all cooldown sources halved, nothing plays differently)
         u.Cooldown=Math.Max(0,u.Cooldown-dt);u.TickRecoil(dt);
         if(!float.IsFinite(u.AimYaw)||!float.IsFinite(u.AimPitch)||!float.IsFinite(u.Yaw))Unstick(u);
         if(d.spinParts.Length>0){u.SpinRate=Math.Clamp(u.SpinRate+((d.spinIdle||u.Target!=null)&&!u.Destroyed?dt*2.5f:-dt*.7f),0,1);u.Spin=(u.Spin+u.SpinRate*MathUtils.DegToRad(d.spinSpeed)*dt)%(2*MathF.PI);}
@@ -294,7 +296,9 @@ public static class MDTowerBrain {
     public static bool Airborne(ComponentBody b){var loc=b.Entity.FindComponent<ComponentLocomotion>();return loc!=null&&loc.FlySpeed>0&&!b.StandingOnValue.HasValue&&b.ImmersionFactor<=0;}
     // Radar (0.10.0): every interval, every working tower within range (attack.links > 0: only that many, nearest first) gets
     // range x attack.boost until a little after the next pulse (several radars: the strongest boost). Silent and without link
-    // lines (user, 10-23: with many radars the lines and pings were too busy).
+    // lines (user, 10-23: with many radars the lines and pings were too busy). 0.18.4: interval halved to the real 0.5 s; the boost
+    // still lasts 1.5 s after a pulse as before (BoostLinger; was interval + 0.5 with the old 1 s).
+    public const float BoostLinger=1;
     static void Radar(ComponentMDUnit u) {
         var d=u.Tower;var a=d.attack;if(u.Cooldown>0)return;u.Cooldown=a.interval;
         var p=u.Body.Position;var bodies=new DynamicArray<ComponentBody>();u.Project.FindSubsystem<SubsystemBodies>(true).FindBodiesAroundPoint(new(p.X,p.Z),a.range+1,bodies);
@@ -303,7 +307,7 @@ public static class MDTowerBrain {
         double now=u.Clock.GameTime;
         foreach(var t in towers) {
             if(t.RangeBoostUntil<now||a.boost>=t.RangeBoost)t.RangeBoost=a.boost;
-            t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+.5);
+            t.RangeBoostUntil=Math.Max(t.RangeBoostUntil,now+a.interval+BoostLinger);
         }
         u.ShotCount+=towers.Count>0?1:0;
     }
@@ -321,8 +325,22 @@ public static class MDTowerBrain {
             if(turning){var dd=c-p;float along=Vector3.Dot(dd,f);if(along<0||Math.Abs(Vector3.Dot(dd,side))>a.width*.5f+along*.15f)continue;}   // the band widens a little with distance
             AreaHits++;
             if(a.type=="flame"){Hit(u,b,a.power*.25f/Math.Max(.25f,a.duration),c,f);b.Entity.FindComponent<ComponentOnFire>()?.SetOnFire(null,a.burn);}
-            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f;Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
+            else {var push=f*a.knockback+Vector3.UnitY*a.knockback*.25f;if(a.knockback>0&&b.Mass<=a.pushMaxMass)b.Velocity+=push*.2f*PushRoom(u,b,c);Hit(u,b,a.power*.2f/Math.Max(.2f,a.duration),c,f);if(a.slow>0)w.Slow(b,a.slow,a.slowTime,MDTowerWorldColor(d.fx.color2));}
         }
+    }
+    // 0.18.4 (user, 2026-11-06: "激流塔修一下"; since 0.15.0): the water jet's first spray pushed a walker that had stopped at the edge (RD05
+    // stops about 14.4 m off its target) just past the range (15.1 m of 15); there it stood and fired, out of reach, and the jet never
+    // sprayed again. The push now ends inside the range: full up to JetFade m before the line JetEdge m inside the range (u.Range, a
+    // radar's boost included, from the tower to the body's centre as InArea measures), fading to nothing at that line, and less for
+    // a body already sliding outwards (its speed away from the tower times JetCoast s, about how far a push carries it). So what it
+    // pushes stays in its range and is sprayed again; one that walks in is pushed back again with every spray.
+    public const float JetEdge=1,JetFade=3,JetCoast=.35f;
+    public static bool PushCapEnabled=true;   // lab switch: the 0.18.3 push
+    static float PushRoom(ComponentMDUnit u,ComponentBody b,Vector3 c) {
+        if(!PushCapEnabled)return 1;
+        var dd=c-u.Body.Position;dd.Y=0;float h=dd.Length();if(h<.01f)return 1;
+        float outwards=Math.Max(0,Vector3.Dot(new Vector3(b.Velocity.X,0,b.Velocity.Z),dd/h));
+        return Math.Clamp((u.Range-JetEdge-h-outwards*JetCoast)/JetFade,0,1);
     }
     static void ChainStrike(ComponentMDUnit u,Vector3 from,ComponentBody first) {
         var d=u.Tower;var a=d.attack;var w=World(u);var c=MDTowerWorldColor(d.fx.color);var hit=new HashSet<ComponentBody>();var cur=first;var p=from;
@@ -382,9 +400,9 @@ public static class MDTowerBrain {
             // not another medic tower (players via the user, 2026-10-29: two medics healing each other were all but invulnerable);
             // 0.14.0: not a tower a boss hit in the last MDBoss.HealBlock seconds, and once per interval however many medics reach it
             else if(unit!=null&&unit!=u&&(unit.Kind=="Turret"&&unit.Tower?.attack.type!="heal"||unit.Mech!=null)&&!unit.Destroyed&&unit.Damage.Hitpoints<1&&w.CanHeal(b)){float pts=unit.Tower?.hp??unit.Damage.AttackResilience,want=Math.Min(a.power,1-unit.Damage.Hitpoints),got=MDMedic.Take(u,want*pts);
-                if(got>0){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+got/pts);w.Healed(b,a.interval);w.Heal(b.Position);any=true;}}   // towers and, since 0.9.0 round 5, Mercury
+                if(got>0){unit.Damage.Hitpoints=Math.Min(1,unit.Damage.Hitpoints+got/pts);w.Healed(b,a.healBlock>0?a.healBlock:a.interval);w.Heal(b.Position);any=true;}}   // towers and, since 0.9.0 round 5, Mercury
         }
-        u.Cooldown=any?a.interval:.5f;
+        u.Cooldown=any?a.interval:.25f;   // 0.18.4 nothing healed: looks again in 0.25 s (was .5 counted down twice)
         if(any){w.Ring(p,a.range,MDTowerWorldColor(d.fx.color),.8f);w.Flash(Muzzle(u,0),.5f,MDTowerWorldColor(d.fx.color),.2f);Sound(u,d.fireSounds,p,.5f);}
     }
 

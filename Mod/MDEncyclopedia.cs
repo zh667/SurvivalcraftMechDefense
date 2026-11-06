@@ -59,7 +59,8 @@ public static class MDEncyclopedia {
         var s=new StringBuilder("【数值】");
         s.Append($"\n耐久：{(k.Boss?$"{MDBoss.BaseArmour*k.BossArmour:0} 起，按附近炮塔和机甲加强（每座一 / 二 / 三阶塔 +{MDBoss.PerTier:0} / {MDBoss.PerTier*2:0} / {MDBoss.PerTier*3:0}，每台机甲 +{MDBoss.PerMech*3000:0}～{MDBoss.PerMech*5000:0}{(k.BossArmour!=1?$"，再乘 {k.BossArmour:0.##}":"")}，最高 {MDBoss.MaxArmour*k.BossArmour:0}）":$"{hp:0}")}");
         s.Append(k.Boss?"\n移动："+BossMove(k):k.Fly>0?$"\n移动：飞行 {k.Speed:0.#} 米／秒，离地约 {k.Fly:0} 米（防空炮优先打它，加农炮打不到）":$"\n移动：{k.Speed:0.#} 米／秒");
-        if(k.Weapon=="repair")s.Append("\n能力：不开火；飞在受伤的机兵上空，每秒修复它 4% 耐久（首领除外），所以要先打掉它");
+        // 0.18.4 it keeps behind its squad and mends from afar (ComponentMDRobot.HealerGoal)
+        if(k.Weapon=="repair")s.Append($"\n能力：不开火；躲在机兵队伍后方（比离防线最近的机兵再远 {ComponentMDRobot.HealBehind:0} 米以上），用绿色治疗光束修复 {k.Range:0} 米内受伤的机兵，每秒 4% 耐久（首领除外）；被炮塔瞄准或受伤时再往后退 {ComponentMDRobot.HealDuck:0} 米，队伍没了就停在离炮塔 {ComponentMDRobot.HealAlone:0} 米外。用射程远的塔或亲自去打掉它");
         else {
             s.Append($"\n武器：{WeaponName(k)}；每轮 {k.Shots} 发，每 {k.Interval:0.#} 秒一轮；射程 {k.Range:0} 米{(k.MinRange>0?$"，{k.MinRange:0} 米内打不到":"")}{(k.Splash>0?$"，爆炸半径 {k.Splash:0.#} 米":"")}");
             s.Append($"\n每发伤害：炮塔／机甲 {k.VsStructure:0}，玩家约 {k.VsCreature*10:0}% 生命（未计护甲）");
@@ -77,8 +78,8 @@ public static class MDEncyclopedia {
         if(k.Boss)s.Append($"\n压制：被它打中的炮塔和机甲 {MDBoss.HealBlock:0} 秒内不能被医疗塔治疗");
         if(k.Boss)s.Append($"\n失衡：头上的黄色槽（满 {MDBossState.PoiseMax:0}，每失衡一次下次 ×{MDBossState.PoiseGrowth:0.#}）。元素反应（双元素 +{MDBossState.PoisePair:0}、三元素 +{MDBossState.PoiseTriad:0}）、它免疫的控制（+{MDBossState.PoiseControl:0}）、重炮（+{MDBossState.PoiseHeavy:0}）和机甲火炮（+{MDBossState.PoiseMechCannon:0}）都会填它，但炮塔造成的每秒最多 {MDBossState.TowerPoiseRate:0} 点，机甲触发的不受限；满了它失衡 {MDBossState.PoiseStagger:0} 秒，之后 {MDBossState.PoiseWindow:0} 秒受到的伤害 ×{MDBossState.ExposedFactor:0.#} 并无视装甲层，然后 {MDBossState.PoiseLock:0} 秒内不会再失衡。反应打首领的额外伤害只有 {MDElements.BossShare*100:0}%");
         s.Append("\n出现："+Appear(k));
-        s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
-        s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");
+        if(k.Weapon!="repair")s.Append($"\n优先攻击：打过它的玩家或机甲（一直追打，直到对方被消灭、离开 {MDRobots.LoseRange:0} 米或离开游戏；创造模式也是）> 机甲 > 炮塔 > 玩家");
+        if(k.Weapon!="repair")s.Append(MDSettings.AggroRange>0?$"；看见 {MDSettings.AggroRange:0} 米内的玩家就主动攻击":"；附近没有炮塔、机甲时，玩家不打它它就不攻击");
         return s.ToString();
     }
 
@@ -139,19 +140,19 @@ public static class MDEncyclopedia {
     }
     static string Targets(MDTowerAttack a)=>a.type is "heal" or "radar"?"":a.groundOnly?"只打地面":a.airFirst?$"优先打空中（地面伤害 ×{a.groundFactor:0.##}）":"地面和空中";
     static string AttackText(MDTowerDef d) {
-        var a=d.attack;float per=a.interval>0?a.power/a.interval:0;
+        var a=d.attack;float per=a.Period>0?a.power/a.Period:0;   // 0.18.4 the real time between attacks (a spray also lasts its duration)
         var s=a.type switch{
             "radar"=>$"范围 {a.range:0} 格内所有防御塔射程 ×{a.boost:0.##}",
-            "heal"=>$"每 {a.interval:0.#} 秒治疗附近的玩家、机甲和炮塔 {a.power:0.#}",
-            "pulse"=>$"每 {a.interval:0.#} 秒一圈脉冲{(a.stun>0?$"，瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "wave"=>$"每 {a.interval:0.#} 秒朝目标发出一道 {a.arc:0}° 的震荡波（每秒 {a.speed:0} 格）{(a.stun>0?$"，扫过的敌人晕眩 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "orb"=>$"每 {a.interval:0.#} 秒射出一枚脉冲弹（每秒 {a.speed:0} 格），命中处 {a.splash:0.#} 格内{(a.stun>0?$"瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
-            "chain"=>$"每 {a.interval:0.#} 秒一道闪电 {a.power:0}（每秒 {per:0.#}）{(a.bounces>0?$"，再弹射 {a.bounces} 个附近的敌人":"")}",
+            "heal"=>a.healBlock>a.interval?$"每 {a.interval:0.#} 秒治疗附近的玩家 {a.power:0.#}，同一座炮塔或机甲每 {a.healBlock:0.#} 秒一次":$"每 {a.interval:0.#} 秒治疗附近的玩家、机甲和炮塔 {a.power:0.#}",
+            "pulse"=>$"每 {a.Period:0.#} 秒一圈脉冲{(a.stun>0?$"，瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "wave"=>$"每 {a.Period:0.#} 秒朝目标发出一道 {a.arc:0}° 的震荡波（每秒 {a.speed:0} 格）{(a.stun>0?$"，扫过的敌人晕眩 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "orb"=>$"每 {a.Period:0.#} 秒射出一枚脉冲弹（每秒 {a.speed:0} 格），命中处 {a.splash:0.#} 格内{(a.stun>0?$"瘫痪 {a.stun:0.#} 秒（首领不受影响）":"")}{(a.power>0?$"，伤害 {a.power:0}":"")}",
+            "chain"=>$"每 {a.Period:0.#} 秒一道闪电 {a.power:0}（每秒 {per:0.#}）{(a.bounces>0?$"，再弹射 {a.bounces} 个附近的敌人":"")}",
             "flame"=>$"喷火，喷射带上每个敌人每秒 {per:0.#}",
             "jet"=>(a.power>0?$"喷射，喷射带上每个敌人每秒 {per:0.#}":"喷射，不造成伤害")+(a.knockback>0?"，把敌人冲退":""),
-            "missile"=>$"追踪导弹，每 {a.interval:0.##} 秒一发 {a.power:0.#}（每秒 {per:0.#}），必定命中",
-            "beam"=>$"激光，每 {a.interval:0.#} 秒一束 {a.power:0}（每秒 {per:0.#}）",
-            _=>$"每 {a.interval:0.##} 秒 {a.power:0.#}（每秒 {per:0.#}）"};
+            "missile"=>$"追踪导弹，每 {a.Period:0.##} 秒一发 {a.power:0.#}（每秒 {per:0.#}），必定命中",
+            "beam"=>$"激光，每 {a.Period:0.#} 秒一束 {a.power:0}（每秒 {per:0.#}）",
+            _=>$"每 {a.Period:0.##} 秒 {a.power:0.#}（每秒 {per:0.#}）"};
         var extra=new List<string>();
         if(a.splash>0&&a.type is not ("flame" or "jet" or "orb"))extra.Add($"爆炸半径 {a.splash:0.#} 格");
         if(a.slow>0&&a.slow<1)extra.Add($"减速到 ×{a.slow:0.##}");

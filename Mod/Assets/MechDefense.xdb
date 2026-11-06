@@ -2628,7 +2628,7 @@
       </MemberComponentTemplate>
       <MemberComponentTemplate Name="Creature" Guid="b8c6b309-c720-5eff-a81b-be1b902a7924">
         <Parameter Name="DisplayName" Type="string" Value="维修无人机" Guid="8626781f-a9b1-5370-9687-d8c44d2fcf4c" />
-        <Parameter Name="Description" Type="string" Value="维修无人机：不开火，飞在受伤的机兵上空用绿色光束给它们修复耐久（首领除外）。开始刷新后第 14 天起出现。优先打掉它。击毁后常掉火控芯片。" Guid="4ba274ea-a35d-5229-ae56-7626310916a7" />
+        <Parameter Name="Description" Type="string" Value="维修无人机：不开火，躲在机兵队伍后方，用绿色光束远程给受伤的机兵修复耐久（首领除外）。开始刷新后第 14 天起出现。用射程远的塔或亲自去打掉它。击毁后常掉火控芯片。" Guid="4ba274ea-a35d-5229-ae56-7626310916a7" />
         <Parameter Name="KillVerbs" Type="string" Value="killed" Guid="f47bf486-f8ab-517d-a486-0d89059cbc3c" />
         <Parameter Name="Category" Type="Game.CreatureCategory" Value="LandPredator" Guid="80696adf-8804-5114-ab15-6585a0b0e149" />
       </MemberComponentTemplate>

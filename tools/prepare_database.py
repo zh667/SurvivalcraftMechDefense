@@ -91,8 +91,8 @@ ROBOTS=[  # template, kind, skin, name, description, resilience, walk speed, mas
     ('MDRobot14C','RD14','model_c','双管装甲战车','双管炮塔战车：血厚、走得慢，炮塔自己转向，边走边打，炮弹小范围溅射。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',2400,3.0,2500,'heavy'),
     # 0.14.0: the drones (our own models); they fly (FLY below)
     ('MDRobot09','RD09','model','旋翼机炮无人机','旋翼无人机：在离地七米左右的空中绕着目标飞，机炮点射。防空炮优先打它，加农炮打不到。开始刷新后第 3 天起出现。击毁后掉落机兵残骸。',720,6,300,'drone'),
-    # 0.15.0: the repair drone (RD09's model, tinted green: MDTowerWorld.Tint); it does not fire, it mends robots near it
-    ('MDRepair09','RP09','model','维修无人机','维修无人机：不开火，飞在受伤的机兵上空用绿色光束给它们修复耐久（首领除外）。开始刷新后第 14 天起出现。优先打掉它。击毁后常掉火控芯片。',960,6,300,'repair'),
+    # 0.15.0: the repair drone (RD09's model, tinted green: MDTowerWorld.Tint); it does not fire, it mends robots near it (0.18.4: from behind its squad)
+    ('MDRepair09','RP09','model','维修无人机','维修无人机：不开火，躲在机兵队伍后方，用绿色光束远程给受伤的机兵修复耐久（首领除外）。开始刷新后第 14 天起出现。用射程远的塔或亲自去打掉它。击毁后常掉火控芯片。',960,6,300,'repair'),
     ('MDRobotEN02','EN02','model','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2640,5,900,'elite'),
     ('MDRobotEN02B','EN02','model_b','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2640,5,900,'elite'),
     ('MDRobotEN02C','EN02','model_c','双旋翼无人机','精英无人机：双旋翼重型无人机，在离地九米左右的空中盘旋，两门机炮交替扫射。防空炮优先打它，加农炮打不到。常掉火控芯片，偶尔掉能量核心。',2640,5,900,'elite'),

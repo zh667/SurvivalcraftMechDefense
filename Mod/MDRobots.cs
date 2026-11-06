@@ -438,7 +438,10 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     // Walk into range (or around cover), stop and turn to fire; without a target, to the nearest tower or Mercury (Hunt), or a
     // raider to its raid's goal.
     void Engage(float dt) {
-        if(Unstuck.Step(Body,path.Destination,dt,Kind.Speed)){Fire(dt,false);return;}   // 0.18.0 jumping or climbing out (MDUnstuck)
+        if(Unstuck.Step(Body,path.Destination,dt,Kind.Speed,hop:true)){Fire(dt,false);return;}   // 0.18.0 jumping or climbing out; 1.0.0 hops 1-2 block walls (MDUnstuck)
+        // 1.0.0 a wall of 3 blocks or more it may not climb (MDUnstuck.TallWall): the game's own path search finds a way round, if there is one
+        // (Engage sets the destination every frame, which keeps the game's pathfinding in its direct-walk state, so it never searched)
+        if(Unstuck.TallWall&&path.Destination.HasValue&&path.m_stateMachine.CurrentState=="MovingDirect"){Unstuck.TallWall=false;Unstuck.Detours++;path.m_stateMachine.TransitionTo("SearchingForPath");}
         if(Target!=null) {
             var tc=MDCombat.Center(Target);var flat=new Vector2(tc.X-Body.Position.X,tc.Z-Body.Position.Z);float dist=flat.Length();bool sight=SmartEnabled?CanHit(Target):Sight(Eye,Target);   // 0.18.0 what its gun can hit, not what its eye sees
             if(Evade(dt)){Fire(dt,sight&&dist<=Kind.Range&&Aligned(flat));return;}
@@ -845,13 +848,23 @@ public static class MDRaids {
 // clears the blocks it would climb (ClearBlocks keepStep).
 public sealed class MDUnstuck {
     public const float Watch=2.5f,MinProgress=.8f,ClimbTime=4,ClimbSpeed=4,JumpSpeed=7,SinkDepth=.9f;
-    Vector3 mark;bool marked,wasBlocked,acted;float watch,climb,idle;int tries;Vector3 climbDir;
-    public int Jumps,Climbs;public float Risen;   // lab
+    // 1.0.0 (user, 2026-11-06: "敌对机器人遇到障碍会跳跃，加跳跃冷却"): a ground robot (not a boss: hop) that walks into a wall 1 or 2 blocks
+    // high and stays below HopSlow m/s towards its goal for HopWait s hops over it at once (before: nothing until the Watch above, 2.5-5 s,
+    // the robots' template has JumpSpeed 0, so the game's own jump orders never lift them), at most once every HopCooldown s. A wall of
+    // 3 or more with the ground behind it back near its feet is not climbed unless it is sunk (a pit, MDUnstuck.Sunk) or the ground
+    // goes on high (a hill); stuck with no low wall in front (a wall's end it walks round, other bodies) it neither jumps nor climbs either:
+    // TallWall asks the robot for a path round (ComponentMDRobot.Engage); none: it stays (and fires if it sees). A 1-block step the robots'
+    // bodies already rise over by themselves (smooth rise), as before.
+    public const float HopCooldown=1.75f,HopWait=.3f,HopSlow=.6f,HopPush=3,HopClear=.5f,Gravity=10;
+    public static bool HopEnabled=true;   // lab switch: false = 0.18.4 (no hop, any wall climbed)
+    Vector3 mark;bool marked,wasBlocked,acted;float watch,climb,idle,slow;int tries;Vector3 climbDir;double nextHop;SubsystemTime clock;
+    public int Jumps,Climbs,Hops,Detours,TallWalls;public float Risen;public int LastWall;public readonly List<double> HopTimes=[];   // lab
+    public bool TallWall;   // set when a stuck check found nothing it may jump or climb (a tall wall, a wall's end); ComponentMDRobot.Engage clears it
     public bool Climbing=>climb>0;
     static Vector3 Flat(Vector3 v){v.Y=0;return v.LengthSquared()>1e-4f?Vector3.Normalize(v):Vector3.Zero;}
     static float FlatDistance(Vector3 a,Vector3 b)=>Vector2.Distance(new(a.X,a.Z),new(b.X,b.Z));
     // goal: where it is heading (null: nowhere; the watch starts again); true while it jumps or climbs (it moves itself then)
-    public bool Step(ComponentBody b,Vector3? goal,float dt,float speed,bool sunk=false) {
+    public bool Step(ComponentBody b,Vector3? goal,float dt,float speed,bool sunk=false,bool hop=false) {
         if(!ComponentMDRobot.SmartEnabled)return false;
         var p=b.Position;
         if(climb>0) {
@@ -861,16 +874,51 @@ public sealed class MDUnstuck {
             wasBlocked|=blocked;return true;
         }
         var dir=goal.HasValue?Flat(goal.Value-p):Vector3.Zero;
-        if(dir.LengthSquared()<.5f||!sunk&&FlatDistance(goal.Value,p)<2.5f){watch=0;marked=false;idle+=dt;if(idle>5)tries=0;return false;}   // a moment without a goal (it saw its target from a jump) keeps the count
+        if(dir.LengthSquared()<.5f||!sunk&&FlatDistance(goal.Value,p)<2.5f){watch=0;marked=false;slow=0;idle+=dt;if(idle>5)tries=0;return false;}   // a moment without a goal (it saw its target from a jump) keeps the count
         idle=0;
         if(sunk){climb=ClimbTime;climbDir=dir;wasBlocked=false;Climbs++;return true;}
+        if(hop&&HopEnabled) {   // 1.0.0 a low wall in its way: over it now
+            float along=Vector3.Dot(new Vector3(b.Velocity.X,0,b.Velocity.Z),dir);
+            slow=b.StandingOnValue.HasValue&&along<HopSlow?slow+dt:0;
+            if(slow>=HopWait) {
+                int h=Wall(b,dir,out bool room);LastWall=h;
+                clock??=b.Project.FindSubsystem<SubsystemTime>(true);double now=clock.GameTime;
+                if(h is >=1 and <=2&&room&&now>=nextHop) {
+                    float rise=h-(p.Y-MathF.Floor(p.Y+.1f))+HopClear;   // from its feet to over the top, with room
+                    b.Velocity=new Vector3(dir.X*HopPush,MathF.Sqrt(2*Gravity*Math.Max(rise,.5f)),dir.Z*HopPush);
+                    nextHop=now+HopCooldown;Hops++;HopTimes.Add(now);slow=0;marked=false;watch=0;return true;
+                }
+            }
+        }
         if(!marked){mark=p;marked=true;}
         watch+=dt;if(watch<Watch)return false;
         float progress=FlatDistance(mark,goal.Value)-FlatDistance(p,goal.Value);watch=0;mark=p;bool helped=acted;acted=false;
         if(progress>=MinProgress){if(!helped)tries=0;return false;}   // on its own feet: not stuck; after a jump or a climb: watch once more
+        if(hop&&HopEnabled&&!Sunk(b)&&!HighBeyond(b,dir)&&Wall(b,dir,out _) is 0 or >=3){TallWall=true;TallWalls++;return false;}   // 1.0.0 a tall wall, or nothing low to get over (a wall's end, bodies): a path, no climb
         tries++;acted=true;
         if(tries==1&&b.StandingOnValue.HasValue){b.Velocity=new Vector3(dir.X*3,JumpSpeed,dir.Z*3);Jumps++;return true;}
         climb=ClimbTime;climbDir=dir;wasBlocked=false;Climbs++;return true;
+    }
+    static bool Solid(Terrain t,int x,int y,int z){int v=t.GetCellValue(x,y,z);return BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v);}
+    // 1.0.0 the height in blocks (0-3, 3 = 3 or more) of what stands just in front of it from its feet up (the highest of three columns
+    // across its front), and whether it has room over that: as many free blocks as its body is tall
+    public static int Wall(ComponentBody b,Vector3 dir,out bool room) {
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;var box=b.BoxSize;float half=Math.Max(box.X,box.Z)*.5f;var side=new Vector3(-dir.Z,0,dir.X);
+        int feet=Terrain.ToCell(b.Position.Y+.1f),best=0,bx=0,bz=0,head=Math.Clamp((int)MathF.Ceiling(box.Y),1,4);
+        foreach(float s in new[]{0,-.7f,.7f}) {
+            var f=b.Position+dir*(half+.6f)+side*(half*s);int x=Terrain.ToCell(f.X),z=Terrain.ToCell(f.Z),h=0;
+            while(h<3&&Solid(t,x,feet+h,z))h++;
+            if(h>best){best=h;bx=x;bz=z;}
+        }
+        room=true;for(int k=0;k<head&&room;k++)room=!Solid(t,bx,feet+best+k,bz);
+        return best;
+    }
+    // 1.0.0 the ground goes on high (2.5 m or more over its feet) all along 1.5-4.5 m past its front: a hill or a pit's side (climbed), not a
+    // wall (a wall 1-2 blocks thick, even met at a slant, covers two of these points at most)
+    static bool HighBeyond(ComponentBody b,Vector3 dir) {
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;float half=Math.Max(b.BoxSize.X,b.BoxSize.Z)*.5f;
+        for(float d=1.5f;d<=4.6f;d+=1){var f=b.Position+dir*(half+d);int x=Terrain.ToCell(f.X),z=Terrain.ToCell(f.Z);if(t.GetChunkAtCell(x,z)==null||t.GetTopHeight(x,z)+1-b.Position.Y<2.5f)return false;}
+        return true;
     }
     // nothing solid just in front of it from its feet to 3 m up
     static bool Open(ComponentBody b,Vector3 dir) {

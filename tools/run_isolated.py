@@ -1,6 +1,6 @@
 """Run a test mod in an isolated copy of the Survivalcraft API runtime and wait for its result file.
 
-python tools/run_isolated.py lab  [--mode all|gallery|fire|perf|special|combat|mech] [--package dist/MechDefense-x.scmod] [--limit 1500]
+python tools/run_isolated.py lab  [--mode all|gallery|fire|perf|special|combat|mech] [--package dist/[API1.9]机甲防线x.scmod] [--limit 1500]
 python tools/run_isolated.py perf --package dist/MechDefense-0.3.1.scmod --label old
 python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.scmod --label migration   (old-save migration:
 python tools/run_isolated.py smoke --mode new --label migration                                           same runtime, both steps)
@@ -33,7 +33,7 @@ def main():
     ap.add_argument('--no-build', action='store_true')
     a = ap.parse_args(); project, result_name = TESTS[a.test]; source = SOURCES[a.source]
     info = json.loads((ROOT / 'Mod/modinfo.json').read_text(encoding='utf-8'))
-    package = Path(a.package) if a.package else ROOT / f"dist/MechDefense-{info['Version']}.scmod"
+    package = Path(a.package) if a.package else ROOT / f"dist/[API1.9]{info['Name']}{info['Version']}.scmod"   # 1.0.0 naming (tools/package.py)
     runtime = ROOT / f"local/runtime-{a.test}{'-' + a.label if a.label else ''}"; mods = runtime / 'Mods'; mods.mkdir(parents=True, exist_ok=True)
     for f in source.iterdir():
         if f.is_file() and f.suffix.lower() in ('.dll', '.exe', '.json', '.zip', '.js', '.xml'): shutil.copy2(f, runtime / f.name)

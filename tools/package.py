@@ -77,8 +77,10 @@ def content(p,n):
 data={n:content(p,n) for p,n in files}
 manifest=[dict(path=n,bytes=len(data[n]),sha256=hashlib.sha256(data[n]).hexdigest()) for p,n in files]
 out=root/'dist';out.mkdir(exist_ok=True)
-version=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
-package=out/f'MechDefense-{version}.scmod'
+info=json.loads((root/'Mod/modinfo.json').read_text(encoding='utf-8'));version=info['Version']
+# 1.0.0 (user, 2026-11-06, like the CS weapons mod): [API1.9]<mod name><version>.scmod, e.g. [API1.9]机甲防线1.0.0.scmod (0.18.4 and older:
+# MechDefense-<version>.scmod); the notes beside it are [API1.9]机甲防线<version>-说明.md
+package=out/f"[API1.9]{info['Name']}{version}.scmod"
 with zipfile.ZipFile(package,'w',zipfile.ZIP_DEFLATED) as z:
     for p,n in files:z.writestr(zipfile.ZipInfo.from_file(p,n),data[n],zipfile.ZIP_DEFLATED)
     z.writestr('asset-manifest.json',json.dumps(manifest,indent=2))

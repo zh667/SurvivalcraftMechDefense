@@ -6,7 +6,9 @@ namespace Game;
 
 public class MDModLoader : ModLoader {
     public override void __ModInitialize() {
-        new Harmony("local.mechdefense.sample").PatchAll();
+        new Harmony(MDSettings.Package).PatchAll();   // 1.0.0: the package name (0.18.4 and older: local.mechdefense.sample)
+        // 1.0.0 an old copy (0.18.4 or older, the old package name) still in the Mods folder loads as a second mod with the same types
+        if(ModsManager.ModListAll.Any(m=>m.modInfo?.PackageName==MDSettings.OldPackage&&!m.IsDisabled))Log.Error("[MechDefense] an old copy of this mod ("+MDSettings.OldPackage+", 0.18.4 or older) is also installed: delete the old file from the Mods folder");
         foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized"})ModsManager.RegisterHook(hook,this);
     }
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).

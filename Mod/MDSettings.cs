@@ -1,6 +1,7 @@
 using Engine;
 using System.Globalization;
 using System.Xml.Linq;
+using HarmonyLib;
 
 namespace Game;
 
@@ -50,7 +51,14 @@ public sealed class MDHudPlacement {
 // "模组设置" through one entry, like the CS weapons mod) and saved by MDModLoader into the game's ModSettings.xml
 // (ModLoader.SaveSettings / LoadSettings), so they hold for every world. The per-frame code reads these plain fields.
 public static class MDSettings {
-    public const string Package="local.mechdefense.sample",Element="MechDefenseSettings";
+    public const string Package="zh667.MechDefense",Element="MechDefenseSettings";
+    // 1.0.0 (user, 2026-11-06): the package was "local.mechdefense.sample" up to 0.18.4. ModSettings.xml keeps each mod's settings under
+    // its package name and the engine hands a mod only its own element, so the old settings would be lost: Migrate (after the engine
+    // loads the file, MDSettingsMigration) reads the old element when there is none under the new name and writes it back under the
+    // new one. Worlds list the package names they were played with (SubsystemUsedMods): MDOldPackageAlias answers the old name.
+    public const string OldPackage="local.mechdefense.sample";
+    public static bool MigrateEnabled=true;   // lab switch: false = what a plain rename does (no migration, no alias)
+    public static string Migrated="";         // what Migrate did (lab, log)
     public static bool HudShow=true,HudKeys=true;
     public static MDHudPlacement Hud=new();
     // robots: wild spawns by time of day, every SpawnInterval s, SpawnDensity x the group size and the number near a player;
@@ -121,6 +129,18 @@ public static class MDSettings {
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}
     }
+    // 1.0.0: settings saved by 0.18.4 or older under OldPackage, read once and written back under Package (the old element stays, for a
+    // downgrade); nothing to do when the new element exists or there is no old one
+    public static void Migrate() {
+        try {
+            var cache=ModSettingsManager.ModSettingsCache;
+            if(!MigrateEnabled){Migrated="off";return;}
+            if(cache.ContainsKey(Package)){Migrated="new key present";return;}
+            if(!cache.TryGetValue(OldPackage,out var old)||old?.Element(Element)==null){Migrated="no old settings";return;}
+            Load(old);Persist();Migrated=cache.ContainsKey(Package)?"migrated from "+OldPackage:"read from "+OldPackage+", not written: "+LastError;
+            Log.Information("[MechDefense] settings: "+Migrated);
+        } catch(Exception x){Migrated="failed: "+x.Message;Log.Warning("[MechDefense] settings migration: "+x.Message);}
+    }
     // writes ModSettings.xml now (the game also writes it when it closes)
     public static void Persist(){try{ModSettingsManager.SaveModSettings();}catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] saving settings: "+x.Message);}}
     // texts shared by the settings page and the docs
@@ -130,4 +150,19 @@ public static class MDSettings {
     public static string MedicText(float m)=>m<=0?"不限":$"每座 {m:0} 点";
     public static string GrowthText(int g)=>g<=0?"关闭":$"每阶段 +{g} %（每 7 天一个阶段，最多 +{g*MDGrowth.MaxStages} %）";
     public static string StartDayText(int day)=>day<=0?"开始天数：0（不刷新，野外和夜袭都没有）":$"开始天数：第 {day} 天（精英第 {day+7} 天）";
+}
+
+// 1.0.0 the old settings, right after the engine has read ModSettings.xml (before anything can save it with the defaults)
+[HarmonyPatch(typeof(ModSettingsManager),nameof(ModSettingsManager.LoadModSettings))]
+public static class MDSettingsMigration { public static void Postfix()=>MDSettings.Migrate(); }
+
+// 1.0.0 a world played with 0.18.4 or older lists this mod under its old package name: before it loads, the play screen looks each name
+// up (ModsManager.GetModEntity) and would warn that the mod is missing. The old name finds this mod. Saving the world writes the new name.
+[HarmonyPatch(typeof(ModsManager),nameof(ModsManager.GetModEntity))]
+public static class MDOldPackageAlias {
+    public static int Answered;   // lab
+    public static void Postfix(string packagename,ref ModEntity modEntity,ref bool __result) {
+        if(__result||packagename!=MDSettings.OldPackage||!MDSettings.MigrateEnabled)return;
+        if(ModsManager.ModList.Find(m=>m.modInfo?.PackageName==MDSettings.Package) is {} ours){modEntity=ours;__result=true;Answered++;}
+    }
 }

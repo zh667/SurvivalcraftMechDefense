@@ -3,7 +3,7 @@
 python tools/stage_tower_preview.py <id> <model.glb> <atlas.png> [<id> <model.glb> <atlas.png> ...] [--base PKG] [--out PATH]
 python tools/stage_tower_preview.py --poly <id>[,<id>...] [--base PKG] [--out PATH]
     (--poly takes E:/projects/endfield-turret-model/poly_v1/<id>/model.glb and atlas.png)
-  -> local/claude-work/preview/<id>/ (staged Towers folder per tower) and dist/MechDefense-<version>-preview-<id or poly>.scmod
+  -> local/claude-work/preview/<id>/ (staged Towers folder per tower) and dist/[API1.9]机甲防线<version>-preview-<id or poly>.scmod
 
 Never touches Mod/Assets. Per tower it stages towers.json (bounds and radius from the new model; cells unchanged), the model,
 the atlas, icon.bin (the dropped item: every triangle, unit size, the old icon's face shade) and icon.png (the slot picture,
@@ -70,10 +70,10 @@ def main():
     jobs = [(tid, POLY / tid / 'model.glb', POLY / tid / 'atlas.png') for tid in opts['--poly'].split(',')] if '--poly' in opts else \
         [(args[i], Path(args[i + 1]), Path(args[i + 2])) for i in range(0, len(args), 3)]
     assert jobs and all(len(j) == 3 for j in jobs), __doc__
-    version = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8'))['Version']
-    base = root / opts.get('--base', f'dist/MechDefense-{version}.scmod')
+    info = json.loads((root / 'Mod/modinfo.json').read_text(encoding='utf-8')); version = info['Version']; stem = f"[API1.9]{info['Name']}{version}"   # 1.0.0 naming (tools/package.py)
+    base = root / opts.get('--base', f'dist/{stem}.scmod')
     name = jobs[0][0] if len(jobs) == 1 else 'poly'
-    out = root / opts.get('--out', f'dist/MechDefense-{version}-preview-{name}.scmod')
+    out = root / opts.get('--out', f'dist/{stem}-preview-{name}.scmod')
     zi = zipfile.ZipFile(base); runtime = json.loads(zi.read('Assets/Towers/towers.json'))
     new = {}; entries = {}
     for tid, glb, atlas in jobs:

@@ -120,7 +120,7 @@ public static class MDNeorxnaCompatibility {
         try {
             var method=a.GetType("Neorxna.NUI.NUInfoPanelWidget",false)?.GetMethod("SetInfo_Entity",[typeof(Entity)]);
             if(method==null||installed)return installed;
-            new Harmony("local.mechdefense.neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
+            new Harmony(MDSettings.Package+".neorxna").Patch(method,postfix:new HarmonyMethod(typeof(MDNeorxnaCompatibility),nameof(AfterEntityInfo)));
             installed=true;Log.Information("[MechDefense] Neorxna info panel: names and status of towers and mechs");return true;
         } catch(Exception x){Log.Warning("[MechDefense] Neorxna patch: "+x.Message);return false;}
     }

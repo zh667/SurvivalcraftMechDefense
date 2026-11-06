@@ -16,7 +16,8 @@ SOURCES = {'1.9.3.1': SOURCE, '1.9.4': Path(r'D:\下载\[Windows]SurvivalcraftAP
 # The user's Neorxna info mod (exercises the optional compatibility patch). Builds for API 1.9.4 do not run on this 1.9.3.1
 # runtime (2026-10-11: v1.4.3 throws MissingMethodException at start and the lab never reaches the main menu).
 NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods'), Path(r'D:\下载')]   # 0.15.0: the 1.9.4 build the user plays with (Neorxna-v1.4.3) is in D:\下载
-TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json'), 'smoke': ('RuntimeSmoke', 'smoke-result.json')}
+TESTS = {'lab': ('TowerLab', 'lab-result.json'), 'perf': ('PerfCompare', 'perf-result.json'), 'smoke': ('RuntimeSmoke', 'smoke-result.json'),
+         'uninstall': ('Uninstall', 'uninstall-result.json')}   # 1.0.0: uninstall / reinstall (Tests/Uninstall; --package none = the mod removed)
 # lab --mode combat: the user's ghoul mod and Wonderful Era (pirates; with the two mods it depends on), copied into the
 # isolated runtime only.
 COMBAT_MODS = [SOURCE / 'Mods' / '[API1.9.2.1]Ghoul尸鬼-v2.0.scmod', Path(r'D:\下载\[API1.9.3]美好时代V1.9.3a.scmod'),
@@ -31,6 +32,8 @@ def main():
     ap.add_argument('--source', choices=SOURCES, default='1.9.3.1')
     # --no-build: use the test DLL already built (a batch builds once, then runs several isolated runtimes at the same time)
     ap.add_argument('--no-build', action='store_true')
+    # --extra-blocks (uninstall test): also install Tests/LabBlocks, a small mod with three blocks of its own (another mod's new blocks)
+    ap.add_argument('--extra-blocks', action='store_true')
     a = ap.parse_args(); project, result_name = TESTS[a.test]; source = SOURCES[a.source]
     info = json.loads((ROOT / 'Mod/modinfo.json').read_text(encoding='utf-8'))
     package = Path(a.package) if a.package else ROOT / f"dist/[API1.9]{info['Name']}{info['Version']}.scmod"   # 1.0.0 naming (tools/package.py)
@@ -40,10 +43,14 @@ def main():
     if (source / 'runtimes').exists(): shutil.copytree(source / 'runtimes', runtime / 'runtimes', dirs_exist_ok=True)
     print('runtime source:', source)
     if not a.no_build:
+        if a.extra_blocks:
+            p = subprocess.run(['dotnet', 'build', str(ROOT / 'Tests/LabBlocks/LabBlocks.csproj'), '-c', 'Release', '--nologo', '-v', 'q'], capture_output=True, text=True, encoding='utf-8', errors='replace')
+            if p.returncode: print(p.stdout[-3000:]); sys.exit('LabBlocks build failed')
         p = subprocess.run(['dotnet', 'build', str(ROOT / f'Tests/{project}/{project}.csproj'), '-c', 'Release', '--nologo', '-v', 'q'], capture_output=True, text=True, encoding='utf-8', errors='replace')
         if p.returncode: print(p.stdout[-3000:]); sys.exit('test build failed')
     for f in mods.iterdir(): f.unlink()
-    shutil.copy2(ROOT / package if not package.is_absolute() else package, mods / 'MechDefense.scmod')
+    removed = a.package == 'none'   # the mod uninstalled (test uninstall)
+    if not removed: shutil.copy2(ROOT / package if not package.is_absolute() else package, mods / 'MechDefense.scmod')
     if a.test == 'lab':
         found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if ('[API1.9.4' in f.name) == (a.source == '1.9.4')]
         if found: shutil.copy2(found[0], mods / 'Neorxna.scmod')
@@ -56,15 +63,21 @@ def main():
             for m in COMBAT_MODS:
                 if m.exists(): shutil.copy2(m, mods / m.name)
                 print('combat mod:', m.name, 'copied' if m.exists() else 'MISSING')
-    with zipfile.ZipFile(mods / 'MechDefense.scmod') as z:   # the lab depends on the package under test (an older one too)
-        tested = json.loads(z.read('modinfo.json').decode('utf-8-sig'))
+    if not removed:
+        with zipfile.ZipFile(mods / 'MechDefense.scmod') as z:   # the lab depends on the package under test (an older one too)
+            tested = json.loads(z.read('modinfo.json').decode('utf-8-sig'))
     deps = {tested['PackageName']: tested['Version']} if a.test == 'lab' else {}
     with zipfile.ZipFile(mods / f'{project}.scmod', 'w') as z:
         z.write(ROOT / f'Tests/{project}/bin/Release/net10.0/{project}.dll', f'{project}.dll')
         z.writestr('modinfo.json', json.dumps(dict(Name=project, Version='1.0.0', ApiVersion='1.9.3.1', ScVersion='2.4', PackageName='local.' + project.lower(),
                                                    Author='Tests', Description='Isolated tests only', LoadOrder=1300, Dependencies=deps)))
-    (runtime / ('smoke-mode.txt' if a.test == 'smoke' else 'lab-mode.txt')).write_text(a.mode, encoding='ascii')
-    if a.test == 'smoke' and a.mode == 'old':   # a fresh old world (worlds live in <runtime>/doc/Worlds, inside local/)
+    if a.extra_blocks:
+        with zipfile.ZipFile(mods / 'LabBlocks.scmod', 'w') as z:
+            z.write(ROOT / 'Tests/LabBlocks/bin/Release/net10.0/LabBlocks.dll', 'LabBlocks.dll')
+            z.writestr('modinfo.json', json.dumps(dict(Name='LabBlocks', Version='1.0.0', ApiVersion='1.9.3.1', ScVersion='2.4', PackageName='local.labblocks',
+                                                       Author='Tests', Description='Isolated tests only: three plain blocks', LoadOrder=1200, Dependencies={})))
+    (runtime / {'smoke': 'smoke-mode.txt', 'uninstall': 'uninstall-mode.txt'}.get(a.test, 'lab-mode.txt')).write_text(a.mode, encoding='ascii')
+    if a.test in ('smoke', 'uninstall') and a.mode in ('old', 'pkg-old', 'u-old'):   # a fresh old world (worlds live in <runtime>/doc/Worlds, inside local/)
         worlds = runtime / 'doc' / 'Worlds'; assert ROOT / 'local' in worlds.parents
         if worlds.exists(): shutil.rmtree(worlds)
     res = runtime / result_name

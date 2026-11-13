@@ -152,6 +152,7 @@ public partial class Lab {
             IEnumerable<bool> Look(Vector3 at,int frames=4){foreach(var x in Hold(eyeC,at,frames))yield return x;}
             void Step(string what)=>steps.Add($"{what}: all {MDTowerTools.ShowAll}, shown {MDTowerTools.Shown.Count}, rings {MDTowerWorld.RingsDrawn}, fills {MDTowerWorld.FillsDrawn}, bars {MDTowerWorld.TowerBarsDrawn} ({MDTowerTools.LastText})");
             MDTowerTools.Shown.Clear();MDTowerTools.ShowAll=false;
+            typeof(MDTowerTools).GetField("CoreToggleEnabled")?.SetValue(null,true);   // 1.0.1: the core's click opens its store; this part checks the 0.18.0 toggle
             foreach(var x in ClickCore())yield return x;bool viaGame=MDTowerTools.CoreToggles>t0;
             if(!viaGame){MDTowerTools.ToggleAll(pl);steps.Add("the injected right-click did not reach the hook; ToggleAll called directly");}   // fall back, and say so
             foreach(var x in Look(C0,4))yield return x;Step("core clicked");int allN=MDTowerTools.Shown.Count,bars=MDTowerWorld.TowerBarsDrawn;bool allOn=MDTowerTools.ShowAll;
@@ -160,7 +161,7 @@ public partial class Lab {
             foreach(var x in Look(near[0].Body.Position+Vector3.UnitY*1.2f,3))yield return x;Step("Z on the gun tower");bool zHid=!MDTowerTools.Shown.Contains(near[0])&&!MDTowerTools.ShowAll&&MDTowerTools.Shown.Count==allN-1;
             int t1=MDTowerTools.CoreToggles;foreach(var x in ClickCore())yield return x;if(MDTowerTools.CoreToggles==t1)MDTowerTools.ToggleAll(pl);Step("core clicked again");bool back=MDTowerTools.ShowAll&&MDTowerTools.Shown.Count==allN;
             t1=MDTowerTools.CoreToggles;foreach(var x in ClickCore())yield return x;if(MDTowerTools.CoreToggles==t1)MDTowerTools.ToggleAll(pl);foreach(var x in Look(C0,3))yield return x;Step("core clicked once more");bool none=!MDTowerTools.ShowAll&&MDTowerTools.Shown.Count==0&&MDTowerWorld.RingsDrawn==0&&MDTowerWorld.TowerBarsDrawn==0;
-            cr["toggle"]=steps;cr["toggleViaGame"]=viaGame;
+            cr["toggle"]=steps;cr["toggleViaGame"]=viaGame;typeof(MDTowerTools).GetField("CoreToggleEnabled")?.SetValue(null,false);
             if(!allOn||allN!=near.Count+1||bars<1||!zHid||!back||!none)bad.Add("core: toggle "+string.Join(" | ",steps));
             // destroyed: the blast, the towers within 30 m offline, the far one firing on; terrain untouched with the setting off
             var dNear=Dummy(near[0].Body.Position+new Vector3(-7,0,0));var dFar=Dummy(far.Body.Position+new Vector3(-7,0,0));keep.Add(dNear.Entity);keep.Add(dFar.Entity);

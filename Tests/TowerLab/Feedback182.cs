@@ -70,6 +70,7 @@ public partial class Lab {
         bool Part(string p)=>mode=="fb182"||mode=="fb182-"+p;
         var proj=GameManager.Project;var pl=player.ComponentPlayer;var w=MDTowerWorld.For(proj);var terrain=proj.FindSubsystem<SubsystemTerrain>(true);
         var particles=proj.FindSubsystem<SubsystemParticles>(true);
+        typeof(MDSettings).GetField("RangeTerrain")?.SetValue(null,true);   // 1.0.1: rings are level by default; this mode checks 0.18.2's ring on the ground
         void ClearAll(){foreach(var e in proj.Entities.Where(e=>e.FindComponent<ComponentCreature>()!=null&&e.FindComponent<ComponentPlayer>()==null).ToList())proj.RemoveEntity(e,true);dums.Clear();}
         IEnumerable<bool> Seconds(double s,Action each=null){for(double s0=Time.RealTime;Time.RealTime-s0<s;){each?.Invoke();yield return true;}}
         var C0=Home;int X0=(int)MathF.Floor(C0.X),Z0=(int)MathF.Floor(C0.Z);

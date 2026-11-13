@@ -22,9 +22,9 @@ namespace TowerLab;
 //         攻击范围贴合地形 on folded on the ground (joins), as 0.18.2.
 // click   an empty-hand right-click on a tower picks it up (MDTowerTools.Moving), the same click does not put it down, a left-click on
 //         the ground 6 m off does; with an item in the hand the right-click does not pick it up.
-// shield  the core's shield: two towers in a chain against the core's face (one corner to corner, one far off): both hand all over 1 % to
-//         the store, the dome reaches the far one; a robot's hit on a member or the player inside takes the store, one outside hurts that
-//         tower; a member moved off gets its share back; the core destroyed leaves the other at 1 % and off line.
+// shield  the core's shield: three towers within its 30 m (one against it, one 8 m off, one 25 m off) and one 40 m off: the three hand all
+//         over 1 % to the store, the dome is 30 m; a robot's hit on a member or the player inside takes the store, one outside hurts that
+//         tower; a member moved out of range gets its share back; the core destroyed leaves the others at 1 % and off line.
 // core    items 3-4 m from the core (scrap, dirt) go into its store within 3 s, experience and items 25 m off stay; a right-click on the
 //         core opens the store panel; the store saved and read back is the same; the core taken down drops what it held.
 public partial class Lab {
@@ -256,21 +256,20 @@ public partial class Lab {
                 foreach(var x in Seconds(.6))yield return x;
                 var cb=core.Body.BoundingBox;float cw=cb.Max.X-cb.Min.X+.1f;
                 var probe=Place(gd,C0+new Vector3(0,0,-20),0);foreach(var x in Seconds(.3))yield return x;float tw=probe.Body.BoxSize.X+.1f,td=probe.Body.BoxSize.Z+.1f;Remove([probe]);
-                // t1 against the core's +x face, t2 against t1's, t3 corner to corner with t2 (not a member), t4 far off
+                // t1 against the core, t2 8 m off, t3 25 m off (all three within the 30 m), t4 40 m off
                 var cx=(cb.Min.X+cb.Max.X)*.5f;var cz=(cb.Min.Z+cb.Max.Z)*.5f;
-                var t1=Place(gd,new Vector3(cx+cw*.5f+tw*.5f,70,cz),0);var t2=Place(gd,new Vector3(cx+cw*.5f+tw*1.5f,70,cz),0);
-                var t3=Place(gd,new Vector3(cx+cw*.5f+tw*2.5f,70,cz+td),0);var t4=Place(gd,new Vector3(cx,70,cz+40),0);
+                var t1=Place(gd,new Vector3(cx+cw*.5f+tw*.5f,70,cz),0);var t2=Place(gd,new Vector3(cx-8,70,cz),0);
+                var t3=Place(gd,new Vector3(cx,70,cz-25),0);var t4=Place(gd,new Vector3(cx,70,cz+40),0);
                 t1.SetHitpoints(.8f);t2.SetHitpoints(.5f);t3.SetHitpoints(1);t4.SetHitpoints(1);   // in the same frame: the shield's next look finds them so (a first run set them 0.3 s late, after it had taken 99 % of each)
                 float hp=gd.hp;foreach(var x in Seconds(1.6))yield return x;
                 float F(ComponentMDUnit u,string n)=>(float)typeof(ComponentMDUnit).GetField(n).GetValue(u);
                 int Members()=>(int)shieldType.GetMethod("MemberCount").Invoke(null,[proj]);
                 int members=Members();float radius=(float)shieldType.GetMethod("Radius").Invoke(null,[proj]);
-                float pts=F(core,"ShieldPoints"),want=(.79f+.49f)*hp;
-                h["joined"]=$"members {members}, radius {radius:0.0}, store {pts:0} (wanted {want:0}), hp t1 {t1.Damage.Hitpoints:0.000} t2 {t2.Damage.Hitpoints:0.000} t3 {t3.Damage.Hitpoints:0.000}";
-                if(members!=2)bad.Add("shield: "+h["joined"]);
-                if(MathF.Abs(pts-want)>2||MathF.Abs(t1.Damage.Hitpoints-.01f)>1e-3f||MathF.Abs(t2.Damage.Hitpoints-.01f)>1e-3f||t3.Damage.Hitpoints<.999f)bad.Add("shield: handed over "+h["joined"]);
-                float far=Vector2.Distance(new(t2.Body.BoundingBox.Max.X,t2.Body.BoundingBox.Max.Z),new(core.Body.Position.X,core.Body.Position.Z));if(radius<far)bad.Add($"shield: radius {radius:0.0} short of t2's far corner {far:0.0}");
-                foreach(var x in Seconds(.6,()=>Cam(C0+new Vector3(-10,9,-16),C0+new Vector3(3,2,0))))yield return x;Shot("f101_shield_dome");yield return true;
+                float pts=F(core,"ShieldPoints"),want=(.79f+.49f+.99f)*hp;
+                h["joined"]=$"members {members}, radius {radius:0.0}, store {pts:0} (wanted {want:0}), hp t1 {t1.Damage.Hitpoints:0.000} t2 {t2.Damage.Hitpoints:0.000} t3 {t3.Damage.Hitpoints:0.000} t4 {t4.Damage.Hitpoints:0.000}";
+                if(members!=3||MathF.Abs(radius-30)>.01f)bad.Add("shield: "+h["joined"]);
+                if(MathF.Abs(pts-want)>2||MathF.Abs(t1.Damage.Hitpoints-.01f)>1e-3f||MathF.Abs(t2.Damage.Hitpoints-.01f)>1e-3f||MathF.Abs(t3.Damage.Hitpoints-.01f)>1e-3f||t4.Damage.Hitpoints<.999f)bad.Add("shield: handed over "+h["joined"]);
+                foreach(var x in Seconds(.6,()=>Cam(C0+new Vector3(-30,28,-46),C0)))yield return x;Shot("f101_shield_dome");yield return true;
                 var rb=Robot("MDRobot05",C0+new Vector3(-30,0,0));rb.ForceClip="idle";var k=rb.Kind;
                 float before=F(core,"ShieldPoints");MDRobots.Hit(rb.Entity,t1.Body,k,1,t1.Body.Position+Vector3.UnitY,Vector3.UnitX);float after=F(core,"ShieldPoints");
                 h["hitMember"]=$"store {before:0} -> {after:0}, t1 {t1.Damage.Hitpoints:0.000}";if(after>=before||t1.Damage.Hitpoints<.0099f)bad.Add("shield: a hit on a member "+h["hitMember"]);
@@ -280,8 +279,8 @@ public partial class Lab {
                 float t4before=t4.Damage.Hitpoints;MDRobots.Hit(rb.Entity,t4.Body,k,1,t4.Body.Position+Vector3.UnitY,Vector3.UnitX);
                 h["hitOutside"]=$"t4 {t4before:0.000} -> {t4.Damage.Hitpoints:0.000}";if(t4.Damage.Hitpoints>=t4before)bad.Add("shield: a tower outside took no damage "+h["hitOutside"]);
                 // t2 moved off the chain: its share back
-                float share=F(core,"ShieldPoints")/(F(t1,"ShieldPooled")+F(t2,"ShieldPooled"));float back=F(t2,"ShieldPooled")*share/hp;
-                t2.Entity.FindComponent<ComponentMDTowerBody>(true).FixAt(C0+new Vector3(-14,0,14),Quaternion.Identity);foreach(var x in Seconds(1.2))yield return x;
+                float share=F(core,"ShieldPoints")/(F(t1,"ShieldPooled")+F(t2,"ShieldPooled")+F(t3,"ShieldPooled"));float back=F(t2,"ShieldPooled")*share/hp;
+                t2.Entity.FindComponent<ComponentMDTowerBody>(true).FixAt(C0+new Vector3(-36,0,0),Quaternion.Identity);foreach(var x in Seconds(1.2))yield return x;
                 h["left"]=$"t2 {t2.Damage.Hitpoints:0.000} (wanted {.01f+back:0.000}), members {Members()}";
                 if(MathF.Abs(t2.Damage.Hitpoints-(.01f+back))>.01f)bad.Add("shield: left "+h["left"]);
                 // the core destroyed: t1 stays at 1 % and goes off line

@@ -6,19 +6,21 @@ namespace Game;
 
 // 1.0.0 (second batch, user 2026-11-13: "防线核心增加一个防御罩功能，可以保护范围内的炮台和主角，受到攻击会消耗防御核心的耐久。防御罩半径动态覆盖到
 // 与防线核心四个面直接相连的炮台中最长的位置。炮台与防线核心直接相连后，会增加防御核心的耐久，但自身耐久下降到1%"; the rules asked back and
-// answered: a chain of towers counts and the radius is the farthest one's; a tower that leaves gets its durability back; the shield
+// answered: first a chain of towers with the radius of the farthest one, then a fixed range (below); a tower that leaves gets its durability back; the shield
 // covers the towers and the players in it; when it is gone nothing more is destroyed, the core's loss takes the towers off line as before):
-// - Members: the towers touching the live core face to face (footprints side by side, not corner to corner), and the towers touching a
-//   member the same way, found again every Every s. A member hands what it has over 1 % (Keep) to the core's shield store (Points),
-//   then stays at 1 %; repaired or healed later, the extra goes over too. Pooled: what each has handed over.
-// - The shield: a dome round the core out to the farthest member's farthest corner (+Margin), at least MinRadius. A robot's hit
+// - Members: every tower within Range m of the live core (horizontally), found again every Every s (user, 2026-11-13, after the first
+//   cut: "这个应该是防线核心的范围内……面贴面、一座挨一座连上的炮塔，我都不知道怎么做，而且太麻烦，一个范围可以"; it took towers touching
+//   the core face to face and chains of them). Range = MDThreat.DownRadius, the core's defence that goes off line with it. A member
+//   hands what it has over 1 % (Keep) to the core's shield store (Points), then stays at 1 %; repaired or healed later, the extra goes
+//   over too. Pooled: what each has handed over.
+// - The shield: a dome of Range m round the core. A robot's hit
 //   (MDRobots.Hit) on a tower, a mech or a player inside it takes Points first, then the core's own durability. The core destroyed:
 //   the store is gone, the members stay at 1 % and go off line with the towers round the core (MDThreat.CoreDestroyed).
-// - A member that leaves (moved or taken off the chain, the core taken down or put out, the setting off) gets back its share of what
+// - A member that leaves (moved out of range, taken down, the core taken down or put out, the setting off) gets back its share of what
 //   is left: Pooled x Points / (all Pooled). One destroyed takes its share with it.
 // - Setting 防线核心防御罩 (MDSettings.CoreShield), on by default. Saved: the core's ShieldPoints, each member's ShieldPooled.
 public static class MDShield {
-    public const float Keep=.01f,Every=.5f,Margin=1,MinRadius=4,Touch=.2f,FlashTime=.35f;
+    public const float Keep=.01f,Every=.5f,Range=MDThreat.DownRadius,FlashTime=.35f;
     public static int Absorbed; public static float AbsorbedPoints;   // tests
     sealed class State { public ComponentMDUnit Core; public readonly HashSet<ComponentMDUnit> Members=[]; public float Radius; public double Next,FlashUntil; public Vector3 FlashAt; }
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Project,State> states=new();
@@ -37,21 +39,12 @@ public static class MDShield {
         if(s.Core!=null&&s.Core!=core){Release(s,s.Core.Entity.IsAddedToProject&&!s.Core.Destroyed);}   // another core, or this one gone
         if(core==null||!MDSettings.CoreShield||core.Destroyed){if(s.Core!=null)Release(s,true);s.Core=null;return;}
         s.Core=core;if(now<s.Next&&s.Next-now<=Every)return;s.Next=now+Every;
-        // the chain from the core
-        var towers=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u?.Tower!=null&&u!=core&&!u.Destroyed&&u.Tower.attack.type!="core"&&u!=MDTowerTools.Moving&&Vector3.DistanceSquared(u.Body.Position,core.Body.Position)<200*200).ToList();
-        var chain=new HashSet<ComponentMDUnit>();var front=new Queue<ComponentMDUnit>();front.Enqueue(core);
-        while(front.Count>0){var a=front.Dequeue();foreach(var t in towers)if(!chain.Contains(t)&&Touching(a,t)){chain.Add(t);front.Enqueue(t);}}
-        foreach(var u in s.Members.Where(u=>!chain.Contains(u)).ToList())Leave(s,u,u.Entity.IsAddedToProject&&!u.Destroyed);
-        foreach(var u in chain){s.Members.Add(u);Hand(s,u);}
-        float r=MinRadius;var c=core.Body.Position;
-        foreach(var u in s.Members){var b=u.Body.BoundingBox;foreach(var x in new[]{b.Min.X,b.Max.X})foreach(var z in new[]{b.Min.Z,b.Max.Z})r=Math.Max(r,Vector2.Distance(new(x,z),new(c.X,c.Z))+Margin);}
-        s.Radius=r;
-    }
-    // face to face: the footprints overlap along one side (not only at a corner) and meet across the other, at about the same height
-    static bool Touching(ComponentMDUnit a,ComponentMDUnit b) {
-        var p=a.Body.BoundingBox;var q=b.Body.BoundingBox;if(MathF.Abs(p.Min.Y-q.Min.Y)>1.5f)return false;
-        float ox=MathF.Min(p.Max.X,q.Max.X)-MathF.Max(p.Min.X,q.Min.X),oz=MathF.Min(p.Max.Z,q.Max.Z)-MathF.Max(p.Min.Z,q.Min.Z);
-        return ox>.3f&&oz>-Touch||oz>.3f&&ox>-Touch;
+        // the towers in range (not one being carried: it joins again where it is put down)
+        var c=core.Body.Position;
+        var inRange=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u?.Tower!=null&&u!=core&&!u.Destroyed&&u.Tower.attack.type!="core"&&u!=MDTowerTools.Moving&&Vector2.Distance(new(u.Body.Position.X,u.Body.Position.Z),new(c.X,c.Z))<=Range).ToHashSet();
+        foreach(var u in s.Members.Where(u=>!inRange.Contains(u)).ToList())Leave(s,u,u.Entity.IsAddedToProject&&!u.Destroyed);
+        foreach(var u in inRange){s.Members.Add(u);Hand(s,u);}
+        s.Radius=Range;
     }
     // a member's durability over Keep goes to the store
     static void Hand(State s,ComponentMDUnit u) {
@@ -98,7 +91,7 @@ public static class MDShield {
     }
     public static string Line(ComponentMDUnit core) {
         var s=For(core.Project);if(s.Core!=core||!MDSettings.CoreShield)return "";
-        return $"\n防御罩：{core.ShieldPoints:0} 点 + 核心 {core.Damage.Hitpoints*Points(core):0} 点，连接 {s.Members.Count} 座，半径 {s.Radius:0} 米";
+        return $"\n防御罩：{core.ShieldPoints:0} 点 + 核心 {core.Damage.Hitpoints*Points(core):0} 点，罩内 {s.Members.Count} 座炮塔，半径 {s.Radius:0} 米";
     }
     // the dome: three rings and eight arcs, brighter for a moment after a hit (MDTowerWorld.DrawShield)
     public static bool Dome(Project p,out Vector3 centre,out float radius,out float flash) {

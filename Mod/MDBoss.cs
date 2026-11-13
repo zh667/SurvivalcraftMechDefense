@@ -84,9 +84,11 @@ public abstract class MDBossState {
         _=>"脚下光环的颜色是它当前的弱点：白色冲击、橙色爆炸、蓝色能量。"};
 
     float dig,sinkCheck; bool sunk; Vector3 walkVelocity; protected float Dt;
+    // 1.0.0 (11-13) hard blocks in its way (MDBoss.ClearBlocks): how long it has been held up by them, the grinding of each, the tower footings near it
+    public float HardStuck; public readonly Dictionary<Point3,float> Grind=[]; internal Vector3 hardMark; internal double footingsAt=-1; internal readonly HashSet<Point3> Footings=[];
     public void Update(float dt) {
         var w=MDTowerWorld.For(P);Dt=dt;
-        dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(r.Body,sunk&&r.Creature.ComponentLocomotion.FlySpeed<=0);}   // 0.18.0 sunk: it climbs out, not on through the hill
+        dig-=dt;if(dig<=0){dig=.25f;MDBoss.BlocksCleared+=MDBoss.ClearBlocks(r.Body,sunk&&r.Creature.ComponentLocomotion.FlySpeed<=0,this);}   // 0.18.0 sunk: it climbs out, not on through the hill
         foreach(var (bit,at) in new[]{(1,.7f),(2,.35f)})if((Escorts&bit)==0&&r.Health.Health<at){Escorts|=bit;MDBoss.Escort(r,EscortSize);}
         if(Exposed>0){Exposed-=dt;if(Exposed<=0&&LayersLeft>0)MDBoss.Announce(P,r.Body.Position,$"{Name}换上了下一层装甲。",new Color(255,170,120));}
         poiseIdle+=dt;if(poiseIdle>PoiseIdle)Poise=Math.Max(0,Poise-PoiseDecay*dt);towerPoiseLeft=Math.Min(TowerPoiseRate,towerPoiseLeft+TowerPoiseRate*dt);if(PoiseLockLeft>0)PoiseLockLeft-=dt;if(Unbalanced>0)Unbalanced-=dt;   // 0.16.0 poise
@@ -134,6 +136,8 @@ public abstract class MDBossState {
     // the wanted velocity in its own frame (x right, y forward) over WalkSpeed. The vanilla pilot adds its own orders on top
     // (an idle flyer sinks at -0.5): both are set again right before locomotion runs (MDBossOrders).
     public Vector3? Wanted; public Vector2? WalkWanted;
+    // 1.0.0 (11-13) it is trying to get somewhere (last frame's orders: MDBoss.ClearBlocks runs before this frame's): only then is it held up by hard blocks
+    public bool WantsToMove=>WalkWanted.HasValue&&walkVelocity.LengthSquared()>.25f||Wanted is {} f&&f.LengthSquared()>.04f;
     protected void Fly(Vector3 velocity){var l=r.Creature.ComponentLocomotion;Wanted=l.FlySpeed>0?velocity/l.FlySpeed:Vector3.Zero;l.FlyOrder=Wanted;}
     protected void Walk(Vector3 velocity) {
         walkVelocity=velocity;var l=r.Creature.ComponentLocomotion;if(l.WalkSpeed<=0)return;var m=r.Body.Matrix;
@@ -671,7 +675,7 @@ public sealed class MDSiegeState:MDBossState {
     public const float DeployTime=4,StowTime=2,UpTime=16,DownTime=3,MaxDrive=12,MainTell=3,MainBreak=.03f,Close=12,Crowd=10,StowedFactor=.3f,RearFactor=1.5f,FrontFactor=.7f;
     public string Phase="stowed"; float phaseT=DownTime-1,t,howitzer=3,main=5,missiles=4,charged,deathT,crowded,dust;string move="";ComponentBody lockOn;readonly object mainKey=new();
     public Vector3? Spot;                // where it drives to while sunk in its base
-    public int Interrupts,MainShots,Moves2,Evades,BlockedMoves;   // lab: interrupted charges, main gun shots, drives, early sinks with a player close, moves because nothing was in reach
+    public int Interrupts,MainShots,Moves2,Evades,BlockedMoves,DriveHard;   // DriveHard (1.0.0 (11-13)): hard cells on the last drive picked   // lab: interrupted charges, main gun shots, drives, early sinks with a player close, moves because nothing was in reach
     public const float BlockedMove=3; float blockCheck,blockedFor; int heldMark;
     // 0.18.0 the main gun's line or a howitzer's arc reaches b from here
     bool MainLine(ComponentBody b)=>!ComponentMDRobot.SmartEnabled?r.Sight(r.Eye,b):r.Sight(r.Point("main",out _),b);
@@ -744,10 +748,16 @@ public sealed class MDSiegeState:MDBossState {
         bool Dry(Vector3 q){int x=Terrain.ToCell(q.X),z=Terrain.ToCell(q.Z);return t.GetChunkAtCell(x,z)!=null&&BlocksManager.Blocks[Terrain.ExtractContents(t.GetCellValueFast(x,t.GetTopHeight(x,z),z))] is not FluidBlock;}
         // the wanted side first, then the other, a few turns and distances each (two tries alone often both fell in a lake or the
         // sea and it never moved: lab bosses14 1.9.3.1, 10-30); nothing dry or loaded: it rises where it is
+        // 1.0.0 (11-13) of those, the first with no hard block or tower footing on the straight drive there (MDBoss.HardOnWay), else the one with fewest
+        Vector3? best=null;int bestHard=int.MaxValue;float half=body.BoxSize.X*.5f+.5f;
         foreach(float s in new[]{side,-side})foreach(float tn in new[]{turn,.5f,.9f,.3f,1.2f})foreach(float dd in new[]{d,30,40}) {
             var p=At(s,tn,dd);if(!Dry(p))continue;
-            p.Y=GroundY(p);Spot=p;Moves2++;Count("drive");return;
+            p.Y=GroundY(p);int h=MDBoss.HardOnWay(body,this,body.Position,p,half,.3f,body.BoxSize.Y);
+            if(h<bestHard){best=p;bestHard=h;}
+            if(h==0)goto picked;
         }
+        picked:
+        if(best is {} q){Spot=q;DriveHard=bestHard;Moves2++;Count("drive");}
     }
     // sunk in its base it drives to the spot (blocks in the way give way, MDBoss.ClearBlocks), facing where it goes
     void Drive(float dt,MDTowerWorld w) {
@@ -787,8 +797,31 @@ public static class MDBoss {
     public static int BlocksCleared;   // tests
     // 0.18.0 keepStep (a walking boss sunk under the ground round it, MDUnstuck.Sunk): the blocks outside its own box in its lowest 1.8 m
     // stay, so it meets the side of the pit or the hill and climbs it (MDUnstuck) instead of clearing a level trench on through it
-    public static int ClearBlocks(ComponentBody b,bool keepStep=false) {
+    // 1.0.0 (11-13) (user, 2026-11-13: "装甲炮车现在成为拆家狂魔了，直接就把炮台下面的方块全清掉了！希望对于挖掘抗性大于10的方块不可直接破坏，尽量选择
+    // 绕路或者跳跃，如果实在无法出去，也是需要一定时间才能破坏高挖掘抗性的方块"): a block whose dig resilience is above HardDig (stone,
+    // granite, cobblestone, bricks, ores, iron and copper blocks: 34 of the game's 164 blocks; dirt 1.5, sand 1.5, wood 5, marble 10 still
+    // give way) and the two cells under a tower of this mod (its footing, whatever it is made of) are not cleared at once. Held up by
+    // them (it moved under HardProgress m in HardWatch s with such blocks in its way) for HardWait s, it grinds through them: each goes
+    // after GrindTime(resilience) s of grinding (granite 4.2 s, iron block 7.2 s, a footing at least 3 s), with sparks and dust. Moving on
+    // clears the grinding. RD19 picks a drive with none in the way (MDSiegeState.PickSpot); the walkers climb (MDUnstuck).
+    public const float HardDig=10,HardWait=4,HardProgress=.5f,GrindPerResilience=.3f,FootingRange=30;
+    public static bool HardEnabled=true;   // lab switch: false = 1.0.0 as released on 11-07 (every collidable block but bedrock gives way at once)
+    public static int HardKept,HardGround;   // tests: hard cells left in a pass, hard cells ground through
+    public static float GrindTime(float resilience)=>GrindPerResilience*Math.Max(resilience,HardDig);
+    public static bool Hard(Block block,int value)=>block.GetDigResilience(value)>HardDig;
+    // the tower footings within FootingRange m (refreshed every second)
+    static void Footings(MDBossState s,ComponentBody b) {
+        double now=b.Project.FindSubsystem<SubsystemTime>(true).GameTime;if(now-s.footingsAt<1&&now>=s.footingsAt)return;
+        s.footingsAt=now;s.Footings.Clear();
+        foreach(var e in b.Project.Entities) {
+            if(e.FindComponent<ComponentMDUnit>() is not {Tower:not null,Destroyed:false} u||Vector3.DistanceSquared(u.Body.Position,b.Position)>FootingRange*FootingRange)continue;
+            var ub=u.Body.BoundingBox;int y=(int)MathF.Floor(ub.Min.Y-.05f);
+            for(int x=(int)MathF.Floor(ub.Min.X+.05f);x<=(int)MathF.Floor(ub.Max.X-.05f);x++)for(int z=(int)MathF.Floor(ub.Min.Z+.05f);z<=(int)MathF.Floor(ub.Max.Z-.05f);z++){s.Footings.Add(new Point3(x,y,z));s.Footings.Add(new Point3(x,y-1,z));}
+        }
+    }
+    public static int ClearBlocks(ComponentBody b,bool keepStep=false,MDBossState s=null) {
         var t=b.Project.FindSubsystem<SubsystemTerrain>(true);var box=b.BoundingBox;var v=b.Velocity;
+        bool hardRule=HardEnabled&&s!=null;if(hardRule)Footings(s,b);var hard=hardRule?new List<(Point3 c,float res)>():null;
         var min=new Vector3(box.Min.X-.5f,box.Min.Y+.3f,box.Min.Z-.5f);var max=new Vector3(box.Max.X+.5f,box.Max.Y+.6f,box.Max.Z+.5f);
         v.Y=Math.Max(v.Y,0);   // ahead never reaches below its feet: coming down onto a mech it dug a pit there (lab robots-escorts, 10-30)
         if(v.LengthSquared()>.25f){var ahead=Vector3.Normalize(v)*1.5f;min=Vector3.Min(min,min+ahead);max=Vector3.Max(max,max+ahead);}
@@ -799,7 +832,41 @@ public static class MDBoss {
                 int value=t.Terrain.GetCellValueFast(x,y,z);var block=BlocksManager.Blocks[Terrain.ExtractContents(value)];
                 if(block is BedrockBlock||!block.IsCollidable_(value))continue;
                 if(keepStep&&y<box.Min.Y+1.8f&&(x+1<=box.Min.X||x>=box.Max.X||z+1<=box.Min.Z||z>=box.Max.Z))continue;
+                if(hardRule){var c=new Point3(x,y,z);bool footing=s.Footings.Contains(c);if(footing||Hard(block,value)){hard.Add((c,footing?Math.Max(block.GetDigResilience(value),HardDig):block.GetDigResilience(value)));continue;}}
                 t.DestroyCell(0,x,y,z,0,true,false);n++;
+            }
+        }
+        if(hardRule)n+=GrindHard(s,b,t,hard);
+        return n;
+    }
+    // called every 0.25 s with the hard cells in its way this pass
+    static int GrindHard(MDBossState s,ComponentBody b,SubsystemTerrain t,List<(Point3 c,float res)> hard) {
+        const float Pass=.25f;HardKept+=hard.Count;
+        float moved=Vector2.Distance(new(b.Position.X,b.Position.Z),new(s.hardMark.X,s.hardMark.Z));
+        if(hard.Count==0||moved>HardProgress||!s.WantsToMove){s.hardMark=b.Position;s.HardStuck=0;s.Grind.Clear();return 0;}   // free, getting on, or standing still by choice
+        s.HardStuck+=Pass;if(s.HardStuck<HardWait)return 0;
+        int n=0;var w=MDTowerWorld.For(b.Project);bool fx=s.Grind.Count==0||(int)(s.HardStuck/Pass)%2==0;
+        foreach(var (c,res) in hard) {
+            float g=s.Grind.GetValueOrDefault(c)+Pass;
+            if(g<GrindTime(res)){s.Grind[c]=g;if(fx)w.Sparks(new Vector3(c.X+.5f,c.Y+.5f,c.Z+.5f),Vector3.UnitY,3,new Color(255,200,140),3,.9f,.25f,.04f);continue;}
+            s.Grind.Remove(c);int value=t.Terrain.GetCellValueFast(c.X,c.Y,c.Z);if(BlocksManager.Blocks[Terrain.ExtractContents(value)] is BedrockBlock)continue;
+            t.DestroyCell(0,c.X,c.Y,c.Z,0,true,false);n++;HardGround++;
+            w.SmokePuffs(new Vector3(c.X+.5f,c.Y+.5f,c.Z+.5f),2,.6f,new Color(150,140,130,150),.5f,1.2f,.3f);
+        }
+        if(n>0)s.hardMark=b.Position;   // a cell gave way: it may get on now
+        return n;
+    }
+    // 1.0.0 (11-13) the hard cells (MDBoss.Hard, a tower's footing) a body `half` m wide meets going straight from `from` to `to`, at heights
+    // `lift` to `top` m over its feet (RD19's drives, MDSiegeState.PickSpot)
+    public static int HardOnWay(ComponentBody b,MDBossState s,Vector3 from,Vector3 to,float half,float lift,float top) {
+        if(!HardEnabled)return 0;Footings(s,b);
+        var t=b.Project.FindSubsystem<SubsystemTerrain>(true).Terrain;var d=new Vector3(to.X-from.X,0,to.Z-from.Z);float len=d.Length();if(len<.5f)return 0;
+        var dir=d/len;var side=new Vector3(-dir.Z,0,dir.X);var seen=new HashSet<Point3>();int n=0;
+        for(float k=0;k<=len;k+=1)for(float w=-half;w<=half+.01f;w+=1) {
+            var q=from+dir*k+side*w;int x=(int)MathF.Floor(q.X),z=(int)MathF.Floor(q.Z);if(t.GetChunkAtCell(x,z)==null)continue;
+            for(int y=(int)MathF.Floor(from.Y+lift);y<=(int)MathF.Floor(from.Y+top);y++) {
+                var c=new Point3(x,y,z);if(y<1||y>254||!seen.Add(c))continue;int value=t.GetCellValueFast(x,y,z);var block=BlocksManager.Blocks[Terrain.ExtractContents(value)];
+                if(block.IsCollidable_(value)&&(s.Footings.Contains(c)||Hard(block,value)))n++;
             }
         }
         return n;

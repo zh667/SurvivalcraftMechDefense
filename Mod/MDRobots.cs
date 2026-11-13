@@ -195,6 +195,7 @@ public static class MDRobots {
         if(b==null||IsRobot(b.Entity)||!MDCombat.Living(b))return;
         bool structure=b.Entity.FindComponent<ComponentHealth>()==null;
         float power=(structure?k.VsStructure:k.VsCreature)*scale*(attacker?.FindComponent<ComponentMDRobot>()?.Growth??1);if(power<=0)return;   // 0.15.0 growth
+        if(MDShield.Absorb(attacker,b,power,point))return;   // inside the core's shield: the shield takes it (MDShield)
         if(b.Entity.FindComponent<ComponentPlayer>()!=null){PlayerHits++;if(PlayerHitLog.Count<200)PlayerHitLog.Add($"{k.Id} x{scale:0.00} at {Vector3.Distance(point,b.Position):0.0} m");}
         ComponentMiner.AttackBody(new MDRobotAttackment(b.Entity,attacker,point,dir,power){Explosive=k.Splash>0});
         if(structure&&attacker?.FindComponent<ComponentMDRobot>()?.Kind.Boss==true)MDTowerWorld.For(attacker.Project).BlockHeal(b,MDBoss.HealBlock);   // 0.14.0: no healing for a while
@@ -228,6 +229,22 @@ public class MDRobotAttackment:Attackment {
     public MDRobotAttackment(Entity target,Entity attacker,Vector3 hitPoint,Vector3 hitDirection,float attackPower):base(target,attacker,hitPoint,hitDirection,attackPower) {
         ImpulseFactor=1.5f;StunTimeSet=.15f;AllowImpulseAndStunWhenDamageIsZero=false;
     }
+    // 1.0.0 (11-13) (user, 2026-11-13: "玩家穿上尸鬼的全套灵魂盔甲后会免疫敌对机器人的全部伤害，跟无敌一样"): clothes take at most MaxArmour of a
+    // robot's hit. The game's armour (ComponentClothing.ApplyArmorProtection) lets a piece with ArmorProtection 1 take the whole hit
+    // up to its sturdiness, which then wears; the ghoul mod's soul set is ArmorProtection 1 with sturdiness "infinity"
+    // (Assets/saghouls.clo), so nothing ever came through and nothing wore out. The ghoul mod does the same for its own creatures'
+    // hits (its CalculateCreatureInjuryAmount: 70 % of its own armour value). The clothes still take their hit and wear as before.
+    public const float MaxArmour=.8f;
+    public static bool ArmourCapEnabled=true;   // lab switch: false = 1.0.0 as released on 11-07
+    public static int Capped;                   // tests: hits the cap raised
+    public override float CalculateInjuryAmount() {
+        if(!ArmourCapEnabled||!EnableArmorProtection||AttackPower<=0||Target?.FindComponent<ComponentClothing>() is not {} clothing)return base.CalculateInjuryAmount();
+        float raw=AttackPower,after=clothing.ApplyArmorProtection(this),floor=raw*(1-MaxArmour);
+        if(after<floor){after=floor;Capped++;}
+        AttackPower=after;EnableArmorProtection=false;
+        try{return base.CalculateInjuryAmount();}
+        finally{AttackPower=raw;EnableArmorProtection=true;}
+    }
 }
 
 public class ComponentMDRobot:ComponentBehavior,IUpdateable {
@@ -241,7 +258,7 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     public ComponentBody Chase; public double ChaseUntil;         // the player a raid without towers comes for (MDRaids.RaidPlayer; not saved)
     public float Cooldown,Windup=-1,Gap; public int ShotsLeft,Barrel,ShotsFired; public bool Exploded;
     public float Growth=1; bool grown;                     // 0.15.0: health and damage x this (MDGrowth, saved)
-    public bool ThreatRaid;                                // 0.16.0: sent by a threat raid (MDThreat; its kills add no threat; not saved)
+    public bool ThreatRaid;                                // 0.16.0: sent by a threat raid (MDThreat; its kills add no threat); saved since 1.0.0 (11-13) (a wave goes on after a reload)
     public float DamageShare,PlayerDamageShare;            // 0.15.0: the damage taken so far as a share of its health, all / by players and mechs (MDRewards)
     float lastHealth=1,hitAge=9,leafCheck; double nextScan,nextHunt; MDMechPose pose;
     public MDBossState Boss;                       // the bosses only (Mod/MDBoss.cs)
@@ -272,13 +289,13 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
         Kind=MDRobots.Kind(v.GetValue<string>("Kind"));Def=MDMechLibrary.Load(Kind.Root,"unit");Anim=new MDMechAnimator(Def);
         Creature=Entity.FindComponent<ComponentCreature>(true);Body=Entity.FindComponent<ComponentBody>(true);Health=Entity.FindComponent<ComponentHealth>(true);path=Entity.FindComponent<ComponentPathfinding>(true);spawn=Entity.FindComponent<ComponentSpawn>();
         time=Project.FindSubsystem<SubsystemTime>(true);bodies=Project.FindSubsystem<SubsystemBodies>(true);terrain=Project.FindSubsystem<SubsystemTerrain>(true);
-        Raider=v.GetValue("Raider",false);if(v.GetValue("HasRaidGoal",false))RaidGoal=v.GetValue("RaidGoal",Vector3.Zero);
+        Raider=v.GetValue("Raider",false);ThreatRaid=v.GetValue("ThreatRaid",false);if(v.GetValue("HasRaidGoal",false))RaidGoal=v.GetValue("RaidGoal",Vector3.Zero);
         Cooldown=MDRobots.R(.5f,1.5f);lastHealth=Health.Health;
         if(Kind.Boss)Boss=MDBossState.For(this,v);
         Growth=v.GetValue("Growth",0f);if(Growth<=0)Growth=Kind.Boss?1:MDGrowth.Factor(Project);   // a new robot: the world's stage now
     }
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
-        v.SetValue("Raider",Raider);v.SetValue("Growth",Growth);v.SetValue("HasRaidGoal",RaidGoal.HasValue);if(RaidGoal.HasValue)v.SetValue("RaidGoal",RaidGoal.Value);Boss?.Save(v);
+        v.SetValue("Raider",Raider);v.SetValue("Growth",Growth);v.SetValue("ThreatRaid",ThreatRaid);v.SetValue("HasRaidGoal",RaidGoal.HasValue);if(RaidGoal.HasValue)v.SetValue("RaidGoal",RaidGoal.Value);Boss?.Save(v);
     }
     public MDMechPose Pose()=>pose??=MDRobots.Pose(Def,Anim.Evaluate(),yawJoint,AimYawNow,pitchJoint,AimPitchNow);
     // 0.14.0 turret aim (Kind.AimYaw / AimPitch): relative to the body, eased towards the target

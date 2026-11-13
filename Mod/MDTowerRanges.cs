@@ -24,8 +24,12 @@ namespace Game;
 // - Cost: the shapes are built once and kept (RangeShape), rebuilt every RebuildTime s (at most one a frame, new ones at most
 //   NewPerFrame a frame) or at once when the tower moves; the column of blocks under each point is read once per build. A frame only
 //   queues the kept quads (0.17.0 looked every vertex up every frame and read every column again every 2 s in one frame).
+// 1.0.0 (11-13) (user, 2026-11-13: "炮台攻击范围显示不应该受到地形影响，现在看上去像一大堆心电图，显得很杂乱"): by default the ring and the fill
+// lie level at the tower's base (flat: RangeSurface gives the base's height everywhere), so a bumpy ground no longer folds the ring up
+// and down; where the ground is higher the ring is drawn faint through it (the x-ray pass above, within XrayRange m). The setting
+// 攻击范围贴合地形 (MDSettings.RangeTerrain) brings 0.18.2's ring on the ground back. The ghost's footprint still sits on the ground.
 public sealed partial class MDTowerWorld {
-    FlatBatch3D rangeBatch,rangeXray;
+    FlatBatch3D rangeBatch,rangeXray;bool flatNow;
     static readonly DepthStencilState Behind=new(){DepthBufferWriteEnable=false,DepthBufferFunction=CompareFunction.Greater};
     public static int RingsDrawn,GhostsDrawn,FillsDrawn,ShapesBuilt,JoinsDrawn;   // tests (this frame; ShapesBuilt counts up)
     // 0.18.0 every tower at once (the core's click, MDTowerTools.ShowAll): the ring of each within RingRange m of the camera, the fill
@@ -35,7 +39,7 @@ public sealed partial class MDTowerWorld {
     public static bool XrayEnabled=true;   // lab switch
     double refreshAt;int builtThisFrame,newThisFrame;
     sealed class RangeShape {
-        public Vector3 At,Forward;public float Range;public bool Fill,Filled;public double Built;public int Used;
+        public Vector3 At,Forward;public float Range;public bool Fill,Filled,Flat;public double Built;public int Used;
         public readonly List<Vector3> Strip=[];                       // ribbon pieces, 2 ends each (their middle line)
         public readonly List<(Vector3 p,float y0,float y1,Color c)> Joins=[]; // vertical joins between two heights
         public readonly List<Vector3> FillTris=[];                    // fill triangles, 3 corners each
@@ -64,7 +68,7 @@ public sealed partial class MDTowerWorld {
     static Color RangeFade(Color c,float a)=>new Color(c.R,c.G,c.B,(byte)255)*a;
     void RangeArea(object key,MDTowerDef d,Vector3 at,Vector3 forward,float range,bool fill,Vector3 eye,bool xray) {
         if(range<=.5f)return;var a=d.attack;
-        if(!shapes.TryGetValue(key,out var s)||Vector3.DistanceSquared(s.At,at)>1e-6f||Vector3.DistanceSquared(s.Forward,forward)>1e-4f||MathF.Abs(s.Range-range)>1e-3f||s.Fill!=fill) {
+        if(!shapes.TryGetValue(key,out var s)||Vector3.DistanceSquared(s.At,at)>1e-6f||Vector3.DistanceSquared(s.Forward,forward)>1e-4f||MathF.Abs(s.Range-range)>1e-3f||s.Fill!=fill||s.Flat==MDSettings.RangeTerrain) {
             if(s!=null||newThisFrame<NewPerFrame||key is string||key==MDTowerTools.Current?.Moving){s=Build(d,at,forward,range,fill);shapes[key]=s;newThisFrame++;}
             else return;   // the rest in the next frames (a click on the core shows dozens at once)
         }
@@ -87,8 +91,12 @@ public sealed partial class MDTowerWorld {
         }
     }
     RangeShape Build(MDTowerDef d,Vector3 at,Vector3 forward,float range,bool fill) {
-        var a=d.attack;var c=C(d.fx.color);var s=new RangeShape{At=at,Forward=forward,Range=range,Fill=fill,Built=time,FillColor=RangeFade(c,.16f)};
+        var a=d.attack;var c=C(d.fx.color);var s=new RangeShape{At=at,Forward=forward,Range=range,Fill=fill,Built=time,FillColor=RangeFade(c,.16f),Flat=!MDSettings.RangeTerrain};
         column.Clear();terrainNow=SubsystemParticles.Project.FindSubsystem<SubsystemTerrain>(true);ShapesBuilt++;
+        flatNow=s.Flat;try{return BuildShape(s,d,at,forward,range,fill);}finally{flatNow=false;}
+    }
+    RangeShape BuildShape(RangeShape s,MDTowerDef d,Vector3 at,Vector3 forward,float range,bool fill) {
+        var a=d.attack;var c=C(d.fx.color);
         if(a.directional) {   // the band in front of it: along 0..range, a.width wide
             forward.Y=0;forward=Vector3.Normalize(forward);var side=new Vector3(-forward.Z,0,forward.X)*(a.width*.5f);
             var p0=at-side;var p1=at-side+forward*range;var p2=at+side+forward*range;var p3=at+side;   // 0.18.0 with a radar's boost, as it hits
@@ -171,6 +179,7 @@ public sealed partial class MDTowerWorld {
     // is a surface with no surface right over it (else the base's own height: inside a hill higher than that, or over a drop deeper).
     readonly Dictionary<(int,int),(int y,int v)> column=[];SubsystemTerrain terrainNow;
     public float RangeSurface(float x,float z,float baseY) {
+        if(flatNow)return baseY;   // 1.0.0 (11-13) level at the base (Build)
         terrainNow??=SubsystemParticles.Project.FindSubsystem<SubsystemTerrain>(true);var t=terrainNow.Terrain;
         int bx=(int)MathF.Floor(x),bz=(int)MathF.Floor(z),by=(int)MathF.Floor(baseY);
         if(!column.TryGetValue((bx,bz),out var cv)) {

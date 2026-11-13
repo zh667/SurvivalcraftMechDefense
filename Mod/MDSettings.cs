@@ -65,7 +65,10 @@ public static class MDSettings {
     // robots from game day StartDay (0: none at all, wild or raids; elites 7 days later); raids on RaidChance % of the nights,
     // RaidSize x their size
     public static MDSpawnTime SpawnTime=MDSpawnTime.Night;
-    public static float SpawnInterval=60,SpawnDensity=1,RaidChance=75,RaidSize=1;
+    // 1.0.0 (11-13) (user, 2026-11-13: "默认的设置中夜袭概率可以降低一点，然后召唤恶魔机甲的击杀数提高一点，不然前期很难撑得住，后面玩家自己再去提高难度"):
+    // defaults 75 % -> DefaultRaidChance, 50 -> DefaultBossKills. Saved settings keep what the player had (also an old default).
+    public const float DefaultRaidChance=50; public const int DefaultBossKills=80;
+    public static float SpawnInterval=60,SpawnDensity=1,RaidChance=DefaultRaidChance,RaidSize=1;
     public static int StartDay=3;
     public const int MaxStartDay=99999;   // no practical limit (user, 2026-10-25: "开始天数玩家可随意设置数值（上限不设为30）"; was 30)
     // 0.12.0 (players via the user, 2026-10-25): a robot attacks a player within AggroRange m that it sees (0: only when hit or at
@@ -75,7 +78,7 @@ public static class MDSettings {
     // 0 完整 / 1 精简 (default) / 2 极简 (MDTowerWorld.Emit)
     public static int FxLevel=1;
     public static readonly string[] FxNames=["完整","精简（默认）","极简"];
-    public static int BossKills=50;
+    public static int BossKills=DefaultBossKills;
     // 0.15.0 (user, 2026-10-30): element reactions on / off (MDElements; types, resistances and statuses stay), and the robots'
     // growth per stage in % (stages every 7 days from StartDay, at most MaxGrowthStages: MDGrowth); 0 = off
     public static bool Reactions=true;
@@ -85,6 +88,13 @@ public static class MDSettings {
     public const float MaxMedicCapacity=200000;   // 0.15.0: damage numbers over what this mod's towers and mechs hit (MDDamageNumbers.cs)
     public static int Growth=10;
     public static bool MechTerrain;   // 0.17.0 the mech's cannon and grenade break terrain (MDTerrainBlast), off by default
+    // 1.0.0 (11-13) (user, 2026-11-13: "炮台希望加个设置，是否攻击原版生物。主要原版生物太弱了，然后如果死了会不停刷新，然后就是持续的炮声"): off =
+    // towers leave the game's own creatures (MDFaction.Vanilla) alone unless one hurt the player's side in the last 30 s; on by default (as before)
+    public static bool AttackVanilla=true;
+    // 1.0.0 (11-13) (user, 2026-11-13: "炮台攻击范围显示不应该受到地形影响，现在看上去像一大堆心电图"): off (default) = a level ring at the tower's
+    // base (MDTowerRanges); on = 0.18.2's ring on the ground's surface
+    public static bool RangeTerrain;
+    public static bool CoreShield=true;   // the defence core's shield (MDShield), on by default
     public static readonly int[] GrowthSteps=[0,5,10,15];
     public const float MaxAggroRange=48;
     public const int MaxBossKills=200;
@@ -92,11 +102,11 @@ public static class MDSettings {
 
     public static void Defaults() {
         HudShow=HudKeys=true;Hud=new();MDMechKeys.Apply(MDMechKeys.Defaults());
-        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=75;RaidSize=1;AggroRange=16;BossKills=50;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;ThreatDifficulty=1;Endless=false;MechTerrain=false;
+        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=DefaultRaidChance;RaidSize=1;AggroRange=16;BossKills=DefaultBossKills;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;ThreatDifficulty=1;Endless=false;MechTerrain=false;AttackVanilla=true;RangeTerrain=false;CoreShield=true;
     }
     public static void Normalize() {
         Hud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
-        StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,75),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
+        StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,DefaultRaidChance),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
         AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);FxLevel=Math.Clamp(FxLevel,0,2);Growth=Math.Clamp(Growth,0,15);MedicCapacity=Math.Clamp(Finite(MedicCapacity,50000),0,MaxMedicCapacity);ThreatDifficulty=Math.Clamp(ThreatDifficulty,0,3);
         if(!Enum.IsDefined(SpawnTime))SpawnTime=MDSpawnTime.Night;
     }
@@ -110,7 +120,7 @@ public static class MDSettings {
             new XAttribute("SpawnTime",SpawnTime),new XAttribute("SpawnInterval",F(SpawnInterval)),new XAttribute("SpawnDensity",F(SpawnDensity)),
             new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize)),
             new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),new XAttribute("FxLevel",FxLevel),new XAttribute("Reactions",Reactions),new XAttribute("DamageNumbers",DamageNumbers),new XAttribute("MedicCapacity",F(MedicCapacity)),new XAttribute("ThreatDifficulty",ThreatDifficulty),new XAttribute("Endless",Endless),new XAttribute("Growth",Growth),   // 0.12.0, 0.15.0
-            new XAttribute("MechTerrain",MechTerrain),
+            new XAttribute("MechTerrain",MechTerrain),new XAttribute("AttackVanilla",AttackVanilla),new XAttribute("RangeTerrain",RangeTerrain),new XAttribute("CoreShield",CoreShield),   // 1.0.0 (11-13)
             new XAttribute("MechKeys",MDMechKeys.ToText(MDMechKeys.Current()))));   // 0.11.0: the mech's bound keys (MDMechKeys)
     }
     // a missing or unreadable value keeps the default
@@ -122,9 +132,9 @@ public static class MDSettings {
             HudShow=B("HudShow",true);HudKeys=B("HudKeys",true);
             Hud=new MDHudPlacement{Custom=B("HudCustom",false),X=N("HudX",.85f),Y=N("HudY",.8f),Scale=N("HudScale",1),Rotation=N("HudRotation",0)};
             SpawnTime=Enum.TryParse<MDSpawnTime>((string)e.Attribute("SpawnTime"),out var st)?st:MDSpawnTime.Night;
-            SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",75);RaidSize=N("RaidSize",1);
-            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",50));FxLevel=(int)MathF.Round(N("FxLevel",1));Reactions=B("Reactions",true);DamageNumbers=B("DamageNumbers",true);MedicCapacity=N("MedicCapacity",50000);ThreatDifficulty=(int)MathF.Round(N("ThreatDifficulty",1));Endless=B("Endless",false);Growth=(int)MathF.Round(N("Growth",10));
-            MechTerrain=B("MechTerrain",false);
+            SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",DefaultRaidChance);RaidSize=N("RaidSize",1);
+            AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",DefaultBossKills));FxLevel=(int)MathF.Round(N("FxLevel",1));Reactions=B("Reactions",true);DamageNumbers=B("DamageNumbers",true);MedicCapacity=N("MedicCapacity",50000);ThreatDifficulty=(int)MathF.Round(N("ThreatDifficulty",1));Endless=B("Endless",false);Growth=(int)MathF.Round(N("Growth",10));
+            MechTerrain=B("MechTerrain",false);AttackVanilla=B("AttackVanilla",true);RangeTerrain=B("RangeTerrain",false);CoreShield=B("CoreShield",true);
             MDMechKeys.Apply(MDMechKeys.FromText((string)e.Attribute("MechKeys")));
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}

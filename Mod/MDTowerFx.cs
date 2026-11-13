@@ -416,6 +416,7 @@ public sealed partial class MDTowerWorld : ParticleSystemBase {
         }
         DrawElements(eye,right,up);   // 0.15.0 status icons and reaction names (MDElements.cs)
         DrawRanges(eye);   // 0.17.0 the towers' areas of attack and a ghost being placed (MDTowerRanges.cs)
+        DrawShield(eye);   // the core's shield (MDShield.cs)
         DrawLockMarks(right,up);   // 0.18.2 without fog too
         FlushOverlay(camera);   // 0.18.2 the icons and bars, without fog (MDElements.cs)
     }

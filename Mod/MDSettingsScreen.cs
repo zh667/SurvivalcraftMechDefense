@@ -177,7 +177,7 @@ public sealed class MDSettingsScreen:Screen {
         endless=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("无尽模式"),endless,n));
         shield=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("防线核心防御罩"),shield,n));   // MDShield
         content.Children.Add(MDUi.Note("放下防线核心后，附近击毁机兵会让威胁度上涨，满了引来多波次袭击（倒计时会说出下一波的兵种和数量）。难度越高，威胁度满得越快、每波越多。无尽模式：袭击不停、越来越强，直到核心被摧毁。原来的夜袭和“首领出现”不受影响。"+
-            "防御罩：和核心或已连上的炮塔面贴面相连的炮塔连成一串，把 1% 以外的耐久交给核心，罩子覆盖到最远那座；罩内炮塔、机甲和玩家受到的机兵攻击先扣罩子，再扣核心。"));
+            "防御罩：核心 30 米内的炮塔把 1% 以外的耐久交给核心；罩内炮塔、机甲和玩家受到的机兵攻击先扣罩子，再扣核心。"));
         content.Children.Add(MDUi.Heading("战斗"));
         terrain=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("机甲火炮、榴弹破坏地形"),terrain,n));   // 0.17.0 (MDTerrainBlast)
         content.Children.Add(MDUi.Note("开启后，机甲的火炮炮弹和榴弹落地时像火药一样炸开方块（掉落物会飞出，木头偶尔起火），也会伤到船等载具和动物；不伤本模组的炮塔、机甲和玩家。防御塔的炮弹不受影响。默认关闭。"));

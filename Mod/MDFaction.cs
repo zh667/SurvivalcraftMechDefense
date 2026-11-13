@@ -82,6 +82,13 @@ public static class MDFaction {
         var m=memos.GetOrCreateValue(a.Attacker);m.aggressiveUntil=time.GameTime+Memory;m.checkedAt=double.MinValue;
     }
 
+    // 1.0.1 the game's own creatures (setting 炮塔攻击原版生物, MDSettings.AttackVanilla): the creature templates of the game's
+    // Assets/Database.xml, the same 72 in API 1.9.3.1 and 1.9.4 (players and this mod's robots are not among them; a mod that only
+    // changes a vanilla creature keeps its name). A template of another mod is never vanilla.
+    public static readonly HashSet<string> VanillaTemplates=["Bird","Cow","Bull","AICreature","Bear","Wolf","FlightlessBird","Horse","Alpaca","Ray","Creature","Cetacean","Shark","Horse_White","Bear_Brown","Horse_Chestnut","Bass_Freshwater","Cow_Black","Horse_Bay_Saddled","Donkey_Saddled","Beluga","Ostrich","Horse_Chestnut_Saddled","Horse_Palomino","Leopard","Gnu","Wolf_Gray","Camel_Saddled","Rhino","Reindeer","Barracuda","Raven","Camel","Werewolf","Tiger_White","Sparrow","Alpaca_Shorn","Bull_Brown","Orca","Duck","Giraffe","Shark_Bull","Shark_Tiger","Horse_Black","Bear_Black","Lion","Tiger","Horse_Black_Saddled","Donkey","Cow_Brown","Bull_Black","Piranha","Wildboar","Horse_Palomino_Saddled","Bear_Polar","Horse_White_Saddled","Horse_Bay","Ray_Yellow","Moose","Ray_Brown","Wolf_Coyote","Bass_Sea","Pigeon","Hyena","Seagull","Alpaca_White","Bull_White","Shark_GreatWhite","Bison","Jaguar","Zebra","Cassowary"];
+    public static bool Vanilla(Entity e)=>e?.ValuesDictionary?.DatabaseObject?.Name is {} n&&VanillaTemplates.Contains(n);
+    // hurt the player's side within the last 30 s (Attacked)
+    public static bool Aggressor(Entity e,double now)=>e!=null&&memos.TryGetValue(e,out var m)&&m.aggressiveUntil>now;
     public static bool Hostile(ComponentCreature creature,double now) {
         var e=creature.Entity;var m=memos.GetOrCreateValue(e);
         if(now-m.checkedAt<Recheck&&now>=m.checkedAt)return m.hostile;

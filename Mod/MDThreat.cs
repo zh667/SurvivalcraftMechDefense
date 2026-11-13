@@ -16,8 +16,12 @@ namespace Game;
 //   robots. A wave is the night raid's size for the defence round the core x difficulty x (1 + 0.1 x raids done) x (1 + 0.15 x
 //   wave), kinds by the growth stage; every second raid ends with a boss. Beaten: threat 0, raids done + 1, a payout at the core.
 //   Endless (mod setting): waves keep coming, each stronger, until the core is destroyed. The core destroyed ends any raid.
-// - The world keeps the threat, the raids done and whether the handbook was given (Project.xml); a raid under way when the world
-//   is saved starts again from its countdown.
+// - The world keeps the threat, the raids done and whether the handbook was given (Project.xml).
+// - 1.0.1 (user, 2026-11-13: "机甲防线无尽模式，退出重进后，袭击波次会被重置，每次都是第一波"): a raid under way is kept too (its phase, wave,
+//   wave count and timer: PhaseAttribute and the rest). Up to 1.0.0 only the threat was kept, still full, so the raid began again
+//   at wave 1. Reopened during a countdown: that wave's countdown again (at least ResumeCountdown s), the wave planned afresh;
+//   during a wave: the wave goes on with its robots still in the world (ComponentMDRobot saves ThreatRaid since 1.0.1), at least
+//   ResumeWave s before the wave times out. A raid boss still counting down when the world was saved does not come back.
 public static class MDThreat {
     public const float CoreReach=120,FirstCountdown=30,WaveGap=40,WaveTimeout=240;
     public const int BossThreat=10;
@@ -27,6 +31,11 @@ public static class MDThreat {
     public static float Difficulty=>DifficultyFactors[Math.Clamp(MDSettings.ThreatDifficulty,0,3)];
     public static int Cap=>(int)MathF.Round(30/Difficulty);
     public const string ThreatAttribute="MechDefenseThreat",RaidsAttribute="MechDefenseRaidsDone",ManualAttribute="MechDefenseManualGiven";
+    public const string PhaseAttribute="MechDefenseRaidPhase",WaveAttribute="MechDefenseRaidWave",WavesAttribute="MechDefenseRaidWaves",TimerAttribute="MechDefenseRaidTimer";   // 1.0.1
+    public const float ResumeCountdown=15,ResumeWave=60;
+    static string resume;   // 1.0.1 the phase of a raid read with the world, taken up by the next Update (the core is found there)
+    public static bool ResumeEnabled=true;   // lab switch: false = 1.0.0 (a raid under way is not kept)
+    public static int Resumed; public static string LastResume="";   // tests
     public static float Threat; public static int RaidsDone; public static bool ManualGiven;
     public enum Phase{Idle,Countdown,Wave}
     public static Phase Now=Phase.Idle; public static int Wave,Waves; public static float Timer;
@@ -80,9 +89,12 @@ public static class MDThreat {
         GiveManual(p);
         if(DownEnds>0&&p.FindSubsystem<SubsystemTime>(true).GameTime>=DownEnds){DownEnds=-1;var pl=p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers.FirstOrDefault();if(pl!=null)Say(p,pl.ComponentBody.Position,"断电的防御塔已自动重启。",new Color(160,220,255));}
         var core=CoreCached(p);
+        if(core==null)resume=null;   // 1.0.1 no core: nothing to take up
         if(core==null){if(Now!=Phase.Idle){Fighting.Clear();Now=Phase.Idle;Say(p,p.FindSubsystem<SubsystemPlayers>(true).ComponentPlayers.FirstOrDefault()?.ComponentBody.Position??Vector3.Zero,"防线核心被摧毁了，袭击结束。",new Color(255,120,100));Threat=0;}return;}
+        MDCoreStorage.Absorb(p,core);   // 1.0.1 the items round the live core (every game mode)
         if(!Raids(p))return;   // Harmless: no raids
         var at=core.Body.Position;
+        if(resume!=null){var how=resume;resume=null;Resume(p,core,how);}
         switch(Now) {
             case Phase.Idle:
                 if(Threat>=Cap){Now=Phase.Countdown;Wave=0;Waves=Math.Min(6,3+RaidsDone/2);Timer=FirstCountdown;NextWave=Plan(p,core,0);
@@ -142,11 +154,32 @@ public static class MDThreat {
         // 0.16.3 (user 2026-11-01: 每次重新进游戏都会给一本驾驶手册): SetAttributeValue writes a bool as "true" and this compared "True",
         // so every world opened as not given yet; bool.TryParse takes either
         ManualGiven=bool.TryParse((string)project?.Attribute(ManualAttribute),out var given)&&given;
-        Now=Phase.Idle;Fighting.Clear();BossesComing=0;cached=null;cachedAt=-1;DownEnds=-1;
+        Now=Phase.Idle;Fighting.Clear();BossesComing=0;cached=null;cachedAt=-1;DownEnds=-1;resume=null;
+        var phase=(string)project?.Attribute(PhaseAttribute);
+        if(ResumeEnabled&&phase is "Countdown" or "Wave"&&int.TryParse((string)project.Attribute(WaveAttribute),out int w)&&int.TryParse((string)project.Attribute(WavesAttribute),out int ws)) {
+            resume=phase;Wave=Math.Max(0,w);Waves=Math.Max(1,ws);
+            Timer=float.TryParse((string)project.Attribute(TimerAttribute),System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var tm)?tm:FirstCountdown;
+        }
+    }
+    // 1.0.1 a raid read with the world goes on where it was (Load)
+    static void Resume(Project p,ComponentMDUnit core,string how) {
+        var at=core.Body.Position;Resumed++;
+        if(how=="Wave") {
+            Now=Phase.Wave;Fighting.Clear();Fighting.AddRange(p.Entities.Select(e=>e.FindComponent<ComponentMDRobot>()).Where(r=>r!=null&&r.ThreatRaid&&r.Health.Health>0));
+            Timer=Math.Max(Timer,ResumeWave);LastResume=$"wave {Wave+1}/{Waves}, {Fighting.Count} robots";
+            Say(p,at,$"袭击继续：第 {Wave+1}/{(MDSettings.Endless?"∞":Waves.ToString())} 波，还剩 {Fighting.Count} 台。",new Color(255,120,100));
+        } else {
+            Now=Phase.Countdown;Timer=Math.Max(Timer,ResumeCountdown);NextWave=Plan(p,core,Wave);LastResume=$"countdown to wave {Wave+1}/{Waves}";
+            Say(p,at,$"袭击继续：第 {Wave+1} 波 {Timer:0} 秒后到：{Describe(NextWave)}",new Color(255,110,90));
+        }
     }
     public static void Save(System.Xml.Linq.XElement project) {
         if(project==null)return;project.SetAttributeValue(ThreatAttribute,Threat.ToString(System.Globalization.CultureInfo.InvariantCulture));
         project.SetAttributeValue(RaidsAttribute,RaidsDone);project.SetAttributeValue(ManualAttribute,ManualGiven);
+        // 1.0.1 a raid under way (or one read with the world and not taken up yet); none: the attributes go
+        string phase=resume??(Now==Phase.Idle?null:Now.ToString());bool on=ResumeEnabled&&phase!=null;
+        project.SetAttributeValue(PhaseAttribute,on?phase:null);project.SetAttributeValue(WaveAttribute,on?(object)Wave:null);project.SetAttributeValue(WavesAttribute,on?(object)Waves:null);
+        project.SetAttributeValue(TimerAttribute,on?Timer.ToString(System.Globalization.CultureInfo.InvariantCulture):null);
     }
     // the core's line over it and in the Neorxna panel
     public static string Status(ComponentMDUnit core)=>!core.CoreLive?"已失效（每个存档只有一个有效的核心）":!Raids(core.Project)?"无害模式：不涨威胁度，不会袭击":
@@ -157,7 +190,7 @@ public static class MDThreat {
         $"威胁度：核心 {CoreReach:0} 米内每击毁一台普通机兵 +1，精英 +3，首领 +{BossThreat}。满 {Cap} 点（难度“{DifficultyNames[Math.Clamp(MDSettings.ThreatDifficulty,0,3)]}”；难度越高满得越快）时袭击开始：{FirstCountdown:0} 秒倒计时后，一波接一波（3 波起，袭击越多波次越多，最多 6 波），每波之间 {WaveGap:0} 秒，倒计时会说出下一波的兵种和数量，核心头上也显示。每两次袭击最后一波有首领。\n\n"+
         $"全部打退：威胁度清零，在核心旁掉落奖励，下一次袭击略强。无尽模式（模组设置）：袭击不停，越来越强，直到核心被摧毁。\n\n"+
         $"核心被摧毁：它会爆炸，袭击结束，周围 {DownRadius:0} 米内的防御塔全部断电失效（不开火、不治疗、雷达不加成），放下新的防线核心立即恢复，否则 {DownTime:0} 秒后自动重启。爆炸是否破坏地形跟随设置“机甲火炮、榴弹破坏地形”。\n\n"+
-        $"核心头上有一道光柱，远处也能看到（袭击时变红）。手持任意物品右键点击核心（维修材料除外），可以一键显示或隐藏全部防御塔的攻击范围和耐久条；对着某座塔按 {MDMechKeys.Hint(MDMechAction.Ranges)} 只开关那一座。\n\n"+
+        $"核心头上有一道光柱，远处也能看到（袭击时变红）。右键点击核心（维修材料除外）打开它的储存（{MDCoreStorage.Slots} 格）：核心 {MDCoreStorage.AbsorbRange:0} 米内地上的物品会自动收进去（经验球除外），满了就留在地上；核心被摧毁或拆下时，里面的东西掉在原地。对着某座塔按 {MDMechKeys.Hint(MDMechAction.Ranges)} 开关它的攻击范围，空手右键炮塔可以直接拿起来移动。\n\n"+
         $"创造模式也会袭击，无害模式不会。原来的夜袭和“击毁机兵召来首领”照常，模组设置里可以分别关掉。";
 }
 

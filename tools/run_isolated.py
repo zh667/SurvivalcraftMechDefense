@@ -59,7 +59,7 @@ def main():
             for m in FACTION_MODS:
                 if m.exists(): shutil.copy2(m, mods / m.name)
                 print('faction mod:', m.name, 'copied' if m.exists() else 'MISSING')
-        if a.mode in ('fb101', 'fb101-armour'):   # 1.0.1: the ghoul mod's soul armour (Tests/TowerLab/Feedback101.cs), its 1.9.4 build there
+        if a.mode in ('fb101', 'fb101-armour'):   # 1.0.0 (11-13): the ghoul mod's soul armour (Tests/TowerLab/Feedback101.cs), its 1.9.4 build there
             ghoul = Path(r'D:\下载\[API1.9.4]Ghoul尸鬼-v2.0.1.scmod') if a.source == '1.9.4' else COMBAT_MODS[0]
             if ghoul.exists(): shutil.copy2(ghoul, mods / ghoul.name)
             print('ghoul mod:', ghoul.name, 'copied' if ghoul.exists() else 'MISSING')

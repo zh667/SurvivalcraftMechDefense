@@ -152,7 +152,7 @@ public partial class Lab {
             IEnumerable<bool> Look(Vector3 at,int frames=4){foreach(var x in Hold(eyeC,at,frames))yield return x;}
             void Step(string what)=>steps.Add($"{what}: all {MDTowerTools.ShowAll}, shown {MDTowerTools.Shown.Count}, rings {MDTowerWorld.RingsDrawn}, fills {MDTowerWorld.FillsDrawn}, bars {MDTowerWorld.TowerBarsDrawn} ({MDTowerTools.LastText})");
             MDTowerTools.Shown.Clear();MDTowerTools.ShowAll=false;
-            typeof(MDTowerTools).GetField("CoreToggleEnabled")?.SetValue(null,true);   // 1.0.1: the core's click opens its store; this part checks the 0.18.0 toggle
+            typeof(MDTowerTools).GetField("CoreToggleEnabled")?.SetValue(null,true);   // 1.0.0 (11-13): the core's click opens its store; this part checks the 0.18.0 toggle
             foreach(var x in ClickCore())yield return x;bool viaGame=MDTowerTools.CoreToggles>t0;
             if(!viaGame){MDTowerTools.ToggleAll(pl);steps.Add("the injected right-click did not reach the hook; ToggleAll called directly");}   // fall back, and say so
             foreach(var x in Look(C0,4))yield return x;Step("core clicked");int allN=MDTowerTools.Shown.Count,bars=MDTowerWorld.TowerBarsDrawn;bool allOn=MDTowerTools.ShowAll;

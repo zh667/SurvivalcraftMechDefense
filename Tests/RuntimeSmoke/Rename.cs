@@ -87,7 +87,7 @@ public static class Rename {
     }
 
     static object Dialog() {
-        var d=DialogsManager.Dialogs.FirstOrDefault();if(d==null)return null;
+        var d=DialogsManager.Dialogs.FirstOrDefault(x=>x.GetType().Name!="BulletinDialog");if(d==null)return null;   // not the game's community bulletin (fetched online; seen on 1.9.4, on 1.9.3.1 since 2026-11-13)
         return new{type=d.GetType().Name,texts=d.AllChildren.OfType<LabelWidget>().Select(l=>l.Text).Where(x=>!string.IsNullOrWhiteSpace(x)).ToList()};
     }
     static void New() {

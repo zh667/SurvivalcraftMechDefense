@@ -95,10 +95,10 @@ public sealed class MDSettingsScreen:Screen {
     }
     public static void Open(){EnsureScreens();ScreensManager.SwitchScreen(ScreenName);}
     // the robot options being edited
-    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills,Fx,Growth; public bool Reactions,Numbers,Endless,Terrain,Vanilla=true,RangeTerrain; public float Medic; public int Difficulty;
-        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills,Fx=MDSettings.FxLevel,Growth=MDSettings.Growth,Reactions=MDSettings.Reactions,Numbers=MDSettings.DamageNumbers,Medic=MDSettings.MedicCapacity,Difficulty=MDSettings.ThreatDifficulty,Endless=MDSettings.Endless,Terrain=MDSettings.MechTerrain,Vanilla=MDSettings.AttackVanilla,RangeTerrain=MDSettings.RangeTerrain};
-        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=MDSettings.DefaultRaidChance,Size=1,StartDay=3,Aggro=16,BossKills=MDSettings.DefaultBossKills,Fx=1,Growth=10,Reactions=true,Numbers=true,Medic=50000,Difficulty=1,Endless=false,Terrain=false,Vanilla=true,RangeTerrain=false};
-        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.FxLevel=Fx;MDSettings.Growth=Growth;MDSettings.Reactions=Reactions;MDSettings.DamageNumbers=Numbers;MDSettings.MedicCapacity=Medic;MDSettings.ThreatDifficulty=Difficulty;MDSettings.Endless=Endless;MDSettings.MechTerrain=Terrain;MDSettings.AttackVanilla=Vanilla;MDSettings.RangeTerrain=RangeTerrain;MDSettings.Normalize();} }
+    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills,Fx,Growth; public bool Reactions,Numbers,Endless,Terrain,Vanilla=true,RangeTerrain,Shield=true; public float Medic; public int Difficulty;
+        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills,Fx=MDSettings.FxLevel,Growth=MDSettings.Growth,Reactions=MDSettings.Reactions,Numbers=MDSettings.DamageNumbers,Medic=MDSettings.MedicCapacity,Difficulty=MDSettings.ThreatDifficulty,Endless=MDSettings.Endless,Terrain=MDSettings.MechTerrain,Vanilla=MDSettings.AttackVanilla,RangeTerrain=MDSettings.RangeTerrain,Shield=MDSettings.CoreShield};
+        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=MDSettings.DefaultRaidChance,Size=1,StartDay=3,Aggro=16,BossKills=MDSettings.DefaultBossKills,Fx=1,Growth=10,Reactions=true,Numbers=true,Medic=50000,Difficulty=1,Endless=false,Terrain=false,Vanilla=true,RangeTerrain=false,Shield=true};
+        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.FxLevel=Fx;MDSettings.Growth=Growth;MDSettings.Reactions=Reactions;MDSettings.DamageNumbers=Numbers;MDSettings.MedicCapacity=Medic;MDSettings.ThreatDifficulty=Difficulty;MDSettings.Endless=Endless;MDSettings.MechTerrain=Terrain;MDSettings.AttackVanilla=Vanilla;MDSettings.RangeTerrain=RangeTerrain;MDSettings.CoreShield=Shield;MDSettings.Normalize();} }
     public Robots Working;
     // the mech's keys being edited (MDMechKeys); capturing: the action waiting for a key press
     public Dictionary<MDMechAction,Key> WorkingKeys;public MDMechAction? Capturing;
@@ -112,7 +112,7 @@ public sealed class MDSettingsScreen:Screen {
     readonly StackPanelWidget content=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Stretch};
     readonly StackPanelWidget bar;readonly LabelWidget status=MDUi.Note("");
     readonly ButtonWidget defaults=MDUi.Button("恢复默认",150),cancel=MDUi.Button("取消",130),save=MDUi.Button("保存",130),editHud=MDUi.Button("调整机甲面板（位置、大小、旋转）",360);
-    ButtonWidget less,more,input,time,fx,reactions,growth,numbers,difficulty,endless,terrain,vanilla,rangeTerrain;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills,medic;
+    ButtonWidget less,more,input,time,fx,reactions,growth,numbers,difficulty,endless,terrain,vanilla,rangeTerrain,shield;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills,medic;
     public MDSettingsScreen() {
         Children.Add(background);Children.Add(MDUi.Frame());
         scroll.Children.Add(content);scrollHost.Children.Add(scroll);
@@ -151,7 +151,7 @@ public sealed class MDSettingsScreen:Screen {
         foreach(var a in MDMechKeys.Tower){var b=MDUi.Button("",170);keyButtons[a]=b;content.Children.Add(MDUi.Row(MDUi.Label(MDMechKeys.ActionName(a)),b,n));}
         content.Children.Add(MDUi.Note("步行时用：对准一座炮塔按「显示攻击范围」开关它的范围圈（可以标记多座，对着空处按全部隐藏）；对着已放下的炮塔按「移动」或空手右键（手机空手点）拿起它，对准新位置左键（手机点屏）放下，「旋转」每次转 90°，右键或再按「移动」取消。"+
             "手持防御塔部署物时，准星处自动显示占地（绿色可放、红色不能放）和攻击范围。旋转键默认 R：只在移动炮塔时用，这时 R 不会骑乘。"));
-        rangeTerrain=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("攻击范围贴合地形"),rangeTerrain,n));   // 1.0.1 (MDTowerRanges)
+        rangeTerrain=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("攻击范围贴合地形"),rangeTerrain,n));   // 1.0.0 (11-13) (MDTowerRanges)
         content.Children.Add(MDUi.Note("关（默认）：范围圈画成炮塔底座高度的一个平圆，被地形挡住的部分半透明显示。开：范围圈沿地面起伏画（坑、台阶处会上下折）。"));
         content.Children.Add(MDUi.Heading("画面"));
         fx=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("特效数量"),fx,n));
@@ -175,11 +175,13 @@ public sealed class MDSettingsScreen:Screen {
         content.Children.Add(MDUi.Heading("防线核心"));
         difficulty=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("防线难度"),difficulty,n));
         endless=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("无尽模式"),endless,n));
-        content.Children.Add(MDUi.Note("放下防线核心后，附近击毁机兵会让威胁度上涨，满了引来多波次袭击（倒计时会说出下一波的兵种和数量）。难度越高，威胁度满得越快、每波越多。无尽模式：袭击不停、越来越强，直到核心被摧毁。原来的夜袭和“首领出现”不受影响。"));
+        shield=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("防线核心防御罩"),shield,n));   // MDShield
+        content.Children.Add(MDUi.Note("放下防线核心后，附近击毁机兵会让威胁度上涨，满了引来多波次袭击（倒计时会说出下一波的兵种和数量）。难度越高，威胁度满得越快、每波越多。无尽模式：袭击不停、越来越强，直到核心被摧毁。原来的夜袭和“首领出现”不受影响。"+
+            "防御罩：和核心或已连上的炮塔面贴面相连的炮塔连成一串，把 1% 以外的耐久交给核心，罩子覆盖到最远那座；罩内炮塔、机甲和玩家受到的机兵攻击先扣罩子，再扣核心。"));
         content.Children.Add(MDUi.Heading("战斗"));
         terrain=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("机甲火炮、榴弹破坏地形"),terrain,n));   // 0.17.0 (MDTerrainBlast)
         content.Children.Add(MDUi.Note("开启后，机甲的火炮炮弹和榴弹落地时像火药一样炸开方块（掉落物会飞出，木头偶尔起火），也会伤到船等载具和动物；不伤本模组的炮塔、机甲和玩家。防御塔的炮弹不受影响。默认关闭。"));
-        vanilla=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("炮塔攻击原版生物"),vanilla,n));   // 1.0.1 (MDFaction.Vanilla)
+        vanilla=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("炮塔攻击原版生物"),vanilla,n));   // 1.0.0 (11-13) (MDFaction.Vanilla)
         content.Children.Add(MDUi.Note("开（默认）：炮塔也打狼、熊、鲨鱼等游戏原有的凶猛动物。关：只打机兵和其他模组的敌人；原版动物 30 秒内伤过玩家、炮塔或玩家的动物时照样还击。"));
         reactions=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("元素反应"),reactions,n));
         content.Children.Add(MDUi.Note("热、冷、电、腐蚀伤害会给敌人挂上状态（头顶有图标），另一种元素再打中时发生反应，例如热 + 冷 = 热冲击。关掉后只保留伤害类型、抗性和状态。"));
@@ -193,7 +195,7 @@ public sealed class MDSettingsScreen:Screen {
     void Refresh() {
         var r=Working;startLabel.Text=MDSettings.StartDayText(r.StartDay);time.Text=MDSettings.SpawnTimeName(r.Time);
         interval.Text=$"{r.Interval:0} 秒";density.Text=$"{r.Density:0.##} 倍";chance.Text=r.Chance<=0?"不夜袭":$"{r.Chance:0}%";size.Text=$"{r.Size:0.##} 倍";
-        fx.Text=MDSettings.FxNames[Math.Clamp(r.Fx,0,2)];reactions.Text=r.Reactions?"开":"关";numbers.Text=r.Numbers?"开":"关";difficulty.Text=MDThreat.DifficultyNames[Math.Clamp(r.Difficulty,0,3)];endless.Text=r.Endless?"开":"关";terrain.Text=r.Terrain?"开":"关";vanilla.Text=r.Vanilla?"开":"关";rangeTerrain.Text=r.RangeTerrain?"开":"关";medic.Text=MDSettings.MedicText(r.Medic);growth.Text=MDSettings.GrowthText(r.Growth);
+        fx.Text=MDSettings.FxNames[Math.Clamp(r.Fx,0,2)];reactions.Text=r.Reactions?"开":"关";numbers.Text=r.Numbers?"开":"关";difficulty.Text=MDThreat.DifficultyNames[Math.Clamp(r.Difficulty,0,3)];endless.Text=r.Endless?"开":"关";terrain.Text=r.Terrain?"开":"关";vanilla.Text=r.Vanilla?"开":"关";shield.Text=r.Shield?"开":"关";rangeTerrain.Text=r.RangeTerrain?"开":"关";medic.Text=MDSettings.MedicText(r.Medic);growth.Text=MDSettings.GrowthText(r.Growth);
         aggro.Text=MDSettings.AggroText(r.Aggro);bossKills.Text=MDSettings.BossKillsText(r.BossKills);
         int cap=Math.Max(1,(int)MathF.Round(4*r.Density)),lo=Math.Max(1,(int)MathF.Round(r.Density)),hi=Math.Clamp((int)MathF.Round(2.5f*r.Density),1,cap);
         densityNote.Text=$"每批 {lo}～{hi} 台，玩家 80 米内最多 {cap} 台。";
@@ -245,7 +247,7 @@ public sealed class MDSettingsScreen:Screen {
         if(difficulty.IsClicked)Working.Difficulty=(Working.Difficulty+1)%4;
         if(endless.IsClicked)Working.Endless=!Working.Endless;
         if(terrain.IsClicked)Working.Terrain=!Working.Terrain;
-        if(vanilla.IsClicked)Working.Vanilla=!Working.Vanilla;if(rangeTerrain.IsClicked)Working.RangeTerrain=!Working.RangeTerrain;
+        if(vanilla.IsClicked)Working.Vanilla=!Working.Vanilla;if(shield.IsClicked)Working.Shield=!Working.Shield;if(rangeTerrain.IsClicked)Working.RangeTerrain=!Working.RangeTerrain;
         if(growth.IsClicked){int i=Array.IndexOf(MDSettings.GrowthSteps,Working.Growth);Working.Growth=MDSettings.GrowthSteps[(i+1)%MDSettings.GrowthSteps.Length];}
         if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;SyncSliders();status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
         if(editHud.IsClicked){OpenEditor();return;}

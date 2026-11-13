@@ -1,0 +1,130 @@
+using Engine;
+using Engine.Graphics;
+using GameEntitySystem;
+
+namespace Game;
+
+// 1.0.0 (second batch, user 2026-11-13: "防线核心增加一个防御罩功能，可以保护范围内的炮台和主角，受到攻击会消耗防御核心的耐久。防御罩半径动态覆盖到
+// 与防线核心四个面直接相连的炮台中最长的位置。炮台与防线核心直接相连后，会增加防御核心的耐久，但自身耐久下降到1%"; the rules asked back and
+// answered: a chain of towers counts and the radius is the farthest one's; a tower that leaves gets its durability back; the shield
+// covers the towers and the players in it; when it is gone nothing more is destroyed, the core's loss takes the towers off line as before):
+// - Members: the towers touching the live core face to face (footprints side by side, not corner to corner), and the towers touching a
+//   member the same way, found again every Every s. A member hands what it has over 1 % (Keep) to the core's shield store (Points),
+//   then stays at 1 %; repaired or healed later, the extra goes over too. Pooled: what each has handed over.
+// - The shield: a dome round the core out to the farthest member's farthest corner (+Margin), at least MinRadius. A robot's hit
+//   (MDRobots.Hit) on a tower, a mech or a player inside it takes Points first, then the core's own durability. The core destroyed:
+//   the store is gone, the members stay at 1 % and go off line with the towers round the core (MDThreat.CoreDestroyed).
+// - A member that leaves (moved or taken off the chain, the core taken down or put out, the setting off) gets back its share of what
+//   is left: Pooled x Points / (all Pooled). One destroyed takes its share with it.
+// - Setting 防线核心防御罩 (MDSettings.CoreShield), on by default. Saved: the core's ShieldPoints, each member's ShieldPooled.
+public static class MDShield {
+    public const float Keep=.01f,Every=.5f,Margin=1,MinRadius=4,Touch=.2f,FlashTime=.35f;
+    public static int Absorbed; public static float AbsorbedPoints;   // tests
+    sealed class State { public ComponentMDUnit Core; public readonly HashSet<ComponentMDUnit> Members=[]; public float Radius; public double Next,FlashUntil; public Vector3 FlashAt; }
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Project,State> states=new();
+    static State For(Project p)=>states.GetValue(p,_=>new State());
+    static float Points(ComponentMDUnit u)=>u.Tower?.hp??u.Damage.AttackResilience;
+    public static ComponentMDUnit Core(Project p)=>For(p).Core;
+    public static int MemberCount(Project p)=>For(p).Members.Count;
+    public static float Radius(Project p)=>For(p).Core==null?0:For(p).Radius;
+    public static Vector3 Centre(ComponentMDUnit core)=>core.Body.Position;
+    public static float Pooled(Project p)=>For(p).Members.Sum(u=>u.ShieldPooled);
+    public static bool IsMember(ComponentMDUnit u)=>u!=null&&For(u.Project).Members.Contains(u);
+
+    // every frame from MDThreat.Update with the live core (null: none)
+    public static void Update(Project p,ComponentMDUnit core) {
+        var s=For(p);double now=p.FindSubsystem<SubsystemTime>(true).GameTime;
+        if(s.Core!=null&&s.Core!=core){Release(s,s.Core.Entity.IsAddedToProject&&!s.Core.Destroyed);}   // another core, or this one gone
+        if(core==null||!MDSettings.CoreShield||core.Destroyed){if(s.Core!=null)Release(s,true);s.Core=null;return;}
+        s.Core=core;if(now<s.Next&&s.Next-now<=Every)return;s.Next=now+Every;
+        // the chain from the core
+        var towers=p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()).Where(u=>u?.Tower!=null&&u!=core&&!u.Destroyed&&u.Tower.attack.type!="core"&&u!=MDTowerTools.Moving&&Vector3.DistanceSquared(u.Body.Position,core.Body.Position)<200*200).ToList();
+        var chain=new HashSet<ComponentMDUnit>();var front=new Queue<ComponentMDUnit>();front.Enqueue(core);
+        while(front.Count>0){var a=front.Dequeue();foreach(var t in towers)if(!chain.Contains(t)&&Touching(a,t)){chain.Add(t);front.Enqueue(t);}}
+        foreach(var u in s.Members.Where(u=>!chain.Contains(u)).ToList())Leave(s,u,u.Entity.IsAddedToProject&&!u.Destroyed);
+        foreach(var u in chain){s.Members.Add(u);Hand(s,u);}
+        float r=MinRadius;var c=core.Body.Position;
+        foreach(var u in s.Members){var b=u.Body.BoundingBox;foreach(var x in new[]{b.Min.X,b.Max.X})foreach(var z in new[]{b.Min.Z,b.Max.Z})r=Math.Max(r,Vector2.Distance(new(x,z),new(c.X,c.Z))+Margin);}
+        s.Radius=r;
+    }
+    // face to face: the footprints overlap along one side (not only at a corner) and meet across the other, at about the same height
+    static bool Touching(ComponentMDUnit a,ComponentMDUnit b) {
+        var p=a.Body.BoundingBox;var q=b.Body.BoundingBox;if(MathF.Abs(p.Min.Y-q.Min.Y)>1.5f)return false;
+        float ox=MathF.Min(p.Max.X,q.Max.X)-MathF.Max(p.Min.X,q.Min.X),oz=MathF.Min(p.Max.Z,q.Max.Z)-MathF.Max(p.Min.Z,q.Min.Z);
+        return ox>.3f&&oz>-Touch||oz>.3f&&ox>-Touch;
+    }
+    // a member's durability over Keep goes to the store
+    static void Hand(State s,ComponentMDUnit u) {
+        float over=u.Damage.Hitpoints-Keep;if(over<=1e-4f)return;
+        float pts=over*Points(u);u.ShieldPooled+=pts;s.Core.ShieldPoints+=pts;u.SetHitpoints(Keep);
+    }
+    static float Share(State s){float all=s.Members.Sum(m=>m.ShieldPooled);return all<=0?0:Math.Clamp(s.Core.ShieldPoints/all,0,1);}
+    static void Leave(State s,ComponentMDUnit u,bool back) {
+        float give=u.ShieldPooled*Share(s);s.Core.ShieldPoints=Math.Max(0,s.Core.ShieldPoints-give);
+        if(back){u.SetHitpoints(Math.Min(1,u.Damage.Hitpoints+give/Points(u)));MDTowerWorld.For(u.Project).Sparks(u.Body.Position+Vector3.UnitY*1.2f,Vector3.UnitY,8,new Color(140,220,255),3,.8f,.3f,.04f);}
+        u.ShieldPooled=0;s.Members.Remove(u);
+    }
+    // all members leave: with their share of what is left (back), or with nothing (the core destroyed)
+    static void Release(State s,bool back) {
+        if(s.Core==null)return;
+        if(!back){foreach(var u in s.Members)u.ShieldPooled=0;s.Members.Clear();s.Core.ShieldPoints=0;return;}
+        foreach(var u in s.Members.ToList())Leave(s,u,u.Entity.IsAddedToProject&&!u.Destroyed);
+    }
+    // the core destroyed (ComponentMDUnit.TowerDestroyed): the members are taken off line with the others and keep their 1 %
+    public static List<ComponentMDUnit> CoreLost(ComponentMDUnit core) {
+        var s=For(core.Project);List<ComponentMDUnit> lost=s.Core==core?s.Members.ToList():[];
+        if(s.Core==core){Release(s,false);s.Core=null;}
+        core.ShieldPoints=0;return lost;
+    }
+    // a member taken down with a pickaxe: its share back first, so its item keeps the durability (MDTowerMaintenance.Dismantle)
+    public static void Detach(ComponentMDUnit u){var s=For(u.Project);if(s.Core!=null&&s.Members.Contains(u))Leave(s,u,true);}
+    // the core taken down or put out by a new one: the members get their share back
+    public static void CoreRemoved(ComponentMDUnit core){var s=For(core.Project);if(s.Core==core){Release(s,true);s.Core=null;}}
+
+    // a robot's hit on b (MDRobots.Hit): true when the shield took it
+    public static bool Absorb(Entity attacker,ComponentBody b,float power,Vector3 point) {
+        if(b==null||power<=0)return false;var s=For(b.Project);var core=s.Core;
+        if(core==null||!core.Entity.IsAddedToProject||core.Destroyed||!MDSettings.CoreShield)return false;
+        bool covered=b.Entity.FindComponent<ComponentMDUnit>() is {} u?u==core||u.Tower!=null||u.Mech!=null:b.Entity.FindComponent<ComponentPlayer>()!=null;
+        if(!covered)return false;
+        var c=Centre(core);if(Vector3.DistanceSquared(MDCombat.Center(b),c)>s.Radius*s.Radius)return false;
+        float fromStore=Math.Min(power,core.ShieldPoints);core.ShieldPoints-=fromStore;float rest=power-fromStore;
+        if(rest>0)core.SetHitpoints(Math.Max(0,core.Damage.Hitpoints-rest/Points(core)));   // then the core itself (destroyed at 0: ComponentMDUnit.Update)
+        Absorbed++;AbsorbedPoints+=power;
+        // the flash where the hit met the dome: on the line from the core towards the attacker
+        var from=attacker?.FindComponent<ComponentBody>()?.Position??point;var d=from-c;s.FlashAt=d.LengthSquared()>1e-4f?c+Vector3.Normalize(d)*s.Radius:point;s.FlashUntil=b.Project.FindSubsystem<SubsystemTime>(true).GameTime+FlashTime;
+        MDTowerWorld.For(b.Project).Sparks(s.FlashAt,-Vector3.Normalize(d+new Vector3(0,.001f,0)),6,new Color(140,220,255),4,.9f,.25f,.05f);
+        return true;
+    }
+    public static string Line(ComponentMDUnit core) {
+        var s=For(core.Project);if(s.Core!=core||!MDSettings.CoreShield)return "";
+        return $"\n防御罩：{core.ShieldPoints:0} 点 + 核心 {core.Damage.Hitpoints*Points(core):0} 点，连接 {s.Members.Count} 座，半径 {s.Radius:0} 米";
+    }
+    // the dome: three rings and eight arcs, brighter for a moment after a hit (MDTowerWorld.DrawShield)
+    public static bool Dome(Project p,out Vector3 centre,out float radius,out float flash) {
+        var s=For(p);centre=default;radius=0;flash=0;if(s.Core==null||!s.Core.Entity.IsAddedToProject||s.Core.Destroyed)return false;
+        centre=Centre(s.Core);radius=s.Radius;double now=p.FindSubsystem<SubsystemTime>(true).GameTime;flash=s.FlashUntil>now?(float)((s.FlashUntil-now)/FlashTime):0;return true;
+    }
+}
+
+public sealed partial class MDTowerWorld {
+    FlatBatch3D shieldBatch;
+    public static int ShieldSegments;   // tests (this frame)
+    void DrawShield(Vector3 eye) {
+        ShieldSegments=0;if(!MDShield.Dome(project,out var c,out float r,out float flash))return;
+        shieldBatch??=SubsystemParticles.PrimitivesRenderer.FlatBatch(3,DepthStencilState.DepthRead,RasterizerState.CullNoneScissor,BlendState.AlphaBlend);
+        var col=new Color(120,210,255)*(.28f+.5f*flash);const int n=48;
+        void Seg(Vector3 a,Vector3 b) {
+            var m=(a+b)*.5f;var w=Vector3.Cross(b-a,m-eye);if(w.LengthSquared()<1e-8f)return;w=Vector3.Normalize(w)*Math.Clamp(.003f*Vector3.Distance(eye,m),.05f,.3f);
+            shieldBatch.QueueQuad(a-w,b-w,b+w,a+w,col);ShieldSegments++;
+        }
+        foreach(float h in new[]{.05f,.45f,.8f}) {   // rings at heights h x r
+            float rr=r*MathF.Sqrt(Math.Max(0,1-h*h)),y=c.Y+h*r;
+            for(int i=0;i<n;i++){float t0=i*MathF.PI*2/n,t1=(i+1)*MathF.PI*2/n;Seg(new(c.X+MathF.Cos(t0)*rr,y,c.Z+MathF.Sin(t0)*rr),new(c.X+MathF.Cos(t1)*rr,y,c.Z+MathF.Sin(t1)*rr));}
+        }
+        for(int k=0;k<8;k++) {   // arcs from the ground to the top
+            float a=k*MathF.PI/4;var dir=new Vector3(MathF.Cos(a),0,MathF.Sin(a));
+            for(int i=0;i<12;i++){float t0=i*MathF.PI/24,t1=(i+1)*MathF.PI/24;Seg(c+dir*MathF.Cos(t0)*r+Vector3.UnitY*MathF.Sin(t0)*r,c+dir*MathF.Cos(t1)*r+Vector3.UnitY*MathF.Sin(t1)*r);}
+        }
+    }
+}

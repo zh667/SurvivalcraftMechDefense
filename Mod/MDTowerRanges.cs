@@ -24,7 +24,7 @@ namespace Game;
 // - Cost: the shapes are built once and kept (RangeShape), rebuilt every RebuildTime s (at most one a frame, new ones at most
 //   NewPerFrame a frame) or at once when the tower moves; the column of blocks under each point is read once per build. A frame only
 //   queues the kept quads (0.17.0 looked every vertex up every frame and read every column again every 2 s in one frame).
-// 1.0.1 (user, 2026-11-13: "炮台攻击范围显示不应该受到地形影响，现在看上去像一大堆心电图，显得很杂乱"): by default the ring and the fill
+// 1.0.0 (11-13) (user, 2026-11-13: "炮台攻击范围显示不应该受到地形影响，现在看上去像一大堆心电图，显得很杂乱"): by default the ring and the fill
 // lie level at the tower's base (flat: RangeSurface gives the base's height everywhere), so a bumpy ground no longer folds the ring up
 // and down; where the ground is higher the ring is drawn faint through it (the x-ray pass above, within XrayRange m). The setting
 // 攻击范围贴合地形 (MDSettings.RangeTerrain) brings 0.18.2's ring on the ground back. The ghost's footprint still sits on the ground.
@@ -179,7 +179,7 @@ public sealed partial class MDTowerWorld {
     // is a surface with no surface right over it (else the base's own height: inside a hill higher than that, or over a drop deeper).
     readonly Dictionary<(int,int),(int y,int v)> column=[];SubsystemTerrain terrainNow;
     public float RangeSurface(float x,float z,float baseY) {
-        if(flatNow)return baseY;   // 1.0.1 level at the base (Build)
+        if(flatNow)return baseY;   // 1.0.0 (11-13) level at the base (Build)
         terrainNow??=SubsystemParticles.Project.FindSubsystem<SubsystemTerrain>(true);var t=terrainNow.Terrain;
         int bx=(int)MathF.Floor(x),bz=(int)MathF.Floor(z),by=(int)MathF.Floor(baseY);
         if(!column.TryGetValue((bx,bz),out var cv)) {

@@ -42,7 +42,8 @@ public class ComponentMDUnit : Component,IUpdateable {
     public float Cooldown; float wreck,lastHitpoints;
     public float HealCharge=-1;   // 0.15.0 medic towers: healing points left (-1 = full; MDMedic)
     public bool CoreLive=true;    // 0.16.0 the defence core: the world's live one (MDThreat)
-    public MDCoreStorage Storage; // 1.0.1 a defence core's store (MDCoreStorage.cs); null for the other towers
+    public MDCoreStorage Storage; // 1.0.0 (11-13) a defence core's store (MDCoreStorage.cs); null for the other towers
+    public float ShieldPoints,ShieldPooled;   // 1.0.0 second batch (MDShield.cs): a core's shield store; a member's durability handed to it, in points
     // 0.18.0 out of action after its defence core was destroyed (MDThreat.CoreDestroyed) until a core is live again or this game time
     public double OfflineUntil;
     public bool Offline=>Tower!=null&&Clock!=null&&OfflineUntil>Clock.GameTime;
@@ -51,8 +52,11 @@ public class ComponentMDUnit : Component,IUpdateable {
     public UpdateOrder UpdateOrder=>(UpdateOrder)1;
     public Vector3 Muzzle=>Mech!=null?MDMechBrain.Eye(this):MDTowerBrain.Muzzle(this);
     void TowerDestroyed() {
-        MDCoreStorage.Spill(this);   // 1.0.1 a core's store lies where it stood
-        if(Tower.attack.type=="core"&&CoreLive){MDThreat.CoreDestroyed(this);return;}   // 0.18.0 a big blast, the towers round it go down
+        MDCoreStorage.Spill(this);   // 1.0.0 (11-13) a core's store lies where it stood
+        if(Tower.attack.type=="core") {   // the shield's members stay at 1 % and go off line with the towers round it (MDShield)
+            var members=MDShield.CoreLost(this);
+            if(CoreLive){MDThreat.CoreDestroyed(this);foreach(var m in members)if(!m.Destroyed)m.OfflineUntil=Math.Max(m.OfflineUntil,Clock.GameTime+MDThreat.DownTime);return;}
+        }   // 0.18.0 a big blast, the towers round it go down
         var w=MDTowerWorld.For(Project);var top=Body.Position+Vector3.UnitY*(Tower.bounds[1][1]*.55f);
         w.Explosion(top,Math.Max(1.5f,Tower.radius*.6f),"heavy",new Color(255,200,120),new Color(255,120,40));
         Project.FindSubsystem<SubsystemAudio>(true).PlaySound("Audio/Explosion1",.7f,0,top,10,false);
@@ -66,7 +70,7 @@ public class ComponentMDUnit : Component,IUpdateable {
             return;
         }
         TurretVariant=Math.Clamp(v.GetValue("TurretVariant",1),1,3);ShotCount=v.GetValue("TurretShotCount",0);
-        HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);float off=v.GetValue("OfflineLeft",0f);if(off>0)OfflineUntil=Clock.GameTime+off;TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
+        HealCharge=v.GetValue("HealCharge",-1f);CoreLive=v.GetValue("CoreLive",true);ShieldPoints=v.GetValue("ShieldPoints",0f);ShieldPooled=v.GetValue("ShieldPooled",0f);float off=v.GetValue("OfflineLeft",0f);if(off>0)OfflineUntil=Clock.GameTime+off;TowerId=v.GetValue("TowerId","");if(string.IsNullOrEmpty(TowerId))TowerId="battle_turret_"+TurretVariant;
         Tower=MDTowerLibrary.Get(TowerId)??throw new InvalidOperationException("Unknown tower "+TowerId);
         recoilAge=Enumerable.Repeat(10f,Tower.recoilParts.Length).ToArray();
         if(Tower.attack.type=="core"){Storage=new MDCoreStorage(this);Storage.Load(v);}
@@ -77,7 +81,7 @@ public class ComponentMDUnit : Component,IUpdateable {
     public override void Save(ValuesDictionary v,EntityToIdMap map) {
         if(Legacy)return;
         if(Mech!=null){v.SetValue("AimYaw",AimYaw);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Mech.Save(v);return;}
-        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("OfflineLeft",Offline?(float)(OfflineUntil-Clock.GameTime):0f);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("CooldownLeft",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Storage?.Save(v);}
+        v.SetValue("HealCharge",HealCharge);v.SetValue("CoreLive",CoreLive);v.SetValue("OfflineLeft",Offline?(float)(OfflineUntil-Clock.GameTime):0f);v.SetValue("AimYaw",AimYaw);v.SetValue("AimPitch",AimPitch);v.SetValue("CooldownLeft",Cooldown);v.SetValue("TurretVariant",TurretVariant);v.SetValue("TurretShotCount",ShotCount);v.SetValue("Destroyed",Destroyed);v.SetValue("WreckTime",wreck);Storage?.Save(v);v.SetValue("ShieldPoints",ShieldPoints);v.SetValue("ShieldPooled",ShieldPooled);}
     public void PlayEvent(string name,float duration) {
         if(Destroyed)return;
         Animation=name;AnimationTime=0;
@@ -135,7 +139,7 @@ public static class MDCombat {
         if(source.Mech!=null)return creature!=null&&!MDFaction.Friendly(b.Entity);
         if(creature==null)return false;
         double now=source.Clock.GameTime;
-        if(!MDSettings.AttackVanilla&&MDFaction.Vanilla(b.Entity)&&!MDFaction.Aggressor(b.Entity,now))return false;   // 1.0.1
+        if(!MDSettings.AttackVanilla&&MDFaction.Vanilla(b.Entity)&&!MDFaction.Aggressor(b.Entity,now))return false;   // 1.0.0 (11-13)
         return MDFaction.Hostile(creature,now);
     }
     // The first body or terrain on a segment, for sight checks and shots. Bodies of the player's side (other towers, Mercury,

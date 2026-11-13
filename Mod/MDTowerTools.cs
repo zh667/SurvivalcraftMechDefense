@@ -31,9 +31,9 @@ public static class MDTowerTools {
     }
     // a newly placed tower while all are shown (MDTowerWorld.DrawRanges, once a second)
     public static void Refresh(Project p){if(ShowAll)foreach(var u in p.Entities.Select(e=>e.FindComponent<ComponentMDUnit>()))if(u?.Tower!=null&&!u.Destroyed&&u.Tower.attack.type!="core")Shown.Add(u);}
-    // 1.0.1 (user, 2026-11-13: "点下防线核心一大堆攻击范围出来，完全看不清是哪个的……核心……点击可以改成打开内置储存空间"): the click opens the
+    // 1.0.0 (11-13) (user, 2026-11-13: "点下防线核心一大堆攻击范围出来，完全看不清是哪个的……核心……点击可以改成打开内置储存空间"): the click opens the
     // core's store (MDCoreStorage); ShowAll stays for the lab and is no longer reached from the game
-    public static bool CoreToggleEnabled;   // lab switch: true = 1.0.0 (the click shows every tower's range)
+    public static bool CoreToggleEnabled;   // lab switch: true = 1.0.0 as released on 11-07 (the click shows every tower's range)
     public static bool CoreClick(ComponentPlayer p) {
         var ray=p.ComponentInput.PlayerInput.Interact;if(!ray.HasValue)return false;
         var u=p.ComponentMiner.Raycast<BodyRaycastResult>(ray.Value,RaycastMode.Interaction)?.ComponentBody.Entity.FindComponent<ComponentMDUnit>();
@@ -42,12 +42,12 @@ public static class MDTowerTools {
         if(CoreToggleEnabled)ToggleAll(p);else MDCoreStorage.Open(p,u);
         return true;
     }
-    // 1.0.1 (user, 2026-11-13: "改成每个炮塔都支持空手点击时显示攻击范围并直接进入移动状态，毕竟拆除是需要工具点击的。这样也可以减少按键，手机屏幕
+    // 1.0.0 (11-13) (user, 2026-11-13: "改成每个炮塔都支持空手点击时显示攻击范围并直接进入移动状态，毕竟拆除是需要工具点击的。这样也可以减少按键，手机屏幕
     // 实在放不下了"): a right-click (a tap) with an empty hand on a tower picks it up as the move key does: its ghost and range follow
     // the crosshair; a left-click (a tap) puts it down, a right-click or the move key leaves it where it was. Taking down stays the
     // pickaxe's (three hits). For PickGuard s after the pick, clicks are not the move's (the same tap must not put it down at once).
     public const double PickGuard=.5; static double pickedAt=-1,towerClickAt=-1; static bool clickFree=true;
-    public static bool TowerClickEnabled=true;   // lab switch: false = 1.0.0 (an empty-hand click on a tower does nothing)
+    public static bool TowerClickEnabled=true;   // lab switch: false = 1.0.0 as released on 11-07 (an empty-hand click on a tower does nothing)
     public static int TowerClicks;               // tests
     public static bool TowerClick(ComponentPlayer p) {
         if(!TowerClickEnabled||Moving!=null||MDMechPilot.Mounted(p)!=null||Terrain.ExtractContents(p.ComponentMiner.ActiveBlockValue)!=0)return false;
@@ -93,7 +93,7 @@ public static class MDTowerTools {
         }
         var u=Moving;
         if(!clickFree&&!v.Interact.HasValue&&!v.Hit.HasValue&&u.Clock.GameTime-pickedAt>=.15)clickFree=true;   // the picking click let go
-        if(!clickFree&&u.Clock.GameTime-pickedAt<PickGuard*4&&u.Clock.GameTime>=pickedAt){var g0=Aim(p,u.Tower,CameraRay(p),MoveReach,u.Body,Facing(u));g0.Moving=u;Current=g0;Clear(ref v);bar?.Show(u,g0);return;}   // 1.0.1 the picking tap is not the move's
+        if(!clickFree&&u.Clock.GameTime-pickedAt<PickGuard*4&&u.Clock.GameTime>=pickedAt){var g0=Aim(p,u.Tower,CameraRay(p),MoveReach,u.Body,Facing(u));g0.Moving=u;Current=g0;Clear(ref v);bar?.Show(u,g0);return;}   // 1.0.0 (11-13) the picking tap is not the move's
         if(!u.Entity.IsAddedToProject||u.Destroyed||Vector3.Distance(u.Body.Position,p.ComponentBody.Position)>64){Stop(p,u.Destroyed?"炮塔已损毁，移动取消。":"移动已取消。");return;}
         bool mouse=(gi.Devices&WidgetInputDevice.Mouse)!=0;
         Ray3? click=mouse?v.Hit:v.Interact??v.Hit;   // a left-click; on a phone a tap

@@ -4,7 +4,7 @@ using TemplatesDatabase;
 
 namespace Game;
 
-// 1.0.1 the defence core's store (user, 2026-11-13: "既然防线核心点击不再显示附近炮台攻击范围了，核心增加吸收附近掉落物的功能，点击可以改成打开
+// 1.0.0 (11-13) the defence core's store (user, 2026-11-13: "既然防线核心点击不再显示附近炮台攻击范围了，核心增加吸收附近掉落物的功能，点击可以改成打开
 // 内置储存空间，方便持续作战。如果太卡可以把附近掉落物直接传送到防线核心的内置储存空间"):
 // - A right-click (a tap) on a core with anything but a repair material opens its store: the game's chest panel, Slots slots
 //   (until 1.0.0 that click showed every tower's range: MDTowerTools.ToggleAll; the Z key still marks towers one by one).

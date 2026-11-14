@@ -27,6 +27,11 @@ namespace TowerLab;
 //         tower; a member moved out of range gets its share back; the core destroyed leaves the others at 1 % and off line.
 // core    items 3-4 m from the core (scrap, dirt) go into its store within 3 s, experience and items 25 m off stay; a right-click on the
 //         core opens the store panel; the store saved and read back is the same; the core taken down drops what it held.
+// anydamage (11-14) a member 8 m from the core and a tower 40 m off at full durability: a player's weapon hit (20) on the member
+//         takes the store and leaves the member as it was, on the outside tower takes its durability; an explosion beside the member
+//         takes the store too (1.0.0 of 11-13: the member at 1 % took it).
+// group   (11-14) the settings page's first row is the players' QQ group 1087216872 with a Copy button (not clicked: that would
+//         change the clipboard of the computer running the test).
 public partial class Lab {
     static IEnumerable<bool> Feedback101() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(1))yield return true;
@@ -290,6 +295,43 @@ public partial class Lab {
                 if(rb.Entity.IsAddedToProject)proj.RemoveEntity(rb.Entity,true);
             }
             Fresh();while(Wait(.5))yield return true;
+        }
+        // ---------------------------------------------------------------- anydamage
+        if(Part("anydamage")) {   // 1.0.0 (11-14): any damage to a member goes to the shield, not only a robot's hit
+            var a=new Dictionary<string,object>();r["anydamage"]=a;Fresh();while(Wait(.5))yield return true;
+            var core=Place(MDTowerLibrary.Get("defense_core"),C0,0);var gd=MDTowerLibrary.Get("battle_turret_1");
+            var t1=Place(gd,C0+new Vector3(-8,0,0),0);var t4=Place(gd,C0+new Vector3(0,0,40),0);t1.SetHitpoints(1);t4.SetHitpoints(1);
+            foreach(var x in Seconds(1.6))yield return x;
+            float Store()=>(float)typeof(ComponentMDUnit).GetField("ShieldPoints")?.GetValue(core);
+            a["joined"]=$"store {Store():0}, t1 {t1.Damage.Hitpoints:0.000}";
+            // the player's weapon (the attack a sword swing makes), inside and outside
+            float s0=Store(),h0=t1.Damage.Hitpoints;
+            ComponentMiner.AttackBody(new MeleeAttackment(t1.Entity,pl.Entity,t1.Body.Position+Vector3.UnitY,Vector3.UnitX,20));foreach(var x in Seconds(.2))yield return x;
+            a["playerInside"]=$"store {s0:0} -> {Store():0}, t1 {h0:0.000} -> {t1.Damage.Hitpoints:0.000}, alive {t1.Entity.IsAddedToProject&&!t1.Destroyed}";
+            if(!(Store()<s0-15)||t1.Damage.Hitpoints<h0-1e-4f)bad.Add("anydamage: player's hit inside "+a["playerInside"]);
+            float o0=t4.Damage.Hitpoints;
+            ComponentMiner.AttackBody(new MeleeAttackment(t4.Entity,pl.Entity,t4.Body.Position+Vector3.UnitY,Vector3.UnitX,20));foreach(var x in Seconds(.2))yield return x;
+            a["playerOutside"]=$"t4 {o0:0.000} -> {t4.Damage.Hitpoints:0.000}";
+            if(!(t4.Damage.Hitpoints<o0-1e-3f))bad.Add("anydamage: player's hit outside "+a["playerOutside"]);
+            // an explosion (gunpowder-like) next to the member
+            s0=Store();h0=t1.Damage.Hitpoints;var e=Terrain.ToCell(t1.Body.Position+new Vector3(-1.5f,1,0));
+            proj.FindSubsystem<SubsystemExplosions>(true).AddExplosion(e.X,e.Y,e.Z,25,false,true);foreach(var x in Seconds(1))yield return x;
+            a["explosion"]=$"store {s0:0} -> {Store():0}, t1 {h0:0.000} -> {t1.Damage.Hitpoints:0.000}, alive {t1.Entity.IsAddedToProject&&!t1.Destroyed}";
+            if(!(Store()<s0)||t1.Damage.Hitpoints<h0-1e-4f||!t1.Entity.IsAddedToProject)bad.Add("anydamage: explosion "+a["explosion"]);
+            Fresh();while(Wait(.5))yield return true;
+        }
+        // ---------------------------------------------------------------- group
+        if(Part("group")) {
+            var g=new Dictionary<string,object>();r["group"]=g;
+            string Texts(Widget w)=>w is ContainerWidget cw?string.Join(" | ",cw.AllChildren.Select(c=>c switch{LabelWidget l=>l.Text,BevelledButtonWidget b=>"["+b.Text+"]",_=>null}).Where(x=>!string.IsNullOrWhiteSpace(x))):w?.GetType().Name;
+            MDSettingsScreen.Open();foreach(var x in Seconds(1))yield return x;
+            if(ScreensManager.CurrentScreen is MDSettingsScreen page) {
+                var content=typeof(MDSettingsScreen).GetField("content",N)?.GetValue(page) as ContainerWidget;
+                g["first"]=content!=null&&content.Children.Count>0?Texts(content.Children[0]):"no rows";
+                SettingsManager.ShowGuiInScreenshots=true;foreach(var x in Seconds(.5))yield return x;ScreenCaptureManager.Capture(1280,720,"f101_group.png");yield return true;SettingsManager.ShowGuiInScreenshots=false;
+                ScreensManager.SwitchScreen("Game");foreach(var x in Seconds(1))yield return x;
+            } else g["first"]="settings page not open: "+ScreensManager.CurrentScreen?.GetType().Name;
+            var f=(string)g["first"];if(!f.Contains("交流群：1087216872")||!f.Contains("[复制群号]"))bad.Add("group: first row "+f);
         }
         pl.ComponentBody.Position=Home;
         if(bad.Count>0)throw new Exception("fb101: "+string.Join(" || ",bad));

@@ -18,7 +18,7 @@ namespace TowerLab;
 // "fb182-ranges" / "fb182-ghost" / "fb182-fog"); "fb183" (Feedback183.cs, 0.18.3: texts hidden by walls and hills but not by their own target,
 // shared hard control, frost damage; "fb183-walls" / "fb183-control" / "fb183-frost"); "fb184" (Feedback184.cs, 0.18.4: the repair drone behind its
 // squad, the water jet keeps its target in range, every tower's attack times, the help texts; "fb184-healer" / "fb184-jet" / "fb184-rate" / "fb184-text");
-// "fb101" (Feedback101.cs, 1.0.0 (11-13): the user's feedback of 2026-11-13; "fb101-wave|armour|vanilla|hard|ranges|click|core|shield").
+// "fb101" (Feedback101.cs, 1.0.0 (11-13): the user's feedback of 2026-11-13; "fb101-wave|armour|vanilla|hard|ranges|click|core|shield|anydamage|group").
 // "fb100" (Feedback100.cs, 1.0.0: robots hop 1-2 block walls with a cooldown, spawn spots on natural ground; "fb100-hop" / "fb100-spawn" / "fb100-manual").
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;
@@ -55,7 +55,8 @@ public partial class Lab:ModLoader {
                 if(ScreensManager.CurrentScreen is not MainMenuScreen)return;
                 SettingsManager.VisibilityRange=128;SettingsManager.SoundsVolume=0;SettingsManager.MusicVolume=0;SettingsManager.ShowLogoInScreenshots=false;
                 if(mode=="phone"){results["pcUniformVectors"]=GLWrapper.GL_MAX_VERTEX_UNIFORM_VECTORS;GLWrapper.GL_MAX_VERTEX_UNIFORM_VECTORS=PhoneUniformVectors;}   // read by SubsystemModelsRenderer.Load
-                world=WorldsManager.CreateWorld(new WorldSettings{Name="TowerLab_"+DateTime.Now.ToString("HHmmss"),Seed="7",GameMode=mode=="combat"?GameMode.Harmless:GameMode.Creative,TerrainGenerationMode=TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});
+                world=WorldsManager.CreateWorld(new WorldSettings{Name="TowerLab_"+DateTime.Now.ToString("HHmmss"),Seed="7",GameMode=mode=="combat"?GameMode.Harmless:GameMode.Creative,TerrainGenerationMode=mode=="promo"?TerrainGenerationMode.Continent:TerrainGenerationMode.FlatContinent,TerrainLevel=64,TerrainBlockIndex=8,AreWeatherEffectsEnabled=false,TimeOfDayMode=TimeOfDayMode.Day});   // promo (Promo.cs): natural ground
+                if(mode=="promo")SettingsManager.VisibilityRange=192;
                 ScreensManager.FindScreen<GameLoadingScreen>("GameLoading").m_worldInfo=world;   // set by the loading screen in the real game; the ghoul mod reads it
                 GameManager.LoadProject(world,ScreensManager.FindScreen<GameScreen>("Game").Children.Find<ContainerWidget>("GamesWidget"));
                 player=new PlayerData(GameManager.Project){Name="Lab",SpawnPosition=new(100,65,100),InputDevice=WidgetInputDevice.None};GameManager.Project.FindSubsystem<SubsystemPlayers>().AddPlayerData(player);ScreensManager.SwitchScreen("Game");stage=1;return;
@@ -127,6 +128,7 @@ public partial class Lab:ModLoader {
             var traps=SimdTraps(typeof(MDTowerLibrary).Assembly.GetTypes());results["simdTraps"]=traps.Count==0?"none":traps;
             if(traps.Count>0)throw new Exception("calls that crash on API 1.9.4 phones: "+string.Join("; ",traps));
         }
+        if(mode=="promo"){foreach(var x in Promo())yield return x;yield break;}   // Promo.cs: screenshots for the community post on natural ground, no gallery
         var p0=player.ComponentPlayer.ComponentBody.Position;origin=new(MathF.Floor(p0.X)+.5f,70,MathF.Floor(p0.Z)+.5f);
         var towers=MDTowerLibrary.All;results["towers"]=towers.Count;
         Clear((int)origin.X-30,(int)origin.X+75,(int)origin.Z-35,(int)origin.Z+70);

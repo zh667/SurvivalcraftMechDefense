@@ -6,13 +6,14 @@ python tools/run_isolated.py smoke --mode old --package dist/MechDefense-0.5.0.s
 python tools/run_isolated.py smoke --mode new --label migration                                           same runtime, both steps)
 Runtime: local/runtime-<name>; the original game installation and the user's worlds are never touched.
 --source 1.9.4 runs on the user's API 1.9.4 Windows build instead of 1.9.3.1 (players' phones run 1.9.4).
+--source 1.9.5.1 the same with the API 1.9.5.1 build (user, 2026-11-14: from now on test 1.9.3.1 and 1.9.5.1); mods built for 1.9.4 go with it.
 """
 import argparse, glob, json, os, shutil, subprocess, sys, time, zipfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 # The user's own game build (binaries and Content.zip only; its Mods, worlds and settings are not copied).
 SOURCE = Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.3.1')
-SOURCES = {'1.9.3.1': SOURCE, '1.9.4': Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.4')}
+SOURCES = {'1.9.3.1': SOURCE, '1.9.4': Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.4'), '1.9.5.1': Path(r'D:\下载\[Windows]SurvivalcraftAPI_1.9.5.1')}
 # The user's Neorxna info mod (exercises the optional compatibility patch). Builds for API 1.9.4 do not run on this 1.9.3.1
 # runtime (2026-10-11: v1.4.3 throws MissingMethodException at start and the lab never reaches the main menu).
 NEORXNA = [SOURCE / 'Mods', Path(r'D:\下载\Mods'), Path(r'D:\下载')]   # 0.15.0: the 1.9.4 build the user plays with (Neorxna-v1.4.3) is in D:\下载
@@ -52,7 +53,7 @@ def main():
     removed = a.package == 'none'   # the mod uninstalled (test uninstall)
     if not removed: shutil.copy2(ROOT / package if not package.is_absolute() else package, mods / 'MechDefense.scmod')
     if a.test == 'lab':
-        found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if ('[API1.9.4' in f.name) == (a.source == '1.9.4')]
+        found = [f for d in NEORXNA if d.exists() for f in sorted(d.glob('*Neorxna-v1.4*.scmod')) if ('[API1.9.4' in f.name) == (a.source != '1.9.3.1')]
         if found: shutil.copy2(found[0], mods / 'Neorxna.scmod')
         print('neorxna:', found[0] if found else 'none')
         if a.mode == 'faction-mods':
@@ -60,7 +61,7 @@ def main():
                 if m.exists(): shutil.copy2(m, mods / m.name)
                 print('faction mod:', m.name, 'copied' if m.exists() else 'MISSING')
         if a.mode in ('fb101', 'fb101-armour'):   # 1.0.0 (11-13): the ghoul mod's soul armour (Tests/TowerLab/Feedback101.cs), its 1.9.4 build there
-            ghoul = Path(r'D:\下载\[API1.9.4]Ghoul尸鬼-v2.0.1.scmod') if a.source == '1.9.4' else COMBAT_MODS[0]
+            ghoul = Path(r'D:\下载\[API1.9.4]Ghoul尸鬼-v2.0.1.scmod') if a.source != '1.9.3.1' else COMBAT_MODS[0]
             if ghoul.exists(): shutil.copy2(ghoul, mods / ghoul.name)
             print('ghoul mod:', ghoul.name, 'copied' if ghoul.exists() else 'MISSING')
         if a.mode == 'combat':

@@ -112,6 +112,10 @@ public sealed class MDSettingsScreen:Screen {
     readonly StackPanelWidget content=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Stretch};
     readonly StackPanelWidget bar;readonly LabelWidget status=MDUi.Note("");
     readonly ButtonWidget defaults=MDUi.Button("恢复默认",150),cancel=MDUi.Button("取消",130),save=MDUi.Button("保存",130),editHud=MDUi.Button("调整机甲面板（位置、大小、旋转）",360);
+    // 1.0.0 (11-14, user: "机甲防线的模组设置最上方置顶我的qq群聊，像cs武器做的那样，群聊也是同一个"): the first row of the list, scrolling with it as in the
+    // CS weapons mod (there the user asked for it not to stay pinned, so the list keeps its room); Copy puts the number on the clipboard.
+    public const string Group="1087216872";
+    readonly ButtonWidget copyGroup=MDUi.Button("复制群号",130);
     ButtonWidget less,more,input,time,fx,reactions,growth,numbers,difficulty,endless,terrain,vanilla,rangeTerrain,shield;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills,medic;
     public MDSettingsScreen() {
         Children.Add(background);Children.Add(MDUi.Frame());
@@ -138,6 +142,7 @@ public sealed class MDSettingsScreen:Screen {
     }
     void Build(bool n) {
         narrow=n;built=true;content.Children.Clear();
+        copyGroup.ParentWidget?.Children.Remove(copyGroup);content.Children.Add(MDUi.Row(MDUi.Label("交流群："+Group),copyGroup,n));
         content.Children.Add(MDUi.Heading("机甲面板"));
         editHud.ParentWidget?.Children.Remove(editHud);editHud.HorizontalAlignment=WidgetAlignment.Near;content.Children.Add(editHud);
         hudInfo=MDUi.Note("");content.Children.Add(hudInfo);
@@ -250,6 +255,10 @@ public sealed class MDSettingsScreen:Screen {
         if(vanilla.IsClicked)Working.Vanilla=!Working.Vanilla;if(shield.IsClicked)Working.Shield=!Working.Shield;if(rangeTerrain.IsClicked)Working.RangeTerrain=!Working.RangeTerrain;
         if(growth.IsClicked){int i=Array.IndexOf(MDSettings.GrowthSteps,Working.Growth);Working.Growth=MDSettings.GrowthSteps[(i+1)%MDSettings.GrowthSteps.Length];}
         if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;SyncSliders();status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
+        if(copyGroup.IsClicked) {
+            try{ClipboardManager.ClipboardString=Group;status.Text="群号已复制："+Group;}
+            catch(Exception){status.Text="无法访问系统剪贴板，请手动输入群号 "+Group;}
+        }
         if(editHud.IsClicked){OpenEditor();return;}
         Refresh();
         if(cancel.IsClicked||Input.Back||Input.Cancel){Close();return;}

@@ -120,6 +120,9 @@ public class ComponentMDUnit : Component,IUpdateable {
 }
 
 public class ComponentMDDamage : ComponentDamage {
+    // every injury ends here (a robot's hit, a player's weapon, an animal, an explosion, fire, a fall, being crushed): inside the core's
+    // shield a member's or the core's goes to the shield first (MDShield.Takes; a robot's hit was already taken in MDRobots.Hit)
+    public override void Damage(float amount){if(amount>0&&Hitpoints>0&&MDShield.Takes(Entity,amount))return;base.Damage(amount);}
     public override void Update(float dt) {
         if(m_componentBody.CrushedTime>0)Damage(dt*.25f);
         if(m_componentBody.Position.Y<0)Damage(1);

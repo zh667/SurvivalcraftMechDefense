@@ -14,15 +14,18 @@ namespace Game;
 //   hands what it has over 1 % (Keep) to the core's shield store (Points), then stays at 1 %; repaired or healed later, the extra goes
 //   over too. Pooled: what each has handed over.
 // - The shield: a dome of Range m round the core. A robot's hit
-//   (MDRobots.Hit) on a tower, a mech or a player inside it takes Points first, then the core's own durability. The core destroyed:
+//   (MDRobots.Hit) on a tower, a mech or a player inside it takes Points first, then the core's own durability. Any other damage
+//   to a member or the core (user, 2026-11-14: "罩内的炮塔不管受到什么伤害，都先扣罩子，再扣核心，和机兵的攻击一样"; a player's weapon,
+//   animals, explosions, fire, falls; the player's hits stay: "玩家用武器打自己的炮塔要不要直接无效 不要") goes the same way
+//   (ComponentMDDamage.Damage -> Takes); until 1.0.0 (11-14) it went straight to the member, which stays at 1 %. The core destroyed:
 //   the store is gone, the members stay at 1 % and go off line with the towers round the core (MDThreat.CoreDestroyed).
 // - A member that leaves (moved out of range, taken down, the core taken down or put out, the setting off) gets back its share of what
 //   is left: Pooled x Points / (all Pooled). One destroyed takes its share with it.
 // - Setting 防线核心防御罩 (MDSettings.CoreShield), on by default. Saved: the core's ShieldPoints, each member's ShieldPooled.
 public static class MDShield {
     public const float Keep=.01f,Every=.5f,Range=MDThreat.DownRadius,FlashTime=.35f;
-    public static int Absorbed; public static float AbsorbedPoints;   // tests
-    sealed class State { public ComponentMDUnit Core; public readonly HashSet<ComponentMDUnit> Members=[]; public float Radius; public double Next,FlashUntil; public Vector3 FlashAt; }
+    public static int Absorbed,Taken; public static float AbsorbedPoints,TakenPoints;   // tests (Taken: damage other than a robot's hit)
+    sealed class State { public ComponentMDUnit Core; public readonly HashSet<ComponentMDUnit> Members=[]; public float Radius; public double Next,FlashUntil,LastSpark; public Vector3 FlashAt; }
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Project,State> states=new();
     static State For(Project p)=>states.GetValue(p,_=>new State());
     static float Points(ComponentMDUnit u)=>u.Tower?.hp??u.Damage.AttackResilience;
@@ -81,12 +84,24 @@ public static class MDShield {
         bool covered=b.Entity.FindComponent<ComponentMDUnit>() is {} u?u==core||u.Tower!=null||u.Mech!=null:b.Entity.FindComponent<ComponentPlayer>()!=null;
         if(!covered)return false;
         var c=Centre(core);if(Vector3.DistanceSquared(MDCombat.Center(b),c)>s.Radius*s.Radius)return false;
-        float fromStore=Math.Min(power,core.ShieldPoints);core.ShieldPoints-=fromStore;float rest=power-fromStore;
-        if(rest>0)core.SetHitpoints(Math.Max(0,core.Damage.Hitpoints-rest/Points(core)));   // then the core itself (destroyed at 0: ComponentMDUnit.Update)
-        Absorbed++;AbsorbedPoints+=power;
+        Spend(core,power);Absorbed++;AbsorbedPoints+=power;
         // the flash where the hit met the dome: on the line from the core towards the attacker
         var from=attacker?.FindComponent<ComponentBody>()?.Position??point;var d=from-c;s.FlashAt=d.LengthSquared()>1e-4f?c+Vector3.Normalize(d)*s.Radius:point;s.FlashUntil=b.Project.FindSubsystem<SubsystemTime>(true).GameTime+FlashTime;
         MDTowerWorld.For(b.Project).Sparks(s.FlashAt,-Vector3.Normalize(d+new Vector3(0,.001f,0)),6,new Color(140,220,255),4,.9f,.25f,.05f);
+        return true;
+    }
+    // the store first, then the core itself (destroyed at 0: ComponentMDUnit.Update)
+    static void Spend(ComponentMDUnit core,float points) {
+        float fromStore=Math.Min(points,core.ShieldPoints);core.ShieldPoints-=fromStore;float rest=points-fromStore;
+        if(rest>0)core.SetHitpoints(Math.Max(0,core.Damage.Hitpoints-rest/Points(core)));
+    }
+    // any other damage (amount: a share of the durability) to a member or the live core (ComponentMDDamage.Damage): true when the shield took it
+    public static bool Takes(Entity e,float amount) {
+        if(!MDSettings.CoreShield||e?.FindComponent<ComponentMDUnit>() is not {} u)return false;var s=For(u.Project);var core=s.Core;
+        if(core==null||!core.Entity.IsAddedToProject||core.Destroyed||u!=core&&!s.Members.Contains(u))return false;
+        float points=amount*Points(u);Spend(core,points);Taken++;TakenPoints+=points;
+        var at=MDCombat.Center(u.Body);double now=u.Project.FindSubsystem<SubsystemTime>(true).GameTime;s.FlashAt=at;s.FlashUntil=now+FlashTime;
+        if(now-s.LastSpark>.2){s.LastSpark=now;MDTowerWorld.For(u.Project).Sparks(at,Vector3.UnitY,4,new Color(140,220,255),3,.8f,.25f,.04f);}   // fire and crushing hurt every frame
         return true;
     }
     public static string Line(ComponentMDUnit core) {

@@ -18,7 +18,7 @@ namespace TowerLab;
 // "fb182-ranges" / "fb182-ghost" / "fb182-fog"); "fb183" (Feedback183.cs, 0.18.3: texts hidden by walls and hills but not by their own target,
 // shared hard control, frost damage; "fb183-walls" / "fb183-control" / "fb183-frost"); "fb184" (Feedback184.cs, 0.18.4: the repair drone behind its
 // squad, the water jet keeps its target in range, every tower's attack times, the help texts; "fb184-healer" / "fb184-jet" / "fb184-rate" / "fb184-text");
-// "fb101" (Feedback101.cs, 1.0.0 (11-13): the user's feedback of 2026-11-13; "fb101-wave|armour|vanilla|hard|ranges|click|core|shield|group").
+// "fb101" (Feedback101.cs, 1.0.0 (11-13): the user's feedback of 2026-11-13; "fb101-wave|armour|vanilla|hard|ranges|click|core|shield|anydamage|group").
 // "fb100" (Feedback100.cs, 1.0.0: robots hop 1-2 block walls with a cooldown, spawn spots on natural ground; "fb100-hop" / "fb100-spawn" / "fb100-manual").
 public partial class Lab:ModLoader {
     static int stage;static double began,step;static WorldInfo world;static PlayerData player;static Vector3 origin;

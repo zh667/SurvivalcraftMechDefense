@@ -27,6 +27,8 @@ namespace TowerLab;
 //         tower; a member moved out of range gets its share back; the core destroyed leaves the others at 1 % and off line.
 // core    items 3-4 m from the core (scrap, dirt) go into its store within 3 s, experience and items 25 m off stay; a right-click on the
 //         core opens the store panel; the store saved and read back is the same; the core taken down drops what it held.
+// group   (11-14) the settings page's first row is the players' QQ group 1087216872 with a Copy button (not clicked: that would
+//         change the clipboard of the computer running the test).
 public partial class Lab {
     static IEnumerable<bool> Feedback101() {
         Remove(placed.Select(p=>p.unit));placed.Clear();while(Wait(1))yield return true;
@@ -290,6 +292,19 @@ public partial class Lab {
                 if(rb.Entity.IsAddedToProject)proj.RemoveEntity(rb.Entity,true);
             }
             Fresh();while(Wait(.5))yield return true;
+        }
+        // ---------------------------------------------------------------- group
+        if(Part("group")) {
+            var g=new Dictionary<string,object>();r["group"]=g;
+            string Texts(Widget w)=>w is ContainerWidget cw?string.Join(" | ",cw.AllChildren.Select(c=>c switch{LabelWidget l=>l.Text,BevelledButtonWidget b=>"["+b.Text+"]",_=>null}).Where(x=>!string.IsNullOrWhiteSpace(x))):w?.GetType().Name;
+            MDSettingsScreen.Open();foreach(var x in Seconds(1))yield return x;
+            if(ScreensManager.CurrentScreen is MDSettingsScreen page) {
+                var content=typeof(MDSettingsScreen).GetField("content",N)?.GetValue(page) as ContainerWidget;
+                g["first"]=content!=null&&content.Children.Count>0?Texts(content.Children[0]):"no rows";
+                SettingsManager.ShowGuiInScreenshots=true;foreach(var x in Seconds(.5))yield return x;ScreenCaptureManager.Capture(1280,720,"f101_group.png");yield return true;SettingsManager.ShowGuiInScreenshots=false;
+                ScreensManager.SwitchScreen("Game");foreach(var x in Seconds(1))yield return x;
+            } else g["first"]="settings page not open: "+ScreensManager.CurrentScreen?.GetType().Name;
+            var f=(string)g["first"];if(!f.Contains("交流群：1087216872")||!f.Contains("[复制群号]"))bad.Add("group: first row "+f);
         }
         pl.ComponentBody.Position=Home;
         if(bad.Count>0)throw new Exception("fb101: "+string.Join(" || ",bad));

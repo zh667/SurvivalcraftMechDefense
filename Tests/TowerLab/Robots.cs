@@ -474,12 +474,14 @@ public partial class Lab {
             IEnumerable<bool> Snap(string name){foreach(var x in During(1,()=>{}))yield return x;ScreenCaptureManager.Capture(1280,720,name+".png");foreach(var x in During(.3,()=>{}))yield return x;h[name]=Panel();}
             bool Near(float a,float b,float tol=2)=>Math.Abs(a-b)<tol;
             foreach(var x in Snap("rh_default"))yield return x;
+            // 1.1.0: the panel widens to its longest line (Width .. MaxWidth, since 0.18.x), so the box is checked against its own width,
+            // not 320 (this failed the same on main f2f2a1e: 348 / 368 wide on 1.9.3.1 / 1.9.5.1)
             var area=m.Hud.LastArea;float fit=MDHudPlacement.Fit(area);var b0=Box();
-            if(!Near(b0.max.X,area.X-20)||!Near(b0.max.Y,area.Y-85)||!Near(b0.max.X-b0.min.X,320*fit))throw new Exception("hud default place: "+Panel());
+            if(!Near(b0.max.X,area.X-20)||!Near(b0.max.Y,area.Y-85)||!Near(b0.max.X-b0.min.X,m.Hud.Panel.Size.X*fit)||m.Hud.Panel.Size.X<MDStatusWidget.Width||m.Hud.Panel.Size.X>MDStatusWidget.MaxWidth)throw new Exception("hud default place: "+Panel());
             MDSettings.Hud=new MDHudPlacement{Custom=true,X=.2f,Y=.25f,Scale=.6f};foreach(var x in Snap("rh_small_top_left"))yield return x;
-            var b1=Box();if(!Near((b1.min.X+b1.max.X)/2,.2f*area.X)||!Near((b1.min.Y+b1.max.Y)/2,.25f*area.Y)||!Near(b1.max.X-b1.min.X,320*fit*.6f))throw new Exception("hud small: "+Panel());
+            var b1=Box();if(!Near((b1.min.X+b1.max.X)/2,.2f*area.X)||!Near((b1.min.Y+b1.max.Y)/2,.25f*area.Y)||!Near(b1.max.X-b1.min.X,m.Hud.Panel.Size.X*fit*.6f))throw new Exception("hud small: "+Panel());
             MDSettings.Hud=new MDHudPlacement{Custom=true,X=.5f,Y=.5f,Scale=1.5f,Rotation=MathF.PI/6};foreach(var x in Snap("rh_turned_centre"))yield return x;
-            var b2=Box();var ext=MDHudPlacement.Extent(new Vector2(320,112),fit*1.5f,MathF.PI/6);
+            var b2=Box();var ext=MDHudPlacement.Extent(m.Hud.Panel.Size,fit*1.5f,MathF.PI/6);
             if(!Near((b2.min.X+b2.max.X)/2,area.X/2)||!Near((b2.min.Y+b2.max.Y)/2,area.Y/2)||!Near(b2.max.X-b2.min.X,ext.X,3)||!Near(b2.max.Y-b2.min.Y,ext.Y,3))throw new Exception("hud turned: "+Panel()+$", want extent {ext}");
             MDSettings.HudKeys=false;foreach(var x in Snap("rh_no_keys"))yield return x;
             if(m.Hud.Panel.Size.Y!=86)throw new Exception("hud without keys: "+Panel());

@@ -324,8 +324,25 @@ public class ComponentMDRobot:ComponentBehavior,IUpdateable {
     }
     public Vector3 Eye=>Def.muzzles.ContainsKey("eye")?Point("eye",out _):Body.Position+Vector3.UnitY*Body.BoxSize.Y*.85f;
 
+    // 1.1.0 (players via the user, 2026-11-20: "晚上很黑看不到夜袭敌人在哪里……或者让敌对机器人会发点红光那种（模组设置可开关）"; the
+    // user chose this over arrows): after dark (MDWildSpawns.Night) a dim red glow through the engine's own ComponentModel.EmissionColor, so
+    // nothing more is drawn; faded in and out over GlowFade s, gone when destroyed or with the setting "机兵夜间发红光" off. Written only
+    // while it glows or fades, and cleared once, so another mod's emission is left alone by day.
+    public static Vector4 GlowColor=new(.45f,.06f,.04f,0);public const float GlowFade=2;
+    public float Glow; bool glowing; ComponentModel glowModel;
+    static Project nightProject; static double nightAt=-1; static bool nightNow;
+    static bool NightNow(Project p,double t){if(p!=nightProject||t!=nightAt){nightProject=p;nightAt=t;nightNow=MDWildSpawns.Night(p);}return nightNow;}
+    void UpdateGlow(float dt) {
+        glowModel??=Entity.FindComponent<ComponentModel>();if(glowModel==null)return;
+        float want=MDSettings.RobotGlow&&Health.Health>0&&NightNow(Project,time.GameTime)?1:0;
+        Glow+=Math.Clamp(want-Glow,-dt/GlowFade,dt/GlowFade);
+        if(Glow>0){glowModel.EmissionColor=GlowColor*Glow;glowing=true;}
+        else if(glowing){glowModel.EmissionColor=null;glowing=false;}
+    }
+
     public void Update(float dt) {
         dt=Math.Min(dt,.1f);pose=null;var w=MDTowerWorld.For(Project);
+        UpdateGlow(dt);
         if(!grown){grown=true;if(Growth>1)Health.AttackResilience*=Growth;}   // after the template's resilience is loaded
         if(ForceClip!=null){Anim.PlayBase(ForceClip,1,.01f);Anim.BaseTime=ForceTime;Anim.Fade=1;Anim.Action=null;Anim.Update(0);pose=null;return;}
         if(Health.Health<=0) {

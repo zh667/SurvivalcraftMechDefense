@@ -276,11 +276,11 @@
     "bnb"
     "cpc"
   </Recipe>
-  <!-- materials: the robot route (furnace) and the fallbacks at five times the normal price (crafting table) -->
-  <Recipe Result="MDPartBlock:1" ResultCount="1" RequiredHeatLevel="2" a="mdpart:0" b="ironingot" Description="合金板：机兵残骸×2 + 铁锭，熔炉炼制">
-    "aab"
+  <!-- materials: the robot route (furnace; 1.1.0: two slots, the game's own furnace has only two - was "aab" with an iron ingot, which only bigger furnaces from other mods could take) and the fallbacks at five times the normal price (crafting table) -->
+  <Recipe Result="MDPartBlock:1" ResultCount="1" RequiredHeatLevel="2" a="mdpart:0" Description="合金板：机兵残骸×2，熔炉炼制">
+    "aa"
   </Recipe>
-  <Recipe Result="MDPartBlock:1" ResultCount="1" RequiredHeatLevel="0" a="ironblock" b="ironingot" c="copperingot" Description="合金板（不打机兵的做法，贵 5 倍）：铁块 + 铁锭×3 + 铜锭×3">
+  <Recipe Result="MDPartBlock:1" ResultCount="1" RequiredHeatLevel="0" a="ironblock" b="ironingot" c="copperingot" Description="合金板（不打机兵的做法，贵得多）：铁块 + 铁锭×3 + 铜锭×3">
     "bcb"
     "cac"
     " b "

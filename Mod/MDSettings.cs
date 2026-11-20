@@ -13,8 +13,11 @@ public enum MDSpawnTime { Night, Always, Off }
 // (radians, clockwise on screen). The same layout serves the panel in play (MDHudHost) and the editor (MDHudLayoutScreen).
 public sealed class MDHudPlacement {
     public bool Custom; public float X=.85f,Y=.8f,Scale=1,Rotation;
+    // 1.1.0: where a panel sits when not custom, as a share of the area (its centre); null = above the bottom right corner (the mech
+    // panel). The top-down panel (MDTopDownPanel) sits at the right edge, half way down.
+    public Vector2? Home;
     public const float Edge=20,Bottom=85,MinScale=.5f,MaxScale=2.5f;
-    public MDHudPlacement Copy()=>new(){Custom=Custom,X=X,Y=Y,Scale=Scale,Rotation=Rotation};
+    public MDHudPlacement Copy()=>new(){Custom=Custom,X=X,Y=Y,Scale=Scale,Rotation=Rotation,Home=Home};
     public MDHudPlacement Normalize() {
         X=float.IsFinite(X)?Math.Clamp(X,0,1):.85f;Y=float.IsFinite(Y)?Math.Clamp(Y,0,1):.8f;
         Scale=float.IsFinite(Scale)?Math.Clamp(Scale,MinScale,MaxScale):1;Rotation=float.IsFinite(Rotation)?MathF.IEEERemainder(Rotation,MathF.PI*2):0;return this;
@@ -28,6 +31,7 @@ public sealed class MDHudPlacement {
     // the panel's centre in the area, kept fully on screen
     public Vector2 Centre(Vector2 area,Vector2 size) {
         var ext=Extent(size,TotalScale(area),Turn);
+        if(!Custom&&Home is {} h){var hh=Vector2.Min(ext/2,area/2);return new Vector2(Math.Clamp(h.X*area.X,hh.X+Edge,Math.Max(hh.X+Edge,area.X-hh.X-Edge)),Math.Clamp(h.Y*area.Y,hh.Y,area.Y-hh.Y));}
         if(!Custom)return new Vector2(area.X-Edge-ext.X/2,area.Y-Bottom-ext.Y/2);
         var half=Vector2.Min(ext/2,area/2);
         return new Vector2(Math.Clamp(X*area.X,half.X,area.X-half.X),Math.Clamp(Y*area.Y,half.Y,area.Y-half.Y));
@@ -95,6 +99,12 @@ public static class MDSettings {
     // base (MDTowerRanges); on = 0.18.2's ring on the ground's surface
     public static bool RangeTerrain;
     public static bool CoreShield=true;   // the defence core's shield (MDShield), on by default
+    // 1.1.0 (players via the user, 2026-11-20): robots glow dim red after dark (ComponentMDRobot.UpdateGlow), on by default; the
+    // top-down view (MDTopDown): its panel (shown, place / size / turn like the mech panel) and whether picking up a tower goes
+    // into it by itself (off by default: the user, 11-20, small moves and stray pick-ups would keep throwing the camera up)
+    public static bool RobotGlow=true,TopDownOnMove,TopDownHudShow=true;
+    public static MDHudPlacement NewTopDownHud()=>new(){Home=new Vector2(1,.45f)};
+    public static MDHudPlacement TopDownHud=NewTopDownHud();
     public static readonly int[] GrowthSteps=[0,5,10,15];
     public const float MaxAggroRange=48;
     public const int MaxBossKills=200;
@@ -102,10 +112,10 @@ public static class MDSettings {
 
     public static void Defaults() {
         HudShow=HudKeys=true;Hud=new();MDMechKeys.Apply(MDMechKeys.Defaults());
-        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=DefaultRaidChance;RaidSize=1;AggroRange=16;BossKills=DefaultBossKills;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;ThreatDifficulty=1;Endless=false;MechTerrain=false;AttackVanilla=true;RangeTerrain=false;CoreShield=true;
+        SpawnTime=MDSpawnTime.Night;SpawnInterval=60;SpawnDensity=1;StartDay=3;RaidChance=DefaultRaidChance;RaidSize=1;AggroRange=16;BossKills=DefaultBossKills;FxLevel=1;Reactions=true;Growth=10;DamageNumbers=true;MedicCapacity=50000;ThreatDifficulty=1;Endless=false;MechTerrain=false;AttackVanilla=true;RangeTerrain=false;CoreShield=true;RobotGlow=true;TopDownOnMove=false;TopDownHudShow=true;TopDownHud=NewTopDownHud();
     }
     public static void Normalize() {
-        Hud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
+        Hud.Normalize();TopDownHud.Home??=new Vector2(1,.45f);TopDownHud.Normalize();SpawnInterval=Math.Clamp(Finite(SpawnInterval,60),15,600);SpawnDensity=Math.Clamp(Finite(SpawnDensity,1),.25f,4);
         StartDay=Math.Clamp(StartDay,0,MaxStartDay);RaidChance=Math.Clamp(Finite(RaidChance,DefaultRaidChance),0,100);RaidSize=Math.Clamp(Finite(RaidSize,1),.5f,3);
         AggroRange=Math.Clamp(Finite(AggroRange,16),0,MaxAggroRange);BossKills=Math.Clamp(BossKills,0,MaxBossKills);FxLevel=Math.Clamp(FxLevel,0,2);Growth=Math.Clamp(Growth,0,15);MedicCapacity=Math.Clamp(Finite(MedicCapacity,50000),0,MaxMedicCapacity);ThreatDifficulty=Math.Clamp(ThreatDifficulty,0,3);
         if(!Enum.IsDefined(SpawnTime))SpawnTime=MDSpawnTime.Night;
@@ -121,6 +131,8 @@ public static class MDSettings {
             new XAttribute("StartDay",StartDay),new XAttribute("RaidChance",F(RaidChance)),new XAttribute("RaidSize",F(RaidSize)),
             new XAttribute("AggroRange",F(AggroRange)),new XAttribute("BossKills",BossKills),new XAttribute("FxLevel",FxLevel),new XAttribute("Reactions",Reactions),new XAttribute("DamageNumbers",DamageNumbers),new XAttribute("MedicCapacity",F(MedicCapacity)),new XAttribute("ThreatDifficulty",ThreatDifficulty),new XAttribute("Endless",Endless),new XAttribute("Growth",Growth),   // 0.12.0, 0.15.0
             new XAttribute("MechTerrain",MechTerrain),new XAttribute("AttackVanilla",AttackVanilla),new XAttribute("RangeTerrain",RangeTerrain),new XAttribute("CoreShield",CoreShield),   // 1.0.0 (11-13)
+            new XAttribute("RobotGlow",RobotGlow),new XAttribute("TopDownOnMove",TopDownOnMove),new XAttribute("TopDownHudShow",TopDownHudShow),new XAttribute("TopDownHudCustom",TopDownHud.Custom),   // 1.1.0
+            new XAttribute("TopDownHudX",F(TopDownHud.X)),new XAttribute("TopDownHudY",F(TopDownHud.Y)),new XAttribute("TopDownHudScale",F(TopDownHud.Scale)),new XAttribute("TopDownHudRotation",F(TopDownHud.Rotation)),
             new XAttribute("MechKeys",MDMechKeys.ToText(MDMechKeys.Current()))));   // 0.11.0: the mech's bound keys (MDMechKeys)
     }
     // a missing or unreadable value keeps the default
@@ -135,6 +147,8 @@ public static class MDSettings {
             SpawnInterval=N("SpawnInterval",60);SpawnDensity=N("SpawnDensity",1);StartDay=(int)MathF.Round(N("StartDay",3));RaidChance=N("RaidChance",DefaultRaidChance);RaidSize=N("RaidSize",1);
             AggroRange=N("AggroRange",16);BossKills=(int)MathF.Round(N("BossKills",DefaultBossKills));FxLevel=(int)MathF.Round(N("FxLevel",1));Reactions=B("Reactions",true);DamageNumbers=B("DamageNumbers",true);MedicCapacity=N("MedicCapacity",50000);ThreatDifficulty=(int)MathF.Round(N("ThreatDifficulty",1));Endless=B("Endless",false);Growth=(int)MathF.Round(N("Growth",10));
             MechTerrain=B("MechTerrain",false);AttackVanilla=B("AttackVanilla",true);RangeTerrain=B("RangeTerrain",false);CoreShield=B("CoreShield",true);
+            RobotGlow=B("RobotGlow",true);TopDownOnMove=B("TopDownOnMove",false);TopDownHudShow=B("TopDownHudShow",true);   // 1.1.0
+            TopDownHud=new MDHudPlacement{Home=new Vector2(1,.45f),Custom=B("TopDownHudCustom",false),X=N("TopDownHudX",.9f),Y=N("TopDownHudY",.45f),Scale=N("TopDownHudScale",1),Rotation=N("TopDownHudRotation",0)};
             MDMechKeys.Apply(MDMechKeys.FromText((string)e.Attribute("MechKeys")));
             Normalize();
         } catch(Exception x){LastError=x.Message;Log.Warning("[MechDefense] settings: "+x.Message);Defaults();}

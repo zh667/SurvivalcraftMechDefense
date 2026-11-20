@@ -18,6 +18,7 @@ namespace TowerLab;
 // "fb182-ranges" / "fb182-ghost" / "fb182-fog"); "fb183" (Feedback183.cs, 0.18.3: texts hidden by walls and hills but not by their own target,
 // shared hard control, frost damage; "fb183-walls" / "fb183-control" / "fb183-frost"); "fb184" (Feedback184.cs, 0.18.4: the repair drone behind its
 // squad, the water jet keeps its target in range, every tower's attack times, the help texts; "fb184-healer" / "fb184-jet" / "fb184-rate" / "fb184-text");
+// "fb110" (Feedback110.cs, 1.1.0: players' feedback of 2026-11-20; "fb110-furnace|glow|topdown|settings").
 // "fb101" (Feedback101.cs, 1.0.0 (11-13): the user's feedback of 2026-11-13; "fb101-wave|armour|vanilla|hard|ranges|click|core|shield|anydamage|group").
 // "fb100" (Feedback100.cs, 1.0.0: robots hop 1-2 block walls with a cooldown, spawn spots on natural ground; "fb100-hop" / "fb100-spawn" / "fb100-manual").
 public partial class Lab:ModLoader {
@@ -210,6 +211,7 @@ public partial class Lab:ModLoader {
         if(mode=="fb183"||mode.StartsWith("fb183-"))foreach(var x in Feedback183())yield return x;   // Tests/TowerLab/Feedback183.cs (0.18.3: texts behind walls, shared hard control, frost damage)
         if(mode=="fb184"||mode.StartsWith("fb184-"))foreach(var x in Feedback184())yield return x;   // Tests/TowerLab/Feedback184.cs (0.18.4: the repair drone behind its squad, the water jet, tower fire times, texts)
         if(mode=="fb100"||mode.StartsWith("fb100-"))foreach(var x in Feedback100())yield return x;
+        if(mode=="fb110"||mode.StartsWith("fb110-"))foreach(var x in Feedback110())yield return x;   // Tests/TowerLab/Feedback110.cs (1.1.0: the alloy plate in the game's furnace, robots glowing at night, the top-down view, its panel and settings)
         if(mode=="fb101"||mode.StartsWith("fb101-"))foreach(var x in Feedback101())yield return x;   // Tests/TowerLab/Feedback101.cs (1.0.0 (11-13): raids kept over a reload, robot hits through any armour, vanilla creatures, bosses and hard blocks, level rings, picking towers up, the core's store)   // Tests/TowerLab/Feedback100.cs (1.0.0: robots hop low walls, spawn spots on natural ground, the handbook's gun numbers)
         if(mode=="fb13"||mode=="faction-mods")foreach(var x in Feedback13())yield return x;   // Tests/TowerLab/Feedback13.cs
         if(mode=="mech-view"||mode.StartsWith("mech-view-"))foreach(var x in MechView())yield return x;   // Tests/TowerLab/MechView.cs

@@ -1,4 +1,4 @@
-# Status — 2026-11-13
+# Status — 2026-11-20
 
 Housekeeping 2026-10-25 (user: "中间产物都删掉吧"): all `local/runtime-*` (197) and the earlier rounds' `local/claude-work` folders (r3-r5,
 r13-r16, progression, mech-review, k11, diag) were deleted, 29.7 GB. Screenshot paths under `local/claude-work/` named in the sections
@@ -26,6 +26,27 @@ Housekeeping 2026-11-06（同 11-04 的规矩）：0.18.4 这一轮的 `local/ru
 
 Housekeeping 2026-11-07（同 11-04 的规矩）：1.0.0 这一轮的 `local/runtime-*`、被取代的验证轮（b1～b3、第一次另存测试 s-*-194）、不带另存的对照包 `claude-work/r100/pkg-prefeature.scmod`
 （提交 e1e0736 可重建）、运行时 towers.json 的备份和拆分提交用的中间文件，共 129 项 9.53 GB；`local/` 从 16.88 GB 降到 7.35 GB。留下最终结果 `claude-work/r100/`（105 项，1.38 GB）。
+
+## 1.1.0（分支 feat/feedback-1120，PR 待合并，2026-11-20）：合金板原版熔炉可炼；机兵夜间红光；俯瞰布防视角
+
+玩家反馈三条（用户转述，11-20）。计划、讨论和完整结果见 `docs/tasks/2026-11-20-feedback-1.1.0.md`。
+
+| # | 内容 | 做法 | 文件 |
+|---|---|---|---|
+| 1 | 合金板要工业熔炉才能烧（原版熔炉只有 2 格原料） | 配方改成“机兵残骸 ×2”（`"aa"`），原版熔炉就能炼。正常价格约合 2 个铁锭；没有残骸时的备用配方不变 | `MechDefense.cr`、`MDParts.cs`、README、PROGRESSION |
+| 2 | 夜里看不见夜袭的机兵（用户：不做箭头） | 天黑后机兵发暗红光：`ComponentModel.EmissionColor` = (0.45, 0.06, 0.04)，2 s 淡入淡出，被毁或白天熄灭。不加绘制调用。设置“机兵夜间发红光”默认开 | `MDRobots.cs`（`UpdateGlow`）、`MDSettings`、`MDSettingsScreen` |
+| 3 | 俯瞰布防视角 | 拿起炮塔时出现俯瞰面板：“俯瞰／返回”“拉近”“拉远”。面板的位置、大小、旋转、显示可在设置里调，和机甲面板同一套编辑器。电脑按 O 随时进出（G 是游戏的“编辑物品”键）；手机可以用铃兰触控映射。“拿起炮塔时自动俯瞰”默认关。<br>俯瞰相机：俯角 65°，高度 12～48（默认 24），中心离玩家最多 48 m。移动键平移，滚轮或按钮调高度。受伤、死亡、上机甲、打开对话框、切换相机都会退出。不进游戏的“切换视角”循环（`ManageCameras` 加相机时设成不可切换） | `MDTopDown.cs`（新）、`MDTowerTools.cs`、`MDMechKeys.cs`、`MDPlayer.cs`、`MDSettings.cs`、`MDSettingsScreen.cs` |
+
+测试：新实验室模式 `fb110`（`furnace|glow|topdown|settings`），两个运行时都通过，数字见任务文档。
+回归（1.9.3.1 和 1.9.5.1 各 18 项，`local/claude-work/r110/`）：这次的改动没有引起回归。以前就有的测试问题都拿 main f2f2a1e 加已发布的 1.0.0 包对照过：
+- robots `hud`：面板从 0.18.x 起会按文字加宽，测试还写死 320 宽。**已修**，改成按面板实际宽度判断。
+- robots `leaves/bolt`：4 发弩箭一片树叶没打掉，main 上一样，原因没查。
+- robots `bossdig`：测试按 10-25“清掉一切方块”的旧规则写，11-13 起首领不直接清硬方块。测试没改。
+- `bosses14` RD19：1.9.5.1 偶发一次，复跑两次都通过。
+
+1.0.0 以来的回归都没有跑完整的 robots，这三条测试问题是这次才看到的。
+
+没验证：手机（俯瞰面板和点屏放塔没在手机上试过）；工业模组的大熔炉能不能识别两格配方。
 
 ## 1.0.0 第三批（分支 feat/qq-group-1114，PR 待合并，2026-11-14）：设置页交流群；防御罩接住罩内炮塔受到的任何伤害；宣传图；测试改跑 1.9.3.1 和 1.9.5.1
 

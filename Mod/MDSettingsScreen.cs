@@ -95,10 +95,10 @@ public sealed class MDSettingsScreen:Screen {
     }
     public static void Open(){EnsureScreens();ScreensManager.SwitchScreen(ScreenName);}
     // the robot options being edited
-    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills,Fx,Growth; public bool Reactions,Numbers,Endless,Terrain,Vanilla=true,RangeTerrain,Shield=true; public float Medic; public int Difficulty;
-        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills,Fx=MDSettings.FxLevel,Growth=MDSettings.Growth,Reactions=MDSettings.Reactions,Numbers=MDSettings.DamageNumbers,Medic=MDSettings.MedicCapacity,Difficulty=MDSettings.ThreatDifficulty,Endless=MDSettings.Endless,Terrain=MDSettings.MechTerrain,Vanilla=MDSettings.AttackVanilla,RangeTerrain=MDSettings.RangeTerrain,Shield=MDSettings.CoreShield};
-        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=MDSettings.DefaultRaidChance,Size=1,StartDay=3,Aggro=16,BossKills=MDSettings.DefaultBossKills,Fx=1,Growth=10,Reactions=true,Numbers=true,Medic=50000,Difficulty=1,Endless=false,Terrain=false,Vanilla=true,RangeTerrain=false,Shield=true};
-        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.FxLevel=Fx;MDSettings.Growth=Growth;MDSettings.Reactions=Reactions;MDSettings.DamageNumbers=Numbers;MDSettings.MedicCapacity=Medic;MDSettings.ThreatDifficulty=Difficulty;MDSettings.Endless=Endless;MDSettings.MechTerrain=Terrain;MDSettings.AttackVanilla=Vanilla;MDSettings.RangeTerrain=RangeTerrain;MDSettings.CoreShield=Shield;MDSettings.Normalize();} }
+    public sealed class Robots { public MDSpawnTime Time; public float Interval,Density,Chance,Size,Aggro; public int StartDay,BossKills,Fx,Growth; public bool Reactions,Numbers,Endless,Terrain,Vanilla=true,RangeTerrain,Shield=true,Glow=true,TopDownAuto; public float Medic; public int Difficulty;
+        public static Robots Current()=>new(){Time=MDSettings.SpawnTime,Interval=MDSettings.SpawnInterval,Density=MDSettings.SpawnDensity,Chance=MDSettings.RaidChance,Size=MDSettings.RaidSize,StartDay=MDSettings.StartDay,Aggro=MDSettings.AggroRange,BossKills=MDSettings.BossKills,Fx=MDSettings.FxLevel,Growth=MDSettings.Growth,Reactions=MDSettings.Reactions,Numbers=MDSettings.DamageNumbers,Medic=MDSettings.MedicCapacity,Difficulty=MDSettings.ThreatDifficulty,Endless=MDSettings.Endless,Terrain=MDSettings.MechTerrain,Vanilla=MDSettings.AttackVanilla,RangeTerrain=MDSettings.RangeTerrain,Shield=MDSettings.CoreShield,Glow=MDSettings.RobotGlow,TopDownAuto=MDSettings.TopDownOnMove};
+        public static Robots Default()=>new(){Time=MDSpawnTime.Night,Interval=60,Density=1,Chance=MDSettings.DefaultRaidChance,Size=1,StartDay=3,Aggro=16,BossKills=MDSettings.DefaultBossKills,Fx=1,Growth=10,Reactions=true,Numbers=true,Medic=50000,Difficulty=1,Endless=false,Terrain=false,Vanilla=true,RangeTerrain=false,Shield=true,Glow=true,TopDownAuto=false};
+        public void Apply(){MDSettings.SpawnTime=Time;MDSettings.SpawnInterval=Interval;MDSettings.SpawnDensity=Density;MDSettings.RaidChance=Chance;MDSettings.RaidSize=Size;MDSettings.StartDay=StartDay;MDSettings.AggroRange=Aggro;MDSettings.BossKills=BossKills;MDSettings.FxLevel=Fx;MDSettings.Growth=Growth;MDSettings.Reactions=Reactions;MDSettings.DamageNumbers=Numbers;MDSettings.MedicCapacity=Medic;MDSettings.ThreatDifficulty=Difficulty;MDSettings.Endless=Endless;MDSettings.MechTerrain=Terrain;MDSettings.AttackVanilla=Vanilla;MDSettings.RangeTerrain=RangeTerrain;MDSettings.CoreShield=Shield;MDSettings.RobotGlow=Glow;MDSettings.TopDownOnMove=TopDownAuto;MDSettings.Normalize();} }
     public Robots Working;
     // the mech's keys being edited (MDMechKeys); capturing: the action waiting for a key press
     public Dictionary<MDMechAction,Key> WorkingKeys;public MDMechAction? Capturing;
@@ -111,12 +111,12 @@ public sealed class MDSettingsScreen:Screen {
     readonly ScrollPanelWidget scroll=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Stretch,VerticalAlignment=WidgetAlignment.Stretch};
     readonly StackPanelWidget content=new(){Direction=LayoutDirection.Vertical,HorizontalAlignment=WidgetAlignment.Stretch};
     readonly StackPanelWidget bar;readonly LabelWidget status=MDUi.Note("");
-    readonly ButtonWidget defaults=MDUi.Button("恢复默认",150),cancel=MDUi.Button("取消",130),save=MDUi.Button("保存",130),editHud=MDUi.Button("调整机甲面板（位置、大小、旋转）",360);
+    readonly ButtonWidget defaults=MDUi.Button("恢复默认",150),cancel=MDUi.Button("取消",130),save=MDUi.Button("保存",130),editHud=MDUi.Button("调整机甲面板（位置、大小、旋转）",360),editTopDown=MDUi.Button("调整俯瞰面板（位置、大小、旋转）",360);
     // 1.0.0 (11-14, user: "机甲防线的模组设置最上方置顶我的qq群聊，像cs武器做的那样，群聊也是同一个"): the first row of the list, scrolling with it as in the
     // CS weapons mod (there the user asked for it not to stay pinned, so the list keeps its room); Copy puts the number on the clipboard.
     public const string Group="1087216872";
     readonly ButtonWidget copyGroup=MDUi.Button("复制群号",130);
-    ButtonWidget less,more,input,time,fx,reactions,growth,numbers,difficulty,endless,terrain,vanilla,rangeTerrain,shield;LabelWidget startLabel,hudInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills,medic;
+    ButtonWidget less,more,input,time,fx,reactions,growth,numbers,difficulty,endless,terrain,vanilla,rangeTerrain,shield,glow,topDownAuto;LabelWidget startLabel,hudInfo,topDownInfo,densityNote;SliderWidget interval,density,chance,size,aggro,bossKills,medic;
     public MDSettingsScreen() {
         Children.Add(background);Children.Add(MDUi.Frame());
         scroll.Children.Add(content);scrollHost.Children.Add(scroll);
@@ -158,9 +158,17 @@ public sealed class MDSettingsScreen:Screen {
             "手持防御塔部署物时，准星处自动显示占地（绿色可放、红色不能放）和攻击范围。旋转键默认 R：只在移动炮塔时用，这时 R 不会骑乘。"));
         rangeTerrain=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("攻击范围贴合地形"),rangeTerrain,n));   // 1.0.0 (11-13) (MDTowerRanges)
         content.Children.Add(MDUi.Note("关（默认）：范围圈画成炮塔底座高度的一个平圆，被地形挡住的部分半透明显示。开：范围圈沿地面起伏画（坑、台阶处会上下折）。"));
+        content.Children.Add(MDUi.Heading("俯瞰视角"));   // 1.1.0 (MDTopDown)
+        topDownAuto=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("拿起炮塔时自动俯瞰"),topDownAuto,n));
+        content.Children.Add(MDUi.Note("拿起炮塔后屏幕边上出现俯瞰面板：点「俯瞰」从高处往下看，方便挑位置；放下或取消后回到原来的视角。俯瞰时移动键（手机摇杆）平移视角，滚轮或面板上的「拉近」「拉远」调高度，点炮塔就能拿起。"+
+            "电脑也可以随时按「俯瞰视角」键（默认 O）进出；手机可用铃兰触控把这个键映射到屏幕上。自动俯瞰默认关：开了以后每次拿起炮塔都直接进入俯瞰。被攻击时会自动退出俯瞰。"));
+        editTopDown.ParentWidget?.Children.Remove(editTopDown);editTopDown.HorizontalAlignment=WidgetAlignment.Near;content.Children.Add(editTopDown);
+        topDownInfo=MDUi.Note("");content.Children.Add(topDownInfo);
         content.Children.Add(MDUi.Heading("画面"));
         fx=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("特效数量"),fx,n));
         content.Children.Add(MDUi.Note("炮塔和机兵的烟雾、火花、碎屑数量。手机发热时选“极简”；“完整”是 0.12.0 及以前的效果。"));
+        glow=MDUi.Button("",220);content.Children.Add(MDUi.Row(MDUi.Label("机兵夜间发红光"),glow,n));   // 1.1.0 (ComponentMDRobot.UpdateGlow)
+        content.Children.Add(MDUi.Note("开（默认）：天黑后敌方机兵（包括精英、首领）身上发暗红色的光，夜里远远也能看到它们在哪；天亮后熄灭，被击毁的不发光。不增加绘制量。"));
         content.Children.Add(MDUi.Heading("敌方机兵"));
         less=MDUi.Button("−",64);more=MDUi.Button("+",64);input=MDUi.Button("输入",96);startLabel=MDUi.Label("");
         content.Children.Add(MDUi.Row(startLabel,MDUi.Bar(less,more,input),n));
@@ -200,16 +208,18 @@ public sealed class MDSettingsScreen:Screen {
     void Refresh() {
         var r=Working;startLabel.Text=MDSettings.StartDayText(r.StartDay);time.Text=MDSettings.SpawnTimeName(r.Time);
         interval.Text=$"{r.Interval:0} 秒";density.Text=$"{r.Density:0.##} 倍";chance.Text=r.Chance<=0?"不夜袭":$"{r.Chance:0}%";size.Text=$"{r.Size:0.##} 倍";
-        fx.Text=MDSettings.FxNames[Math.Clamp(r.Fx,0,2)];reactions.Text=r.Reactions?"开":"关";numbers.Text=r.Numbers?"开":"关";difficulty.Text=MDThreat.DifficultyNames[Math.Clamp(r.Difficulty,0,3)];endless.Text=r.Endless?"开":"关";terrain.Text=r.Terrain?"开":"关";vanilla.Text=r.Vanilla?"开":"关";shield.Text=r.Shield?"开":"关";rangeTerrain.Text=r.RangeTerrain?"开":"关";medic.Text=MDSettings.MedicText(r.Medic);growth.Text=MDSettings.GrowthText(r.Growth);
+        fx.Text=MDSettings.FxNames[Math.Clamp(r.Fx,0,2)];reactions.Text=r.Reactions?"开":"关";numbers.Text=r.Numbers?"开":"关";difficulty.Text=MDThreat.DifficultyNames[Math.Clamp(r.Difficulty,0,3)];endless.Text=r.Endless?"开":"关";terrain.Text=r.Terrain?"开":"关";vanilla.Text=r.Vanilla?"开":"关";shield.Text=r.Shield?"开":"关";rangeTerrain.Text=r.RangeTerrain?"开":"关";glow.Text=r.Glow?"开":"关";topDownAuto.Text=r.TopDownAuto?"开":"关（默认）";medic.Text=MDSettings.MedicText(r.Medic);growth.Text=MDSettings.GrowthText(r.Growth);
         aggro.Text=MDSettings.AggroText(r.Aggro);bossKills.Text=MDSettings.BossKillsText(r.BossKills);
         int cap=Math.Max(1,(int)MathF.Round(4*r.Density)),lo=Math.Max(1,(int)MathF.Round(r.Density)),hi=Math.Clamp((int)MathF.Round(2.5f*r.Density),1,cap);
         densityNote.Text=$"每批 {lo}～{hi} 台，玩家 80 米内最多 {cap} 台。";
         foreach(var (a,b) in keyButtons){var t=Capturing==a?"请按键…":MDMechKeys.KeyName(WorkingKeys.GetValueOrDefault(a,Key.Null));if(b.Text!=t)b.Text=t;}
         var p=MDSettings.Hud;
         hudInfo.Text=$"显示：{(MDSettings.HudShow?"开":"关")} · 按键提示：{(MDSettings.HudKeys?"开":"关")} · 位置：{(p.Custom?$"自定义（大小 {p.Scale*100:0}%，旋转 {p.Rotation*180/MathF.PI:0}°）":"默认（右下角）")}";
+        var q=MDSettings.TopDownHud;
+        topDownInfo.Text=$"俯瞰面板　显示：{(MDSettings.TopDownHudShow?"开":"关")} · 位置：{(q.Custom?$"自定义（大小 {q.Scale*100:0}%，旋转 {q.Rotation*180/MathF.PI:0}°）":"默认（右侧中部）")}";
     }
     // also used by the lab
-    public void OpenEditor(){returning=true;ScreensManager.SwitchScreen(MDHudLayoutScreen.ScreenName);}
+    public void OpenEditor(MDHudTarget target=MDHudTarget.Mech){returning=true;MDHudLayoutScreen.Target=target;ScreensManager.SwitchScreen(MDHudLayoutScreen.ScreenName);}
     public void SaveNow(){Working.Apply();MDMechKeys.Apply(WorkingKeys);MDSettings.Persist();Close();}
     // the sliders show Working (Update copies them back every frame): after Working changes in code (defaults, the lab)
     public void SyncSliders(){interval.Value=Working.Interval;density.Value=Working.Density;chance.Value=Working.Chance;size.Value=Working.Size;aggro.Value=Working.Aggro;bossKills.Value=Working.BossKills;medic.Value=Working.Medic;}
@@ -252,14 +262,15 @@ public sealed class MDSettingsScreen:Screen {
         if(difficulty.IsClicked)Working.Difficulty=(Working.Difficulty+1)%4;
         if(endless.IsClicked)Working.Endless=!Working.Endless;
         if(terrain.IsClicked)Working.Terrain=!Working.Terrain;
-        if(vanilla.IsClicked)Working.Vanilla=!Working.Vanilla;if(shield.IsClicked)Working.Shield=!Working.Shield;if(rangeTerrain.IsClicked)Working.RangeTerrain=!Working.RangeTerrain;
+        if(vanilla.IsClicked)Working.Vanilla=!Working.Vanilla;if(shield.IsClicked)Working.Shield=!Working.Shield;if(glow.IsClicked)Working.Glow=!Working.Glow;if(topDownAuto.IsClicked)Working.TopDownAuto=!Working.TopDownAuto;if(rangeTerrain.IsClicked)Working.RangeTerrain=!Working.RangeTerrain;
         if(growth.IsClicked){int i=Array.IndexOf(MDSettings.GrowthSteps,Working.Growth);Working.Growth=MDSettings.GrowthSteps[(i+1)%MDSettings.GrowthSteps.Length];}
-        if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;SyncSliders();status.Text="已恢复默认（保存后生效）。机甲面板在调整页里单独恢复。";}
+        if(defaults.IsClicked){Working=Robots.Default();WorkingKeys=MDMechKeys.Defaults();Capturing=null;SyncSliders();status.Text="已恢复默认（保存后生效）。机甲面板、俯瞰面板在各自的调整页里单独恢复。";}
         if(copyGroup.IsClicked) {
             try{ClipboardManager.ClipboardString=Group;status.Text="群号已复制："+Group;}
             catch(Exception){status.Text="无法访问系统剪贴板，请手动输入群号 "+Group;}
         }
         if(editHud.IsClicked){OpenEditor();return;}
+        if(editTopDown.IsClicked){OpenEditor(MDHudTarget.TopDown);return;}
         Refresh();
         if(cancel.IsClicked||Input.Back||Input.Cancel){Close();return;}
         if(save.IsClicked)SaveNow();
@@ -287,6 +298,9 @@ public sealed class MDHudGesture {
     }
 }
 
+// 1.1.0 which panel the editor edits: the mech's status panel or the top-down view's (MDTopDownPanel)
+public enum MDHudTarget { Mech, TopDown }
+
 // The panel editor: the game behind it, the real panel on top where it will be. Drag it (mouse or one finger); two fingers
 // move, pinch and twist; the mouse wheel scales, Shift + wheel or Q / E turns; the buttons do the same. Nothing here can
 // fire or move the mech. Works on a copy: Save writes it, Cancel and Back leave the saved one.
@@ -294,6 +308,12 @@ public sealed class MDHudLayoutScreen:Screen {
     public const string ScreenName="MechDefenseHudLayout";
     public const float ScaleStep=1.1f,TurnStep=MathF.PI/12;
     public MDHudPlacement Working=new();public bool WorkingShow=true,WorkingKeys=true;
+    public static MDHudTarget Target;   // 1.1.0 set before the screen opens (MDSettingsScreen.OpenEditor)
+    public MDHudTarget Editing{get;private set;}
+    public readonly MDTopDownPanel TopDownSample=new();
+    CanvasWidget Shown=>Editing==MDHudTarget.TopDown?TopDownSample:Sample;
+    Vector2 Size2=>Shown.Size;
+    readonly LabelWidget heading=MDUi.Label("机甲面板 · 位置和大小",1,MDUi.Accent);
     readonly MDWorldBackground background=new();
     readonly CanvasWidget preview=new(){Size=new Vector2(float.PositiveInfinity),ClampToBounds=true,IsHitTestVisible=false};
     public readonly MDStatusWidget Sample=new();
@@ -309,8 +329,8 @@ public sealed class MDHudLayoutScreen:Screen {
     readonly MDHudGesture gesture=new();
     Screen back;bool collapsed,dragging,wasMoving,sideChecked;Vector2 dragOffset,area;
     public MDHudLayoutScreen() {
-        Children.Add(background);preview.Children.Add(Sample);Children.Add(preview);Sample.Sample();
-        controls.Children.Add(MDUi.Label("机甲面板 · 位置和大小",1,MDUi.Accent));
+        Children.Add(background);preview.Children.Add(Sample);preview.Children.Add(TopDownSample);Children.Add(preview);Sample.Sample();TopDownSample.Sample();TopDownSample.IsHitTestVisible=false;
+        controls.Children.Add(heading);
         controls.Children.Add(show);controls.Children.Add(keys);
         controls.Children.Add(MDUi.Bar(bigger,smaller));controls.Children.Add(MDUi.Bar(left,right));controls.Children.Add(MDUi.Bar(reset,side));controls.Children.Add(MDUi.Bar(collapse));
         controls.Children.Add(info);
@@ -323,7 +343,9 @@ public sealed class MDHudLayoutScreen:Screen {
     }
     public override void Enter(object[] parameters) {
         background.Reset();back=ScreensManager.PreviousScreen;
-        Working=MDSettings.Hud.Copy();WorkingShow=MDSettings.HudShow;WorkingKeys=MDSettings.HudKeys;show.IsChecked=WorkingShow;keys.IsChecked=WorkingKeys;
+        Editing=Target;bool td=Editing==MDHudTarget.TopDown;
+        Working=td?MDSettings.TopDownHud.Copy():MDSettings.Hud.Copy();WorkingShow=td?MDSettings.TopDownHudShow:MDSettings.HudShow;WorkingKeys=MDSettings.HudKeys;show.IsChecked=WorkingShow;keys.IsChecked=WorkingKeys;
+        heading.Text=td?"俯瞰面板 · 位置和大小":"机甲面板 · 位置和大小";show.Text=td?"显示俯瞰面板":"显示状态面板";keys.IsVisible=!td;Sample.IsVisible=!td;TopDownSample.IsVisible=td;
         collapsed=dragging=wasMoving=sideChecked=false;gesture.Reset();panel.HorizontalAlignment=WidgetAlignment.Near;panel.VerticalAlignment=WidgetAlignment.Center;
     }
     public override void Leave(){background.Release();base.Leave();}
@@ -333,31 +355,35 @@ public sealed class MDHudLayoutScreen:Screen {
         panel.Size=new Vector2(pw,ph);panel.Margin=new Vector2(12,12);
         panel.SetWidgetPosition(scrollHost,new Vector2(8,8));scrollHost.Size=new Vector2(pw-16,ph-16-60);
         panel.SetWidgetPosition(footer,new Vector2((pw-2*126)/2,ph-60));
-        Sample.ShowKeys=WorkingKeys;var corner=Working.Corner(area,Sample.Size,out var m);preview.SetWidgetPosition(Sample,corner);Sample.RenderTransform=m;
+        Sample.ShowKeys=WorkingKeys;var corner=Working.Corner(area,Size2,out var m);preview.SetWidgetPosition(Shown,corner);Shown.RenderTransform=m;
         base.MeasureOverride(available);
     }
     bool OverControls(Vector2 p)=>!collapsed&&MDUi.Inside(panel,p)||collapsed&&MDUi.Inside(expand,p);
     // edits (the buttons, the lab)
-    public void Scale(float factor){Working.MakeCustom(area,Sample.Size);Working.Scale*=factor;Working.Normalize();}
-    public void Turn(float radians){Working.MakeCustom(area,Sample.Size);Working.Rotation+=radians;Working.Normalize();}
-    public void MoveTo(Vector2 fraction){Working.MakeCustom(area,Sample.Size);Working.X=fraction.X;Working.Y=fraction.Y;Working.Normalize();AutoSide();}
-    public void SaveNow(){MDSettings.Hud=Working.Copy().Normalize();MDSettings.HudShow=WorkingShow;MDSettings.HudKeys=WorkingKeys;MDSettings.Persist();Close();}
+    public void Scale(float factor){Working.MakeCustom(area,Size2);Working.Scale*=factor;Working.Normalize();}
+    public void Turn(float radians){Working.MakeCustom(area,Size2);Working.Rotation+=radians;Working.Normalize();}
+    public void MoveTo(Vector2 fraction){Working.MakeCustom(area,Size2);Working.X=fraction.X;Working.Y=fraction.Y;Working.Normalize();AutoSide();}
+    public void SaveNow() {
+        if(Editing==MDHudTarget.TopDown){MDSettings.TopDownHud=Working.Copy().Normalize();MDSettings.TopDownHudShow=WorkingShow;}
+        else{MDSettings.Hud=Working.Copy().Normalize();MDSettings.HudShow=WorkingShow;MDSettings.HudKeys=WorkingKeys;}
+        MDSettings.Persist();Close();
+    }
     void Close()=>ScreensManager.SwitchScreen(back??ScreensManager.FindScreen<Screen>(MDSettingsScreen.ScreenName));
     public override void Update() {
         panel.IsVisible=!collapsed;expand.IsVisible=collapsed;
         WorkingShow=show.IsChecked;WorkingKeys=keys.IsChecked;
-        Sample.ColorTransform=WorkingShow?Color.White:new Color((byte)150,(byte)150,(byte)150,(byte)110);   // a hidden panel stays visible here, dimmed
+        Shown.ColorTransform=WorkingShow?Color.White:new Color((byte)150,(byte)150,(byte)150,(byte)110);   // a hidden panel stays visible here, dimmed
         if(area.X>1&&area.Y>1) {
             bool moving=Pointer();
             if(!sideChecked||wasMoving&&!moving){sideChecked=true;AutoSide();}   // on opening and when a drag ends
             wasMoving=moving;
         }
-        info.Text=$"位置：{(Working.Custom?"自定义":"默认（右下角）")}　大小 {Working.Scale*100:0}%　旋转 {Working.Rotation*180/MathF.PI:0}°"+(WorkingShow?"":"　（面板已隐藏）");
+        info.Text=$"位置：{(Working.Custom?"自定义":Editing==MDHudTarget.TopDown?"默认（右侧中部）":"默认（右下角）")}　大小 {Working.Scale*100:0}%　旋转 {Working.Rotation*180/MathF.PI:0}°"+(WorkingShow?"":"　（面板已隐藏）");
         if(bigger.IsClicked)Scale(ScaleStep);
         if(smaller.IsClicked)Scale(1/ScaleStep);
         if(left.IsClicked)Turn(-TurnStep);
         if(right.IsClicked)Turn(TurnStep);
-        if(reset.IsClicked){Working=new MDHudPlacement();show.IsChecked=keys.IsChecked=true;}
+        if(reset.IsClicked){Working=Editing==MDHudTarget.TopDown?MDSettings.NewTopDownHud():new MDHudPlacement();show.IsChecked=keys.IsChecked=true;}
         if(side.IsClicked)panel.HorizontalAlignment=panel.HorizontalAlignment==WidgetAlignment.Near?WidgetAlignment.Far:WidgetAlignment.Near;
         if(collapse.IsClicked)collapsed=true;
         if(expand.IsClicked)collapsed=false;
@@ -366,7 +392,7 @@ public sealed class MDHudLayoutScreen:Screen {
     }
     // the control panel moves to the other side when the panel being edited sits under it
     void AutoSide() {
-        float c=Working.Centre(area,Sample.Size).X,w=panel.Size.X+24;
+        float c=Working.Centre(area,Size2).X,w=panel.Size.X+24;
         if(panel.HorizontalAlignment==WidgetAlignment.Near&&c<w)panel.HorizontalAlignment=WidgetAlignment.Far;
         else if(panel.HorizontalAlignment==WidgetAlignment.Far&&c>area.X-w)panel.HorizontalAlignment=WidgetAlignment.Near;
     }
@@ -374,7 +400,7 @@ public sealed class MDHudLayoutScreen:Screen {
     // mouse, keys and fingers on the preview (never on the control panel); true while the panel is being moved
     bool Pointer() {
         Vector2 Local(Vector2 p)=>preview.ScreenToWidget(p);
-        if(gesture.Step(Input.TouchLocations,Working,area,Sample.Size,Local,p=>!OverControls(p))){dragging=false;return true;}
+        if(gesture.Step(Input.TouchLocations,Working,area,Size2,Local,p=>!OverControls(p))){dragging=false;return true;}
         if(Input.Scroll is Vector3 wheel&&wheel.Z!=0&&!OverControls(new Vector2(wheel.X,wheel.Y))) {
             if(Input.IsKeyDown(Key.Shift))Turn(wheel.Z*MathF.PI/36);else Scale(MathF.Pow(ScaleStep,wheel.Z));
         }
@@ -383,8 +409,8 @@ public sealed class MDHudLayoutScreen:Screen {
         if(Input.Press is not Vector2 press){dragging=false;return false;}
         var point=Local(press);
         if(!dragging) {
-            if(OverControls(press)||!Working.Hit(point,area,Sample.Size))return false;
-            Working.MakeCustom(area,Sample.Size);dragging=true;dragOffset=point-Working.Centre(area,Sample.Size);return true;
+            if(OverControls(press)||!Working.Hit(point,area,Size2))return false;
+            Working.MakeCustom(area,Size2);dragging=true;dragOffset=point-Working.Centre(area,Size2);return true;
         }
         var c=point-dragOffset;Working.X=c.X/area.X;Working.Y=c.Y/area.Y;Working.Normalize();return true;
     }

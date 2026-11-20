@@ -9,8 +9,10 @@ public class MDModLoader : ModLoader {
         new Harmony(MDSettings.Package).PatchAll();   // 1.0.0: the package name (0.18.4 and older: local.mechdefense.sample)
         // 1.0.0 an old copy (0.18.4 or older, the old package name) still in the Mods folder loads as a second mod with the same types
         if(ModsManager.ModListAll.Any(m=>m.modInfo?.PackageName==MDSettings.OldPackage&&!m.IsDisabled))Log.Error("[MechDefense] an old copy of this mod ("+MDSettings.OldPackage+", 0.18.4 or older) is also installed: delete the old file from the Mods folder");
-        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized","OnProjectXmlSaved"})ModsManager.RegisterHook(hook,this);
+        foreach(var hook in new[]{"OnLoadingFinished","BeforeMinerPlace","ProcessAttackment","OnPlayerInputInteract","OnModelDataDrawing","ProjectXmlLoad","ProjectXmlSave","CalculateCreatureInjuryAmount","BlocksInitalized","OnProjectXmlSaved","ManageCameras"})ModsManager.RegisterHook(hook,this);
     }
+    // 1.1.0 the top-down view's camera in every game view (MDTopDown)
+    public override void ManageCameras(GameWidget gameWidget)=>MDTopDownCameras.Add(gameWidget);
     // Models with more bones than the GPU draws at once (the mechs on Snapdragon phones) are drawn in batches (MDDrawBatches).
     public override void OnModelDataDrawing(SubsystemModelsRenderer.ModelData modelData,ModelShader modelShader,Camera camera,SubsystemModelsRenderer subsystemModelsRenderer,out bool skip)=>
         skip=MDDrawBatches.Draw(modelData,modelShader,subsystemModelsRenderer);

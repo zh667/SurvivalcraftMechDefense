@@ -69,12 +69,29 @@ public static class MDTowerTools {
 
     static void Say(ComponentPlayer p,string text){LastText=text;MDPlayer.Message(p,text);}
     static string K(MDMechAction a)=>MDMechKeys.Hint(a);
+    public static ComponentPlayer Mover=>mover;   // 1.1.0 who is moving a tower (MDTopDownHost)
+    // 1.1.0 from the top-down view the camera is up to 53 m from the ground it looks at (MDTopDown): reaches count from there
+    public static float Reach(ComponentPlayer p,float onFoot)=>MDTopDown.On(p)&&MDTopDown.Camera(p) is {} c?c.Height/MathF.Sin(MDTopDown.Pitch)+onFoot*2:onFoot;
     public static Ray3 CameraRay(ComponentPlayer p){var c=p.GameWidget.ActiveCamera;return new Ray3(c.ViewPosition,c.ViewDirection);}
     static bool Solid(int v)=>BlocksManager.Blocks[Terrain.ExtractContents(v)].IsCollidable_(v);
 
-    // every frame after the game's input and the mech's (MDMechInputPatch)
+    // every frame after the game's input and the mech's (MDMechInputPatch); 1.1.0 the top-down view first and its panel last
     public static void Input(ComponentPlayer p) {
         if(p==null||p.GameWidget==null)return;
+        bool topDown=MDTopDown.Input(p,p.GameWidget.Input,ref p.ComponentInput.m_playerInput);
+        if(topDown&&Moving==null&&(mover==null||mover==p))FreeClick(p);
+        Step(p);MDTopDownHost.Update(p);
+    }
+    // 1.1.0 the top-down view without a tower picked up: a click (a tap) on a tower picks it up, no block is dug or placed from up there
+    static void FreeClick(ComponentPlayer p) {
+        var gi=p.GameWidget.Input;ref var v=ref p.ComponentInput.m_playerInput;
+        Ray3? click=v.Interact??v.Hit;Clear(ref v);
+        if(!click.HasValue||MDTopDownHost.Touching(gi))return;
+        var u=Under(p,click.Value,Reach(p,PickReach));if(u==null)return;
+        if(u.Destroyed){Say(p,"已损毁的炮塔不能移动（可以先维修）。");return;}
+        StartMove(p,u);
+    }
+    static void Step(ComponentPlayer p) {
         if(mover!=null&&mover!=p)return;   // one player at a time moves a tower
         var gi=p.GameWidget.Input;ref var v=ref p.ComponentInput.m_playerInput;
         Current=null;
@@ -93,16 +110,17 @@ public static class MDTowerTools {
         }
         var u=Moving;
         if(!clickFree&&!v.Interact.HasValue&&!v.Hit.HasValue&&u.Clock.GameTime-pickedAt>=.15)clickFree=true;   // the picking click let go
-        if(!clickFree&&u.Clock.GameTime-pickedAt<PickGuard*4&&u.Clock.GameTime>=pickedAt){var g0=Aim(p,u.Tower,CameraRay(p),MoveReach,u.Body,Facing(u));g0.Moving=u;Current=g0;Clear(ref v);bar?.Show(u,g0);return;}   // 1.0.0 (11-13) the picking tap is not the move's
+        if(!clickFree&&u.Clock.GameTime-pickedAt<PickGuard*4&&u.Clock.GameTime>=pickedAt){var g0=Aim(p,u.Tower,CameraRay(p),Reach(p,MoveReach),u.Body,Facing(u));g0.Moving=u;Current=g0;Clear(ref v);bar?.Show(u,g0);return;}   // 1.0.0 (11-13) the picking tap is not the move's
         if(!u.Entity.IsAddedToProject||u.Destroyed||Vector3.Distance(u.Body.Position,p.ComponentBody.Position)>64){Stop(p,u.Destroyed?"炮塔已损毁，移动取消。":"移动已取消。");return;}
         bool mouse=(gi.Devices&WidgetInputDevice.Mouse)!=0;
         Ray3? click=mouse?v.Hit:v.Interact??v.Hit;   // a left-click; on a phone a tap
+        if(click.HasValue&&MDTopDownHost.Touching(gi))click=null;   // 1.1.0 a tap on the top-down panel is the panel's
         bool cancel=MDMechKeys.Pressed(gi,MDMechAction.MoveTower)||mouse&&v.Interact.HasValue;
         if(MDMechKeys.Pressed(gi,MDMechAction.RotateTower))turns=(turns+1)%4;
         MDMechKeys.ConsumePressed(gi,MDMechAction.MoveTower,MDMechAction.RotateTower);
         if(cancel){Clear(ref v);Stop(p,"已取消移动，炮塔留在原处。");return;}
         var ray=click??CameraRay(p);
-        var g=Aim(p,u.Tower,ray,MoveReach,u.Body,Facing(u));g.Moving=u;Current=g;
+        var g=Aim(p,u.Tower,ray,Reach(p,MoveReach),u.Body,Facing(u));g.Moving=u;Current=g;
         LastInput=$"devices {gi.Devices}, hit {v.Hit.HasValue}, interact {v.Interact.HasValue}, ray {ray.Position} {ray.Direction}";
         if(click.HasValue){if(g.Ok)Put(p,u,g);else Say(p,g.Reason??"对准地面再放。");}
         Clear(ref v);bar?.Show(u,g);
@@ -110,8 +128,9 @@ public static class MDTowerTools {
     // the clicks and the mount key are the move's while a tower is picked up
     static void Clear(ref PlayerInput v){v.Dig=v.Hit=v.Interact=v.Aim=v.PickBlockType=null;v.ToggleMount=false;}
     // the tower under the crosshair (within PickReach, in front of the terrain)
-    public static ComponentMDUnit Under(ComponentPlayer p,float reach=PickReach*4) {
-        var ray=CameraRay(p);var to=ray.Position+ray.Direction*reach;
+    public static ComponentMDUnit Under(ComponentPlayer p,float reach=PickReach*4)=>Under(p,CameraRay(p),Reach(p,reach));
+    public static ComponentMDUnit Under(ComponentPlayer p,Ray3 ray,float reach) {
+        var to=ray.Position+ray.Direction*reach;
         var t=p.Project.FindSubsystem<SubsystemTerrain>(true).Raycast(ray.Position,to,false,true,(x,_)=>Solid(x));
         var hit=p.Project.FindSubsystem<SubsystemBodies>(true).Raycast(ray.Position,to,.25f,(b,_)=>b.Entity.FindComponent<ComponentMDUnit>()?.Kind=="Turret");
         return hit is {} h&&(t==null||h.Distance<t.Value.Distance)?h.ComponentBody.Entity.FindComponent<ComponentMDUnit>():null;
@@ -124,11 +143,13 @@ public static class MDTowerTools {
     }
     static void StartMove(ComponentPlayer p,ComponentMDUnit u) {
         Moving=u;mover=p;turns=0;pickedAt=u.Clock.GameTime;clickFree=false;
+        if(MDSettings.TopDownOnMove&&!MDTopDown.On(p))MDTopDown.Enter(p,true,u.Body.Position);   // 1.1.0 the setting (off by default)
         bar??=new MDMoveBar();if(bar.ParentWidget==null)p.ComponentGui.ControlsContainerWidget.Children.Add(bar);
         Say(p,$"正在移动{u.Tower.name}");
     }
     public static void Stop(ComponentPlayer p,string text) {
         Moving=null;mover=null;turns=0;Current=null;
+        if(MDTopDown.Auto&&MDTopDown.Player==p)MDTopDown.Exit(p,"moved");   // 1.1.0 entered for this move
         if(bar?.ParentWidget is ContainerWidget c)c.Children.Remove(bar);
         if(!string.IsNullOrEmpty(text))Say(p,text);
     }
@@ -159,7 +180,8 @@ public static class MDTowerTools {
         MDTowerWorld.For(p.Project).Sparks(g.At+Vector3.UnitY*.1f,Vector3.UnitY,8,new Color(255,220,150),3,.8f,.3f,.04f);
         Stop(p,$"{u.Tower.name}已移到新位置。");
     }
-    public static string BarText(ComponentMDUnit u)=>$"移动「{u.Tower.name}」：对准新位置，左键（手机点屏）放下 · {K(MDMechAction.RotateTower)} 旋转 90° · 右键或 {K(MDMechAction.MoveTower)} 取消";
+    public static string BarText(ComponentMDUnit u)=>$"移动「{u.Tower.name}」：对准新位置，左键（手机点屏）放下 · {K(MDMechAction.RotateTower)} 旋转 90° · 右键或 {K(MDMechAction.MoveTower)} 取消"+
+        (MDTopDown.On(MDTopDown.Player)?" · 俯瞰中：移动键平移视角，滚轮或面板按钮调高度":"");
 }
 
 // The bar over the screen while a tower is being moved: the keys, and whether the spot takes the tower.
